@@ -20,19 +20,20 @@ public class Fuel {
     private UUID id;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private FuelType fuelType;
 
     @Column(nullable = false, unique = true)
     private String fuel; // Fuel type (e.g., Diesel, Natural Gas)
 
     @Column(nullable = false)
-    private double lowerHeatingValue; // LHV (TJ/Gg) or NCV
+    private Double lowerHeatingValue; // LHV (TJ/Gg) or NCV
 
     @Column(nullable = true)
-    private Double liquidDensity; // kg/litre (only for liquid fuels)
+    private Double liquidDensity = 0.0; // kg/litre (only for liquid fuels)
 
     @Column(nullable = true)
-    private Double gasDensity; // kg/m³ (only for gaseous fuels)
+    private Double gasDensity = 0.0; // kg/m³ (only for gaseous fuels)
 
     @OneToMany(mappedBy = "fuel")
     private List<EmissionFactors> emissionFactorsList;

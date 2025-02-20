@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.ServiceImpls;
 
 import com.navyn.emissionlog.Enums.EnergyUnits;
+import com.navyn.emissionlog.Enums.FuelType;
 import com.navyn.emissionlog.Enums.MassUnits;
 import com.navyn.emissionlog.Enums.VolumeUnits;
 import com.navyn.emissionlog.Models.Activity;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+//Biomass CO2 comes from fuelType Biomass -- FIXXXX
 @Service
 public class ActivityServiceImpl implements ActivityService {
 
@@ -34,6 +36,8 @@ public class ActivityServiceImpl implements ActivityService {
         }
 
         List<EmissionFactors> emissionFactorsList = fuel.get().getEmissionFactorsList();
+
+
         Activity activity1 = new Activity();
         Double fuelAmountInSI = 0.0;
         activity1.setSector(activity.getSector());
@@ -58,6 +62,7 @@ public class ActivityServiceImpl implements ActivityService {
                 break;
             default:
                 fuelAmountInSI = 0.0;
+                break;
         }
         activity1.setFuelAmount(fuelAmountInSI);
 
@@ -69,7 +74,7 @@ public class ActivityServiceImpl implements ActivityService {
                             activity1.setCH4Emissions(fuelAmountInSI*emissionFactor.getGasBasis());
                             break;
                         case CO2:
-                            activity1.setFossilCO2Emisions(fuelAmountInSI*emissionFactor.getGasBasis());
+                            activity1.setFossilCO2Emissions(fuelAmountInSI*emissionFactor.getGasBasis());
                             break;
                         default:
                             activity1.setN2OEmissions(fuelAmountInSI*emissionFactor.getGasBasis());
@@ -81,7 +86,7 @@ public class ActivityServiceImpl implements ActivityService {
                             activity1.setCH4Emissions(fuelAmountInSI * emissionFactor.getLiquidBasis());
                             break;
                         case CO2:
-                            activity1.setFossilCO2Emisions(fuelAmountInSI * emissionFactor.getLiquidBasis());
+                            activity1.setFossilCO2Emissions(fuelAmountInSI * emissionFactor.getLiquidBasis());
                             break;
                         default:
                             activity1.setN2OEmissions(fuelAmountInSI  * emissionFactor.getLiquidBasis());
@@ -93,20 +98,35 @@ public class ActivityServiceImpl implements ActivityService {
                             activity1.setCH4Emissions(fuelAmountInSI * emissionFactor.getMassBasis());
                             break;
                         case CO2:
-                            activity1.setFossilCO2Emisions(fuelAmountInSI * emissionFactor.getMassBasis());
+                            activity1.setFossilCO2Emissions(fuelAmountInSI * emissionFactor.getMassBasis());
                             break;
                         default:
                             activity1.setN2OEmissions(fuelAmountInSI * emissionFactor.getMassBasis());
+                            break;
+                    }
+                case BIOMASS:
+                    switch (emissionFactor.getEmmission()) {
+                        case CH4:
+                            activity1.setCH4Emissions(fuelAmountInSI * emissionFactor.getEnergyBasis());
+                            break;
+                        case CO2:
+                            activity1.setBiomassCO2Emissions(fuelAmountInSI * emissionFactor.getEnergyBasis());
+                            break;
+                        default:
+                            activity1.setN2OEmissions(fuelAmountInSI * emissionFactor.getEnergyBasis());
                             break;
                     }
                 default:
                     switch (emissionFactor.getEmmission()) {
                         case CH4:
                             activity1.setCH4Emissions(fuelAmountInSI * emissionFactor.getEnergyBasis());
+                            break;
                         case CO2:
-                            activity1.setFossilCO2Emisions(fuelAmountInSI * emissionFactor.getEnergyBasis());
+                            activity1.setFossilCO2Emissions(fuelAmountInSI * emissionFactor.getEnergyBasis());
+                            break;
                         default:
                             activity1.setN2OEmissions(fuelAmountInSI * emissionFactor.getEnergyBasis());
+                            break;
                     }
             }
         }
@@ -129,7 +149,7 @@ public class ActivityServiceImpl implements ActivityService {
         updatedActivity.setFuelAmount(activity.getFuelAmount());
         updatedActivity.setMetric(activity.getMetric());
         updatedActivity.setCH4Emissions(activity.getCH4Emissions());
-        updatedActivity.setFossilCO2Emisions(activity.getFossilCO2Emisions());
+        updatedActivity.setFossilCO2Emissions(activity.getFossilCO2Emissions());
         updatedActivity.setBiomassCO2Emissions(activity.getBiomassCO2Emissions());
         updatedActivity.setN2OEmissions(activity.getN2OEmissions());
 

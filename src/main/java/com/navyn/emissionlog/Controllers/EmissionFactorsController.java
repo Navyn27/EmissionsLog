@@ -2,6 +2,7 @@ package com.navyn.emissionlog.Controllers;
 
 import com.navyn.emissionlog.Models.EmissionFactors;
 import com.navyn.emissionlog.Payload.Requests.EmissionFactorsDto;
+import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.Services.EmissionFactorsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,15 +19,15 @@ public class EmissionFactorsController {
     private EmissionFactorsService emissionFactorsService;
 
     @PostMapping
-    public ResponseEntity<EmissionFactors> createEmissionFactors(@RequestBody EmissionFactorsDto emissionFactorsDto) {
+    public ResponseEntity<ApiResponse> createEmissionFactors(@RequestBody EmissionFactorsDto emissionFactorsDto) {
         EmissionFactors emissionFactors = emissionFactorsService.createEmissionFactorsFactor(emissionFactorsDto);
-        return ResponseEntity.ok(emissionFactors);
+        return ResponseEntity.ok( new ApiResponse(true, "Emission has been created successfully", emissionFactors));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EmissionFactors> updateEmissionFactors(@PathVariable UUID id, @RequestBody EmissionFactorsDto emissionFactorsDto) {
+    public ResponseEntity<ApiResponse> updateEmissionFactors(@PathVariable UUID id, @RequestBody EmissionFactorsDto emissionFactorsDto) {
         EmissionFactors emissionFactors = emissionFactorsService.updateEmissionFactorsFactor(id, emissionFactorsDto);
-        return ResponseEntity.ok(emissionFactors);
+        return ResponseEntity.ok( new ApiResponse(true, "Emission has been updated successfully", emissionFactors));
     }
 
     @DeleteMapping("/{id}")
@@ -36,20 +37,20 @@ public class EmissionFactorsController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EmissionFactors> getEmissionFactorsById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse> getEmissionFactorsById(@PathVariable UUID id) {
         EmissionFactors emissionFactors = emissionFactorsService.getEmissionFactorsFactorById(id);
-        return ResponseEntity.ok(emissionFactors);
+        return ResponseEntity.ok( new ApiResponse(true, "Emission fetched successfully", emissionFactors));
     }
 
     @GetMapping
-    public ResponseEntity<List<EmissionFactors>> getAllEmissionFactors() {
+    public ResponseEntity<ApiResponse> getAllEmissionFactors() {
         List<EmissionFactors> emissionFactorsList = emissionFactorsService.getAllEmissionFactorsFactors();
-        return ResponseEntity.ok(emissionFactorsList);
+        return ResponseEntity.ok( new ApiResponse(true, "Emissions fetched successfully", emissionFactorsList));
     }
 
     @GetMapping("/fuel/{fuelId}")
-    public ResponseEntity<EmissionFactors> getEmissionFactorsByFuelId(@PathVariable UUID fuelId) {
+    public ResponseEntity<ApiResponse> getEmissionFactorsByFuelId(@PathVariable UUID fuelId) {
         EmissionFactors emissionFactors = emissionFactorsService.getEmissionFactorsFactorByFuelId(fuelId);
-        return ResponseEntity.ok(emissionFactors);
+        return ResponseEntity.ok( new ApiResponse(true, "Emission fetched successfully", emissionFactors));
     }
 }

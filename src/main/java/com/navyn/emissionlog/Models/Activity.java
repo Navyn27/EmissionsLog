@@ -32,11 +32,11 @@ public class Activity {
     @Enumerated(EnumType.STRING)
     private Metric metric;
 
-    private Double CH4Emissions;
+    private Double CH4Emissions = 0.0;
 
-    private Double FossilCO2Emisions;
+    private Double FossilCO2Emissions = 0.0;
 
-    private Double BiomassCO2Emissions;
+    private Double BiomassCO2Emissions = 0.0;
 
-    private Double N2OEmissions;
+    private Double N2OEmissions = 0.0;
 }

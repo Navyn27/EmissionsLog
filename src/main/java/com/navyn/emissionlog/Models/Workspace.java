@@ -27,5 +27,5 @@ public class Workspace {
 
     @OneToMany
     @JsonIgnore
-    private List<User> surveyors;
+    private List<User> dataEntry;
 }
