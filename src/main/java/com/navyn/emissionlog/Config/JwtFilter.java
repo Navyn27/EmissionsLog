@@ -32,6 +32,15 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = null;
         String username = null;
 
+        // In doFilterInternal method
+        String path = request.getRequestURI();
+        if (path.contains("/swagger-ui") || path.contains("/api-docs") ||
+                path.contains("/v3/api-docs") || path.contains("/swagger-resources") ||
+                path.contains("/webjars")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
             username = jwtService.extractUserName(token);
