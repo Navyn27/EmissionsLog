@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.ServiceImpls;
 
+import com.navyn.emissionlog.Models.EmissionFactors;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
 import com.navyn.emissionlog.Payload.Requests.EmissionFactorsDto;
@@ -24,24 +25,31 @@ public class FuelServiceImpl implements FuelService {
 
     @Override
     public Fuel saveFuel(CreateFuelDto fuel) {
-        Fuel fuel1 = new Fuel();
-        fuel1.setFuelType(fuel.getFuelType());
-        fuel1.setFuel(fuel.getFuel());
-        fuel1.setLiquidDensity(fuel.getFuelDensityLiquids());
-        fuel1.setGasDensity(fuel.getFuelDensityGases());
-        fuel1.setLowerHeatingValue(fuel.getLowerHeatingValue());
+        try {
+            Fuel fuel1 = new Fuel();
+            fuel1.setFuelType(fuel.getFuelType());
+            fuel1.setFuel(fuel.getFuel());
+            fuel1.setLiquidDensity(fuel.getFuelDensityLiquids());
+            fuel1.setGasDensity(fuel.getFuelDensityGases());
+            fuel1.setLowerHeatingValue(fuel.getLowerHeatingValue());
+            fuel1 = fuelRepository.save(fuel1);
 
-        fuel1 = fuelRepository.save(fuel1);
+            EmissionFactorsDto emissionFactorsDto = new EmissionFactorsDto();
+            emissionFactorsDto.setEmission(fuel.getEmission());
+            emissionFactorsDto.setGasBasis(fuel.getGasBasis());
+            emissionFactorsDto.setEnergyBasis(fuel.getEnergyBasis());
+            emissionFactorsDto.setMassBasis(fuel.getMassBasis());
+            emissionFactorsDto.setLiquidBasis(fuel.getLiquidBasis());
+            emissionFactorsDto.setFuel(fuel1.getId());
+            EmissionFactors emissionFactors = emissionFactorsService.createEmissionFactorsFactor(emissionFactorsDto);
+            fuel1.setEmissionFactorsList(List.of(emissionFactors));
 
-        EmissionFactorsDto emissionFactorsDto = new EmissionFactorsDto();
-        emissionFactorsDto.setEmission(fuel.getEmission());
-        emissionFactorsDto.setGasBasis(fuel.getGasBasis());
-        emissionFactorsDto.setEnergyBasis(fuel.getEnergyBasis());
-        emissionFactorsDto.setMassBasis(fuel.getMassBasis());
-        emissionFactorsDto.setLiquidBasis(fuel.getLiquidBasis());
-        emissionFactorsDto.setFuel(fuel1.getId());
-
-        return fuel1;
+            return fuelRepository.save(fuel1);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error saving fuel: " + e.getMessage());
+        }
     }
 
     @Override

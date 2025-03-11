@@ -34,6 +34,8 @@ public class ActivityServiceImpl implements ActivityService {
         if(fuel.isEmpty()){
             throw new IllegalArgumentException("Fuel is not recorded");
         }
+        System.out.println("Here");
+        System.out.println(fuel.get());
 
         List<EmissionFactors> emissionFactorsList = fuel.get().getEmissionFactorsList();
 

@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.Payload.Requests;
 
+import com.navyn.emissionlog.Enums.Emissions;
 import lombok.Data;
 
 @Data
@@ -13,4 +14,5 @@ public class CreateFuelFromExcelDto {
     private Double fuelDensityGases=0.0;
     private Double liquidBasis=0.0;
     private Double gasBasis= 0.0;
+    private Emissions emission = Emissions.N2O;
 }

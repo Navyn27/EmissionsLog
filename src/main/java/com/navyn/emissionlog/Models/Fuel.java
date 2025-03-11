@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.navyn.emissionlog.Enums.FuelType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -35,6 +36,8 @@ public class Fuel {
     @Column(nullable = true)
     private Double gasDensity = 0.0; // kg/m³ (only for gaseous fuels)
 
-    @OneToMany(mappedBy = "fuel")
+    @OneToMany(mappedBy = "fuel", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonIgnore
+    @ToString.Exclude
     private List<EmissionFactors> emissionFactorsList;
 }

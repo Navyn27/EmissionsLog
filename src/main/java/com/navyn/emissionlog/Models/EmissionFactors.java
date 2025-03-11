@@ -1,5 +1,7 @@
 package com.navyn.emissionlog.Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.navyn.emissionlog.Enums.EmissionFactorType;
 import com.navyn.emissionlog.Enums.Emissions;
 import jakarta.persistence.*;
 import lombok.*;
@@ -17,10 +19,15 @@ public class EmissionFactors {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    @Enumerated(EnumType.STRING)
     private Emissions emmission;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @Enumerated(EnumType.STRING)
+    private EmissionFactorType emissionType;
+
+    @ManyToOne
     @JoinColumn(name = "fuel_id", nullable = false)
+    @ToString.Exclude
     private Fuel fuel; // Relation to Fuel entity
 
     @Column(nullable = false)

@@ -63,6 +63,7 @@ public class FuelController {
                 createFuelDto.setLowerHeatingValue(fuelDto.getLowerHeatingValue());
                 createFuelDto.setEnergyBasis(fuelDto.getEnergyBasis());
                 createFuelDto.setMassBasis(fuelDto.getMassBasis());
+                createFuelDto.setEmission(fuelDto.getEmission());
                 createFuelDto.setFuelDensityLiquids(fuelDto.getFuelDensityLiquids());
                 createFuelDto.setFuelDensityGases(fuelDto.getFuelDensityGases());
                 createFuelDto.setLiquidBasis(fuelDto.getLiquidBasis());
@@ -77,6 +78,7 @@ public class FuelController {
             throw new RuntimeException(e);
         }
         catch (Exception e) {
+            e.printStackTrace();
             ApiResponse response = new ApiResponse(false, "Failed to upload fuel data", null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
