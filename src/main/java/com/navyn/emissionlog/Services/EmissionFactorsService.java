@@ -8,9 +8,9 @@ import java.util.UUID;
 
 public interface EmissionFactorsService {
 
-    EmissionFactors createEmissionFactorsFactor(EmissionFactorsDto emissionFactorsDto);
+    EmissionFactors createEmissionFactor(EmissionFactorsDto emissionFactorsDto);
 
-    EmissionFactors updateEmissionFactorsFactor(UUID id, EmissionFactorsDto EmissionFactors);
+    EmissionFactors updateEmissionFactor(UUID id, EmissionFactorsDto EmissionFactors);
 
     void deleteEmissionFactorsFactor(UUID id);
 

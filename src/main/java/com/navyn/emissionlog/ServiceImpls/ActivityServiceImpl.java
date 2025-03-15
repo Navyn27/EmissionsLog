@@ -1,9 +1,6 @@
 package com.navyn.emissionlog.ServiceImpls;
 
-import com.navyn.emissionlog.Enums.EnergyUnits;
-import com.navyn.emissionlog.Enums.FuelType;
-import com.navyn.emissionlog.Enums.MassUnits;
-import com.navyn.emissionlog.Enums.VolumeUnits;
+import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.Models.Activity;
 import com.navyn.emissionlog.Models.EmissionFactors;
 import com.navyn.emissionlog.Models.Fuel;
@@ -34,17 +31,13 @@ public class ActivityServiceImpl implements ActivityService {
         if(fuel.isEmpty()){
             throw new IllegalArgumentException("Fuel is not recorded");
         }
-        System.out.println("Here");
-        System.out.println(fuel.get());
-
         List<EmissionFactors> emissionFactorsList = fuel.get().getEmissionFactorsList();
-
-
         Activity activity1 = new Activity();
         Double fuelAmountInSI = 0.0;
         activity1.setSector(activity.getSector());
         activity1.setFuelState(activity.getFuelState());
         activity1.setFuel(fuel.get());
+        activity1.setEmissionType(activity.getEmissionType());
         activity1.setMetric(activity.getMetric());
         activity1.setScope(activity.getScope());
         String unit = activity.getFuelUnit();
@@ -67,7 +60,6 @@ public class ActivityServiceImpl implements ActivityService {
                 break;
         }
         activity1.setFuelAmount(fuelAmountInSI);
-
         for(EmissionFactors emissionFactor : emissionFactorsList){
             switch(activity.getFuelState()){
                 case GASEOUS:
@@ -82,6 +74,7 @@ public class ActivityServiceImpl implements ActivityService {
                             activity1.setN2OEmissions(fuelAmountInSI*emissionFactor.getGasBasis());
                             break;
                     }
+                break;
                 case LIQUID:
                     switch (emissionFactor.getEmmission()) {
                         case CH4:
@@ -94,6 +87,7 @@ public class ActivityServiceImpl implements ActivityService {
                             activity1.setN2OEmissions(fuelAmountInSI  * emissionFactor.getLiquidBasis());
                             break;
                     }
+                    break;
                 case SOLID:
                     switch (emissionFactor.getEmmission()) {
                         case CH4:
@@ -106,6 +100,7 @@ public class ActivityServiceImpl implements ActivityService {
                             activity1.setN2OEmissions(fuelAmountInSI * emissionFactor.getMassBasis());
                             break;
                     }
+                    break;
                 case BIOMASS:
                     switch (emissionFactor.getEmmission()) {
                         case CH4:
@@ -118,6 +113,7 @@ public class ActivityServiceImpl implements ActivityService {
                             activity1.setN2OEmissions(fuelAmountInSI * emissionFactor.getEnergyBasis());
                             break;
                     }
+                    break;
                 default:
                     switch (emissionFactor.getEmmission()) {
                         case CH4:
@@ -130,6 +126,7 @@ public class ActivityServiceImpl implements ActivityService {
                             activity1.setN2OEmissions(fuelAmountInSI * emissionFactor.getEnergyBasis());
                             break;
                     }
+                    break;
             }
         }
 
@@ -150,6 +147,7 @@ public class ActivityServiceImpl implements ActivityService {
         updatedActivity.setFuelState(activity.getFuelState());
         updatedActivity.setFuelAmount(activity.getFuelAmount());
         updatedActivity.setMetric(activity.getMetric());
+        updatedActivity.setEmissionType(activity.getEmissionType());
         updatedActivity.setCH4Emissions(activity.getCH4Emissions());
         updatedActivity.setFossilCO2Emissions(activity.getFossilCO2Emissions());
         updatedActivity.setBiomassCO2Emissions(activity.getBiomassCO2Emissions());

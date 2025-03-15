@@ -23,7 +23,7 @@ public class EmissionFactorsServiceImpl implements EmissionFactorsService {
     EmissionFactorsRepository emissionFactorsRepository;
 
     @Override
-    public EmissionFactors createEmissionFactorsFactor(EmissionFactorsDto emissionFactorsDto) {
+    public EmissionFactors createEmissionFactor(EmissionFactorsDto emissionFactorsDto) {
         EmissionFactors emissionFactor = new EmissionFactors();
         Optional<Fuel> fuel = fuelRepository.findById(emissionFactorsDto.getFuel());
         if(fuel.isEmpty()) {
@@ -41,7 +41,7 @@ public class EmissionFactorsServiceImpl implements EmissionFactorsService {
     }
 
     @Override
-    public EmissionFactors updateEmissionFactorsFactor(UUID id, EmissionFactorsDto emissionFactorsDto) {
+    public EmissionFactors updateEmissionFactor(UUID id, EmissionFactorsDto emissionFactorsDto) {
         Optional<EmissionFactors> emissionFactor1 = emissionFactorsRepository.findById(id);
         Optional<Fuel> fuel = fuelRepository.findById(emissionFactorsDto.getFuel());
         if(fuel.isEmpty() || emissionFactor1.isEmpty()) {

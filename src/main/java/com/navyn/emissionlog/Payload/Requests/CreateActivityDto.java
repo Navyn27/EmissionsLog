@@ -1,9 +1,6 @@
 package com.navyn.emissionlog.Payload.Requests;
 
-import com.navyn.emissionlog.Enums.FuelState;
-import com.navyn.emissionlog.Enums.Metric;
-import com.navyn.emissionlog.Enums.Scopes;
-import com.navyn.emissionlog.Enums.Sectors;
+import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.Validators.ValidUnitForMetric;
 import lombok.Data;
 
@@ -19,4 +16,5 @@ public class CreateActivityDto {
     private Double fuelAmount;
     private Metric metric;
     private FuelState fuelState;
+    private EmissionType emissionType;
 }

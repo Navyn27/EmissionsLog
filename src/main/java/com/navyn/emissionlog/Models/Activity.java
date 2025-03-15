@@ -1,9 +1,6 @@
 package com.navyn.emissionlog.Models;
 
-import com.navyn.emissionlog.Enums.FuelState;
-import com.navyn.emissionlog.Enums.Metric;
-import com.navyn.emissionlog.Enums.Scopes;
-import com.navyn.emissionlog.Enums.Sectors;
+import com.navyn.emissionlog.Enums.*;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -19,6 +16,8 @@ public class Activity {
 
     @Enumerated(EnumType.STRING)
     private Sectors sector;
+
+    private EmissionType emissionType;
 
     @ManyToOne
     @JoinColumn(name = "emission_factors_list", nullable = false)

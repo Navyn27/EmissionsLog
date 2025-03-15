@@ -20,13 +20,13 @@ public class EmissionFactorsController {
 
     @PostMapping
     public ResponseEntity<ApiResponse> createEmissionFactors(@RequestBody EmissionFactorsDto emissionFactorsDto) {
-        EmissionFactors emissionFactors = emissionFactorsService.createEmissionFactorsFactor(emissionFactorsDto);
+        EmissionFactors emissionFactors = emissionFactorsService.createEmissionFactor(emissionFactorsDto);
         return ResponseEntity.ok( new ApiResponse(true, "Emission has been created successfully", emissionFactors));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse> updateEmissionFactors(@PathVariable UUID id, @RequestBody EmissionFactorsDto emissionFactorsDto) {
-        EmissionFactors emissionFactors = emissionFactorsService.updateEmissionFactorsFactor(id, emissionFactorsDto);
+    public ResponseEntity<ApiResponse> updateEmissionFactor(@PathVariable UUID id, @RequestBody EmissionFactorsDto emissionFactorsDto) {
+        EmissionFactors emissionFactors = emissionFactorsService.updateEmissionFactor(id, emissionFactorsDto);
         return ResponseEntity.ok( new ApiResponse(true, "Emission has been updated successfully", emissionFactors));
     }
 

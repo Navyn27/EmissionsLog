@@ -41,7 +41,7 @@ public class FuelServiceImpl implements FuelService {
             emissionFactorsDto.setMassBasis(fuel.getMassBasis());
             emissionFactorsDto.setLiquidBasis(fuel.getLiquidBasis());
             emissionFactorsDto.setFuel(fuel1.getId());
-            EmissionFactors emissionFactors = emissionFactorsService.createEmissionFactorsFactor(emissionFactorsDto);
+            EmissionFactors emissionFactors = emissionFactorsService.createEmissionFactor(emissionFactorsDto);
             fuel1.setEmissionFactorsList(List.of(emissionFactors));
 
             return fuelRepository.save(fuel1);
