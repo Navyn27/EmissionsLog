@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.ServiceImpls;
 
-import com.navyn.emissionlog.Models.EmissionFactors;
+import com.navyn.emissionlog.Models.StationaryEmissionFactors;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
 import com.navyn.emissionlog.Payload.Requests.EmissionFactorsDto;
@@ -27,7 +27,7 @@ public class FuelServiceImpl implements FuelService {
     public Fuel saveFuel(CreateFuelDto fuel) {
         try {
             Fuel fuel1 = new Fuel();
-            fuel1.setFuelType(fuel.getFuelType());
+            fuel1.setFuelTypes(fuel.getFuelTypes());
             fuel1.setFuel(fuel.getFuel());
             fuel1.setLiquidDensity(fuel.getFuelDensityLiquids());
             fuel1.setGasDensity(fuel.getFuelDensityGases());
@@ -41,8 +41,8 @@ public class FuelServiceImpl implements FuelService {
             emissionFactorsDto.setMassBasis(fuel.getMassBasis());
             emissionFactorsDto.setLiquidBasis(fuel.getLiquidBasis());
             emissionFactorsDto.setFuel(fuel1.getId());
-            EmissionFactors emissionFactors = emissionFactorsService.createEmissionFactor(emissionFactorsDto);
-            fuel1.setEmissionFactorsList(List.of(emissionFactors));
+            StationaryEmissionFactors stationaryEmissionFactors = emissionFactorsService.createEmissionFactor(emissionFactorsDto);
+            fuel1.setStationaryEmissionFactorsList(List.of(stationaryEmissionFactors));
 
             return fuelRepository.save(fuel1);
         }
@@ -66,7 +66,7 @@ public class FuelServiceImpl implements FuelService {
     public Fuel updateFuel(UUID id, CreateFuelDto fuel) {
         return fuelRepository.findById(id)
                 .map(existingFuel -> {
-                    existingFuel.setFuelType(fuel.getFuelType());
+                    existingFuel.setFuelTypes(fuel.getFuelTypes());
                     existingFuel.setFuel(fuel.getFuel());
                     existingFuel.setLowerHeatingValue(fuel.getLowerHeatingValue());
                     existingFuel.setLiquidDensity(fuel.getFuelDensityLiquids());

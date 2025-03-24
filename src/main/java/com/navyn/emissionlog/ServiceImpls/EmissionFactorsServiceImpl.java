@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.ServiceImpls;
 
-import com.navyn.emissionlog.Models.EmissionFactors;
+import com.navyn.emissionlog.Models.StationaryEmissionFactors;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Payload.Requests.EmissionFactorsDto;
 import com.navyn.emissionlog.Repositories.EmissionFactorsRepository;
@@ -23,8 +23,8 @@ public class EmissionFactorsServiceImpl implements EmissionFactorsService {
     EmissionFactorsRepository emissionFactorsRepository;
 
     @Override
-    public EmissionFactors createEmissionFactor(EmissionFactorsDto emissionFactorsDto) {
-        EmissionFactors emissionFactor = new EmissionFactors();
+    public StationaryEmissionFactors createEmissionFactor(EmissionFactorsDto emissionFactorsDto) {
+        StationaryEmissionFactors emissionFactor = new StationaryEmissionFactors();
         Optional<Fuel> fuel = fuelRepository.findById(emissionFactorsDto.getFuel());
         if(fuel.isEmpty()) {
             throw new IllegalArgumentException();
@@ -35,20 +35,20 @@ public class EmissionFactorsServiceImpl implements EmissionFactorsService {
         emissionFactor.setGasBasis(emissionFactorsDto.getGasBasis());
         emissionFactor.setLiquidBasis(emissionFactorsDto.getLiquidBasis());
         emissionFactor.setMassBasis(emissionFactorsDto.getMassBasis());
-        EmissionFactors savedEmissionFactor = emissionFactorsRepository.save(emissionFactor);
-        fuel.get().getEmissionFactorsList().add(savedEmissionFactor);
+        StationaryEmissionFactors savedEmissionFactor = emissionFactorsRepository.save(emissionFactor);
+        fuel.get().getStationaryEmissionFactorsList().add(savedEmissionFactor);
         return savedEmissionFactor;
     }
 
     @Override
-    public EmissionFactors updateEmissionFactor(UUID id, EmissionFactorsDto emissionFactorsDto) {
-        Optional<EmissionFactors> emissionFactor1 = emissionFactorsRepository.findById(id);
+    public StationaryEmissionFactors updateEmissionFactor(UUID id, EmissionFactorsDto emissionFactorsDto) {
+        Optional<StationaryEmissionFactors> emissionFactor1 = emissionFactorsRepository.findById(id);
         Optional<Fuel> fuel = fuelRepository.findById(emissionFactorsDto.getFuel());
         if(fuel.isEmpty() || emissionFactor1.isEmpty()) {
             throw new IllegalArgumentException();
         }
 
-        EmissionFactors emissionFactor = emissionFactor1.get();
+        StationaryEmissionFactors emissionFactor = emissionFactor1.get();
         emissionFactor.setEmmission(emissionFactorsDto.getEmission());
         emissionFactor.setEnergyBasis(emissionFactorsDto.getEnergyBasis());
         emissionFactor.setFuel(fuel.get());
@@ -64,17 +64,17 @@ public class EmissionFactorsServiceImpl implements EmissionFactorsService {
     }
 
     @Override
-    public EmissionFactors getEmissionFactorsFactorById(UUID id) {
+    public StationaryEmissionFactors getEmissionFactorsFactorById(UUID id) {
         return emissionFactorsRepository.findById(id).get();
     }
 
     @Override
-    public List<EmissionFactors> getAllEmissionFactorsFactors() {
+    public List<StationaryEmissionFactors> getAllEmissionFactorsFactors() {
         return emissionFactorsRepository.findAll();
     }
 
     @Override
-    public EmissionFactors getEmissionFactorsFactorByFuelId(UUID fuelId) {
+    public StationaryEmissionFactors getEmissionFactorsFactorByFuelId(UUID fuelId) {
         return emissionFactorsRepository.findByFuelId(fuelId);
     }
 }

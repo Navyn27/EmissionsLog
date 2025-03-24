@@ -21,7 +21,7 @@ public class RegionServiceImpl implements RegionService {
     public Region saveRegion(CreateRegionDto region) {
         Region region1 = new Region();
         region1.setCity(region.getCity());
-        region1.setCountry(region.getCountry());
+        region1.setCountries(region.getCountries());
         region1.setProvince(region.getProvince());
         return regionRepository.save(region1);
     }
@@ -40,7 +40,7 @@ public class RegionServiceImpl implements RegionService {
     public Region updateRegion(UUID id, CreateRegionDto region) {
         return regionRepository.findById(id)
                 .map(existingRegion -> {
-                    existingRegion.setCountry(region.getCountry());
+                    existingRegion.setCountries(region.getCountries());
                     existingRegion.setProvince(region.getProvince());
                     existingRegion.setCity(region.getCity());
                     return regionRepository.save(existingRegion);

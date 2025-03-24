@@ -2,7 +2,7 @@ package com.navyn.emissionlog.ServiceImpls;
 
 import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.Models.Activity;
-import com.navyn.emissionlog.Models.EmissionFactors;
+import com.navyn.emissionlog.Models.StationaryEmissionFactors;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Payload.Requests.CreateActivityDto;
 import com.navyn.emissionlog.Repositories.ActivityRepository;
@@ -31,18 +31,18 @@ public class ActivityServiceImpl implements ActivityService {
         if(fuel.isEmpty()){
             throw new IllegalArgumentException("Fuel is not recorded");
         }
-        List<EmissionFactors> emissionFactorsList = fuel.get().getEmissionFactorsList();
+        List<StationaryEmissionFactors> stationaryEmissionFactorsList = fuel.get().getStationaryEmissionFactorsList();
         Activity activity1 = new Activity();
         Double fuelAmountInSI = 0.0;
         activity1.setSector(activity.getSector());
-        activity1.setFuelState(activity.getFuelState());
+        activity1.setFuelState(activity.getFuelStates());
         activity1.setFuel(fuel.get());
-        activity1.setEmissionType(activity.getEmissionType());
-        activity1.setMetric(activity.getMetric());
+        activity1.setEmissionType(activity.getActivityTypes());
+        activity1.setMetric(activity.getMetrics());
         activity1.setScope(activity.getScope());
         String unit = activity.getFuelUnit();
 
-        switch(activity.getMetric()){
+        switch(activity.getMetrics()){
             case MASS:
                 MassUnits massUnit = MassUnits.valueOf(unit);
                 fuelAmountInSI = massUnit.toKilograms(activity.getFuelAmount());
@@ -60,8 +60,8 @@ public class ActivityServiceImpl implements ActivityService {
                 break;
         }
         activity1.setFuelAmount(fuelAmountInSI);
-        for(EmissionFactors emissionFactor : emissionFactorsList){
-            switch(activity.getFuelState()){
+        for(StationaryEmissionFactors emissionFactor : stationaryEmissionFactorsList){
+            switch(activity.getFuelStates()){
                 case GASEOUS:
                     switch (emissionFactor.getEmmission()){
                         case CH4:

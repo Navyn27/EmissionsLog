@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.Models;
 
-import com.navyn.emissionlog.Enums.Country;
+import com.navyn.emissionlog.Enums.Countries;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -23,7 +23,7 @@ public class Region {
 
     @NotNull(message = "The country value can't be null")
     @Enumerated(EnumType.STRING)
-    private Country country;
+    private Countries countries;
 
     @NotNull(message = "The province/state Value can't be null")
     private String province;

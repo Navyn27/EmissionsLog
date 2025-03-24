@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.Payload.Requests;
 
-import com.navyn.emissionlog.Enums.Role;
+import com.navyn.emissionlog.Enums.Roles;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Email;
@@ -30,7 +30,7 @@ public class SignUpDTO {
     private String email;
 
     @Enumerated(EnumType.STRING)
-    private Role role;
+    private Roles role;
 
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$",

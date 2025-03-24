@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.Models;
 
 import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Models.ActivityData.ActivityData;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -17,22 +18,11 @@ public class Activity {
     @Enumerated(EnumType.STRING)
     private Sectors sector;
 
-    private EmissionType emissionType;
-
-    @ManyToOne
-    @JoinColumn(name = "emission_factors_list", nullable = false)
-    private Fuel fuel;
-
     @Enumerated(EnumType.STRING)
     private Scopes scope;
 
-    private Double fuelAmount;
-
-    @Enumerated(EnumType.STRING)
-    private FuelState fuelState;
-
-    @Enumerated(EnumType.STRING)
-    private Metric metric;
+    @OneToOne
+    private ActivityData activityData;
 
     private Double CH4Emissions = 0.0;
 

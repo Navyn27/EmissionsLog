@@ -1,12 +1,12 @@
 package com.navyn.emissionlog.Payload.Requests;
 
 import com.navyn.emissionlog.Enums.Emissions;
-import com.navyn.emissionlog.Enums.FuelType;
+import com.navyn.emissionlog.Enums.FuelTypes;
 import lombok.Data;
 
 @Data
 public class CreateFuelDto {
-    private FuelType fuelType;
+    private FuelTypes fuelTypes;
     private String fuel;
     private Emissions emission;
     private Double lowerHeatingValue = 0.0;

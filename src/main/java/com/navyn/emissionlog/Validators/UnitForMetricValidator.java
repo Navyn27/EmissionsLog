@@ -2,7 +2,7 @@ package com.navyn.emissionlog.Validators;
 
 import com.navyn.emissionlog.Enums.EnergyUnits;
 import com.navyn.emissionlog.Enums.MassUnits;
-import com.navyn.emissionlog.Enums.Metric;
+import com.navyn.emissionlog.Enums.Metrics;
 import com.navyn.emissionlog.Enums.VolumeUnits;
 import com.navyn.emissionlog.Payload.Requests.CreateActivityDto;
 import jakarta.validation.ConstraintValidator;
@@ -16,10 +16,10 @@ public class UnitForMetricValidator implements ConstraintValidator<ValidUnitForM
             return true;
         }
 
-        Metric metric = activity.getMetric();
+        Metrics metrics = activity.getMetrics();
         String unit = activity.getFuelUnit();
 
-        switch (metric) {
+        switch (metrics) {
             case MASS:
                 try {
                     MassUnits.valueOf(unit);

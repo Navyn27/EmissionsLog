@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.Controllers;
 
-import com.navyn.emissionlog.Enums.FuelType;
+import com.navyn.emissionlog.Enums.FuelTypes;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelFromExcelDto;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
@@ -56,7 +56,7 @@ public class FuelController {
                 CreateFuelDto createFuelDto = new CreateFuelDto();
 
                 // Convert fuelType from String to Enum
-                createFuelDto.setFuelType(FuelType.valueOf(fuelDto.getFuelType().toUpperCase()));
+                createFuelDto.setFuelTypes(FuelTypes.valueOf(fuelDto.getFuelType().toUpperCase()));
 
                 // Map all other fields
                 createFuelDto.setFuel(fuelDto.getFuel());

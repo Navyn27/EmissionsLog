@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.Models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.navyn.emissionlog.Enums.FuelType;
+import com.navyn.emissionlog.Enums.FuelTypes;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,7 +22,7 @@ public class Fuel {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private FuelType fuelType;
+    private FuelTypes fuelTypes;
 
     @Column(nullable = false, unique = true)
     private String fuel; // Fuel type (e.g., Diesel, Natural Gas)
@@ -39,5 +39,5 @@ public class Fuel {
     @OneToMany(mappedBy = "fuel", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnore
     @ToString.Exclude
-    private List<EmissionFactors> emissionFactorsList;
+    private List<StationaryEmissionFactors> stationaryEmissionFactorsList;
 }

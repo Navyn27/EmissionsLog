@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.Models;
 
-import com.navyn.emissionlog.Enums.Role;
+import com.navyn.emissionlog.Enums.Roles;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -29,7 +29,7 @@ public class User implements UserDetails {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    private Role role;
+    private Roles role;
 
     private String phoneNumber;
 

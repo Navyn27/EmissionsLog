@@ -14,7 +14,7 @@ public class CreateActivityDto {
     private String fuelUnit;
     private Scopes scope;
     private Double fuelAmount;
-    private Metric metric;
-    private FuelState fuelState;
-    private EmissionType emissionType;
+    private Metrics metrics;
+    private FuelStates fuelStates;
+    private ActivityTypes activityTypes;
 }
