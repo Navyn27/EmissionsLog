@@ -23,7 +23,7 @@ public class Workspace {
 
     @OneToOne
     @JsonIgnore
-    private User admin;
+    private User admin = null;
 
     @OneToMany
     @JsonIgnore
