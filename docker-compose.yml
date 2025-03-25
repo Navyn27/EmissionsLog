@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:latest
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: navyn
+      POSTGRES_PASSWORD: lastP@ssw0rd
+      POSTGRES_DB: ghgmgmt
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    container_name: springboot-app
+    restart: always
+    depends_on:
+      - database
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/ghgmgmt
+      SPRING_DATASOURCE_USERNAME: navyn
+      SPRING_DATASOURCE_PASSWORD: lastP@ssw0rd
+    ports:
+      - "8088:8088"
