@@ -37,9 +37,9 @@ public class UserServiceImpl implements UserService {
 
     BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
-    private UserServiceImpl(UserRepository userRepository, WorkspaceRepository recordingEntityRepository){
+    private UserServiceImpl(UserRepository userRepository, WorkspaceRepository recordingEntityRepository) {
         this.userRepository = userRepository;
-        this.recordingEntityRepository =  recordingEntityRepository;
+        this.recordingEntityRepository = recordingEntityRepository;
     }
 
     @Override
@@ -54,7 +54,7 @@ public class UserServiceImpl implements UserService {
         }
         double otp = GenerateOTP.generateOTP();
 
-        if (!userRepository.findByEmail(payload.getEmail()).isEmpty()) {
+        if (!(userRepository.findByEmail(payload.getEmail()) == null)) {
             throw new EmailAlreadyExistsException();
         }
 
@@ -85,12 +85,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String login(LoginDTO user){
+    public String login(LoginDTO user) {
         Authentication authentication =
                 authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(user.getEmail(),user.getPassword()
+                        new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword()
                         ));
-        if(authentication.isAuthenticated()){
+        if (authentication.isAuthenticated()) {
             return jwtService.generateToken(user.getEmail());
         }
         return null;
@@ -98,25 +98,25 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean deleteUser(String email) {
-        Optional<User> user = userRepository.findByEmail(email);
-        if(user.isPresent()) {
-            userRepository.deleteById(user.get().getId());
+        User user = userRepository.findByEmail(email);
+        if (user != null) {
+            userRepository.deleteById(user.getId());
             return true;
         }
         return false;
     }
 
     @Override
-    public User updateUser(String email, SignUpDTO payload){
-        Optional<User> user = userRepository.findByEmail(email);
-        if(user.isPresent()) {
-            user.get().setEmail(payload.getEmail());
-            user.get().setFirstname(payload.getFirstName());
-            user.get().setLastname(payload.getLastName());
-            user.get().setPhoneNumber(payload.getPhoneNumber());
-            user.get().setPassword(payload.getPassword());
-            user.get().setRole(payload.getRole());
-            return userRepository.save(user.get());
+    public User updateUser(String email, SignUpDTO payload) {
+        User user = userRepository.findByEmail(email);
+        if (user != null) {
+            user.setEmail(payload.getEmail());
+            user.setFirstname(payload.getFirstName());
+            user.setLastname(payload.getLastName());
+            user.setPhoneNumber(payload.getPhoneNumber());
+            user.setPassword(payload.getPassword());
+            user.setRole(payload.getRole());
+            return userRepository.save(user);
         }
         return null;
     }
