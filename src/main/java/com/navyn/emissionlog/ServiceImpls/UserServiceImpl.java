@@ -7,7 +7,6 @@ import com.navyn.emissionlog.Payload.Requests.LoginDTO;
 import com.navyn.emissionlog.Payload.Requests.SignUpDTO;
 import com.navyn.emissionlog.Repositories.UserRepository;
 import com.navyn.emissionlog.Repositories.WorkspaceRepository;
-import com.navyn.emissionlog.Services.JwtService;
 import com.navyn.emissionlog.Services.UserService;
 import com.navyn.emissionlog.Utils.GenerateOTP;
 import org.springframework.beans.factory.annotation.Autowired;

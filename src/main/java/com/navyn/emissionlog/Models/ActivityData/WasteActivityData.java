@@ -1,5 +1,8 @@
 package com.navyn.emissionlog.Models.ActivityData;
 
-public class WasteActivityData {
+import jakarta.persistence.Entity;
+
+@Entity
+public class WasteActivityData extends ActivityData{
 
 }

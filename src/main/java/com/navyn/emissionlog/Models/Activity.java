@@ -5,6 +5,7 @@ import com.navyn.emissionlog.Models.ActivityData.ActivityData;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -31,4 +32,6 @@ public class Activity {
     private Double BiomassCO2Emissions = 0.0;
 
     private Double N2OEmissions = 0.0;
+
+    private LocalDateTime activityYear = LocalDateTime.now();
 }

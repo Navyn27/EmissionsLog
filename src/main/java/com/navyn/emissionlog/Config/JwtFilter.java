@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.Config;
 
-import com.navyn.emissionlog.Services.JwtService;
+import com.navyn.emissionlog.ServiceImpls.JwtService;
 import com.navyn.emissionlog.ServiceImpls.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

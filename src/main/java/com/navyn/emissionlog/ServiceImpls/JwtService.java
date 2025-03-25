@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Services;
+package com.navyn.emissionlog.ServiceImpls;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

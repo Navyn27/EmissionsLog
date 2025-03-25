@@ -1,10 +1,10 @@
 package com.navyn.emissionlog.Controllers;
 
+import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.navyn.emissionlog.Models.Activity;
-import com.navyn.emissionlog.Payload.Requests.CreateActivityDto;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.Services.ActivityService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +24,10 @@ public class ActivityController {
     @Autowired
     private ActivityService activityService;
 
-    @PostMapping
-    public ResponseEntity<ApiResponse> createActivity(@Valid @RequestBody CreateActivityDto activityDto) {
+    @PostMapping("/stationary/create")
+    public ResponseEntity<ApiResponse> createActivity(@Valid @RequestBody CreateStationaryActivityDto activityDto) {
         try {
-            Activity createdActivity = activityService.createActivity(activityDto);
+            Activity createdActivity = activityService.createStationaryActivity(activityDto);
             return new ResponseEntity<>(
                     new ApiResponse(true, "Activity created successfully", createdActivity),
                     HttpStatus.CREATED
@@ -57,17 +57,17 @@ public class ActivityController {
         );
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse> updateActivity(@PathVariable UUID id, @Valid @RequestBody Activity activity) {
-        try {
-            Activity updatedActivity = activityService.updateActivity(id, activity);
-            return ResponseEntity.ok(
-                    new ApiResponse(true, "Activity updated successfully", updatedActivity)
-            );
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
-        }
-    }
+//    @PutMapping("/{id}")
+//    public ResponseEntity<ApiResponse> updateActivity(@PathVariable UUID id, @Valid @RequestBody Activity activity) {
+//        try {
+//            Activity updatedActivity = activityService.updateActivity(id, activity);
+//            return ResponseEntity.ok(
+//                    new ApiResponse(true, "Activity updated successfully", updatedActivity)
+//            );
+//        } catch (IllegalArgumentException e) {
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+//        }
+//    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deleteActivity(@PathVariable UUID id) {

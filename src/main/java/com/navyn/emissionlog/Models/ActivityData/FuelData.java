@@ -2,15 +2,26 @@ package com.navyn.emissionlog.Models.ActivityData;
 
 import com.navyn.emissionlog.Enums.FuelStates;
 import com.navyn.emissionlog.Enums.Metrics;
-import jakarta.persistence.OneToOne;
+import com.navyn.emissionlog.Models.Fuel;
+import jakarta.persistence.*;
+import lombok.Data;
+
 import java.util.UUID;
 
+@Entity
+@Data
 public class FuelData {
 
-    @OneToOne
-    private UUID fuel;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
-    private FuelStates fuelStates;
+    @ManyToOne
+    private Fuel fuel;
 
-    private Metrics metrics;
+    private FuelStates fuelState;
+
+    private Metrics metric;
+
+    private Double amount_in_SI_Unit;
 }
