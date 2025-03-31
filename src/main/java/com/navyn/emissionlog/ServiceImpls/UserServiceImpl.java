@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -43,8 +44,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Optional<User> getUser(String email) {
-        return Optional.empty();
+    public User getUserByEmail(String email) {
+        Optional<User> user = userRepository.findByEmail(email);
+        if (user.isEmpty()) {
+            throw new UsernameNotFoundException("User not found");
+        }
+        return user.get();
     }
 
     @Override
@@ -54,7 +59,7 @@ public class UserServiceImpl implements UserService {
         }
         double otp = GenerateOTP.generateOTP();
 
-        if (!(userRepository.findByEmail(payload.getEmail()) == null)) {
+        if (userRepository.findByEmail(payload.getEmail()).isPresent()) {
             throw new EmailAlreadyExistsException();
         }
 
@@ -98,18 +103,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean deleteUser(String email) {
-        User user = userRepository.findByEmail(email);
-        if (user != null) {
-            userRepository.deleteById(user.getId());
+        Optional<User> user = userRepository.findByEmail(email);
+        if (user.isPresent()) {
+            userRepository.deleteById(user.get().getId());
             return true;
         }
-        return false;
+        throw new UsernameNotFoundException("User not found");
     }
 
     @Override
     public User updateUser(String email, SignUpDTO payload) {
-        User user = userRepository.findByEmail(email);
-        if (user != null) {
+        Optional<User> user1 = userRepository.findByEmail(email);
+        if (user1.isPresent()) {
+            User user = user1.get();
             user.setEmail(payload.getEmail());
             user.setFirstname(payload.getFirstName());
             user.setLastname(payload.getLastName());
@@ -118,6 +124,6 @@ public class UserServiceImpl implements UserService {
             user.setRole(payload.getRole());
             return userRepository.save(user);
         }
-        return null;
+        throw new UsernameNotFoundException("User not found");
     }
 }

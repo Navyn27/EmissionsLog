@@ -44,4 +44,12 @@ public class ApiResponse {
                 .collect(Collectors.toList());
 
     }
+
+    public static ApiResponse validationError(String message, List<String> errors) {
+        return new ApiResponse(false, message, null, errors);
+    }
+
+    public static ApiResponse error(String message) {
+        return new ApiResponse(false, message);
+    }
 }

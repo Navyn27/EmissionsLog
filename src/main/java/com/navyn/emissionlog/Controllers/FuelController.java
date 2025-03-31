@@ -1,11 +1,16 @@
 package com.navyn.emissionlog.Controllers;
 
+import com.navyn.emissionlog.Enums.Emissions;
 import com.navyn.emissionlog.Enums.FuelTypes;
+import com.navyn.emissionlog.Models.Fuel;
+import com.navyn.emissionlog.Models.StationaryEmissionFactors;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelFromExcelDto;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.Services.FuelService;
+import com.navyn.emissionlog.Services.StationaryEmissionFactorsService;
 import com.navyn.emissionlog.Utils.ExcelReader;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +23,13 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(path = "/fuel")
+@SecurityRequirement(name = "BearerAuth")
 public class FuelController {
     @Autowired
     private FuelService fuelService;
+
+    @Autowired
+    private StationaryEmissionFactorsService stationaryEmissionFactorsService;
 
     @PostMapping
     public ResponseEntity<ApiResponse> createFuel(@RequestBody CreateFuelDto fuel) {
@@ -49,28 +58,32 @@ public class FuelController {
     }
 
     @PostMapping("/uploadData")
-    public ResponseEntity<ApiResponse> uploadFuelData(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<ApiResponse> uploadStationaryFuelData(@RequestParam("file") MultipartFile file) {
         try {
-            List<CreateFuelFromExcelDto> fuelDtos = ExcelReader.readExcel(file.getInputStream(), CreateFuelFromExcelDto.class);
+            List<CreateFuelFromExcelDto> fuelDtos = ExcelReader.readStationaryEmissionsExcel(file.getInputStream(), CreateFuelFromExcelDto.class);
             for (CreateFuelFromExcelDto fuelDto : fuelDtos) {
                 CreateFuelDto createFuelDto = new CreateFuelDto();
 
                 // Convert fuelType from String to Enum
-                createFuelDto.setFuelTypes(FuelTypes.valueOf(fuelDto.getFuelType().toUpperCase()));
-
-                // Map all other fields
+                createFuelDto.setFuelTypes(FuelTypes.valueOf(fuelDto.getFuelType().toUpperCase().replace(' ', '_')));
                 createFuelDto.setFuel(fuelDto.getFuel());
                 createFuelDto.setLowerHeatingValue(fuelDto.getLowerHeatingValue());
-                createFuelDto.setEnergyBasis(fuelDto.getEnergyBasis());
-                createFuelDto.setMassBasis(fuelDto.getMassBasis());
-                createFuelDto.setEmission(fuelDto.getEmission());
                 createFuelDto.setFuelDensityLiquids(fuelDto.getFuelDensityLiquids());
                 createFuelDto.setFuelDensityGases(fuelDto.getFuelDensityGases());
-                createFuelDto.setLiquidBasis(fuelDto.getLiquidBasis());
-                createFuelDto.setGasBasis(fuelDto.getGasBasis());
+                createFuelDto.setFuelDescription(fuelDto.getFuelDescription());
 
-                // Save the fuel entry
-                fuelService.saveFuel(createFuelDto);
+                Fuel fuel = fuelService.saveFuel(createFuelDto);
+
+                //register Emission factors
+                StationaryEmissionFactors stationaryEmissionFactors = new StationaryEmissionFactors();
+                stationaryEmissionFactors.setEmmission(Emissions.valueOf(fuelDto.getEmission()));
+                stationaryEmissionFactors.setFuel(fuel);
+                stationaryEmissionFactors.setLiquidBasis(fuelDto.getLiquidBasis());
+                stationaryEmissionFactors.setGasBasis(fuelDto.getGasBasis());
+                stationaryEmissionFactors.setMassBasis(fuelDto.getMassBasis());
+                stationaryEmissionFactors.setEnergyBasis(fuelDto.getEnergyBasis());
+                stationaryEmissionFactors = stationaryEmissionFactorsService.createStationaryEmissionFactorFromExcel(stationaryEmissionFactors);
+                fuel.getStationaryEmissionFactorsList().add(stationaryEmissionFactors);
             }
             ApiResponse response = new ApiResponse(true, "Fuel data uploaded successfully", null);
             return ResponseEntity.status(HttpStatus.OK).body(response);

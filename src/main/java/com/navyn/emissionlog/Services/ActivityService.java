@@ -1,6 +1,8 @@
 package com.navyn.emissionlog.Services;
 
 import com.navyn.emissionlog.Models.Activity;
+import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByFuelDto;
+import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
 
 import java.util.List;
@@ -16,4 +18,8 @@ public interface ActivityService {
     Activity getActivityById(UUID id);
 
     List<Activity> getAllActivities();
+
+    Activity createTransportActivityByFuel(CreateTransportActivityByFuelDto activityDto);
+
+    Activity createTransportActivityByVehicleData(CreateTransportActivityByVehicleDataDto activityDto);
 }

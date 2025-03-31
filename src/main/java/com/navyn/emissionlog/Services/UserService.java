@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @Service
 public interface UserService {
-    public Optional<User> getUser(String email);
+    public User getUserByEmail(String email);
     public String registerUser(SignUpDTO payload) throws UnmatchingPasswordsException, EmailAlreadyExistsException;
     public List<User> getUsers();
     public String login(LoginDTO user);

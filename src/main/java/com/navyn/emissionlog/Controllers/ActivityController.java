@@ -1,6 +1,9 @@
 package com.navyn.emissionlog.Controllers;
 
+import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByFuelDto;
+import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,13 +22,14 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/activities")
+@SecurityRequirement(name = "BearerAuth")
 public class ActivityController {
 
     @Autowired
     private ActivityService activityService;
 
     @PostMapping("/stationary/create")
-    public ResponseEntity<ApiResponse> createActivity(@Valid @RequestBody CreateStationaryActivityDto activityDto) {
+    public ResponseEntity<ApiResponse> createStationaryActivity(@Valid @RequestBody CreateStationaryActivityDto activityDto) {
         try {
             Activity createdActivity = activityService.createStationaryActivity(activityDto);
             return new ResponseEntity<>(
@@ -33,6 +37,33 @@ public class ActivityController {
                     HttpStatus.CREATED
             );
         } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @PostMapping("/mobile/fuel/create")
+    public ResponseEntity<ApiResponse> createMobileFuelActivity(@Valid @RequestBody CreateTransportActivityByFuelDto activityDto) {
+        try {
+            Activity createdActivity = activityService.createTransportActivityByFuel(activityDto);
+            return new ResponseEntity<>(
+                    new ApiResponse(true, "Activity created successfully", createdActivity),
+                    HttpStatus.CREATED
+            );
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @PostMapping("/mobile/vehicle-data/create")
+    public ResponseEntity<ApiResponse> createMobileVehicleDataActivity(@Valid @RequestBody CreateTransportActivityByVehicleDataDto activityDto){
+        try{
+            Activity createdActivity = activityService.createTransportActivityByVehicleData(activityDto);
+            return new ResponseEntity<>(
+                    new ApiResponse(true, "Activity created successfully", createdActivity),
+                    HttpStatus.CREATED
+            );
+        }
+        catch(IllegalArgumentException e){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }

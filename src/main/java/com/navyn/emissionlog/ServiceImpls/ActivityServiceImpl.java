@@ -5,13 +5,13 @@ import com.navyn.emissionlog.Models.Activity;
 import com.navyn.emissionlog.Models.ActivityData.ActivityData;
 import com.navyn.emissionlog.Models.ActivityData.FuelData;
 import com.navyn.emissionlog.Models.ActivityData.StationaryActivityData;
+import com.navyn.emissionlog.Models.ActivityData.TransportActivityData;
 import com.navyn.emissionlog.Models.StationaryEmissionFactors;
 import com.navyn.emissionlog.Models.Fuel;
+import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByFuelDto;
+import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
-import com.navyn.emissionlog.Repositories.ActivityDataRepository;
-import com.navyn.emissionlog.Repositories.ActivityRepository;
-import com.navyn.emissionlog.Repositories.FuelDataRepository;
-import com.navyn.emissionlog.Repositories.FuelRepository;
+import com.navyn.emissionlog.Repositories.*;
 import com.navyn.emissionlog.Services.ActivityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,6 +37,12 @@ public class ActivityServiceImpl implements ActivityService {
     @Autowired
     private StationaryEmissionCalculationServiceImpl stationaryEmissionCalculationService;
 
+    @Autowired
+    private RegionRepository regionRepository;
+
+    @Autowired
+    private TransportEmissionCalculationServiceImpl transportEmissionCalculationService;
+
     @Override
     public Activity createStationaryActivity(CreateStationaryActivityDto activity) {
         Optional<Fuel> fuel = fuelRepository.findById(activity.getFuel());
@@ -53,7 +59,7 @@ public class ActivityServiceImpl implements ActivityService {
 
         //Create ActivityData
         ActivityData stationaryActivityData = new StationaryActivityData();
-        stationaryActivityData.setActivityType(activity.getActivityType());
+        stationaryActivityData.setActivityType(ActivityTypes.STATIONARY);
         stationaryActivityData.setFuelData(fuelData);
         stationaryActivityData = activityDataRepository.save(stationaryActivityData);
 
@@ -61,6 +67,7 @@ public class ActivityServiceImpl implements ActivityService {
         Activity activity1 = new Activity();
         activity1.setSector(activity.getSector());
         activity1.setScope(activity.getScope());
+        activity1.setRegion(regionRepository.findById(activity.getRegion()).get());
         activity1.setActivityData(stationaryActivityData);
         activity1.setActivityYear(activity.getActivityYear());
         activity1.setActivityData(stationaryActivityData);
@@ -86,6 +93,53 @@ public class ActivityServiceImpl implements ActivityService {
         return activityRepository.findAll();
     }
 
+    @Override
+    public Activity createTransportActivityByFuel(CreateTransportActivityByFuelDto activityDto) {
+        // Validate fuel exists
+        Optional<Fuel> fuel = fuelRepository.findById(activityDto.getFuel());
+        if(fuel.isEmpty()){
+            throw new IllegalArgumentException("Fuel is not recorded");
+        }
+
+        // Create FuelData
+        FuelData fuelData = createTransportFuelData(activityDto, fuel.get());
+
+        // Create ActivityData
+        ActivityData transportActivityData = new TransportActivityData();
+        transportActivityData.setActivityType(ActivityTypes.TRANSPORT);
+        transportActivityData.setFuelData(fuelData);
+        transportActivityData = activityDataRepository.save(transportActivityData);
+
+        // Create Activity
+        Activity activity = new Activity();
+        activity.setSector(activityDto.getSector());
+        activity.setScope(activityDto.getScope());
+        activity.setRegion(regionRepository.findById(activityDto.getRegion()).get());
+        activity.setActivityData(transportActivityData);
+        activity.setActivityYear(activityDto.getActivityYear());
+
+        // Calculate emissions
+        transportEmissionCalculationService.calculateEmissions(fuel.get(), activity, fuelData,
+             activityDto.getFuelUnit(), activityDto.getFuelAmount());
+
+        return activityRepository.save(activity);
+    }
+
+    @Override
+    public Activity createTransportActivityByVehicleData(CreateTransportActivityByVehicleDataDto actibityDto) {
+        return null;
+    }
+
+    // Helper method for creating mobile fuel data
+    private FuelData createTransportFuelData(CreateTransportActivityByFuelDto dto, Fuel fuel) {
+        FuelData fuelData = new FuelData();
+        fuelData.setFuel(fuel);
+        fuelData.setFuelState(dto.getFuelState());
+        fuelData.setMetric(dto.getMetric());
+        fuelData.setAmount_in_SI_Unit(0.0);
+        return fuelDataRepository.save(fuelData);
+    }
+
     //create FuelData
     private FuelData createFuelData(CreateStationaryActivityDto dto, Fuel fuel) {
         FuelData fuelData = new FuelData();
@@ -95,5 +149,4 @@ public class ActivityServiceImpl implements ActivityService {
         fuelData.setAmount_in_SI_Unit(0.0);
         return fuelDataRepository.save(fuelData);
     }
-
 }

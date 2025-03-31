@@ -1,11 +1,10 @@
 package com.navyn.emissionlog.ServiceImpls;
 
-import com.navyn.emissionlog.Models.StationaryEmissionFactors;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
-import com.navyn.emissionlog.Payload.Requests.EmissionFactorsDto;
+import com.navyn.emissionlog.Payload.Requests.ExistingFuelDto;
 import com.navyn.emissionlog.Repositories.FuelRepository;
-import com.navyn.emissionlog.Services.EmissionFactorsService;
+import com.navyn.emissionlog.Services.StationaryEmissionFactorsService;
 import com.navyn.emissionlog.Services.FuelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,30 +19,28 @@ public class FuelServiceImpl implements FuelService {
     @Autowired
     private FuelRepository fuelRepository;
 
-    @Autowired
-    private EmissionFactorsService emissionFactorsService;
-
     @Override
     public Fuel saveFuel(CreateFuelDto fuel) {
         try {
+            Optional<Fuel> existingFuel = fuelRepository.findByFuelTypesAndFuelAndLowerHeatingValueAndLiquidDensityAndGasDensity(
+                    fuel.getFuelTypes(),
+                    fuel.getFuel(),
+                    fuel.getLowerHeatingValue(),
+                    fuel.getFuelDensityLiquids(),
+                    fuel.getFuelDensityGases()
+            );
+
+            if(existingFuel.isPresent()) {
+                return existingFuel.get();
+            }
+
             Fuel fuel1 = new Fuel();
             fuel1.setFuelTypes(fuel.getFuelTypes());
             fuel1.setFuel(fuel.getFuel());
+            fuel1.setFuelDescription(fuel.getFuelDescription());
             fuel1.setLiquidDensity(fuel.getFuelDensityLiquids());
             fuel1.setGasDensity(fuel.getFuelDensityGases());
             fuel1.setLowerHeatingValue(fuel.getLowerHeatingValue());
-            fuel1 = fuelRepository.save(fuel1);
-
-            EmissionFactorsDto emissionFactorsDto = new EmissionFactorsDto();
-            emissionFactorsDto.setEmission(fuel.getEmission());
-            emissionFactorsDto.setGasBasis(fuel.getGasBasis());
-            emissionFactorsDto.setEnergyBasis(fuel.getEnergyBasis());
-            emissionFactorsDto.setMassBasis(fuel.getMassBasis());
-            emissionFactorsDto.setLiquidBasis(fuel.getLiquidBasis());
-            emissionFactorsDto.setFuel(fuel1.getId());
-            StationaryEmissionFactors stationaryEmissionFactors = emissionFactorsService.createEmissionFactor(emissionFactorsDto);
-            fuel1.setStationaryEmissionFactorsList(List.of(stationaryEmissionFactors));
-
             return fuelRepository.save(fuel1);
         }
         catch (Exception e) {
@@ -79,5 +76,16 @@ public class FuelServiceImpl implements FuelService {
     @Override
     public void deleteFuel(UUID id) {
         fuelRepository.deleteById(id);
+    }
+
+    @Override
+    public Fuel getExistingFuel(ExistingFuelDto existingFuel){
+        return fuelRepository.findByFuelTypesAndFuelAndLowerHeatingValueAndLiquidDensityAndGasDensity(
+                existingFuel.getFuelType(),
+                existingFuel.getFuel(),
+                existingFuel.getLowerHeatingValue(),
+                existingFuel.getLiquidDensity(),
+                existingFuel.getGasDensity()
+        ).orElseThrow(() -> new RuntimeException("Fuel not found"));
     }
 }

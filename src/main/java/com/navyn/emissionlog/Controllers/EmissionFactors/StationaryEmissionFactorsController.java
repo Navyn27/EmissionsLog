@@ -1,9 +1,9 @@
 package com.navyn.emissionlog.Controllers.EmissionFactors;
 
 import com.navyn.emissionlog.Models.StationaryEmissionFactors;
-import com.navyn.emissionlog.Payload.Requests.EmissionFactorsDto;
+import com.navyn.emissionlog.Payload.Requests.EmissionFactors.StationaryEmissionFactorsDto;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
-import com.navyn.emissionlog.Services.EmissionFactorsService;
+import com.navyn.emissionlog.Services.StationaryEmissionFactorsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,41 +16,41 @@ import java.util.UUID;
 public class StationaryEmissionFactorsController {
 
     @Autowired
-    private EmissionFactorsService emissionFactorsService;
+    private StationaryEmissionFactorsService stationaryEmissionFactorsService;
 
     @PostMapping("/create")
-    public ResponseEntity<ApiResponse> createEmissionFactors(@RequestBody EmissionFactorsDto emissionFactorsDto) {
-        StationaryEmissionFactors stationaryEmissionFactors = emissionFactorsService.createEmissionFactor(emissionFactorsDto);
+    public ResponseEntity<ApiResponse> createEmissionFactors(@RequestBody StationaryEmissionFactorsDto stationaryEmissionFactorsDto) {
+        StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.createStationaryEmissionFactor(stationaryEmissionFactorsDto);
         return ResponseEntity.ok( new ApiResponse(true, "Emission has been created successfully", stationaryEmissionFactors));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse> updateEmissionFactor(@PathVariable UUID id, @RequestBody EmissionFactorsDto emissionFactorsDto) {
-        StationaryEmissionFactors stationaryEmissionFactors = emissionFactorsService.updateEmissionFactor(id, emissionFactorsDto);
+    public ResponseEntity<ApiResponse> updateEmissionFactor(@PathVariable UUID id, @RequestBody StationaryEmissionFactorsDto stationaryEmissionFactorsDto) {
+        StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.updateStationaryEmissionFactor(id, stationaryEmissionFactorsDto);
         return ResponseEntity.ok( new ApiResponse(true, "Emission has been updated successfully", stationaryEmissionFactors));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEmissionFactors(@PathVariable UUID id) {
-        emissionFactorsService.deleteEmissionFactorsFactor(id);
+        stationaryEmissionFactorsService.deleteStationaryEmissionFactorsFactor(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getEmissionFactorsById(@PathVariable UUID id) {
-        StationaryEmissionFactors stationaryEmissionFactors = emissionFactorsService.getEmissionFactorsFactorById(id);
+        StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsFactorById(id);
         return ResponseEntity.ok( new ApiResponse(true, "Emission fetched successfully", stationaryEmissionFactors));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse> getAllEmissionFactors() {
-        List<StationaryEmissionFactors> stationaryEmissionFactorsList = emissionFactorsService.getAllEmissionFactorsFactors();
+        List<StationaryEmissionFactors> stationaryEmissionFactorsList = stationaryEmissionFactorsService.getAllStationaryEmissionFactorsFactors();
         return ResponseEntity.ok( new ApiResponse(true, "Emissions fetched successfully", stationaryEmissionFactorsList));
     }
 
     @GetMapping("/fuel/{fuelId}")
-    public ResponseEntity<ApiResponse> getEmissionFactorsByFuelId(@PathVariable UUID fuelId) {
-        StationaryEmissionFactors stationaryEmissionFactors = emissionFactorsService.getEmissionFactorsFactorByFuelId(fuelId);
+    public ResponseEntity<ApiResponse> getStationaryEmissionFactorsByFuelId(@PathVariable UUID fuelId) {
+        StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsFactorByFuelId(fuelId);
         return ResponseEntity.ok( new ApiResponse(true, "Emission fetched successfully", stationaryEmissionFactors));
     }
 }

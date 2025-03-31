@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-public interface EmissionFactorsRepository extends JpaRepository<StationaryEmissionFactors, UUID> {
+public interface StationaryEmissionFactorsRepository extends JpaRepository<StationaryEmissionFactors, UUID> {
     StationaryEmissionFactors findByFuelId(UUID fuelId);
 }

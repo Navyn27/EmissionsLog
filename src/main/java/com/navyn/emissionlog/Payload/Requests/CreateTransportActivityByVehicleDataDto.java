@@ -6,7 +6,7 @@ import com.navyn.emissionlog.Models.Vehicles;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class CreateMobileActivityByVehicleDataDto {
+public class CreateTransportActivityByVehicleDataDto {
     private TransportModes modeOfTransport;
     private Sectors sector;
     private UUID fuel;

@@ -41,11 +41,6 @@ public class AuthController {
         }
     }
 
-    @GetMapping(path = "/test")
-    public ResponseEntity<ApiResponse> test(){
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Test successful"));
-    }
-
     @PostMapping(path="/login")
     public ResponseEntity<ApiResponse> loginUser(@Valid @RequestBody LoginDTO user, BindingResult result){
         if(result.hasErrors()){

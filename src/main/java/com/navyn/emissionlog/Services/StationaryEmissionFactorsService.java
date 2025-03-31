@@ -6,17 +6,19 @@ import com.navyn.emissionlog.Payload.Requests.EmissionFactors.StationaryEmission
 import java.util.List;
 import java.util.UUID;
 
-public interface EmissionFactorsService {
+public interface StationaryEmissionFactorsService {
 
-    StationaryEmissionFactors createEmissionFactor(StationaryEmissionFactorsDto stationaryEmissionFactorsDto);
+    StationaryEmissionFactors createStationaryEmissionFactor(StationaryEmissionFactorsDto stationaryEmissionFactorsDto);
 
-    StationaryEmissionFactors updateEmissionFactor(UUID id, StationaryEmissionFactorsDto EmissionFactors);
+    StationaryEmissionFactors updateStationaryEmissionFactor(UUID id, StationaryEmissionFactorsDto EmissionFactors);
 
-    void deleteEmissionFactorsFactor(UUID id);
+    void deleteStationaryEmissionFactorsFactor(UUID id);
 
-    StationaryEmissionFactors getEmissionFactorsFactorById(UUID id);
+    StationaryEmissionFactors getStationaryEmissionFactorsFactorById(UUID id);
 
-    List<StationaryEmissionFactors> getAllEmissionFactorsFactors();
+    List<StationaryEmissionFactors> getAllStationaryEmissionFactorsFactors();
 
-    StationaryEmissionFactors getEmissionFactorsFactorByFuelId(UUID fuelId);
+    StationaryEmissionFactors getStationaryEmissionFactorsFactorByFuelId(UUID fuelId);
+
+    StationaryEmissionFactors createStationaryEmissionFactorFromExcel(StationaryEmissionFactors stationaryEmissionFactors);
 }

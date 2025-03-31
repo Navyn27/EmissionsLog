@@ -3,6 +3,7 @@ package com.navyn.emissionlog.Controllers;
 import com.navyn.emissionlog.Payload.Requests.CreateRegionDto;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.Services.RegionService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping(path="/regions")
+@SecurityRequirement(name = "BearerAuth")
 public class RegionController {
 
     @Autowired

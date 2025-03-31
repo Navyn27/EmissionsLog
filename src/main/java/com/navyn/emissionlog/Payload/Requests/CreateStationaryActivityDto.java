@@ -17,6 +17,6 @@ public class CreateStationaryActivityDto {
     private Double fuelAmount;
     private Metrics metric;
     private FuelStates fuelState;
-    private ActivityTypes activityType;
     private LocalDateTime activityYear = LocalDateTime.now();
+    private UUID region;
 }

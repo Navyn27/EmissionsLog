@@ -1,17 +1,22 @@
 package com.navyn.emissionlog.ServiceImpls;
 
+import com.navyn.emissionlog.Models.User;
+import com.navyn.emissionlog.Repositories.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 @Service
@@ -21,10 +26,26 @@ public class JwtService {
     private String secretkey;
 
     Map<String, Object> claims = new HashMap<>();
+    @Autowired
+    private UserRepository userRepository;
+
     public String generateToken(String username) {
+
+        Optional<User> user1 = userRepository.findByEmail(username);
+        if (user1.isEmpty()) {
+            throw new UsernameNotFoundException("User with email:" + username +"not found");
+        }
+
+        User user = user1.get();
+        claims.put("email", user.getEmail());
+        claims.put("firstName", user.getFirstname());
+        claims.put("lastName", user.getLastname());
+        claims.put("role", user.getRole());
+        claims.put("record", user.getRecord().getId());
+
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(username)
+                .setSubject(user.getEmail())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 14))
                 .signWith(getKey(), io.jsonwebtoken.SignatureAlgorithm.HS256)

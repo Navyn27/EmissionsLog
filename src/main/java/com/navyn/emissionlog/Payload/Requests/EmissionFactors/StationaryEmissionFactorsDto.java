@@ -1,13 +1,12 @@
-package com.navyn.emissionlog.Payload.Requests;
+package com.navyn.emissionlog.Payload.Requests.EmissionFactors;
 
 import com.navyn.emissionlog.Enums.Emissions;
 import lombok.Data;
-import lombok.Getter;
 
 import java.util.UUID;
 
 @Data
-public class EmissionFactorsDto {
+public class StationaryEmissionFactorsDto {
     private Emissions emission;
     private UUID fuel; // Relation to Fuel entity
     private Double energyBasis; // kg CO₂/TJ

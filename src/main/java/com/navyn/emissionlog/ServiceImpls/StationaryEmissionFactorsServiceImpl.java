@@ -3,8 +3,8 @@ package com.navyn.emissionlog.ServiceImpls;
 import com.navyn.emissionlog.Models.StationaryEmissionFactors;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Payload.Requests.EmissionFactors.StationaryEmissionFactorsDto;
-import com.navyn.emissionlog.Repositories.EmissionFactorsRepository;
-import com.navyn.emissionlog.Services.EmissionFactorsService;
+import com.navyn.emissionlog.Repositories.StationaryEmissionFactorsRepository;
+import com.navyn.emissionlog.Services.StationaryEmissionFactorsService;
 import com.navyn.emissionlog.Repositories.FuelRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,16 +14,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class EmissionFactorsServiceImpl implements EmissionFactorsService {
+public class StationaryEmissionFactorsServiceImpl implements StationaryEmissionFactorsService {
 
     @Autowired
     FuelRepository fuelRepository;
 
     @Autowired
-    EmissionFactorsRepository emissionFactorsRepository;
+    StationaryEmissionFactorsRepository stationaryEmissionFactorsRepository;
 
     @Override
-    public StationaryEmissionFactors createEmissionFactor(StationaryEmissionFactorsDto stationaryEmissionFactorsDto) {
+    public StationaryEmissionFactors createStationaryEmissionFactor(StationaryEmissionFactorsDto stationaryEmissionFactorsDto) {
         StationaryEmissionFactors emissionFactor = new StationaryEmissionFactors();
         Optional<Fuel> fuel = fuelRepository.findById(stationaryEmissionFactorsDto.getFuel());
         if(fuel.isEmpty()) {
@@ -35,14 +35,14 @@ public class EmissionFactorsServiceImpl implements EmissionFactorsService {
         emissionFactor.setGasBasis(stationaryEmissionFactorsDto.getGasBasis());
         emissionFactor.setLiquidBasis(stationaryEmissionFactorsDto.getLiquidBasis());
         emissionFactor.setMassBasis(stationaryEmissionFactorsDto.getMassBasis());
-        StationaryEmissionFactors savedEmissionFactor = emissionFactorsRepository.save(emissionFactor);
+        StationaryEmissionFactors savedEmissionFactor = stationaryEmissionFactorsRepository.save(emissionFactor);
         fuel.get().getStationaryEmissionFactorsList().add(savedEmissionFactor);
         return savedEmissionFactor;
     }
 
     @Override
-    public StationaryEmissionFactors updateEmissionFactor(UUID id, StationaryEmissionFactorsDto stationaryEmissionFactorsDto) {
-        Optional<StationaryEmissionFactors> emissionFactor1 = emissionFactorsRepository.findById(id);
+    public StationaryEmissionFactors updateStationaryEmissionFactor(UUID id, StationaryEmissionFactorsDto stationaryEmissionFactorsDto) {
+        Optional<StationaryEmissionFactors> emissionFactor1 = stationaryEmissionFactorsRepository.findById(id);
         Optional<Fuel> fuel = fuelRepository.findById(stationaryEmissionFactorsDto.getFuel());
         if(fuel.isEmpty() || emissionFactor1.isEmpty()) {
             throw new IllegalArgumentException();
@@ -55,26 +55,31 @@ public class EmissionFactorsServiceImpl implements EmissionFactorsService {
         emissionFactor.setGasBasis(stationaryEmissionFactorsDto.getGasBasis());
         emissionFactor.setLiquidBasis(stationaryEmissionFactorsDto.getLiquidBasis());
         emissionFactor.setMassBasis(stationaryEmissionFactorsDto.getMassBasis());
-        return emissionFactorsRepository.save(emissionFactor);
+        return stationaryEmissionFactorsRepository.save(emissionFactor);
     }
 
     @Override
-    public void deleteEmissionFactorsFactor(UUID id) {
-        emissionFactorsRepository.deleteById(id);
+    public void deleteStationaryEmissionFactorsFactor(UUID id) {
+        stationaryEmissionFactorsRepository.deleteById(id);
     }
 
     @Override
-    public StationaryEmissionFactors getEmissionFactorsFactorById(UUID id) {
-        return emissionFactorsRepository.findById(id).get();
+    public StationaryEmissionFactors getStationaryEmissionFactorsFactorById(UUID id) {
+        return stationaryEmissionFactorsRepository.findById(id).get();
     }
 
     @Override
-    public List<StationaryEmissionFactors> getAllEmissionFactorsFactors() {
-        return emissionFactorsRepository.findAll();
+    public List<StationaryEmissionFactors> getAllStationaryEmissionFactorsFactors() {
+        return stationaryEmissionFactorsRepository.findAll();
     }
 
     @Override
-    public StationaryEmissionFactors getEmissionFactorsFactorByFuelId(UUID fuelId) {
-        return emissionFactorsRepository.findByFuelId(fuelId);
+    public StationaryEmissionFactors getStationaryEmissionFactorsFactorByFuelId(UUID fuelId) {
+        return stationaryEmissionFactorsRepository.findByFuelId(fuelId);
+    }
+
+    @Override
+    public StationaryEmissionFactors createStationaryEmissionFactorFromExcel(StationaryEmissionFactors stationaryEmissionFactors) {
+        return stationaryEmissionFactorsRepository.save(stationaryEmissionFactors);
     }
 }

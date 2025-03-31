@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
-public class CreateMobileActivityByFuelDto {
+public class CreateTransportActivityByFuelDto {
     private TransportModes modeOfTransport;
     private Sectors sector;
     private UUID fuel;

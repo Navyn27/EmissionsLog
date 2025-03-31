@@ -2,6 +2,7 @@ package com.navyn.emissionlog.Services;
 
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
+import com.navyn.emissionlog.Payload.Requests.ExistingFuelDto;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,4 +18,6 @@ public interface FuelService {
     Fuel updateFuel(UUID id, CreateFuelDto fuel);
 
     void deleteFuel(UUID id);
+
+    Fuel getExistingFuel(ExistingFuelDto existingFuel);
 }

@@ -9,26 +9,28 @@ import java.math.BigDecimal;
 import java.util.*;
 
 public class ExcelReader {
-    private static final Map<String, String> excelToDtoMap = new HashMap<>();
+    private static final Map<String, String> stationaryEmissionsToDtoMap = new HashMap<>();
     static {
-        excelToDtoMap.put("Fuel Type", "fuelType");
-        excelToDtoMap.put("Fuel", "fuel");
-        excelToDtoMap.put("Lower Heating Value (LHV) (or NCV)", "lowerHeatingValue");
-        excelToDtoMap.put("Energy basis", "energyBasis");
-        excelToDtoMap.put("Mass basis", "massBasis");
-        excelToDtoMap.put("Fuel density of Liquids", "fuelDensityLiquids");
-        excelToDtoMap.put("Fuel density of Gases", "fuelDensityGases");
-        excelToDtoMap.put("Liquid basis", "liquidBasis");
-        excelToDtoMap.put("Gas basis", "gasBasis");
+        stationaryEmissionsToDtoMap.put("Fuel Type", "fuelType");
+        stationaryEmissionsToDtoMap.put("Fuel", "fuel");
+        stationaryEmissionsToDtoMap.put("Description", "fuelDescription");
+        stationaryEmissionsToDtoMap.put("Lower Heating Value (LHV) (or NCV)", "lowerHeatingValue");
+        stationaryEmissionsToDtoMap.put("Emission","emission");
+        stationaryEmissionsToDtoMap.put("Energy basis", "energyBasis");
+        stationaryEmissionsToDtoMap.put("Mass basis", "massBasis");
+        stationaryEmissionsToDtoMap.put("Fuel density of Liquids", "fuelDensityLiquids");
+        stationaryEmissionsToDtoMap.put("Fuel density of Gases", "fuelDensityGases");
+        stationaryEmissionsToDtoMap.put("Liquid basis", "liquidBasis");
+        stationaryEmissionsToDtoMap.put("Gas basis", "gasBasis");
     }
 
-    public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass) throws IOException {
+    public static <T> List<T> readStationaryEmissionsExcel(InputStream inputStream, Class<T> dtoClass) throws IOException {
         List<T> result = new ArrayList<>();
 
         try (Workbook workbook = WorkbookFactory.create(inputStream)) {
-            Sheet sheet = workbook.getSheet("CH4");
+            Sheet sheet = workbook.getSheet("Stationary Emissions");
             if (sheet == null) {
-                throw new IOException("Sheet 'CH4' not found");
+                throw new IOException("Sheet not found");
             }
             Iterator<Row> rowIterator = sheet.iterator();
 
@@ -47,7 +49,7 @@ public class ExcelReader {
                         if (cell == null) continue;
 
                         String header = headers.get(i);
-                        String fieldName = excelToDtoMap.get(header);
+                        String fieldName = stationaryEmissionsToDtoMap.get(header);
                         if (fieldName != null) {
                             Field field = dtoClass.getDeclaredField(fieldName);
                             if (field != null) {
@@ -60,6 +62,7 @@ public class ExcelReader {
                 }
             }
         } catch (ReflectiveOperationException | IllegalArgumentException e) {
+            e.printStackTrace();
             throw new IOException("Error mapping Excel data to DTO", e);
         }
         return result;

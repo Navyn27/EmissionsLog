@@ -28,7 +28,7 @@ public class SecurityConfig {
     private final CorsFilter corsFilter;
 
     @Autowired
-    private UserDetailsServiceImpl userDetailsService;
+    private UserDetailsServiceImpl userDetailsServiceImpl;
 
     public SecurityConfig(JwtFilter jwtFilter, CorsFilter corsFilter) {
         this.jwtFilter = jwtFilter;
@@ -61,7 +61,7 @@ public class SecurityConfig {
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(new BCryptPasswordEncoder(12));
-        provider.setUserDetailsService(userDetailsService);
+        provider.setUserDetailsService(userDetailsServiceImpl);
 
 
         return provider;
