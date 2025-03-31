@@ -2,7 +2,7 @@ package com.navyn.emissionlog.ServiceImpls;
 
 import com.navyn.emissionlog.Models.StationaryEmissionFactors;
 import com.navyn.emissionlog.Models.Fuel;
-import com.navyn.emissionlog.Payload.Requests.EmissionFactorsDto;
+import com.navyn.emissionlog.Payload.Requests.EmissionFactors.StationaryEmissionFactorsDto;
 import com.navyn.emissionlog.Repositories.EmissionFactorsRepository;
 import com.navyn.emissionlog.Services.EmissionFactorsService;
 import com.navyn.emissionlog.Repositories.FuelRepository;
@@ -23,38 +23,38 @@ public class EmissionFactorsServiceImpl implements EmissionFactorsService {
     EmissionFactorsRepository emissionFactorsRepository;
 
     @Override
-    public StationaryEmissionFactors createEmissionFactor(EmissionFactorsDto emissionFactorsDto) {
+    public StationaryEmissionFactors createEmissionFactor(StationaryEmissionFactorsDto stationaryEmissionFactorsDto) {
         StationaryEmissionFactors emissionFactor = new StationaryEmissionFactors();
-        Optional<Fuel> fuel = fuelRepository.findById(emissionFactorsDto.getFuel());
+        Optional<Fuel> fuel = fuelRepository.findById(stationaryEmissionFactorsDto.getFuel());
         if(fuel.isEmpty()) {
             throw new IllegalArgumentException();
         }
-        emissionFactor.setEmmission(emissionFactorsDto.getEmission());
-        emissionFactor.setEnergyBasis(emissionFactorsDto.getEnergyBasis());
+        emissionFactor.setEmmission(stationaryEmissionFactorsDto.getEmission());
+        emissionFactor.setEnergyBasis(stationaryEmissionFactorsDto.getEnergyBasis());
         emissionFactor.setFuel(fuel.get());
-        emissionFactor.setGasBasis(emissionFactorsDto.getGasBasis());
-        emissionFactor.setLiquidBasis(emissionFactorsDto.getLiquidBasis());
-        emissionFactor.setMassBasis(emissionFactorsDto.getMassBasis());
+        emissionFactor.setGasBasis(stationaryEmissionFactorsDto.getGasBasis());
+        emissionFactor.setLiquidBasis(stationaryEmissionFactorsDto.getLiquidBasis());
+        emissionFactor.setMassBasis(stationaryEmissionFactorsDto.getMassBasis());
         StationaryEmissionFactors savedEmissionFactor = emissionFactorsRepository.save(emissionFactor);
         fuel.get().getStationaryEmissionFactorsList().add(savedEmissionFactor);
         return savedEmissionFactor;
     }
 
     @Override
-    public StationaryEmissionFactors updateEmissionFactor(UUID id, EmissionFactorsDto emissionFactorsDto) {
+    public StationaryEmissionFactors updateEmissionFactor(UUID id, StationaryEmissionFactorsDto stationaryEmissionFactorsDto) {
         Optional<StationaryEmissionFactors> emissionFactor1 = emissionFactorsRepository.findById(id);
-        Optional<Fuel> fuel = fuelRepository.findById(emissionFactorsDto.getFuel());
+        Optional<Fuel> fuel = fuelRepository.findById(stationaryEmissionFactorsDto.getFuel());
         if(fuel.isEmpty() || emissionFactor1.isEmpty()) {
             throw new IllegalArgumentException();
         }
 
         StationaryEmissionFactors emissionFactor = emissionFactor1.get();
-        emissionFactor.setEmmission(emissionFactorsDto.getEmission());
-        emissionFactor.setEnergyBasis(emissionFactorsDto.getEnergyBasis());
+        emissionFactor.setEmmission(stationaryEmissionFactorsDto.getEmission());
+        emissionFactor.setEnergyBasis(stationaryEmissionFactorsDto.getEnergyBasis());
         emissionFactor.setFuel(fuel.get());
-        emissionFactor.setGasBasis(emissionFactorsDto.getGasBasis());
-        emissionFactor.setLiquidBasis(emissionFactorsDto.getLiquidBasis());
-        emissionFactor.setMassBasis(emissionFactorsDto.getMassBasis());
+        emissionFactor.setGasBasis(stationaryEmissionFactorsDto.getGasBasis());
+        emissionFactor.setLiquidBasis(stationaryEmissionFactorsDto.getLiquidBasis());
+        emissionFactor.setMassBasis(stationaryEmissionFactorsDto.getMassBasis());
         return emissionFactorsRepository.save(emissionFactor);
     }
 

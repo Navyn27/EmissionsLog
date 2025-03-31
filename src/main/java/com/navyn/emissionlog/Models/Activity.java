@@ -22,6 +22,9 @@ public class Activity {
     @Enumerated(EnumType.STRING)
     private Scopes scope;
 
+    @ManyToOne
+    private Region region;
+
     @OneToOne
     private ActivityData activityData;
 
