@@ -26,7 +26,3 @@ services:
       SPRING_DATASOURCE_PASSWORD: lastP@ssw0rd
     ports:
       - "8088:8088"
-
-volumes:
-    postgres_data:
-        driver: local
