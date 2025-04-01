@@ -1,5 +1,9 @@
 package com.navyn.emissionlog.Utils;
 
+import com.navyn.emissionlog.Enums.ExcelType;
+import com.navyn.emissionlog.Enums.RegionGroup;
+import com.navyn.emissionlog.Enums.TransportType;
+import com.navyn.emissionlog.Enums.VehicleEngineType;
 import org.apache.poi.ss.usermodel.*;
 
 import java.io.IOException;
@@ -9,6 +13,8 @@ import java.math.BigDecimal;
 import java.util.*;
 
 public class ExcelReader {
+
+    // This hashmap is responsible for reading data from stationary emissions Excel files and mapping it to DTOs.
     private static final Map<String, String> stationaryEmissionsToDtoMap = new HashMap<>();
     static {
         stationaryEmissionsToDtoMap.put("Fuel Type", "fuelType");
@@ -24,11 +30,42 @@ public class ExcelReader {
         stationaryEmissionsToDtoMap.put("Gas basis", "gasBasis");
     }
 
-    public static <T> List<T> readStationaryEmissionsExcel(InputStream inputStream, Class<T> dtoClass) throws IOException {
+    // This hashmap is responsible for reading data from transport emissions by fuel Excel files and mapping it to DTOs.
+    private static final Map<String, String> transportEmissionsByFuelDtoMap = new HashMap<>();
+    static {
+        transportEmissionsByFuelDtoMap.put("Region Group", "regionGroup");
+        transportEmissionsByFuelDtoMap.put("Fuel", "fuel");
+        transportEmissionsByFuelDtoMap.put("Fuel Type", "fuelType");
+        transportEmissionsByFuelDtoMap.put("Fossil CO2 EF", "fossilCO2EmissionFactor");
+        transportEmissionsByFuelDtoMap.put("Biogenic CO2 EF", "biogenicCO2EmissionFactor");
+        transportEmissionsByFuelDtoMap.put("Transport Type", "transportType");
+        transportEmissionsByFuelDtoMap.put("Vehicle/Engine Type", "vehicleEngineType");
+        transportEmissionsByFuelDtoMap.put("CH4 EF", "CH4EmissionFactor");
+        transportEmissionsByFuelDtoMap.put("N2O EF", "N2OEmissionFactor");
+    }
+
+    // This hashmap is responsible for reading data from transport emissions by vehicle data Excel files and mapping it to DTOs.
+    private static final Map<String, String> transportEmissionsByVehicleDataDtoMap = new HashMap<>();
+    static {
+        transportEmissionsByVehicleDataDtoMap.put("Region", "regionGroup");
+        transportEmissionsByVehicleDataDtoMap.put("Vehicle", "vehicle");
+        transportEmissionsByVehicleDataDtoMap.put("Size", "size");
+        transportEmissionsByVehicleDataDtoMap.put("% Weight Laden", "weightLaden");
+        transportEmissionsByVehicleDataDtoMap.put("Vehicle Year", "vehicleYear");
+        transportEmissionsByVehicleDataDtoMap.put("Fuel", "fuel");
+        transportEmissionsByVehicleDataDtoMap.put("Fuel Type", "fuelType");
+        transportEmissionsByVehicleDataDtoMap.put("CO2 EF", "CO2EmissionFactor");
+        transportEmissionsByVehicleDataDtoMap.put("CH4 EF", "CH4EmissionFactor");
+        transportEmissionsByVehicleDataDtoMap.put("N2O EF", "N2OEmissionFactor");
+    }
+
+    public static <T> List<T> readEmissionsExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType) throws IOException {
         List<T> result = new ArrayList<>();
 
         try (Workbook workbook = WorkbookFactory.create(inputStream)) {
-            Sheet sheet = workbook.getSheet("Stationary Emissions");
+            Sheet sheet = excelType.equals(ExcelType.FUEL_STATIONARY_EMISSIONS)? workbook.getSheet("Stationary Emissions"):
+                                     excelType.equals(ExcelType.FUEL_TRANSPORT_EMISSIONS) ? workbook.getSheet("Transport Fuel Emissions"):
+                                            workbook.getSheet("Transport Vehicle Based Emiss.");
             if (sheet == null) {
                 throw new IOException("Sheet not found");
             }
@@ -49,7 +86,10 @@ public class ExcelReader {
                         if (cell == null) continue;
 
                         String header = headers.get(i);
-                        String fieldName = stationaryEmissionsToDtoMap.get(header);
+                        String fieldName = excelType.equals(ExcelType.FUEL_STATIONARY_EMISSIONS)? stationaryEmissionsToDtoMap.get(header):
+                                                    excelType.equals(ExcelType.FUEL_TRANSPORT_EMISSIONS) ? transportEmissionsByFuelDtoMap.get(header) :
+                                                            transportEmissionsByVehicleDataDtoMap.get(header);
+
                         if (fieldName != null) {
                             Field field = dtoClass.getDeclaredField(fieldName);
                             if (field != null) {

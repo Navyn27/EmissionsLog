@@ -30,7 +30,7 @@ public class Fuel {
     @Column(nullable = false, unique = true)
     private String fuel; // Fuel type (e.g., Diesel, Natural Gas)
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Double lowerHeatingValue; // LHV (TJ/Gg) or NCV
 
     @Column(nullable = true)
@@ -44,7 +44,11 @@ public class Fuel {
     @ToString.Exclude
     private List<StationaryEmissionFactors> stationaryEmissionFactorsList = new ArrayList<>();
 
-    @OneToMany
+    @OneToMany(mappedBy = "fuel", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnore
-    private List<TransportFuelEmissionFactors> transportFuelEmissionFactors = new ArrayList<>();
+    private List<TransportFuelEmissionFactors> transportFuelEmissionFactorsList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "fuel", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonIgnore
+    private List<TransportFuelVehicleDataEmissionFactors> transportFuelVehicleDataEmissionFactorsList = new ArrayList<>();
 }

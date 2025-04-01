@@ -17,4 +17,6 @@ public interface FuelRepository extends JpaRepository<Fuel, UUID> {
             Double liquidDensity,
             Double gasDensity
     );
+
+    Optional<Fuel> findByFuel(String fuelName);
 }

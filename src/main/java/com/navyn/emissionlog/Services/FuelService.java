@@ -20,4 +20,6 @@ public interface FuelService {
     void deleteFuel(UUID id);
 
     Fuel getExistingFuel(ExistingFuelDto existingFuel);
+
+    Optional<Fuel> getExistingFuel(String fuelName);
 }

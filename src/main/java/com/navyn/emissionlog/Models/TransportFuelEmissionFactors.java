@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.Models;
 
-import com.navyn.emissionlog.Enums.EngineType;
+import com.navyn.emissionlog.Enums.VehicleEngineType;
 import com.navyn.emissionlog.Enums.RegionGroup;
 import com.navyn.emissionlog.Enums.TransportType;
 import jakarta.persistence.*;
@@ -23,7 +23,7 @@ public class TransportFuelEmissionFactors {
     @Enumerated(EnumType.STRING)
     private RegionGroup regionGroup;
 
-    private EngineType engineType;
+    private VehicleEngineType vehicleEngineType;
     private TransportType transportType;
 
     @ManyToOne

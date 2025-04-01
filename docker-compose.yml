@@ -1,4 +1,6 @@
-version: '3.8'
+volumes:
+  postgres_data:
+    driver: local
 
 services:
   database:
@@ -15,14 +17,13 @@ services:
         - postgres_data:/var/lib/postgresql/data
 
   app:
-    build: .
-    container_name: springboot-app
-    restart: always
     image: sugirayvan/emissions-log:latest
+    container_name: emissions-log
+    restart: always
     depends_on:
       - database
     environment:
-      APP_PROFILE: prod
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/ghgmgmt
       SPRING_DATASOURCE_USERNAME: navyn
       SPRING_DATASOURCE_PASSWORD: lastP@ssw0rd

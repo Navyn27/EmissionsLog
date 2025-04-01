@@ -20,25 +20,11 @@ public class AuthController {
     UserService userService;
 
     @PostMapping(path="/signup")
-    public ResponseEntity<ApiResponse> registerUser(@Valid @RequestBody SignUpDTO user, BindingResult result){
+    public ResponseEntity<ApiResponse> registerUser(@Valid @RequestBody SignUpDTO user, BindingResult result) throws EmailAlreadyExistsException, UnmatchingPasswordsException {
         if(result.hasErrors()){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(false, "Invalid request data", null, result.getAllErrors()));
         }
-
-        try{
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true,"User created successfully",userService.registerUser(user)));
-        }
-        catch(EmailAlreadyExistsException e){
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, e.getMessage()));
-        }
-        catch (UnmatchingPasswordsException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(false, "Mismatching password"));
-        }
-        catch(Exception e){
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(false, e.getMessage()));
-        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true,"User created successfully",userService.registerUser(user)));
     }
 
     @PostMapping(path="/login")

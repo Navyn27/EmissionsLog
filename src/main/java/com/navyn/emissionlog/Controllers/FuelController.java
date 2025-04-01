@@ -1,11 +1,12 @@
 package com.navyn.emissionlog.Controllers;
 
 import com.navyn.emissionlog.Enums.Emissions;
+import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.Enums.FuelTypes;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Models.StationaryEmissionFactors;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
-import com.navyn.emissionlog.Payload.Requests.CreateFuelFromExcelDto;
+import com.navyn.emissionlog.Payload.Requests.CreateFuelStationaryEmissionsExcelDto;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.Services.FuelService;
 import com.navyn.emissionlog.Services.StationaryEmissionFactorsService;
@@ -57,11 +58,11 @@ public class FuelController {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuel deleted successfully"));
     }
 
-    @PostMapping("/uploadData")
+    @PostMapping("/uploadByStationaryEmissions")
     public ResponseEntity<ApiResponse> uploadStationaryFuelData(@RequestParam("file") MultipartFile file) {
         try {
-            List<CreateFuelFromExcelDto> fuelDtos = ExcelReader.readStationaryEmissionsExcel(file.getInputStream(), CreateFuelFromExcelDto.class);
-            for (CreateFuelFromExcelDto fuelDto : fuelDtos) {
+            List<CreateFuelStationaryEmissionsExcelDto> fuelDtos = ExcelReader.readEmissionsExcel(file.getInputStream(), CreateFuelStationaryEmissionsExcelDto.class, ExcelType.FUEL_STATIONARY_EMISSIONS);
+            for (CreateFuelStationaryEmissionsExcelDto fuelDto : fuelDtos) {
                 CreateFuelDto createFuelDto = new CreateFuelDto();
 
                 // Convert fuelType from String to Enum

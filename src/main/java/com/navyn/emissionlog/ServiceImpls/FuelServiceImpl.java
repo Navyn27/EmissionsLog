@@ -88,4 +88,9 @@ public class FuelServiceImpl implements FuelService {
                 existingFuel.getGasDensity()
         ).orElseThrow(() -> new RuntimeException("Fuel not found"));
     }
+
+    @Override
+    public Optional<Fuel> getExistingFuel(String fuelName) {
+        return fuelRepository.findByFuel(fuelName);
+    }
 }

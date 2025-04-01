@@ -3,7 +3,7 @@ package com.navyn.emissionlog.Payload.Requests;
 import lombok.Data;
 
 @Data
-public class CreateFuelFromExcelDto {
+public class CreateFuelStationaryEmissionsExcelDto {
     private String fuelType;
     private String fuel;
     private String fuelDescription;

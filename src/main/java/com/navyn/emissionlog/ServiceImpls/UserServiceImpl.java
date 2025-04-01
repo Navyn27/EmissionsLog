@@ -75,12 +75,13 @@ public class UserServiceImpl implements UserService {
         User savedUser = userRepository.save(user);
 
         if (payload.getRecord() == null) {
-            com.navyn.emissionlog.Models.Workspace record = new com.navyn.emissionlog.Models.Workspace();
-            record.setAdmin(savedUser);
-            com.navyn.emissionlog.Models.Workspace savedRecord = recordingEntityRepository.save(record);
+            com.navyn.emissionlog.Models.Workspace workspace = new com.navyn.emissionlog.Models.Workspace();
+            workspace.setAdmin(savedUser);
+            com.navyn.emissionlog.Models.Workspace savedRecord = recordingEntityRepository.save(workspace);
             savedUser.setRecord(savedRecord);
             userRepository.save(savedUser);
         }
+
         return jwtService.generateToken(savedUser.getEmail());
     }
 
