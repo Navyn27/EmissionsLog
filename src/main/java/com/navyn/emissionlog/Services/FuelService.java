@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.Services;
 
+import com.navyn.emissionlog.Enums.FuelTypes;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
 import com.navyn.emissionlog.Payload.Requests.ExistingFuelDto;
@@ -22,4 +23,6 @@ public interface FuelService {
     Fuel getExistingFuel(ExistingFuelDto existingFuel);
 
     Optional<Fuel> getExistingFuel(String fuelName);
+
+    List<Fuel> getFuelsByFuelType(FuelTypes fuelType);
 }

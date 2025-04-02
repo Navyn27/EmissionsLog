@@ -1,10 +1,10 @@
 package com.navyn.emissionlog.ServiceImpls;
 
+import com.navyn.emissionlog.Enums.FuelTypes;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
 import com.navyn.emissionlog.Payload.Requests.ExistingFuelDto;
 import com.navyn.emissionlog.Repositories.FuelRepository;
-import com.navyn.emissionlog.Services.StationaryEmissionFactorsService;
 import com.navyn.emissionlog.Services.FuelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,16 +22,29 @@ public class FuelServiceImpl implements FuelService {
     @Override
     public Fuel saveFuel(CreateFuelDto fuel) {
         try {
-            Optional<Fuel> existingFuel = fuelRepository.findByFuelTypesAndFuelAndLowerHeatingValueAndLiquidDensityAndGasDensity(
-                    fuel.getFuelTypes(),
-                    fuel.getFuel(),
-                    fuel.getLowerHeatingValue(),
-                    fuel.getFuelDensityLiquids(),
-                    fuel.getFuelDensityGases()
-            );
+            Optional<Fuel> existingFuel = fuelRepository.findByFuel(fuel.getFuel());
 
             if(existingFuel.isPresent()) {
-                return existingFuel.get();
+
+                Fuel existingFuel1 = existingFuel.get();
+
+                if (existingFuel1.getLiquidDensity() == null || existingFuel1.getLiquidDensity() == 0.0) {
+                    fuel.setFuelDensityLiquids(existingFuel.get().getLiquidDensity());
+                }
+                if (existingFuel1.getGasDensity() == null || existingFuel1.getGasDensity() == 0.0) {
+                    fuel.setFuelDensityGases(existingFuel.get().getGasDensity());
+                }
+                if (existingFuel1.getLowerHeatingValue() == null || existingFuel.get().getLowerHeatingValue() == 0.0) {
+                    fuel.setLowerHeatingValue(existingFuel.get().getLowerHeatingValue());
+                }
+                if(existingFuel1.getFuelDescription() == null || existingFuel.get().getFuelDescription().isEmpty()) {
+                    fuel.setFuelDescription(existingFuel.get().getFuelDescription());
+                }
+                if(existingFuel1.getFuelTypes() == null || existingFuel.get().getFuelTypes() == null) {
+                    fuel.setFuelTypes(existingFuel.get().getFuelTypes());
+                }
+
+                return fuelRepository.save(existingFuel1);
             }
 
             Fuel fuel1 = new Fuel();
@@ -92,5 +105,10 @@ public class FuelServiceImpl implements FuelService {
     @Override
     public Optional<Fuel> getExistingFuel(String fuelName) {
         return fuelRepository.findByFuel(fuelName);
+    }
+
+    @Override
+    public List<Fuel> getFuelsByFuelType(FuelTypes fuelType) {
+        return fuelRepository.findByFuelTypes(fuelType);
     }
 }

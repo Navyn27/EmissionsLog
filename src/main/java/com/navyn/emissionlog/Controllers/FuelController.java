@@ -98,4 +98,10 @@ public class FuelController {
         }
     }
 
+    @GetMapping("/fuelTypes")
+    public ResponseEntity<ApiResponse> getFuelsByFuelType(@RequestParam FuelTypes fuelType) {
+        List<Fuel> fuels = fuelService.getFuelsByFuelType(fuelType);
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuels fetched successfully", fuels));
+    }
+
 }

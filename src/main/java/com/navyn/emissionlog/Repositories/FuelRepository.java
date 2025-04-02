@@ -4,6 +4,8 @@ import com.navyn.emissionlog.Models.Fuel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import com.navyn.emissionlog.Enums.FuelTypes;
+
+import java.util.List;
 import java.util.Optional;
 
 import java.util.UUID;
@@ -19,4 +21,6 @@ public interface FuelRepository extends JpaRepository<Fuel, UUID> {
     );
 
     Optional<Fuel> findByFuel(String fuelName);
+
+    List<Fuel> findByFuelTypes(FuelTypes fuelType);
 }
