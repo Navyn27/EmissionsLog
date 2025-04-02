@@ -24,13 +24,13 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        if("dev".equals(activeProfile)){
+//        if("dev".equals(activeProfile)){
             config.setAllowedOriginPatterns(Collections.singletonList("*"));
-        }
-        else {
-            ArrayList<String> allowedOrigins = new ArrayList<>(Arrays.asList(allowedOrigin.split(",")));
-            allowedOrigins.forEach(config::addAllowedOrigin);
-        }
+//        }
+//        else {
+//            ArrayList<String> allowedOrigins = new ArrayList<>(Arrays.asList(allowedOrigin.split(",")));
+//            allowedOrigins.forEach(config::addAllowedOrigin);
+//        }
 
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");

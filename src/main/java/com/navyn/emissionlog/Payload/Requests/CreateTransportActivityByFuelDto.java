@@ -19,4 +19,6 @@ public class CreateTransportActivityByFuelDto {
     private LocalDateTime activityYear = LocalDateTime.now();
     private RegionGroup regionGroup;
     private UUID region;
+    private VehicleEngineType vehicleType;
+    private TransportType transportType;
 }
