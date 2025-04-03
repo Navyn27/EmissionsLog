@@ -36,7 +36,7 @@ public class Activity {
 
     private Double FossilCO2Emissions = 0.0;
 
-    private Double BiomassCO2Emissions = 0.0;
+    private Double BioCO2Emissions = 0.0;
 
     private Double N2OEmissions = 0.0;
 

@@ -1,5 +1,8 @@
 package com.navyn.emissionlog.Repositories;
 
+import com.navyn.emissionlog.Enums.RegionGroup;
+import com.navyn.emissionlog.Enums.TransportType;
+import com.navyn.emissionlog.Enums.VehicleEngineType;
 import com.navyn.emissionlog.Models.Fuel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -23,4 +26,10 @@ public interface FuelRepository extends JpaRepository<Fuel, UUID> {
     Optional<Fuel> findByFuel(String fuelName);
 
     List<Fuel> findByFuelTypes(FuelTypes fuelType);
+
+    List<Fuel> findByTransportType(TransportType transportType);
+
+    List<Fuel> findByRegionGroup(RegionGroup regionGroup);
+
+    List<Fuel> findByVehicleEngineType(VehicleEngineType vehicleEngineType);
 }

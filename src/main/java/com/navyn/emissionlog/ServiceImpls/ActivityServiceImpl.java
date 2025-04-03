@@ -8,12 +8,15 @@ import com.navyn.emissionlog.Models.ActivityData.StationaryActivityData;
 import com.navyn.emissionlog.Models.ActivityData.TransportActivityData;
 import com.navyn.emissionlog.Models.StationaryEmissionFactors;
 import com.navyn.emissionlog.Models.Fuel;
+import com.navyn.emissionlog.Models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByFuelDto;
 import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
 import com.navyn.emissionlog.Repositories.*;
 import com.navyn.emissionlog.Services.ActivityService;
+import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +46,9 @@ public class ActivityServiceImpl implements ActivityService {
     @Autowired
     private TransportEmissionCalculationServiceImpl transportEmissionCalculationService;
 
+    @Autowired
+    private TransportFuelEmissionFactorsService transportFuelEmissionFactorsService;
+
     @Override
     public Activity createStationaryActivity(CreateStationaryActivityDto activity) {
         Optional<Fuel> fuel = fuelRepository.findById(activity.getFuel());
@@ -50,9 +56,6 @@ public class ActivityServiceImpl implements ActivityService {
         if(fuel.isEmpty()){
             throw new IllegalArgumentException("Fuel is not recorded");
         }
-
-        //Get Stationary Emissions
-        List<StationaryEmissionFactors> stationaryEmissionFactorsList = fuel.get().getStationaryEmissionFactorsList();
 
         //Create FuelData
         FuelData fuelData = createFuelData(activity, fuel.get());
@@ -118,8 +121,15 @@ public class ActivityServiceImpl implements ActivityService {
         activity.setActivityData(transportActivityData);
         activity.setActivityYear(activityDto.getActivityYear());
 
+        //find the emissions factors
+        Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findByFuelAndRegionGroupAndTransportTypeAndVehicleEngineType(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
+
+        if(transportEmissionFactorsList.isEmpty()){
+            throw new IllegalArgumentException("Transport Emission Factors not found for specified region");
+        }
+
         // Calculate emissions
-        transportEmissionCalculationService.calculateEmissions(fuel.get(), activity, fuelData,
+        transportEmissionCalculationService.calculateEmissions(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData,
              activityDto.getFuelUnit(), activityDto.getFuelAmount());
 
         return activityRepository.save(activity);

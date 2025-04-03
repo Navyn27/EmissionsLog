@@ -6,6 +6,7 @@ import com.navyn.emissionlog.Models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
 import com.navyn.emissionlog.Payload.Requests.EmissionFactors.TransportFuelEmissionFactorsDto;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
+import com.navyn.emissionlog.Repositories.FuelRepository;
 import com.navyn.emissionlog.Services.FuelService;
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import com.navyn.emissionlog.Utils.ExcelReader;
@@ -16,8 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController(value = "TransportEmissionFactorsController")
 @RequestMapping("/api/v1/emission-factors/transport")
@@ -28,6 +28,8 @@ public class TransportEmissionFactorsController {
 
     @Autowired
     private TransportFuelEmissionFactorsService transportFuelEmissionFactorsService;
+    @Autowired
+    private FuelRepository fuelRepository;
 
     @PostMapping("/uploadByFuel")
     public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByFuel(@RequestParam("file") MultipartFile file){
@@ -77,5 +79,46 @@ public class TransportEmissionFactorsController {
     public ResponseEntity<List<TransportFuelEmissionFactors>> getAllTransportEmissionFactors() {
         List<TransportFuelEmissionFactors> transportEmissionFactors = transportFuelEmissionFactorsService.findAll();
         return ResponseEntity.ok(transportEmissionFactors);
+    }
+
+    @GetMapping("/supported/metrics/fuel/{fuelId}/{regionGroup}")
+    public ResponseEntity<ApiResponse> supportedMetricsForFuel(@RequestParam UUID fuelId, @RequestParam RegionGroup regionGroup){
+        HashSet<Metrics> metrics = new HashSet<>();
+        Optional<Fuel> fuel = fuelRepository.findById(fuelId);
+
+        if(fuel.isEmpty()){
+            throw new IllegalArgumentException("Fuel not found");
+        }
+        if(regionGroup == RegionGroup.OTHER){
+            if(fuel.get().getFuel().equals("Diesel") || fuel.get().getFuel().equals("Motor Gasoline") || fuel.get().getFuel().equals("Sub-bituminous Coal")){
+                metrics.add(Metrics.MASS);
+            }
+            else{
+                metrics.add(Metrics.VOLUME);
+            }
+        }
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Supported metrics for fuel fetched successfully", metrics)
+        );
+    }
+
+    @GetMapping("/supported/regionGroup/fuel/{regionGroup}")
+    public ResponseEntity<ApiResponse> supportedFuelsForRegionGroup(@RequestParam RegionGroup regionGroup){
+        List<Fuel> fuels = transportFuelEmissionFactorsService.findAllFuelsByRegionGroup(regionGroup);
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Supported fuels for region group fetched successfully", fuels)
+        );
+    }
+
+    @GetMapping("/supported/regionGroup/transportType/{transportType}")
+    public ResponseEntity<ApiResponse> supportedFuelsForTransportType(@RequestParam TransportType transportType){
+        List<Fuel> fuels = transportFuelEmissionFactorsService.findAllFuelsByTransportType(transportType);
+        return ResponseEntity.ok(new ApiResponse(true, "Supported fuels for transport type fetched successfully", fuels));
+    }
+
+    @GetMapping("/supported/regionGroup/vehicleEngineType/{vehicleEngineType}")
+    public ResponseEntity<ApiResponse> supportedFuelsForVehicleEngineType(@RequestParam VehicleEngineType vehicleEngineType){
+        List<Fuel> fuels = transportFuelEmissionFactorsService.findAllFuelsByVehicleEngineType(vehicleEngineType);
+        return ResponseEntity.ok(new ApiResponse(true, "Supported fuels for vehicle engine type fetched successfully", fuels));
     }
 }

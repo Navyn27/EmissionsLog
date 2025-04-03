@@ -41,7 +41,7 @@ public class ActivityController {
         }
     }
 
-    @PostMapping("/mobile/fuel/create")
+    @PostMapping("/transport/fuel/create")
     public ResponseEntity<ApiResponse> createMobileFuelActivity(@Valid @RequestBody CreateTransportActivityByFuelDto activityDto) {
         try {
             Activity createdActivity = activityService.createTransportActivityByFuel(activityDto);
@@ -54,7 +54,7 @@ public class ActivityController {
         }
     }
 
-    @PostMapping("/mobile/vehicle-data/create")
+    @PostMapping("/transport/vehicle-data/create")
     public ResponseEntity<ApiResponse> createMobileVehicleDataActivity(@Valid @RequestBody CreateTransportActivityByVehicleDataDto activityDto){
         try{
             Activity createdActivity = activityService.createTransportActivityByVehicleData(activityDto);

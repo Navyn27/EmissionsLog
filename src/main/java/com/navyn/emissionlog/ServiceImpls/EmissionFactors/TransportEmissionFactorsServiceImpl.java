@@ -12,6 +12,7 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -87,5 +88,20 @@ public class TransportEmissionFactorsServiceImpl implements TransportFuelEmissio
     @Override
     public void deleteAll() {
         transportFuelEmissionFactorsRepository.deleteAll();
+    }
+
+    @Override
+    public List<Fuel> findAllFuelsByRegionGroup(RegionGroup regionGroup) {
+        return fuelRepository.findByRegionGroup(regionGroup);
+    }
+
+    @Override
+    public List<Fuel> findAllFuelsByTransportType(TransportType transportType) {
+        return fuelRepository.findByTransportType(transportType);
+    }
+
+    @Override
+    public List<Fuel> findAllFuelsByVehicleEngineType(VehicleEngineType vehicleEngineType) {
+        return fuelRepository.findByVehicleEngineType(vehicleEngineType);
     }
 }

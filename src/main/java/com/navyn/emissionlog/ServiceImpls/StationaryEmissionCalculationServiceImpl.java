@@ -92,7 +92,7 @@ public class StationaryEmissionCalculationServiceImpl implements EmissionCalcula
                 break;
             case CO2:
                 if (state == FuelStates.BIOMASS) {
-                    activity.setBiomassCO2Emissions(amount_in_SI * factorValue);
+                    activity.setBioCO2Emissions(amount_in_SI * factorValue);
                 } else {
                     activity.setFossilCO2Emissions(amount_in_SI * factorValue);
                 }

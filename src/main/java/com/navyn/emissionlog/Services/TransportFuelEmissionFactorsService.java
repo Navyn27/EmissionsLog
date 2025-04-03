@@ -8,6 +8,7 @@ import com.navyn.emissionlog.Models.TransportFuelEmissionFactors;
 import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,4 +37,10 @@ public interface TransportFuelEmissionFactorsService {
 
     void delete(TransportFuelEmissionFactors transportFuelEmissionFactors);
     void deleteAll();
+
+    List<Fuel> findAllFuelsByRegionGroup(RegionGroup regionGroup);
+
+    List<Fuel> findAllFuelsByTransportType(TransportType transportType);
+
+    List<Fuel> findAllFuelsByVehicleEngineType(VehicleEngineType vehicleEngineType);
 }
