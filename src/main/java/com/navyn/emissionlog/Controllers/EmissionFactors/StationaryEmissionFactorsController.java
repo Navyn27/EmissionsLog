@@ -32,25 +32,25 @@ public class StationaryEmissionFactorsController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEmissionFactors(@PathVariable UUID id) {
-        stationaryEmissionFactorsService.deleteStationaryEmissionFactorsFactor(id);
+        stationaryEmissionFactorsService.deleteStationaryEmissionFactors(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getEmissionFactorsById(@PathVariable UUID id) {
-        StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsFactorById(id);
+        StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsById(id);
         return ResponseEntity.ok( new ApiResponse(true, "Emission fetched successfully", stationaryEmissionFactors));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse> getAllEmissionFactors() {
-        List<StationaryEmissionFactors> stationaryEmissionFactorsList = stationaryEmissionFactorsService.getAllStationaryEmissionFactorsFactors();
+        List<StationaryEmissionFactors> stationaryEmissionFactorsList = stationaryEmissionFactorsService.getAllStationaryEmissionFactors();
         return ResponseEntity.ok( new ApiResponse(true, "Emissions fetched successfully", stationaryEmissionFactorsList));
     }
 
     @GetMapping("/fuel/{fuelId}")
     public ResponseEntity<ApiResponse> getStationaryEmissionFactorsByFuelId(@PathVariable UUID fuelId) {
-        StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsFactorByFuelId(fuelId);
+        StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsByFuelId(fuelId);
         return ResponseEntity.ok( new ApiResponse(true, "Emission fetched successfully", stationaryEmissionFactors));
     }
 }

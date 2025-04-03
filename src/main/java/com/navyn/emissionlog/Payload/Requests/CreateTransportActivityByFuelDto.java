@@ -8,17 +8,15 @@ import java.util.UUID;
 
 @Data
 public class CreateTransportActivityByFuelDto {
-    private TransportModes modeOfTransport;
-    private Sectors sector;
-    private UUID fuel;
-    private String fuelUnit;
-    private Scopes scope;
-    private Double fuelAmount;
-    private Metrics metric;
-    private FuelStates fuelState;
-    private LocalDateTime activityYear = LocalDateTime.now();
-    private RegionGroup regionGroup;
-    private UUID region;
-    private VehicleEngineType vehicleType;
-    private TransportType transportType;
+    public Sectors sector;
+    public UUID fuel;
+    public String fuelUnit;
+    public Scopes scope;
+    public Double fuelAmount;
+    public Metrics metric;
+    public LocalDateTime activityYear = LocalDateTime.now();
+    public RegionGroup regionGroup;
+    public UUID region;
+    public VehicleEngineType vehicleType;
+    public TransportType transportType;
 }

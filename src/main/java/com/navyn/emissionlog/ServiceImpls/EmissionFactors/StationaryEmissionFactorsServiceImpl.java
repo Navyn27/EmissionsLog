@@ -59,22 +59,22 @@ public class StationaryEmissionFactorsServiceImpl implements StationaryEmissionF
     }
 
     @Override
-    public void deleteStationaryEmissionFactorsFactor(UUID id) {
+    public void deleteStationaryEmissionFactors(UUID id) {
         stationaryEmissionFactorsRepository.deleteById(id);
     }
 
     @Override
-    public StationaryEmissionFactors getStationaryEmissionFactorsFactorById(UUID id) {
+    public StationaryEmissionFactors getStationaryEmissionFactorsById(UUID id) {
         return stationaryEmissionFactorsRepository.findById(id).get();
     }
 
     @Override
-    public List<StationaryEmissionFactors> getAllStationaryEmissionFactorsFactors() {
+    public List<StationaryEmissionFactors> getAllStationaryEmissionFactors() {
         return stationaryEmissionFactorsRepository.findAll();
     }
 
     @Override
-    public StationaryEmissionFactors getStationaryEmissionFactorsFactorByFuelId(UUID fuelId) {
+    public StationaryEmissionFactors getStationaryEmissionFactorsByFuelId(UUID fuelId) {
         return stationaryEmissionFactorsRepository.findByFuelId(fuelId);
     }
 

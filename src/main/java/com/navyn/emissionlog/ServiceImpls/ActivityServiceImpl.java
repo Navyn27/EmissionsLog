@@ -134,7 +134,7 @@ public class ActivityServiceImpl implements ActivityService {
     private FuelData createTransportFuelData(CreateTransportActivityByFuelDto dto, Fuel fuel) {
         FuelData fuelData = new FuelData();
         fuelData.setFuel(fuel);
-        fuelData.setFuelState(dto.getFuelState());
+//        fuelData.setFuelState(dto.getFuelState());
         fuelData.setMetric(dto.getMetric());
         fuelData.setAmount_in_SI_Unit(0.0);
         return fuelDataRepository.save(fuelData);

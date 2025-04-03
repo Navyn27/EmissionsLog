@@ -12,13 +12,13 @@ public interface StationaryEmissionFactorsService {
 
     StationaryEmissionFactors updateStationaryEmissionFactor(UUID id, StationaryEmissionFactorsDto EmissionFactors);
 
-    void deleteStationaryEmissionFactorsFactor(UUID id);
+    void deleteStationaryEmissionFactors(UUID id);
 
-    StationaryEmissionFactors getStationaryEmissionFactorsFactorById(UUID id);
+    StationaryEmissionFactors getStationaryEmissionFactorsById(UUID id);
 
-    List<StationaryEmissionFactors> getAllStationaryEmissionFactorsFactors();
+    List<StationaryEmissionFactors> getAllStationaryEmissionFactors();
 
-    StationaryEmissionFactors getStationaryEmissionFactorsFactorByFuelId(UUID fuelId);
+    StationaryEmissionFactors getStationaryEmissionFactorsByFuelId(UUID fuelId);
 
     StationaryEmissionFactors createStationaryEmissionFactorFromExcel(StationaryEmissionFactors stationaryEmissionFactors);
 }

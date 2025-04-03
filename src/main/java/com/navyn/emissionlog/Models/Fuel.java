@@ -51,4 +51,11 @@ public class Fuel {
     @OneToMany(mappedBy = "fuel", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnore
     private List<TransportFuelVehicleDataEmissionFactors> transportFuelVehicleDataEmissionFactorsList = new ArrayList<>();
+
+    @Override
+    public String toString() {
+        return "Fuel{" +
+                "id=" + id.toString() +
+                ", name='" + fuel + '\'';
+    }
 }
