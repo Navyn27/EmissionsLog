@@ -24,9 +24,6 @@ public interface TransportFuelEmissionFactorsService {
     // Find by criteria
     List<TransportFuelEmissionFactors> findByFuel(UUID fuel) throws BadRequestException;
 
-    List<TransportFuelEmissionFactors> findByRegionGroup(RegionGroup regionGroup);
-    List<TransportFuelEmissionFactors> findByTransportType(TransportType transportType);
-    List<TransportFuelEmissionFactors> findByVehicleEngineType(VehicleEngineType vehicleEngineType);
     Optional<TransportFuelEmissionFactors> findByFuelAndRegionGroupAndTransportTypeAndVehicleEngineType(
             Fuel fuel, RegionGroup regionGroup, TransportType transportType, VehicleEngineType vehicleEngineType);
 
@@ -38,9 +35,9 @@ public interface TransportFuelEmissionFactorsService {
     void delete(TransportFuelEmissionFactors transportFuelEmissionFactors);
     void deleteAll();
 
-    List<Fuel> findAllFuelsByRegionGroup(RegionGroup regionGroup);
+    List<TransportFuelEmissionFactors> findAllFactorsByRegionGroup(RegionGroup regionGroup);
 
-    List<Fuel> findAllFuelsByTransportType(TransportType transportType);
+    List<TransportFuelEmissionFactors> findAllFactorsByTransportType(TransportType transportType);
 
-    List<Fuel> findAllFuelsByVehicleEngineType(VehicleEngineType vehicleEngineType);
+    List<TransportFuelEmissionFactors> findAllFactorsByVehicleEngineType(VehicleEngineType vehicleEngineType);
 }

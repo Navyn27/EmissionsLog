@@ -27,9 +27,4 @@ public interface FuelRepository extends JpaRepository<Fuel, UUID> {
 
     List<Fuel> findByFuelTypes(FuelTypes fuelType);
 
-    List<Fuel> findByTransportType(TransportType transportType);
-
-    List<Fuel> findByRegionGroup(RegionGroup regionGroup);
-
-    List<Fuel> findByVehicleEngineType(VehicleEngineType vehicleEngineType);
 }

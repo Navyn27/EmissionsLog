@@ -12,7 +12,6 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -51,21 +50,6 @@ public class TransportEmissionFactorsServiceImpl implements TransportFuelEmissio
     }
 
     @Override
-    public List<TransportFuelEmissionFactors> findByRegionGroup(RegionGroup regionGroup) {
-        return transportFuelEmissionFactorsRepository.findByRegionGroup(regionGroup);
-    }
-
-    @Override
-    public List<TransportFuelEmissionFactors> findByTransportType(TransportType transportType) {
-        return transportFuelEmissionFactorsRepository.findByTransportType(transportType);
-    }
-
-    @Override
-    public List<TransportFuelEmissionFactors> findByVehicleEngineType(VehicleEngineType vehicleEngineType) {
-        return transportFuelEmissionFactorsRepository.findByVehicleEngineType(vehicleEngineType);
-    }
-
-    @Override
     public Optional<TransportFuelEmissionFactors> findByFuelAndRegionGroupAndTransportTypeAndVehicleEngineType(Fuel fuel, RegionGroup regionGroup, TransportType transportType, VehicleEngineType vehicleEngineType) {
         return transportFuelEmissionFactorsRepository.findByFuelAndRegionGroupAndTransportTypeAndVehicleEngineType(fuel, regionGroup, transportType, vehicleEngineType);
     }
@@ -91,17 +75,17 @@ public class TransportEmissionFactorsServiceImpl implements TransportFuelEmissio
     }
 
     @Override
-    public List<Fuel> findAllFuelsByRegionGroup(RegionGroup regionGroup) {
-        return fuelRepository.findByRegionGroup(regionGroup);
+    public List<TransportFuelEmissionFactors> findAllFactorsByRegionGroup(RegionGroup regionGroup) {
+        return transportFuelEmissionFactorsRepository.findByRegionGroup(regionGroup);
     }
 
     @Override
-    public List<Fuel> findAllFuelsByTransportType(TransportType transportType) {
-        return fuelRepository.findByTransportType(transportType);
+    public List<TransportFuelEmissionFactors> findAllFactorsByTransportType(TransportType transportType) {
+        return transportFuelEmissionFactorsRepository.findByTransportType(transportType);
     }
 
     @Override
-    public List<Fuel> findAllFuelsByVehicleEngineType(VehicleEngineType vehicleEngineType) {
-        return fuelRepository.findByVehicleEngineType(vehicleEngineType);
+    public List<TransportFuelEmissionFactors> findAllFactorsByVehicleEngineType(VehicleEngineType vehicleEngineType) {
+        return transportFuelEmissionFactorsRepository.findByVehicleEngineType(vehicleEngineType);
     }
 }
