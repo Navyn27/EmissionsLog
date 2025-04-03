@@ -10,6 +10,7 @@ import com.navyn.emissionlog.Repositories.FuelRepository;
 import com.navyn.emissionlog.Services.FuelService;
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import com.navyn.emissionlog.Utils.ExcelReader;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ public class TransportEmissionFactorsController {
 
     @Autowired
     private TransportFuelEmissionFactorsService transportFuelEmissionFactorsService;
+
     @Autowired
     private FuelRepository fuelRepository;
 
@@ -102,23 +104,99 @@ public class TransportEmissionFactorsController {
         );
     }
 
-    @GetMapping("/supported/regionGroup/fuel/{regionGroup}")
-    public ResponseEntity<ApiResponse> supportedFuelsForRegionGroup(@RequestParam RegionGroup regionGroup){
-        List<Fuel> fuels = transportFuelEmissionFactorsService.findAllFuelsByRegionGroup(regionGroup);
+    //supported fuel states
+    @GetMapping("/supported/fuelStates/fuel/{fuelId}")
+    public ResponseEntity<ApiResponse> supportedFuelStatesForFuel(@RequestParam UUID fuelId){
+        Optional<Fuel> fuel = fuelRepository.findById(fuelId);
+        List<FuelStates> supportedFuelStates = new ArrayList<>();
+
+        if(fuel.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse(false, "Fuel not found", null)
+            );
+        }
+
+        String fuelName = fuel.get().getFuel();
+
+        if(fuelName.equals("Diesel") || fuelName.equals("Motor Gasoline") || fuelName.equals("Sub-bituminous Coal")){
+            supportedFuelStates.add(FuelStates.SOLID);
+            supportedFuelStates.add(FuelStates.LIQUID);
+            supportedFuelStates.add(FuelStates.GASEOUS);
+        }
+        else{
+            supportedFuelStates.add(FuelStates.LIQUID);
+        }
         return ResponseEntity.ok(
-                new ApiResponse(true, "Supported fuels for region group fetched successfully", fuels)
+                new ApiResponse(true, "Supported fuels states fetched successfully", supportedFuelStates)
         );
     }
 
-    @GetMapping("/supported/regionGroup/transportType/{transportType}")
-    public ResponseEntity<ApiResponse> supportedFuelsForTransportType(@RequestParam TransportType transportType){
-        List<Fuel> fuels = transportFuelEmissionFactorsService.findAllFuelsByTransportType(transportType);
-        return ResponseEntity.ok(new ApiResponse(true, "Supported fuels for transport type fetched successfully", fuels));
+    @GetMapping("/supported/regionGroup/fuel/{fuelId}")
+    public ResponseEntity<ApiResponse> supportedFuelsForRegionGroup(@RequestParam UUID fuelId) throws BadRequestException {
+        Optional<Fuel> fuels = fuelRepository.findById(fuelId);
+        List<RegionGroup> supportedRegionGroups = new ArrayList<>();
+
+        if(fuels.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse(false, "Fuel not found", null)
+            );
+        }
+
+        List<TransportFuelEmissionFactors> transportFuelEmissionFactors = transportFuelEmissionFactorsService.findByFuel(fuels.get().getId());
+        for(TransportFuelEmissionFactors factor : transportFuelEmissionFactors){
+            if(!supportedRegionGroups.contains(factor.getRegionGroup())){
+                supportedRegionGroups.add(factor.getRegionGroup());
+            }
+        }
+
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Supported region groups fetched successfully", supportedRegionGroups)
+        );
     }
 
-    @GetMapping("/supported/regionGroup/vehicleEngineType/{vehicleEngineType}")
-    public ResponseEntity<ApiResponse> supportedFuelsForVehicleEngineType(@RequestParam VehicleEngineType vehicleEngineType){
-        List<Fuel> fuels = transportFuelEmissionFactorsService.findAllFuelsByVehicleEngineType(vehicleEngineType);
-        return ResponseEntity.ok(new ApiResponse(true, "Supported fuels for vehicle engine type fetched successfully", fuels));
+    @GetMapping("/supported/transportType/{fuelId}")
+    public ResponseEntity<ApiResponse> supportedFuelsForTransportType(@RequestParam UUID fuelId) throws BadRequestException {
+        Optional<Fuel> fuels = fuelRepository.findById(fuelId);
+        List<TransportType> supportedTransportTypes = new ArrayList<>();
+
+        if(fuels.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse(false, "Fuel not found", null)
+            );
+        }
+
+        List<TransportFuelEmissionFactors> transportFuelEmissionFactors = transportFuelEmissionFactorsService.findByFuel(fuels.get().getId());
+        for(TransportFuelEmissionFactors factor : transportFuelEmissionFactors){
+            if(!supportedTransportTypes.contains(factor.getTransportType())){
+                supportedTransportTypes.add(factor.getTransportType());
+            }
+        }
+
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Supported transport types fetched successfully", supportedTransportTypes)
+        );
+    }
+
+    @GetMapping("/supported/vehicleEngineType/{fuelId}")
+    public ResponseEntity<ApiResponse> supportedFuelsForVehicleEngineType(@RequestParam UUID fuelId) throws BadRequestException {
+       Optional<Fuel> fuels = fuelRepository.findById(fuelId);
+        List<VehicleEngineType> supportedVehicleEngineTypes = new ArrayList<>();
+
+        if(fuels.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse(false, "Fuel not found", null)
+            );
+        }
+
+        List<TransportFuelEmissionFactors> transportFuelEmissionFactors = transportFuelEmissionFactorsService.findByFuel(fuels.get().getId());
+        for(TransportFuelEmissionFactors factor : transportFuelEmissionFactors){
+            if(!supportedVehicleEngineTypes.contains(factor.getVehicleEngineType())){
+                supportedVehicleEngineTypes.add(factor.getVehicleEngineType());
+            }
+        }
+
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Supported vehicle engine types fetched successfully", supportedVehicleEngineTypes)
+        );
     }
 }

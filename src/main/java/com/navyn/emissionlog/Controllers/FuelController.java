@@ -97,13 +97,13 @@ public class FuelController {
         }
     }
 
-    @GetMapping("/fuelTypes")
+    @GetMapping("/fuelTypes/{fuelType}")
     public ResponseEntity<ApiResponse> getFuelsByFuelType(@RequestParam FuelTypes fuelType) {
         List<Fuel> fuels = fuelService.getFuelsByFuelType(fuelType);
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuels fetched successfully", fuels));
     }
 
-    @GetMapping("/stationaryEmissions/validOptions")
+    @GetMapping("/stationaryEmissions/validOptions/{fuel}")
     public ResponseEntity<ApiResponse> getValidOptions(@RequestParam UUID fuel){
         StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsByFuelId(fuel);
         SupportedCalculationOptions supportedCalculationOptions = new SupportedCalculationOptions();
