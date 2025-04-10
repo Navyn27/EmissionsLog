@@ -65,7 +65,7 @@ public class ExcelReader {
         try (Workbook workbook = WorkbookFactory.create(inputStream)) {
             Sheet sheet = excelType.equals(ExcelType.FUEL_STATIONARY_EMISSIONS)? workbook.getSheet("Stationary Emissions"):
                                      excelType.equals(ExcelType.FUEL_TRANSPORT_EMISSIONS) ? workbook.getSheet("Transport Fuel Emissions"):
-                                            workbook.getSheet("Transport Vehicle Based Emiss.");
+                                            workbook.getSheet("Vehicle Based");
             if (sheet == null) {
                 throw new IOException("Sheet not found");
             }

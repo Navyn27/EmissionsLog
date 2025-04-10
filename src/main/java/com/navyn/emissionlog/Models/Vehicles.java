@@ -1,19 +1,21 @@
 package com.navyn.emissionlog.Models;
-
-import com.navyn.emissionlog.Enums.RegionGroup;
-import com.navyn.emissionlog.Enums.VehicleType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import lombok.Data;
+
 import java.util.UUID;
 
 @Entity
+@Data
 public class Vehicles {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
-    private VehicleType vehicleType;
-    private RegionGroup regionGroup;
+    private String vehicle;
+    private String vehicleYear;
+    private String size;
+    private String weightLaden;
 }

@@ -3,12 +3,17 @@ package com.navyn.emissionlog.Controllers.EmissionFactors;
 import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Models.TransportFuelEmissionFactors;
+import com.navyn.emissionlog.Models.TransportVehicleDataEmissionFactors;
+import com.navyn.emissionlog.Models.Vehicles;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
 import com.navyn.emissionlog.Payload.Requests.EmissionFactors.TransportFuelEmissionFactorsDto;
+import com.navyn.emissionlog.Payload.Requests.EmissionFactors.TransportVehicleDataEmissionFactorsDto;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.Repositories.FuelRepository;
 import com.navyn.emissionlog.Services.FuelService;
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
+import com.navyn.emissionlog.Services.TransportVehicleEmissionFactorsService;
+import com.navyn.emissionlog.Services.VehicleService;
 import com.navyn.emissionlog.Utils.ExcelReader;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +36,13 @@ public class TransportEmissionFactorsController {
     private TransportFuelEmissionFactorsService transportFuelEmissionFactorsService;
 
     @Autowired
+    private TransportVehicleEmissionFactorsService transportVehicleEmissionService;
+
+    @Autowired
     private FuelRepository fuelRepository;
+
+    @Autowired
+    private VehicleService vehicleService;
 
     @PostMapping("/uploadByFuel")
     public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByFuel(@RequestParam("file") MultipartFile file){
@@ -83,6 +94,69 @@ public class TransportEmissionFactorsController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
+
+    @PostMapping("/uploadByVehicleData")
+    public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByVehicleData(@RequestParam("file") MultipartFile file){
+        try {
+            List<TransportVehicleDataEmissionFactorsDto> vehicleDataEmissionFactorsDtos = ExcelReader.readEmissionsExcel(file.getInputStream(), TransportVehicleDataEmissionFactorsDto.class, ExcelType.VEHICLE_DATA_TRANSPORT_EMISSIONS);
+            for(TransportVehicleDataEmissionFactorsDto dto : vehicleDataEmissionFactorsDtos){
+                TransportVehicleDataEmissionFactors transportVehicleDataEmissionFactors = new TransportVehicleDataEmissionFactors();
+
+                //Find fuel
+                Optional<Fuel> fuel = fuelService.getExistingFuel(dto.getFuel());
+                Fuel fuel1;
+                if(fuel.isEmpty()){
+                    CreateFuelDto fuelDto = new CreateFuelDto();
+                    fuelDto.setFuel(dto.getFuel());
+                    fuelDto.setFuelTypes(FuelTypes.valueOf(dto.getFuelType().toUpperCase().replace(' ', '_')));
+                    fuelDto.setFuelSourceType(FuelSourceType.TRANSPORT);
+                    fuel1 = fuelService.saveFuel(fuelDto);
+                }
+                else{
+                    if(fuel.get().getFuelSourceTypes().contains(FuelSourceType.TRANSPORT)){
+                        fuel1 = fuel.get();
+                    }
+                    else {
+                        fuel.get().getFuelSourceTypes().add(FuelSourceType.TRANSPORT);
+                        fuel1 = fuelService.updateFuel(fuel.get());
+                    }
+                }
+
+                //find Vehicle
+                Optional<Vehicles> vehicle = vehicleService.getExistingVehicle(dto.getVehicle(), dto.getVehicleYear(), dto.getSize(), dto.getWeightLaden());
+                Vehicles vehicle1;
+                if(vehicle.isEmpty()){
+                    vehicle1 = new Vehicles();
+                    vehicle1.setVehicle(dto.getVehicle());
+                    vehicle1.setVehicleYear(dto.getVehicleYear());
+                    vehicle1.setSize(dto.getSize());
+                    vehicle1.setWeightLaden(dto.getWeightLaden());
+                    vehicle1 = vehicleService.createVehicle(vehicle1);
+                }else{
+                    vehicle1 = vehicle.get();
+                }
+
+                transportVehicleDataEmissionFactors.setVehicle(vehicle1);
+                transportVehicleDataEmissionFactors.setFuel(fuel1);
+                transportVehicleDataEmissionFactors.setRegionGroup(RegionGroup.valueOf(dto.getRegionGroup().toUpperCase()));
+                transportVehicleDataEmissionFactors.setCO2EmissionFactor(dto.getCO2EmissionFactor());
+                transportVehicleDataEmissionFactors.setCH4EmissionFactor(dto.getCH4EmissionFactor());
+                transportVehicleDataEmissionFactors.setN2OEmissionFactor(dto.getN2OEmissionFactor());
+                transportVehicleEmissionService.createTransportVehicleEmissionFactors(transportVehicleDataEmissionFactors);
+            }
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            ApiResponse response = new ApiResponse(false, "Failed to upload fuel data", null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        ApiResponse response = new ApiResponse(true, "Vehicle data uploaded successfully", null);
+        return ResponseEntity.created(null).body(response);
+    }
+
 
     @GetMapping
     public ResponseEntity<List<TransportFuelEmissionFactors>> getAllTransportEmissionFactors() {

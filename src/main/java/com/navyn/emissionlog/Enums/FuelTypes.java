@@ -6,5 +6,7 @@ public enum FuelTypes {
     PROPANE,
     COAL_PRODUCT,
     BIOMASS,
+    HYBRID,
+    ALL,
     OTHER_WASTE
 }

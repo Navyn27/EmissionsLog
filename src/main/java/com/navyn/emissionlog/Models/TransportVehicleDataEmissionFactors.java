@@ -16,7 +16,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class TransportFuelVehicleDataEmissionFactors {
+public class TransportVehicleDataEmissionFactors {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -27,10 +27,6 @@ public class TransportFuelVehicleDataEmissionFactors {
 
     @ManyToOne
     private Fuel fuel;
-
-    private String vehicleYear;
-    private String size;
-    private String weightLaden;
 
     @Enumerated(EnumType.STRING)
     private RegionGroup regionGroup;
@@ -45,7 +41,7 @@ public class TransportFuelVehicleDataEmissionFactors {
     @PrePersist
     @PreUpdate
     private void generateCheckSum() throws NoSuchAlgorithmException {
-        this.checkSum = generateHashValue(this.regionGroup.toString() + this.vehicleYear + this.size + this.weightLaden + this.CO2EmissionFactor + this.CH4EmissionFactor + this.N2OEmissionFactor);
+        this.checkSum = generateHashValue(this.fuel.toString() + this.vehicle.getId() + this.regionGroup.toString() + this.CO2EmissionFactor + this.CH4EmissionFactor + this.N2OEmissionFactor);
     }
 
     private String generateHashValue(String data) throws NoSuchAlgorithmException {
