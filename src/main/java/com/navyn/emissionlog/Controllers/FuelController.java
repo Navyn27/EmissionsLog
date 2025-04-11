@@ -70,6 +70,7 @@ public class FuelController {
                 createFuelDto.setLowerHeatingValue(fuelDto.getLowerHeatingValue());
                 createFuelDto.setFuelDensityLiquids(fuelDto.getFuelDensityLiquids());
                 createFuelDto.setFuelDensityGases(fuelDto.getFuelDensityGases());
+                createFuelDto.setFuelSourceType(FuelSourceType.STATIONARY);
                 createFuelDto.setFuelDescription(fuelDto.getFuelDescription());
 
                 Fuel fuel = fuelService.saveFuel(createFuelDto);
@@ -97,33 +98,41 @@ public class FuelController {
         }
     }
 
-    @GetMapping("/fuelTypes/{fuelType}")
-    public ResponseEntity<ApiResponse> getFuelsByFuelType(@RequestParam FuelTypes fuelType) {
-        List<Fuel> fuels = fuelService.getFuelsByFuelType(fuelType);
+    @GetMapping("/fuelTypes/stationary/{fuelType}")
+    public ResponseEntity<ApiResponse> getFuelsByFuelType(@PathVariable("fuelType") FuelTypes fuelType) {
+        List<Fuel> fuels = fuelService.getStationaryFuelsByFuelType(fuelType);
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuels fetched successfully", fuels));
+    }
+
+    @GetMapping("/fuelTypes/transport/{fuelType}")
+    public ResponseEntity<ApiResponse> getTransportFuelsByFuelType(@PathVariable("fuelType") FuelTypes fuelType) {
+        List<Fuel> fuels = fuelService.getTransportFuelsByFuelType(fuelType);
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuels fetched successfully", fuels));
     }
 
     @GetMapping("/stationaryEmissions/validOptions/{fuel}")
-    public ResponseEntity<ApiResponse> getValidOptions(@RequestParam UUID fuel){
-        StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsByFuelId(fuel);
+    public ResponseEntity<ApiResponse> getValidOptions(@PathVariable("fuel") UUID fuel){
+        List<StationaryEmissionFactors> stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsByFuelId(fuel);
         SupportedCalculationOptions supportedCalculationOptions = new SupportedCalculationOptions();
 
-        if(stationaryEmissionFactors.getLiquidBasis() != Double.valueOf(0)){
-            supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.LIQUID);
-            supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.VOLUME);
-        }
-        if(stationaryEmissionFactors.getGasBasis() != Double.valueOf(0)){
-            supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.GASEOUS);
-            if(!supportedCalculationOptions.getSupportedCalculationMetrics().contains(Metrics.VOLUME))
+        for(StationaryEmissionFactors factor : stationaryEmissionFactors) {
+            if (factor.getLiquidBasis() != Double.valueOf(0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.LIQUID)) {
+                supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.LIQUID);
                 supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.VOLUME);
-        }
-        if(stationaryEmissionFactors.getMassBasis() != Double.valueOf(0)){
-            supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.SOLID);
-            supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.MASS);
-        }
-        if(stationaryEmissionFactors.getEnergyBasis() != Double.valueOf(0)){
-            supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.ENERGY);
-            supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.ENERGY);
+            }
+            if (factor.getGasBasis() != Double.valueOf(0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.GASEOUS)) {
+                supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.GASEOUS);
+                if (!supportedCalculationOptions.getSupportedCalculationMetrics().contains(Metrics.VOLUME))
+                    supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.VOLUME);
+            }
+            if (factor.getMassBasis() != Double.valueOf(0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.SOLID)) {
+                supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.SOLID);
+                supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.MASS);
+            }
+            if (factor.getEnergyBasis() != Double.valueOf(0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.ENERGY)) {
+                supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.ENERGY);
+                supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.ENERGY);
+            }
         }
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Valid options fetched successfully", supportedCalculationOptions));
     }

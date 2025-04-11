@@ -11,7 +11,7 @@ import java.util.Base64;
 import java.util.UUID;
 
 @Entity
-@Table(name = "emission_factors")
+@Table(name = "stationary_emission_factors")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -18,7 +18,7 @@ public interface StationaryEmissionFactorsService {
 
     List<StationaryEmissionFactors> getAllStationaryEmissionFactors();
 
-    StationaryEmissionFactors getStationaryEmissionFactorsByFuelId(UUID fuelId);
+    List<StationaryEmissionFactors> getStationaryEmissionFactorsByFuelId(UUID fuelId);
 
     StationaryEmissionFactors createStationaryEmissionFactorFromExcel(StationaryEmissionFactors stationaryEmissionFactors);
 }

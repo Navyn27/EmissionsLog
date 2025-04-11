@@ -46,10 +46,17 @@ public class TransportEmissionFactorsController {
                     CreateFuelDto fuelDto = new CreateFuelDto();
                     fuelDto.setFuel(dto.getFuel());
                     fuelDto.setFuelTypes(FuelTypes.valueOf(dto.getFuelType()));
+                    fuelDto.setFuelSourceType(FuelSourceType.TRANSPORT);
                     fuel1 = fuelService.saveFuel(fuelDto);
                 }
                 else{
-                    fuel1 = fuel.get();
+                    if(fuel.get().getFuelSourceTypes().contains(FuelSourceType.TRANSPORT)){
+                        fuel1 = fuel.get();
+                    }
+                    else {
+                        fuel.get().getFuelSourceTypes().add(FuelSourceType.TRANSPORT);
+                        fuel1 = fuelService.updateFuel(fuel.get());
+                    }
                 }
 
                 //register Emission factors
@@ -84,7 +91,7 @@ public class TransportEmissionFactorsController {
     }
 
     @GetMapping("/supported/metrics/fuel/{fuelId}/{regionGroup}")
-    public ResponseEntity<ApiResponse> supportedMetricsForFuel(@RequestParam UUID fuelId, @RequestParam RegionGroup regionGroup){
+    public ResponseEntity<ApiResponse> supportedMetricsForFuel(@PathVariable("fuelId") UUID fuelId, @PathVariable("regionGroup") RegionGroup regionGroup){
         HashSet<Metrics> metrics = new HashSet<>();
         Optional<Fuel> fuel = fuelRepository.findById(fuelId);
 
@@ -106,7 +113,7 @@ public class TransportEmissionFactorsController {
 
     //supported fuel states
     @GetMapping("/supported/fuelStates/fuel/{fuelId}")
-    public ResponseEntity<ApiResponse> supportedFuelStatesForFuel(@RequestParam UUID fuelId){
+    public ResponseEntity<ApiResponse> supportedFuelStatesForFuel(@PathVariable("fuelId") UUID fuelId){
         Optional<Fuel> fuel = fuelRepository.findById(fuelId);
         List<FuelStates> supportedFuelStates = new ArrayList<>();
 
@@ -132,7 +139,7 @@ public class TransportEmissionFactorsController {
     }
 
     @GetMapping("/supported/regionGroup/fuel/{fuelId}")
-    public ResponseEntity<ApiResponse> supportedFuelsForRegionGroup(@RequestParam UUID fuelId) throws BadRequestException {
+    public ResponseEntity<ApiResponse> supportedFuelsForRegionGroup(@PathVariable("fuelId") UUID fuelId) throws BadRequestException {
         Optional<Fuel> fuels = fuelRepository.findById(fuelId);
         List<RegionGroup> supportedRegionGroups = new ArrayList<>();
 
@@ -155,7 +162,7 @@ public class TransportEmissionFactorsController {
     }
 
     @GetMapping("/supported/transportType/{fuelId}")
-    public ResponseEntity<ApiResponse> supportedFuelsForTransportType(@RequestParam UUID fuelId) throws BadRequestException {
+    public ResponseEntity<ApiResponse> supportedFuelsForTransportType(@PathVariable("fuelId") UUID fuelId) throws BadRequestException {
         Optional<Fuel> fuels = fuelRepository.findById(fuelId);
         List<TransportType> supportedTransportTypes = new ArrayList<>();
 
@@ -178,7 +185,7 @@ public class TransportEmissionFactorsController {
     }
 
     @GetMapping("/supported/vehicleEngineType/{fuelId}")
-    public ResponseEntity<ApiResponse> supportedFuelsForVehicleEngineType(@RequestParam UUID fuelId) throws BadRequestException {
+    public ResponseEntity<ApiResponse> supportedFuelsForVehicleEngineType(@PathVariable("fuelId") UUID fuelId) throws BadRequestException {
        Optional<Fuel> fuels = fuelRepository.findById(fuelId);
         List<VehicleEngineType> supportedVehicleEngineTypes = new ArrayList<>();
 

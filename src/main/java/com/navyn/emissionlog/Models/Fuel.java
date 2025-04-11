@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.Models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.navyn.emissionlog.Enums.FuelSourceType;
 import com.navyn.emissionlog.Enums.FuelTypes;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "fuels")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,6 +24,11 @@ public class Fuel {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private FuelTypes fuelTypes;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "fuel_source_type")
+    private List<FuelSourceType> fuelSourceTypes = new ArrayList<>();
 
     private String fuelDescription; // Description of the fuel
 

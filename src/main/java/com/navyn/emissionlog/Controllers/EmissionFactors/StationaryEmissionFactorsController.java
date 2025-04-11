@@ -50,7 +50,7 @@ public class StationaryEmissionFactorsController {
 
     @GetMapping("/fuel/{fuelId}")
     public ResponseEntity<ApiResponse> getStationaryEmissionFactorsByFuelId(@PathVariable UUID fuelId) {
-        StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsByFuelId(fuelId);
+        List<StationaryEmissionFactors> stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsByFuelId(fuelId);
         return ResponseEntity.ok( new ApiResponse(true, "Emission fetched successfully", stationaryEmissionFactors));
     }
 }

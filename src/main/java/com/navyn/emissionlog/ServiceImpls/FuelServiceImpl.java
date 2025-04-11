@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.ServiceImpls;
 
+import com.navyn.emissionlog.Enums.FuelSourceType;
 import com.navyn.emissionlog.Enums.FuelTypes;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
@@ -52,6 +53,7 @@ public class FuelServiceImpl implements FuelService {
             fuel1.setFuel(fuel.getFuel());
             fuel1.setFuelDescription(fuel.getFuelDescription());
             fuel1.setLiquidDensity(fuel.getFuelDensityLiquids());
+            fuel1.getFuelSourceTypes().add(fuel.getFuelSourceType());
             fuel1.setGasDensity(fuel.getFuelDensityGases());
             fuel1.setLowerHeatingValue(fuel.getLowerHeatingValue());
             return fuelRepository.save(fuel1);
@@ -60,6 +62,11 @@ public class FuelServiceImpl implements FuelService {
             e.printStackTrace();
             throw new RuntimeException("Error saving fuel: " + e.getMessage());
         }
+    }
+
+    @Override
+    public Fuel updateFuel(Fuel fuel){
+        return fuelRepository.save(fuel);
     }
 
     @Override
@@ -110,5 +117,15 @@ public class FuelServiceImpl implements FuelService {
     @Override
     public List<Fuel> getFuelsByFuelType(FuelTypes fuelType) {
         return fuelRepository.findByFuelTypes(fuelType);
+    }
+
+    @Override
+    public List<Fuel> getStationaryFuelsByFuelType(FuelTypes fuelType) {
+        return fuelRepository.findByFuelTypesAndFuelSourceTypesContaining(fuelType, FuelSourceType.STATIONARY);
+    }
+
+    @Override
+    public List<Fuel> getTransportFuelsByFuelType(FuelTypes fuelType) {
+        return fuelRepository.findByFuelTypesAndFuelSourceTypesContaining(fuelType, FuelSourceType.TRANSPORT);
     }
 }

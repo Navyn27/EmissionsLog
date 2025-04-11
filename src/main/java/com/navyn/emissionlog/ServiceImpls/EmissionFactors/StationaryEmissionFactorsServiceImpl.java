@@ -74,8 +74,13 @@ public class StationaryEmissionFactorsServiceImpl implements StationaryEmissionF
     }
 
     @Override
-    public StationaryEmissionFactors getStationaryEmissionFactorsByFuelId(UUID fuelId) {
-        return stationaryEmissionFactorsRepository.findByFuelId(fuelId);
+    public List<StationaryEmissionFactors> getStationaryEmissionFactorsByFuelId(UUID fuelId) {
+        Optional<Fuel> fuel = fuelRepository.findById(fuelId);
+
+        if(fuel.isEmpty()){
+            throw new IllegalArgumentException("Fuel not found");
+        }
+        return stationaryEmissionFactorsRepository.findByFuel(fuel.get());
     }
 
     @Override

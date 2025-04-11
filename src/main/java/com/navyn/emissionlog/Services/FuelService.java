@@ -13,6 +13,8 @@ public interface FuelService {
 
     Fuel saveFuel(CreateFuelDto fuel);
 
+    Fuel updateFuel(Fuel fuel);
+
     Optional<Fuel> getFuelById(UUID id);
 
     List<Fuel> getAllFuels();
@@ -25,4 +27,8 @@ public interface FuelService {
     Optional<Fuel> getExistingFuel(String fuelName);
 
     List<Fuel> getFuelsByFuelType(FuelTypes fuelType);
+
+    List<Fuel> getStationaryFuelsByFuelType(FuelTypes fuelType);
+
+    List<Fuel> getTransportFuelsByFuelType(FuelTypes fuelType);
 }
