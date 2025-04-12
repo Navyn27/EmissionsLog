@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.*;
 
 @RestController(value = "TransportEmissionFactorsController")
-@RequestMapping("/emission-factors/transport")
+@RequestMapping("/emissionFactors/transport")
 public class TransportEmissionFactorsController {
 
     @Autowired
@@ -46,7 +46,7 @@ public class TransportEmissionFactorsController {
     private VehicleService vehicleService;
 
     @Operation(summary = "Upload transport emission factors by fuel", description = "This endpoint upload transport emission factors in bulk basing on provided fuel data in an Excel File. The Excel file should contain the following columns: Fuel, Region Group, Fossil CO2 Emission Factor, Biogenic CO2 Emission Factor, Transport Type, Vehicle Engine Type, CH4 Emission Factor, N2O Emission Factor.  The uploaded data is processed and saved to the database.")
-    @PostMapping("/uploadByFuel")
+    @PostMapping("/uploadByFuelExcel")
     public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByFuel(@RequestParam("file") MultipartFile file){
         try {
             List<TransportFuelEmissionFactorsDto> transportFuelEmissionFactorsDtos = ExcelReader.readEmissionsExcel(file.getInputStream(), TransportFuelEmissionFactorsDto.class, ExcelType.FUEL_TRANSPORT_EMISSIONS);
@@ -220,10 +220,9 @@ public class TransportEmissionFactorsController {
 
     @Operation(summary = "Get supported region groups for a specific fuel", description = "This endpoint retrieves the supported region groups for a specific fuel based on its ID. It returns a list of region groups that are applicable to the specified fuel.")
     @GetMapping("/supported/regionGroup/fuel/{fuelId}")
-    public ResponseEntity<ApiResponse> supportedFuelsForRegionGroup(@PathVariable("fuelId") UUID fuelId) throws BadRequestException {
+    public ResponseEntity<ApiResponse> supportedRegionGroupForFuel(@PathVariable("fuelId") UUID fuelId) throws BadRequestException {
         Optional<Fuel> fuels = fuelRepository.findById(fuelId);
         List<RegionGroup> supportedRegionGroups = new ArrayList<>();
-
         if(fuels.isEmpty()){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     new ApiResponse(false, "Fuel not found", null)

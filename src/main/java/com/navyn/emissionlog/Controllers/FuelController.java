@@ -7,14 +7,12 @@ import com.navyn.emissionlog.Models.TransportVehicleDataEmissionFactors;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.Services.FuelService;
-import com.navyn.emissionlog.Services.StationaryEmissionFactorsService;
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import com.navyn.emissionlog.Services.TransportVehicleEmissionFactorsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,11 +29,8 @@ public class FuelController {
     private FuelService fuelService;
 
     @Autowired
-    private StationaryEmissionFactorsService stationaryEmissionFactorsService;
-    @Qualifier("transportFuelEmissionFactorsService")
-    @Autowired
     private TransportFuelEmissionFactorsService transportFuelEmissionFactorsService;
-    @Qualifier("transportVehicleEmissionFactorsService")
+
     @Autowired
     private TransportVehicleEmissionFactorsService transportVehicleEmissionFactorsService;
 
@@ -45,9 +40,9 @@ public class FuelController {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuel created successfully",fuelService.saveFuel(fuel)));
     }
 
-    @Operation(summary = "Get fule identified by the provided Id")
+    @Operation(summary = "Get fuel identified by the provided Id")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> getFuelById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse> getFuelById(@PathVariable("id") UUID id) {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuel Fetched successfully",fuelService.getFuelById(id)));
     }
 
@@ -59,7 +54,7 @@ public class FuelController {
 
     @Operation(summary="Updates a fuel identified by the provided id", description="Updates the fuel with the provided details.")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse> updateFuel(@PathVariable UUID id, @RequestBody CreateFuelDto fuel) {
+    public ResponseEntity<ApiResponse> updateFuel(@PathVariable("id") UUID id, @RequestBody CreateFuelDto fuel) {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuel updated successfully", fuelService.updateFuel(id, fuel)));
     }
 
@@ -72,7 +67,7 @@ public class FuelController {
 
     @Operation(summary = "Retrieves fuels associated with stationary emission factors and of the specified fuel type")
     @GetMapping("/fuelTypes/stationary/{fuelType}")
-    public ResponseEntity<ApiResponse> getFuelsByFuelType(@PathVariable("fuelType") FuelTypes fuelType) {
+    public ResponseEntity<ApiResponse> getStationaryFuelsByFuelType(@PathVariable("fuelType") FuelTypes fuelType) {
         List<Fuel> fuels = fuelService.getStationaryFuelsByFuelType(fuelType);
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuels fetched successfully", fuels));
     }
@@ -93,7 +88,7 @@ public class FuelController {
     }
 
     @Operation(summary = "Retrieves fuels associated with vehicle data emission factors and of the specified fuel type")
-    @GetMapping("/fuelTypes/transport/vehicle-data/{fuelType}")
+    @GetMapping("/fuelTypes/transport/vehicleData/{fuelType}")
     public ResponseEntity<ApiResponse> getTransportFuelsByVehicleData(@PathVariable("fuelType") FuelTypes fuelType) {
         List<Fuel> fuels = fuelService.getTransportFuelsByFuelType(fuelType);
         List<Fuel> supportedFuels = new ArrayList<>();
@@ -105,5 +100,11 @@ public class FuelController {
             }
         }
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuels fetched successfully", supportedFuels));
+    }
+
+    @Operation(summary = "Retrieves all fuel types", description = "Fetches all supported fuel types.")
+    @GetMapping("/fuelTypes")
+    public ResponseEntity<ApiResponse> getAllFuelTypes() {
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuel Types Fetched successfully", FuelTypes.values()));
     }
 }

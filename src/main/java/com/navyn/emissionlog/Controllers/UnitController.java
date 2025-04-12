@@ -15,9 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "BearerAuth")
 @RequestMapping(value = "/units/")
 public class UnitController {
+
     @Operation(summary = "Retrieves units by Metric", description = "Fetches supported units associated with the specified metric.")
-    @GetMapping("/units/{metric}")
-    public ResponseEntity<ApiResponse> getFuelUnitsByMetric(@PathVariable Metrics metric){
+    @GetMapping("/{metric}")
+    public ResponseEntity<ApiResponse> getFuelUnitsByMetric(@PathVariable("metric") Metrics metric){
         switch(metric){
             case MASS:
                 return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Mass Units Fetched successfully", MassUnits.values()));

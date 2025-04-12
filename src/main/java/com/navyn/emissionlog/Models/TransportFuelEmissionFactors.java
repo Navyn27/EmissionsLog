@@ -33,10 +33,10 @@ public class TransportFuelEmissionFactors {
     @ManyToOne
     private Fuel fuel;
 
-    private Double FossilCO2EmissionFactor;
-    private Double BiogenicCO2EmissionFactor;
-    private Double CH4EmissionFactor;
-    private Double N2OEmissionFactor;
+    private Double FossilCO2EmissionFactor = 0.0;
+    private Double BiogenicCO2EmissionFactor = 0.0;
+    private Double CH4EmissionFactor = 0.0;
+    private Double N2OEmissionFactor = 0.0;
 
     @Column(nullable = false, unique = true)
     private String checkSum; // Unique checksum for the emission factor to ensure data integrity and avoid over calculation of emissions

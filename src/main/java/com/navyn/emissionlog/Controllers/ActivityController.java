@@ -1,5 +1,7 @@
 package com.navyn.emissionlog.Controllers;
 
+import com.navyn.emissionlog.Enums.Sectors;
+import com.navyn.emissionlog.Enums.TransportModes;
 import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByFuelDto;
 import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
@@ -22,7 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController("ActivityController")
-@RequestMapping("/api/v1/activities")
+@RequestMapping("/activities")
 @SecurityRequirement(name = "BearerAuth")
 public class ActivityController {
 
@@ -117,5 +119,16 @@ public class ActivityController {
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
+    }
+
+    @GetMapping("/sectors")
+    public ResponseEntity<ApiResponse> getSectors() {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ApiResponse(true, "Sectors fetched successfully", Sectors.values()));
+    }
+
+    @GetMapping("/transportModes")
+    public ResponseEntity<ApiResponse> getTransportModes(){
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Transport Modes fetched successfully", TransportModes.values()));
     }
 }

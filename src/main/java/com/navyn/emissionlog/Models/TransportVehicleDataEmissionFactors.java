@@ -13,6 +13,7 @@ import java.util.Base64;
 import java.util.UUID;
 
 @Entity
+@Table(name = "transport_vehicle_data_emission_factors")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
@@ -31,9 +32,9 @@ public class TransportVehicleDataEmissionFactors {
     @Enumerated(EnumType.STRING)
     private RegionGroup regionGroup;
 
-    private Double CO2EmissionFactor;
-    private Double CH4EmissionFactor;
-    private Double N2OEmissionFactor;
+    private Double CO2EmissionFactor = 0.0;
+    private Double CH4EmissionFactor = 0.0;
+    private Double N2OEmissionFactor = 0.0;
 
     @Column(nullable = false, unique = true)
     private String checkSum; // Unique checksum for the emission factor to ensure data integrity and avoid over calculation of emissions

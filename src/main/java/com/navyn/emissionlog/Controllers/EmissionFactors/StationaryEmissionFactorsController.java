@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController(value = "StationaryEmissionFactorsController")
-@RequestMapping("/emission-factors/stationary")
+@RequestMapping("/emissionFactors/stationary")
 public class StationaryEmissionFactorsController {
 
     @Autowired
