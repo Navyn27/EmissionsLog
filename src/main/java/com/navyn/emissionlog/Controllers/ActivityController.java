@@ -3,6 +3,7 @@ package com.navyn.emissionlog.Controllers;
 import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByFuelDto;
 import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +21,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 
-@RestController
+@RestController("ActivityController")
 @RequestMapping("/api/v1/activities")
 @SecurityRequirement(name = "BearerAuth")
 public class ActivityController {
@@ -28,6 +29,7 @@ public class ActivityController {
     @Autowired
     private ActivityService activityService;
 
+    @Operation(summary = "Create a stationary activity", description = "Creates a stationary activity with the provided details.")
     @PostMapping("/stationary/create")
     public ResponseEntity<ApiResponse> createStationaryActivity(@Valid @RequestBody CreateStationaryActivityDto activityDto) {
         try {
@@ -41,6 +43,7 @@ public class ActivityController {
         }
     }
 
+    @Operation(summary = "Create a transport activity by fuel", description = "Creates a transport activity using fuel data.")
     @PostMapping("/transport/fuel/create")
     public ResponseEntity<ApiResponse> createMobileFuelActivity(@Valid @RequestBody CreateTransportActivityByFuelDto activityDto) {
         try {
@@ -54,6 +57,7 @@ public class ActivityController {
         }
     }
 
+    @Operation(summary = "Create a transport activity by vehicle data", description = "Creates a transport activity using vehicle data.")
     @PostMapping("/transport/vehicle-data/create")
     public ResponseEntity<ApiResponse> createMobileVehicleDataActivity(@Valid @RequestBody CreateTransportActivityByVehicleDataDto activityDto){
         try{
@@ -68,6 +72,7 @@ public class ActivityController {
         }
     }
 
+    @Operation(summary = "Get an activity by ID", description = "Retrieves an activity using its unique identifier.")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getActivity(@PathVariable UUID id) {
         try {
@@ -80,6 +85,7 @@ public class ActivityController {
         }
     }
 
+    @Operation(summary = "Get all activities", description = "Retrieves a list of all activities and their emissions.")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllActivities() {
         List<Activity> activities = activityService.getAllActivities();
@@ -100,6 +106,7 @@ public class ActivityController {
 //        }
 //    }
 
+    @Operation(summary = "Delete an activity", description = "Deletes an activity using its unique identifier.")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deleteActivity(@PathVariable UUID id) {
         try {

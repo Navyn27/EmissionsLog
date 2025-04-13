@@ -6,6 +6,7 @@ import com.navyn.emissionlog.Payload.Requests.LoginDTO;
 import com.navyn.emissionlog.Payload.Requests.SignUpDTO;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.Services.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,12 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
+@RestController("AuthController")
 @RequestMapping(path="/auth")
 public class AuthController {
     @Autowired
     UserService userService;
 
+    @Operation(summary = "User Registration", description = "Register a new user with the provided details.")
     @PostMapping(path="/signup")
     public ResponseEntity<ApiResponse> registerUser(@Valid @RequestBody SignUpDTO user, BindingResult result) throws EmailAlreadyExistsException, UnmatchingPasswordsException {
         if(result.hasErrors()){
@@ -27,6 +29,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true,"User created successfully",userService.registerUser(user)));
     }
 
+    @Operation(summary = "User Login", description = "Authenticate a user with the provided credentials.")
     @PostMapping(path="/login")
     public ResponseEntity<ApiResponse> loginUser(@Valid @RequestBody LoginDTO user, BindingResult result){
         if(result.hasErrors()){

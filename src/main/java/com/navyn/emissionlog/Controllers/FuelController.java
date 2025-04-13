@@ -2,26 +2,28 @@ package com.navyn.emissionlog.Controllers;
 
 import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.Models.Fuel;
-import com.navyn.emissionlog.Models.StationaryEmissionFactors;
+import com.navyn.emissionlog.Models.TransportFuelEmissionFactors;
+import com.navyn.emissionlog.Models.TransportVehicleDataEmissionFactors;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
-import com.navyn.emissionlog.Payload.Requests.CreateFuelStationaryEmissionsExcelDto;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
-import com.navyn.emissionlog.Payload.Responses.SupportedCalculationOptions;
 import com.navyn.emissionlog.Services.FuelService;
 import com.navyn.emissionlog.Services.StationaryEmissionFactorsService;
-import com.navyn.emissionlog.Utils.ExcelReader;
+import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
+import com.navyn.emissionlog.Services.TransportVehicleEmissionFactorsService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@RestController
+@RestController("FuelController")
 @RequestMapping(path = "/fuel")
 @SecurityRequirement(name = "BearerAuth")
 public class FuelController {
@@ -30,114 +32,78 @@ public class FuelController {
 
     @Autowired
     private StationaryEmissionFactorsService stationaryEmissionFactorsService;
+    @Qualifier("transportFuelEmissionFactorsService")
+    @Autowired
+    private TransportFuelEmissionFactorsService transportFuelEmissionFactorsService;
+    @Qualifier("transportVehicleEmissionFactorsService")
+    @Autowired
+    private TransportVehicleEmissionFactorsService transportVehicleEmissionFactorsService;
 
+    @Operation(summary = "Create a fuel without any associated emission factors", description = "Creates a fuel with the provided details.")
     @PostMapping
     public ResponseEntity<ApiResponse> createFuel(@RequestBody CreateFuelDto fuel) {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuel created successfully",fuelService.saveFuel(fuel)));
     }
 
+    @Operation(summary = "Get fule identified by the provided Id")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getFuelById(@PathVariable UUID id) {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuel Fetched successfully",fuelService.getFuelById(id)));
     }
 
+    @Operation(summary = "Get all fuels", description="Fetches all fuels available in the system.")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllFuels() {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuels Fetched successfully", fuelService.getAllFuels()));
     }
 
+    @Operation(summary="Updates a fuel identified by the provided id", description="Updates the fuel with the provided details.")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateFuel(@PathVariable UUID id, @RequestBody CreateFuelDto fuel) {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuel updated successfully", fuelService.updateFuel(id, fuel)));
     }
 
+    @Operation(summary = "Delete a fuel identified by the provided id", description="Deletes the fuel identified by the provided id.")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deleteFuel(@PathVariable UUID id) {
         fuelService.deleteFuel(id);
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuel deleted successfully"));
     }
 
-    @PostMapping("/uploadByStationaryEmissions")
-    public ResponseEntity<ApiResponse> uploadStationaryFuelData(@RequestParam("file") MultipartFile file) {
-        try {
-            List<CreateFuelStationaryEmissionsExcelDto> fuelDtos = ExcelReader.readEmissionsExcel(file.getInputStream(), CreateFuelStationaryEmissionsExcelDto.class, ExcelType.FUEL_STATIONARY_EMISSIONS);
-            for (CreateFuelStationaryEmissionsExcelDto fuelDto : fuelDtos) {
-                CreateFuelDto createFuelDto = new CreateFuelDto();
-
-                // Convert fuelType from String to Enum
-                createFuelDto.setFuelTypes(FuelTypes.valueOf(fuelDto.getFuelType().toUpperCase().replace(' ', '_')));
-                createFuelDto.setFuel(fuelDto.getFuel());
-                createFuelDto.setLowerHeatingValue(fuelDto.getLowerHeatingValue());
-                createFuelDto.setFuelDensityLiquids(fuelDto.getFuelDensityLiquids());
-                createFuelDto.setFuelDensityGases(fuelDto.getFuelDensityGases());
-                createFuelDto.setFuelSourceType(FuelSourceType.STATIONARY);
-                createFuelDto.setFuelDescription(fuelDto.getFuelDescription());
-
-                Fuel fuel = fuelService.saveFuel(createFuelDto);
-
-                //register Emission factors
-                StationaryEmissionFactors stationaryEmissionFactors = new StationaryEmissionFactors();
-                stationaryEmissionFactors.setEmmission(Emissions.valueOf(fuelDto.getEmission()));
-                stationaryEmissionFactors.setFuel(fuel);
-                stationaryEmissionFactors.setLiquidBasis(fuelDto.getLiquidBasis());
-                stationaryEmissionFactors.setGasBasis(fuelDto.getGasBasis());
-                stationaryEmissionFactors.setMassBasis(fuelDto.getMassBasis());
-                stationaryEmissionFactors.setEnergyBasis(fuelDto.getEnergyBasis());
-                stationaryEmissionFactors = stationaryEmissionFactorsService.createStationaryEmissionFactorFromExcel(stationaryEmissionFactors);
-                fuel.getStationaryEmissionFactorsList().add(stationaryEmissionFactors);
-            }
-            ApiResponse response = new ApiResponse(true, "Fuel data uploaded successfully", null);
-            return ResponseEntity.status(HttpStatus.OK).body(response);
-        }catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            ApiResponse response = new ApiResponse(false, "Failed to upload fuel data", null);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-        }
-    }
-
+    @Operation(summary = "Retrieves fuels associated with stationary emission factors and of the specified fuel type")
     @GetMapping("/fuelTypes/stationary/{fuelType}")
     public ResponseEntity<ApiResponse> getFuelsByFuelType(@PathVariable("fuelType") FuelTypes fuelType) {
         List<Fuel> fuels = fuelService.getStationaryFuelsByFuelType(fuelType);
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuels fetched successfully", fuels));
     }
 
-    @GetMapping("/fuelTypes/transport/{fuelType}")
-    public ResponseEntity<ApiResponse> getTransportFuelsByFuelType(@PathVariable("fuelType") FuelTypes fuelType) {
+    @Operation(summary = "Retrieves fuels associated with fuel transport emission factors and of the specified fuel type")
+    @GetMapping("/fuelTypes/transport/fuel/{fuelType}")
+    public ResponseEntity<ApiResponse> getTransportFuelsByFuelType(@PathVariable("fuelType") FuelTypes fuelType) throws BadRequestException {
         List<Fuel> fuels = fuelService.getTransportFuelsByFuelType(fuelType);
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuels fetched successfully", fuels));
-    }
+        List<Fuel> supportedFuels = new ArrayList<>();
 
-    @GetMapping("/stationaryEmissions/validOptions/{fuel}")
-    public ResponseEntity<ApiResponse> getValidOptions(@PathVariable("fuel") UUID fuel){
-        List<StationaryEmissionFactors> stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsByFuelId(fuel);
-        SupportedCalculationOptions supportedCalculationOptions = new SupportedCalculationOptions();
-
-        for(StationaryEmissionFactors factor : stationaryEmissionFactors) {
-            if (factor.getLiquidBasis() != Double.valueOf(0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.LIQUID)) {
-                supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.LIQUID);
-                supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.VOLUME);
-            }
-            if (factor.getGasBasis() != Double.valueOf(0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.GASEOUS)) {
-                supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.GASEOUS);
-                if (!supportedCalculationOptions.getSupportedCalculationMetrics().contains(Metrics.VOLUME))
-                    supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.VOLUME);
-            }
-            if (factor.getMassBasis() != Double.valueOf(0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.SOLID)) {
-                supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.SOLID);
-                supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.MASS);
-            }
-            if (factor.getEnergyBasis() != Double.valueOf(0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.ENERGY)) {
-                supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.ENERGY);
-                supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.ENERGY);
+        for (Fuel fuel : fuels) {
+            List<TransportFuelEmissionFactors> transportFuelEmissionFactors = transportFuelEmissionFactorsService.findByFuel(fuel.getId());
+            if (!transportFuelEmissionFactors.isEmpty()) {
+                supportedFuels.add(fuel);
             }
         }
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Valid options fetched successfully", supportedCalculationOptions));
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuels fetched successfully", supportedFuels));
     }
 
+    @Operation(summary = "Retrieves fuels associated with vehicle data emission factors and of the specified fuel type")
+    @GetMapping("/fuelTypes/transport/vehicle-data/{fuelType}")
+    public ResponseEntity<ApiResponse> getTransportFuelsByVehicleData(@PathVariable("fuelType") FuelTypes fuelType) {
+        List<Fuel> fuels = fuelService.getTransportFuelsByFuelType(fuelType);
+        List<Fuel> supportedFuels = new ArrayList<>();
+
+        for (Fuel fuel : fuels) {
+            List<TransportVehicleDataEmissionFactors> transportVehicleEmissionFactors = transportVehicleEmissionFactorsService.findByFuel(fuel.getId());
+            if (!transportVehicleEmissionFactors.isEmpty()) {
+                supportedFuels.add(fuel);
+            }
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuels fetched successfully", supportedFuels));
+    }
 }
-
-
-//

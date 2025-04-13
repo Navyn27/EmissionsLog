@@ -3,6 +3,7 @@ package com.navyn.emissionlog.Controllers;
 import com.navyn.emissionlog.Payload.Requests.SignUpDTO;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.ServiceImpls.UserServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -11,13 +12,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
+@RestController("UserController")
 @RequestMapping(path ="/users")
 @SecurityRequirement(name = "BearerAuth")
 public class UserController {
     @Autowired
     UserServiceImpl userService;
 
+    @Operation(summary = "Get all users", description = "Fetches all users available in the system.")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllUsers(HttpServletRequest request){
         try{
@@ -28,6 +30,7 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Get user by email", description = "Fetches a user identified by the provided email.")
     @GetMapping(path="/{email}")
     public ResponseEntity<ApiResponse> getUser(@PathVariable String email){
         try{
@@ -38,6 +41,7 @@ public class UserController {
         }
     }
 
+    @Operation(summary = "Update user by email", description = "Updates the user identified by the provided email with the new details.")
     @PutMapping(path="/{email}")
     public ResponseEntity<ApiResponse> updateUser(@PathVariable String email, @Valid @RequestBody SignUpDTO payload){
         try{

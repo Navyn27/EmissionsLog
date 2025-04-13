@@ -15,6 +15,7 @@ import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import com.navyn.emissionlog.Services.TransportVehicleEmissionFactorsService;
 import com.navyn.emissionlog.Services.VehicleService;
 import com.navyn.emissionlog.Utils.ExcelReader;
+import io.swagger.v3.oas.annotations.Operation;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,7 @@ public class TransportEmissionFactorsController {
     @Autowired
     private VehicleService vehicleService;
 
+    @Operation(summary = "Upload transport emission factors by fuel", description = "This endpoint upload transport emission factors in bulk basing on provided fuel data in an Excel File. The Excel file should contain the following columns: Fuel, Region Group, Fossil CO2 Emission Factor, Biogenic CO2 Emission Factor, Transport Type, Vehicle Engine Type, CH4 Emission Factor, N2O Emission Factor.  The uploaded data is processed and saved to the database.")
     @PostMapping("/uploadByFuel")
     public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByFuel(@RequestParam("file") MultipartFile file){
         try {
@@ -95,6 +97,7 @@ public class TransportEmissionFactorsController {
         }
     }
 
+    @Operation(summary = "Upload transport emission factors by vehicle data", description = "This endpoint uploads tranport emission factors in bulk basing on provided vehicle data in an Excel File. The Excel file should contain the following columns: Vehicle, Vehicle Year, Size, Weight Laden, Fuel, Region Group, CO2 Emission Factor, CH4 Emission Factor, N2O Emission Factor.  The uploaded data is processed and saved to the database.")
     @PostMapping("/uploadByVehicleData")
     public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByVehicleData(@RequestParam("file") MultipartFile file){
         try {
@@ -157,13 +160,14 @@ public class TransportEmissionFactorsController {
         return ResponseEntity.created(null).body(response);
     }
 
-
+    @Operation(summary = "Get transport emission factors by fuel", description = "This endpoint retrieves transport emission factors based on the provided fuel ID. It returns a list of transport emission factors associated with the specified fuel.")
     @GetMapping
     public ResponseEntity<List<TransportFuelEmissionFactors>> getAllTransportEmissionFactors() {
         List<TransportFuelEmissionFactors> transportEmissionFactors = transportFuelEmissionFactorsService.findAll();
         return ResponseEntity.ok(transportEmissionFactors);
     }
 
+    @Operation(summary = "Get supported metrics on a particular fuel-regionGroup combination", description = "This endpoint retrieves the supported metrics for a specific fuel and region group combination. It returns a set of metrics that are applicable to the specified fuel and region group.")
     @GetMapping("/supported/metrics/fuel/{fuelId}/{regionGroup}")
     public ResponseEntity<ApiResponse> supportedMetricsForFuel(@PathVariable("fuelId") UUID fuelId, @PathVariable("regionGroup") RegionGroup regionGroup){
         HashSet<Metrics> metrics = new HashSet<>();
@@ -185,7 +189,9 @@ public class TransportEmissionFactorsController {
         );
     }
 
+
     //supported fuel states
+    @Operation(summary = "Get supported fuel states for a specific fuel", description = "This endpoint retrieves the supported fuel states for a specific fuel based on its ID. It returns a list of fuel states that are applicable to the specified fuel.")
     @GetMapping("/supported/fuelStates/fuel/{fuelId}")
     public ResponseEntity<ApiResponse> supportedFuelStatesForFuel(@PathVariable("fuelId") UUID fuelId){
         Optional<Fuel> fuel = fuelRepository.findById(fuelId);
@@ -212,6 +218,7 @@ public class TransportEmissionFactorsController {
         );
     }
 
+    @Operation(summary = "Get supported region groups for a specific fuel", description = "This endpoint retrieves the supported region groups for a specific fuel based on its ID. It returns a list of region groups that are applicable to the specified fuel.")
     @GetMapping("/supported/regionGroup/fuel/{fuelId}")
     public ResponseEntity<ApiResponse> supportedFuelsForRegionGroup(@PathVariable("fuelId") UUID fuelId) throws BadRequestException {
         Optional<Fuel> fuels = fuelRepository.findById(fuelId);
@@ -235,6 +242,7 @@ public class TransportEmissionFactorsController {
         );
     }
 
+    @Operation(summary = "Get supported transport types for a specific fuel", description = "This endpoint retrieves the supported transport types for a specific fuel based on its ID. It returns a list of transport types that are applicable to the specified fuel.")
     @GetMapping("/supported/transportType/{fuelId}")
     public ResponseEntity<ApiResponse> supportedFuelsForTransportType(@PathVariable("fuelId") UUID fuelId) throws BadRequestException {
         Optional<Fuel> fuels = fuelRepository.findById(fuelId);
@@ -258,6 +266,7 @@ public class TransportEmissionFactorsController {
         );
     }
 
+    @Operation(summary = "Get supported vehicle/engine types for a specific fuel", description = "This endpoint retrieves the supported vehicle/engine types for a specific fuel based on its ID. It returns a list of vehicle engine types that are applicable to the specified fuel.")
     @GetMapping("/supported/vehicleEngineType/{fuelId}")
     public ResponseEntity<ApiResponse> supportedFuelsForVehicleEngineType(@PathVariable("fuelId") UUID fuelId) throws BadRequestException {
        Optional<Fuel> fuels = fuelRepository.findById(fuelId);

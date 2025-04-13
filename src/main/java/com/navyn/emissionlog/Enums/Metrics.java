@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.Enums;
 
 public enum Metrics {
-    MASS, VOLUME, ENERGY;
+    MASS, VOLUME, ENERGY, DISTANCE;
 
     public String getSIUnit(Metrics metrics){
         switch(metrics){
@@ -11,6 +11,8 @@ public enum Metrics {
                 return "LITER";
             case ENERGY:
                 return "KWH";
+            case DISTANCE:
+                return "METER";
             default:
                 return "-";
         }
