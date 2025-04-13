@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.ServiceImpls;
+package com.navyn.emissionlog.ServiceImpls.EmissionFactors;
 
 import com.navyn.emissionlog.Models.TransportVehicleDataEmissionFactors;
 import com.navyn.emissionlog.Repositories.TransportVehicleDataEmissionFactorsRepository;

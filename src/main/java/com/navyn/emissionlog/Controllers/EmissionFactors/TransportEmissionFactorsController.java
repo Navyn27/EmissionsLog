@@ -4,7 +4,7 @@ import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.Models.TransportVehicleDataEmissionFactors;
-import com.navyn.emissionlog.Models.Vehicles;
+import com.navyn.emissionlog.Models.Vehicle;
 import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
 import com.navyn.emissionlog.Payload.Requests.EmissionFactors.TransportFuelEmissionFactorsDto;
 import com.navyn.emissionlog.Payload.Requests.EmissionFactors.TransportVehicleDataEmissionFactorsDto;
@@ -26,7 +26,7 @@ import java.io.IOException;
 import java.util.*;
 
 @RestController(value = "TransportEmissionFactorsController")
-@RequestMapping("/api/v1/emission-factors/transport")
+@RequestMapping("/emission-factors/transport")
 public class TransportEmissionFactorsController {
 
     @Autowired
@@ -123,10 +123,10 @@ public class TransportEmissionFactorsController {
                 }
 
                 //find Vehicle
-                Optional<Vehicles> vehicle = vehicleService.getExistingVehicle(dto.getVehicle(), dto.getVehicleYear(), dto.getSize(), dto.getWeightLaden());
-                Vehicles vehicle1;
+                Optional<Vehicle> vehicle = vehicleService.getExistingVehicle(dto.getVehicle(), dto.getVehicleYear(), dto.getSize(), dto.getWeightLaden());
+                Vehicle vehicle1;
                 if(vehicle.isEmpty()){
-                    vehicle1 = new Vehicles();
+                    vehicle1 = new Vehicle();
                     vehicle1.setVehicle(dto.getVehicle());
                     vehicle1.setVehicleYear(dto.getVehicleYear());
                     vehicle1.setSize(dto.getSize());

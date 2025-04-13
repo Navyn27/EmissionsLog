@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class TransportEmissionFactorsServiceImpl implements TransportFuelEmissionFactorsService {
+public class TransportFuelEmissionFactorsServiceImpl implements TransportFuelEmissionFactorsService {
 
     @Autowired
     private TransportFuelEmissionFactorsRepository transportFuelEmissionFactorsRepository;

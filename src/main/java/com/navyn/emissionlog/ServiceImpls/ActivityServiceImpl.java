@@ -1,14 +1,8 @@
 package com.navyn.emissionlog.ServiceImpls;
 
 import com.navyn.emissionlog.Enums.*;
-import com.navyn.emissionlog.Models.Activity;
-import com.navyn.emissionlog.Models.ActivityData.ActivityData;
-import com.navyn.emissionlog.Models.ActivityData.FuelData;
-import com.navyn.emissionlog.Models.ActivityData.StationaryActivityData;
-import com.navyn.emissionlog.Models.ActivityData.TransportActivityData;
-import com.navyn.emissionlog.Models.StationaryEmissionFactors;
-import com.navyn.emissionlog.Models.Fuel;
-import com.navyn.emissionlog.Models.TransportFuelEmissionFactors;
+import com.navyn.emissionlog.Models.*;
+import com.navyn.emissionlog.Models.ActivityData.*;
 import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByFuelDto;
 import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
@@ -16,7 +10,6 @@ import com.navyn.emissionlog.Repositories.*;
 import com.navyn.emissionlog.Services.ActivityService;
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +41,12 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Autowired
     private TransportFuelEmissionFactorsService transportFuelEmissionFactorsService;
+
+    @Autowired
+    private VehicleRepository vehicleRepository;
+
+    @Autowired
+    private VehicleDataRepository vehicleDataRepository;
 
     @Override
     public Activity createStationaryActivity(CreateStationaryActivityDto activity) {
@@ -105,12 +104,14 @@ public class ActivityServiceImpl implements ActivityService {
         }
 
         // Create FuelData
-        FuelData fuelData = createTransportFuelData(activityDto, fuel.get());
+        FuelData fuelData = createFuelData(activityDto, fuel.get());
 
         // Create ActivityData
-        ActivityData transportActivityData = new TransportActivityData();
+        TransportActivityData transportActivityData = new TransportActivityData();
         transportActivityData.setActivityType(ActivityTypes.TRANSPORT);
         transportActivityData.setFuelData(fuelData);
+        transportActivityData.setModeOfTransport(activityDto.getTransportMode());
+        transportActivityData.setTransportType(activityDto.getTransportType());
         transportActivityData = activityDataRepository.save(transportActivityData);
 
         // Create Activity
@@ -129,25 +130,63 @@ public class ActivityServiceImpl implements ActivityService {
         }
 
         // Calculate emissions
-        transportEmissionCalculationService.calculateEmissions(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData,
+        transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData,
              activityDto.getFuelUnit(), activityDto.getFuelAmount());
 
         return activityRepository.save(activity);
     }
 
     @Override
-    public Activity createTransportActivityByVehicleData(CreateTransportActivityByVehicleDataDto actibityDto) {
-        return null;
-    }
+    public Activity createTransportActivityByVehicleData(CreateTransportActivityByVehicleDataDto activityDto) {
+        // Validate fuel exists
+        Optional<Fuel> fuel = fuelRepository.findById(activityDto.getFuel());
+        if(fuel.isEmpty()){
+            throw new IllegalArgumentException("Fuel is not recorded");
+        }
 
-    // Helper method for creating mobile fuel data
-    private FuelData createTransportFuelData(CreateTransportActivityByFuelDto dto, Fuel fuel) {
-        FuelData fuelData = new FuelData();
-        fuelData.setFuel(fuel);
-//        fuelData.setFuelState(dto.getFuelState());
-        fuelData.setMetric(dto.getMetric());
-        fuelData.setAmount_in_SI_Unit(0.0);
-        return fuelDataRepository.save(fuelData);
+        Optional<Vehicle> vehicle = vehicleRepository.findById(activityDto.getVehicle());
+        if(vehicle.isEmpty()){
+            throw new IllegalArgumentException("Vehicle is not recorded");
+        }
+
+        // Create Vehicle Data
+        VehicleData vehicleData = createTransportVehicleData(activityDto,vehicle.get());
+
+        //Create Fuel Data
+        FuelData fuelData = createFuelData(activityDto, fuel.get());
+
+        // Create ActivityData
+        TransportActivityData transportActivityData = new TransportActivityData();
+        transportActivityData.setActivityType(ActivityTypes.TRANSPORT);
+        transportActivityData.setFuelData(fuelData);
+        transportActivityData.setModeOfTransport(activityDto.getTransportMode());
+        transportActivityData.setTransportType(activityDto.getTransportType());
+        transportActivityData = activityDataRepository.save(transportActivityData);
+
+        // Create Activity
+        Activity activity = new Activity();
+        activity.setSector(activityDto.getSector());
+        activity.setScope(activityDto.getScope());
+        activity.setRegion(regionRepository.findById(activityDto.getRegion()).get());
+        activity.setActivityData(transportActivityData);
+        activity.setActivityYear(activityDto.getActivityYear());
+
+        // Calculate emissions
+        if(activityDto.getMobileActivityDataType() == MobileActivityDataType.VEHICLE_DISTANCE) {
+            transportEmissionCalculationService.calculateEmissionsByVehicleData(activity, vehicleData, fuel.get(), activityDto.getRegionGroup(), activityDto.getMobileActivityDataType());
+        }
+        else{
+            Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findByFuelAndRegionGroupAndTransportTypeAndVehicleEngineType(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
+
+            if(transportEmissionFactorsList.isEmpty()){
+                throw new IllegalArgumentException("Transport Emission Factors not found for specified region");
+            }
+            transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData,
+                    activityDto.getFuelUnit(), activityDto.getFuelAmount());
+            transportEmissionCalculationService.calculateEmissionsByVehicleData(activity, vehicleData, fuel.get(), activityDto.getRegionGroup(), activityDto.getMobileActivityDataType());
+        }
+
+        return activityRepository.save(activity);
     }
 
     //create FuelData
@@ -158,5 +197,15 @@ public class ActivityServiceImpl implements ActivityService {
         fuelData.setMetric(dto.getMetric());
         fuelData.setAmount_in_SI_Unit(0.0);
         return fuelDataRepository.save(fuelData);
+    }
+
+    //Create VehicleData
+    private VehicleData createTransportVehicleData(CreateTransportActivityByVehicleDataDto dto, Vehicle vehicle) {
+        VehicleData vehicleData = new VehicleData();
+        vehicleData.setVehicle(vehicle);
+        vehicleData.setDistanceTravelled_m(dto.getDistanceUnit().toMeters(dto.getDistanceTravelled()));
+        vehicleData.setPassengers(dto.getPassengers());
+        vehicleData.setFreightWeight_Kg(dto.getFreightWeightUnit().toKilograms(dto.getFreightWeight()));
+        return vehicleDataRepository.save(vehicleData);
     }
 }

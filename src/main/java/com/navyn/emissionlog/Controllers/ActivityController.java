@@ -111,12 +111,4 @@ public class ActivityController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
-
-    @ExceptionHandler(ResponseStatusException.class)
-    public ResponseEntity<ApiResponse> handleResponseStatusException(ResponseStatusException e) {
-        return new ResponseEntity<>(
-                new ApiResponse(false, e.getMessage(), null),
-                e.getStatusCode()
-        );
-    }
 }

@@ -1,11 +1,13 @@
 package com.navyn.emissionlog.Models.ActivityData;
 
-import com.navyn.emissionlog.Models.Vehicles;
+import com.navyn.emissionlog.Models.Vehicle;
 import jakarta.persistence.*;
+import lombok.Data;
 
 import java.util.UUID;
 
 @Entity
+@Data
 public class VehicleData {
 
     @Id
@@ -13,8 +15,8 @@ public class VehicleData {
     private UUID id;
 
     @ManyToOne
-    private Vehicles vehicle;
-    private Double distanceTravelled_Km;
+    private Vehicle vehicle;
+    private Double distanceTravelled_m;
     private Integer passengers;
     private Double freightWeight_Kg;
 }

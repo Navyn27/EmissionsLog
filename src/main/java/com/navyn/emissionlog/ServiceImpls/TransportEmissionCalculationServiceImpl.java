@@ -1,20 +1,17 @@
 package com.navyn.emissionlog.ServiceImpls;
 
-import com.navyn.emissionlog.Enums.EnergyUnits;
-import com.navyn.emissionlog.Enums.MassUnits;
-import com.navyn.emissionlog.Enums.Metrics;
-import com.navyn.emissionlog.Enums.VolumeUnits;
+import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.Models.Activity;
 import com.navyn.emissionlog.Models.ActivityData.FuelData;
+import com.navyn.emissionlog.Models.ActivityData.VehicleData;
 import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Models.TransportFuelEmissionFactors;
+import com.navyn.emissionlog.Models.TransportVehicleDataEmissionFactors;
 import com.navyn.emissionlog.Repositories.ActivityRepository;
 import com.navyn.emissionlog.Repositories.FuelDataRepository;
-import com.navyn.emissionlog.Services.EmissionCalculationService;
+import com.navyn.emissionlog.Repositories.TransportVehicleDataEmissionFactorsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class TransportEmissionCalculationServiceImpl{
@@ -25,7 +22,10 @@ public class TransportEmissionCalculationServiceImpl{
     @Autowired
     private FuelDataRepository fuelDataRepository;
 
-    public void calculateEmissions(TransportFuelEmissionFactors factor, Fuel fuel, Activity activity, FuelData fuelData, String unit, Double rawAmount) {
+    @Autowired
+    private TransportVehicleDataEmissionFactorsRepository transportVehicleDataEmissionFactorsRepository;
+
+    public void calculateEmissionsByFuel(TransportFuelEmissionFactors factor, Fuel fuel, Activity activity, FuelData fuelData, String unit, Double rawAmount) {
 //        Calculate the amount of fuel in the SI unit of provided metric
         Double fuelAmountInSI = convertToSIUnit(rawAmount, fuelData.getMetric(), unit);
 
@@ -34,6 +34,17 @@ public class TransportEmissionCalculationServiceImpl{
         fuelDataRepository.save(fuelData);
 
         applyEmissionFactor(activity,factor, fuelAmountInSI);
+    }
+
+    public void calculateEmissionsByVehicleData(Activity activity, VehicleData vehicleData, Fuel fuel, RegionGroup regionGroup, MobileActivityDataType mobileActivityDataType) {
+        TransportVehicleDataEmissionFactors factor = transportVehicleDataEmissionFactorsRepository.findByVehicleAndFuelAndRegionGroup(vehicleData.getVehicle(), fuel, regionGroup);
+        activity.setBioCO2Emissions(0.0);
+        if(activity.getCH4Emissions() != 0.0)
+            activity.setCH4Emissions(vehicleData.getDistanceTravelled_m() * factor.getCH4EmissionFactor());
+        if(activity.getFossilCO2Emissions() != 0.0)
+            activity.setFossilCO2Emissions(vehicleData.getDistanceTravelled_m() * factor.getCO2EmissionFactor());
+        if(activity.getN2OEmissions() != 0.0)
+            activity.setN2OEmissions(vehicleData.getDistanceTravelled_m() * factor.getN2OEmissionFactor());
     }
 
     private Double convertToSIUnit(Double amount, Metrics metric, String unit) {
@@ -53,7 +64,6 @@ public class TransportEmissionCalculationServiceImpl{
         //apply the emission factor to the activity
         //calculate the emissions based on the fuel amount and the emission factor
         //save the emissions to the activity
-
         activity.setN2OEmissions(factor.getN2OEmissionFactor() * fuelAmountInSI);
         activity.setCH4Emissions(factor.getCH4EmissionFactor() * fuelAmountInSI);
         activity.setFossilCO2Emissions(factor.getFossilCO2EmissionFactor() * fuelAmountInSI);
@@ -61,5 +71,7 @@ public class TransportEmissionCalculationServiceImpl{
 
         activityRepository.save(activity);
     }
+
+
 
 }

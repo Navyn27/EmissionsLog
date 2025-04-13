@@ -11,8 +11,6 @@ import java.util.UUID;
 public interface ActivityService {
     Activity createStationaryActivity(CreateStationaryActivityDto activity);
 
-//    Activity updateActivity(UUID id, Activity activity);
-
     void deleteActivity(UUID id);
 
     Activity getActivityById(UUID id);

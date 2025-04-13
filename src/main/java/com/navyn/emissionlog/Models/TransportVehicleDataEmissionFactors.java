@@ -23,7 +23,7 @@ public class TransportVehicleDataEmissionFactors {
     private UUID id;
 
     @ManyToOne
-    private Vehicles vehicle;
+    private Vehicle vehicle;
 
     @ManyToOne
     private Fuel fuel;
@@ -49,5 +49,4 @@ public class TransportVehicleDataEmissionFactors {
         byte[] hashBytes = digest.digest(data.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(hashBytes);
     }
-
 }

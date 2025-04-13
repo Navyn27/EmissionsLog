@@ -1,18 +1,16 @@
 package com.navyn.emissionlog.Services;
 
-import com.navyn.emissionlog.Enums.RegionGroup;
-import com.navyn.emissionlog.Enums.VehicleType;
-import com.navyn.emissionlog.Models.Vehicles;
+import com.navyn.emissionlog.Models.Vehicle;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface VehicleService {
-    List<Vehicles> getAllVehicles();
+    List<Vehicle> getAllVehicles();
 
-    List<Vehicles> getAllVehiclesByVehicle(String vehicle);
+    List<Vehicle> getAllVehiclesByVehicle(String vehicle);
 
-    Optional<Vehicles> getExistingVehicle( String vehicle, String vehicleYear, String size, String weightLaden);
+    Optional<Vehicle> getExistingVehicle(String vehicle, String vehicleYear, String size, String weightLaden);
 
-    Vehicles createVehicle(Vehicles vehicle);
+    Vehicle createVehicle(Vehicle vehicle);
 }
