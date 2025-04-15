@@ -60,7 +60,7 @@ public class FuelController {
 
     @Operation(summary = "Delete a fuel identified by the provided id", description="Deletes the fuel identified by the provided id.")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse> deleteFuel(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse> deleteFuel(@PathVariable("id") UUID id) {
         fuelService.deleteFuel(id);
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Fuel deleted successfully"));
     }

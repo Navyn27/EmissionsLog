@@ -32,7 +32,7 @@ public class UserController {
 
     @Operation(summary = "Get user by email", description = "Fetches a user identified by the provided email.")
     @GetMapping(path="/{email}")
-    public ResponseEntity<ApiResponse> getUser(@PathVariable String email){
+    public ResponseEntity<ApiResponse> getUser(@PathVariable("email") String email){
         try{
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "User Data Queried Successfully", userService.getUserByEmail(email)));
         }
@@ -43,7 +43,7 @@ public class UserController {
 
     @Operation(summary = "Update user by email", description = "Updates the user identified by the provided email with the new details.")
     @PutMapping(path="/{email}")
-    public ResponseEntity<ApiResponse> updateUser(@PathVariable String email, @Valid @RequestBody SignUpDTO payload){
+    public ResponseEntity<ApiResponse> updateUser(@PathVariable("email") String email, @Valid @RequestBody SignUpDTO payload){
         try{
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "User Updated Successfully", userService.updateUser(email, payload)));
         }

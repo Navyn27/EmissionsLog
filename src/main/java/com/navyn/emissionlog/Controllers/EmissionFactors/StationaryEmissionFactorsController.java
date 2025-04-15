@@ -41,21 +41,21 @@ public class StationaryEmissionFactorsController {
 
     @Operation(summary = "Update emission factors by ID", description="This endpoint updates stationary emission factors associated with a specific ID. It modifies the emission factors identified by the provided ID in the system.")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse> updateEmissionFactor(@PathVariable UUID id, @RequestBody StationaryEmissionFactorsDto stationaryEmissionFactorsDto) {
+    public ResponseEntity<ApiResponse> updateEmissionFactor(@PathVariable("id") UUID id, @RequestBody StationaryEmissionFactorsDto stationaryEmissionFactorsDto) {
         StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.updateStationaryEmissionFactor(id, stationaryEmissionFactorsDto);
         return ResponseEntity.ok( new ApiResponse(true, "Emission has been updated successfully", stationaryEmissionFactors));
     }
 
     @Operation(summary = "Delete emission factors by ID", description="This endpoint deletes stationary emission factors associated with a specific ID. It removes the emission factors identified by the provided ID from the system.")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEmissionFactors(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteEmissionFactors(@PathVariable("id") UUID id) {
         stationaryEmissionFactorsService.deleteStationaryEmissionFactors(id);
         return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "Get emission factors by ID", description="This endpoint retrieves stationary emission factors associated with a specific ID. It returns the details of the emission factors identied by the provided ID.")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> getEmissionFactorsById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse> getEmissionFactorsById(@PathVariable("id") UUID id) {
         StationaryEmissionFactors stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsById(id);
         return ResponseEntity.ok( new ApiResponse(true, "Emission fetched successfully", stationaryEmissionFactors));
     }
@@ -69,7 +69,7 @@ public class StationaryEmissionFactorsController {
 
     @Operation(summary = "Get emission factors by fuel ID", description="This endpoint retrieves stationary emission factors associated with a specific fuel ID. It returns a list of emission factors related to the provided fuel ID.")
     @GetMapping("/fuel/{fuelId}")
-    public ResponseEntity<ApiResponse> getStationaryEmissionFactorsByFuelId(@PathVariable UUID fuelId) {
+    public ResponseEntity<ApiResponse> getStationaryEmissionFactorsByFuelId(@PathVariable("fuelId") UUID fuelId) {
         List<StationaryEmissionFactors> stationaryEmissionFactors = stationaryEmissionFactorsService.getStationaryEmissionFactorsByFuelId(fuelId);
         return ResponseEntity.ok( new ApiResponse(true, "Emission fetched successfully", stationaryEmissionFactors));
     }
