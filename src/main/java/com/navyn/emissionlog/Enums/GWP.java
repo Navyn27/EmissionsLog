@@ -6,7 +6,9 @@ public enum GWP {
     ;
 
     private final int value;
-
+    public int getValue() {
+        return value;
+    }
     GWP(int value) {
         this.value = value;
     }

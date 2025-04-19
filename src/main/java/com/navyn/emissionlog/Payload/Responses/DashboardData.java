@@ -1,0 +1,16 @@
+package com.navyn.emissionlog.Payload.Responses;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class DashboardData {
+    Double totalN20Emissions = 0.0;
+    Double totalFossilCO2Emissions = 0.0;
+    Double totalBioCO2Emissions = 0.0;
+    Double totalCH4Emissions = 0.0;
+    Double totalCO2EqEmissions = 0.0;
+}

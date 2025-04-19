@@ -7,6 +7,7 @@ import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByVehicleDa
 import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.cglib.core.Local;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.validation.Valid;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -147,7 +150,13 @@ public class ActivityController {
     }
 
     @Operation(summary = "Get dashboard summary", description = "Retrieves a summary of the dashboard.")
-    public ResponseEntity<ApiResponse> getDashboardData(){
+    @GetMapping("/dashboard")
+    public ResponseEntity<ApiResponse> getDashboardData(@RequestParam ("year") Integer year){
+        if(year != null){
+            LocalDateTime startDate = LocalDateTime.of(year, 1, 1, 0, 0);
+            LocalDateTime endDate = LocalDateTime.of(year, 12, 31, 23, 59);
+            return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard data fetched successfully", activityService.getDashboardData(startDate, endDate)));
+        }
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard data fetched successfully", activityService.getDashboardData()));
     }
 

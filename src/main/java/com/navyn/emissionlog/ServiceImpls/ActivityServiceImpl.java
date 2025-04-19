@@ -6,11 +6,15 @@ import com.navyn.emissionlog.Models.ActivityData.*;
 import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByFuelDto;
 import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
+import com.navyn.emissionlog.Payload.Responses.DashboardData;
 import com.navyn.emissionlog.Repositories.*;
 import com.navyn.emissionlog.Services.ActivityService;
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -197,6 +201,30 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public List<Activity> getTransportActivities() {
         return activityRepository.findByActivityData_ActivityType(ActivityTypes.TRANSPORT);
+    }
+
+    @Override
+    public DashboardData getDashboardData() {
+        List<Activity> activities = activityRepository.findAll();
+        return calculateDashboardData(activities);
+    }
+
+    @Override
+    public DashboardData getDashboardData(LocalDateTime startDate, LocalDateTime endDate) {
+        List<Activity> activities = activityRepository.findByActivityYearBetwee(startDate, endDate);
+        return calculateDashboardData(activities);
+    }
+
+    private DashboardData calculateDashboardData(List<Activity> activities){
+        DashboardData dashboardData = new DashboardData();
+        for(Activity activity : activities){
+            dashboardData.setTotalCH4Emissions(dashboardData.getTotalCH4Emissions() + activity.getCH4Emissions());
+            dashboardData.setTotalN20Emissions(dashboardData.getTotalN20Emissions() + activity.getN2OEmissions());
+            dashboardData.setTotalFossilCO2Emissions(dashboardData.getTotalFossilCO2Emissions() + activity.getFossilCO2Emissions());
+            dashboardData.setTotalBioCO2Emissions(dashboardData.getTotalBioCO2Emissions() + activity.getBioCO2Emissions());
+        }
+        dashboardData.setTotalCO2EqEmissions(dashboardData.getTotalFossilCO2Emissions() + dashboardData.getTotalBioCO2Emissions() + dashboardData.getTotalCH4Emissions()*GWP.CH4.getValue() + dashboardData.getTotalN20Emissions()*GWP.NO2.getValue());
+        return dashboardData;
     }
 
     //create FuelData
