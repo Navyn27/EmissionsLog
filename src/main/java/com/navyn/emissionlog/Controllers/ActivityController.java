@@ -60,7 +60,7 @@ public class ActivityController {
     }
 
     @Operation(summary = "Create a transport activity by vehicle data", description = "Creates a transport activity using vehicle data.")
-    @PostMapping("/transport/vehicleData/create")
+    @PostMapping("/transport/vehicle-data/create")
     public ResponseEntity<ApiResponse> createMobileVehicleDataActivity(@Valid @RequestBody CreateTransportActivityByVehicleDataDto activityDto){
         try{
             Activity createdActivity = activityService.createTransportActivityByVehicleData(activityDto);
@@ -121,34 +121,14 @@ public class ActivityController {
         }
     }
 
-    @Operation(summary = "Get all sectors", description = "Retrieves a list of all sectors.")
     @GetMapping("/sectors")
     public ResponseEntity<ApiResponse> getSectors() {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new ApiResponse(true, "Sectors fetched successfully", Sectors.values()));
     }
 
-    @Operation(summary = "Get all transport modes", description = "Retrieves a list of all transport modes.")
     @GetMapping("/transportModes")
     public ResponseEntity<ApiResponse> getTransportModes(){
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Transport Modes fetched successfully", TransportModes.values()));
     }
-
-    @Operation(summary = "Get all stationary activities", description = "Retrieves a list of all stationary activities and their emissions.")
-    @GetMapping("/stationary")
-    public ResponseEntity<ApiResponse> getStationaryActivities(){
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Stationary activities fetched successfully", activityService.getStationaryActivities()));
-    }
-
-    @Operation(summary = "Get all transport activities", description = "Retrieves a list of all transport activities and their emissions.")
-    @GetMapping("/transport")
-    public ResponseEntity<ApiResponse> getTransportActivities(){
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Transport activities fetched succesfully", activityService.getTransportActivities()));
-    }
-
-    @Operation(summary = "Get dashboard summary", description = "Retrieves a summary of the dashboard.")
-    public ResponseEntity<ApiResponse> getDashboardData(){
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard data fetched successfully", activityService.getDashboardData()));
-    }
-
 }

@@ -27,10 +27,7 @@ public class TransportFuelEmissionFactors {
     @Enumerated(EnumType.STRING)
     private RegionGroup regionGroup;
 
-    @Enumerated(EnumType.STRING)
     private VehicleEngineType vehicleEngineType;
-
-    @Enumerated(EnumType.STRING)
     private TransportType transportType;
 
     @ManyToOne
