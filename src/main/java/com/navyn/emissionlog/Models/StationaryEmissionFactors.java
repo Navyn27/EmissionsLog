@@ -31,16 +31,16 @@ public class StationaryEmissionFactors {
     private Fuel fuel; // Relation to Fuel entity
 
     @Column(nullable = false)
-    private double energyBasis; // kg CO₂/TJ
+    private Double energyBasis = 0.0; // kg CO₂/TJ
 
     @Column(nullable = false)
-    private double massBasis; // kg CO₂/tonne
+    private Double massBasis = 0.0; // kg CO₂/tonne
 
     @Column(nullable = true)
-    private Double liquidBasis; // kg CO₂/litre (for liquid fuels)
+    private Double liquidBasis = 0.0; // kg CO₂/litre (for liquid fuels)
 
     @Column(nullable = true)
-    private Double gasBasis; // kg CO₂/m³ (for gaseous fuels)
+    private Double gasBasis = 0.0; // kg CO₂/m³ (for gaseous fuels)
 
     @Column(nullable = false, unique = true)
     private String checkSum; // Unique checksum for the emission factor to ensure data integrity and avoid over calculation of emissions

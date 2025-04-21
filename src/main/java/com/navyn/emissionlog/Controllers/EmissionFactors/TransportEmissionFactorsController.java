@@ -184,6 +184,9 @@ public class TransportEmissionFactorsController {
                 metrics.add(Metrics.VOLUME);
             }
         }
+        else{
+            metrics.add(Metrics.VOLUME);
+        }
         return ResponseEntity.ok(
                 new ApiResponse(true, "Supported metrics for fuel fetched successfully", metrics)
         );
@@ -287,5 +290,12 @@ public class TransportEmissionFactorsController {
         return ResponseEntity.ok(
                 new ApiResponse(true, "Supported vehicle engine types fetched successfully", supportedVehicleEngineTypes)
         );
+    }
+
+    @Operation(summary = "Get all mobile activity data types", description = "This endpoint retrieves all mobile activity data types. It returns a list of all supported mobile activity data types.")
+    @GetMapping("/mobileActivityDataTypes")
+    public ResponseEntity<ApiResponse> getAllMobileActivityDataTypes(){
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Mobile activity data types fetched successfully", MobileActivityDataType.values()));
     }
 }

@@ -20,4 +20,8 @@ public interface ActivityService {
     Activity createTransportActivityByFuel(CreateTransportActivityByFuelDto activityDto);
 
     Activity createTransportActivityByVehicleData(CreateTransportActivityByVehicleDataDto activityDto);
+
+    List<Activity> getStationaryActivities();
+
+    List<Activity> getTransportActivities();
 }

@@ -12,4 +12,6 @@ public class CreateTransportActivityByVehicleDataDto extends TransportActivityDt
     private Double distanceTravelled = 0.0;
     private DistanceUnits distanceUnit;
     private MobileActivityDataType mobileActivityDataType;
+    public Double freightWeight;
+    public MassUnits freightWeightUnit;
 }
