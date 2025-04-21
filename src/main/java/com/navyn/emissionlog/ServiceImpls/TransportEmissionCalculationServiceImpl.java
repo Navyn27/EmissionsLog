@@ -64,14 +64,33 @@ public class TransportEmissionCalculationServiceImpl{
         //apply the emission factor to the activity
         //calculate the emissions based on the fuel amount and the emission factor
         //save the emissions to the activity
-        activity.setN2OEmissions(factor.getN2OEmissionFactor() * fuelAmountInSI);
-        activity.setCH4Emissions(factor.getCH4EmissionFactor() * fuelAmountInSI);
-        activity.setFossilCO2Emissions(factor.getFossilCO2EmissionFactor() * fuelAmountInSI);
-        activity.setBioCO2Emissions(factor.getBiogenicCO2EmissionFactor() * fuelAmountInSI);
 
+        if(factor.getN2OEmissionFactor() != null){
+            activity.setN2OEmissions(factor.getN2OEmissionFactor() * fuelAmountInSI);
+        }
+        else{
+            activity.setN2OEmissions(0.0);
+        }
+        if(factor.getCH4EmissionFactor() != null){
+            activity.setCH4Emissions(factor.getCH4EmissionFactor() * fuelAmountInSI);
+        }
+        else{
+            activity.setCH4Emissions(0.0);
+        }
+        if(factor.getFossilCO2EmissionFactor() != null){
+            activity.setFossilCO2Emissions(factor.getFossilCO2EmissionFactor() * fuelAmountInSI);
+        }
+        else{
+            activity.setFossilCO2Emissions(0.0);
+        }
+        if(factor.getBiogenicCO2EmissionFactor() != null){
+            activity.setBioCO2Emissions(factor.getBiogenicCO2EmissionFactor() * fuelAmountInSI);
+        }
+        else{
+            activity.setBioCO2Emissions(0.0);
+        }
         activityRepository.save(activity);
     }
-
 
 
 }

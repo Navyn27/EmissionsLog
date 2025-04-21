@@ -189,6 +189,16 @@ public class ActivityServiceImpl implements ActivityService {
         return activityRepository.save(activity);
     }
 
+    @Override
+    public List<Activity> getStationaryActivities() {
+        return activityRepository.findByActivityData_ActivityType(ActivityTypes.STATIONARY);
+    }
+
+    @Override
+    public List<Activity> getTransportActivities() {
+        return activityRepository.findByActivityData_ActivityType(ActivityTypes.TRANSPORT);
+    }
+
     //create FuelData
     private FuelData createFuelData(CreateStationaryActivityDto dto, Fuel fuel) {
         FuelData fuelData = new FuelData();
