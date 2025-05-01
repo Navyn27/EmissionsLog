@@ -40,5 +40,17 @@ public class Activity {
 
     private Double N2OEmissions = 0.0;
 
+    @Transient
+    private Double CO2EqEmissions = 0.0;
+
     private LocalDateTime activityYear = LocalDateTime.now();
+
+    @PostLoad
+    private void setCO2EqEmissions() {
+        this.CO2EqEmissions = calculateCO2EqEmissions();
+    }
+
+    private Double calculateCO2EqEmissions() {
+        return (this.FossilCO2Emissions * 1) + (this.BioCO2Emissions * 1) + (this.N2OEmissions * GWP.NO2.getValue()) + (this.CH4Emissions * GWP.CH4.getValue());
+    }
 }

@@ -13,11 +13,11 @@ import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ActivityServiceImpl implements ActivityService {
@@ -211,8 +211,47 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public DashboardData getDashboardData(LocalDateTime startDate, LocalDateTime endDate) {
-        List<Activity> activities = activityRepository.findByActivityYearBetwee(startDate, endDate);
+        List<Activity> activities = activityRepository.findByActivityYearBetween(startDate, endDate);
         return calculateDashboardData(activities);
+    }
+
+    @Override
+    public List<DashboardData> getDashboardGraphData(Integer year) {
+        List<Activity> activities;
+        if(year==0){
+            activities = activityRepository.findAll();
+        }
+        else {
+            LocalDateTime startDate = LocalDateTime.of(year, 1, 1, 0, 0);
+            LocalDateTime endDate = LocalDateTime.of(year, 12, 31, 23, 59);
+            activities = activityRepository.findByActivityYearBetween(startDate, endDate);
+        }
+
+        // Group activities by year and month
+        Map<YearMonth, List<Activity>> activitiesByYearMonth = activities.stream()
+                .collect(Collectors.groupingBy(activity ->
+                        YearMonth.from(activity.getActivityYear())));
+
+        // Create aggregated dashboard data for each month
+        List<DashboardData> dashboardDataList = new ArrayList<>();
+
+        for (Map.Entry<YearMonth, List<Activity>> entry : activitiesByYearMonth.entrySet()) {
+            YearMonth yearMonth = entry.getKey();
+            List<Activity> monthlyActivities = entry.getValue();
+
+            DashboardData data = calculateDashboardData(monthlyActivities);
+            // Store period information (you may need to add a field to DashboardData class)
+            data.setMonth(yearMonth.getMonth());
+            data.setYear(yearMonth.getYear());// Assuming there's a period field
+            dashboardDataList.add(data);
+        }
+
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
+        // Sort by year and month
+        dashboardDataList.sort(Comparator.comparing(data ->
+                YearMonth.of(data.getYear(), data.getMonth().getValue())
+        ));
+        return dashboardDataList;
     }
 
     private DashboardData calculateDashboardData(List<Activity> activities){

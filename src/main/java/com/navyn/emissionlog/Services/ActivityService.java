@@ -31,4 +31,6 @@ public interface ActivityService {
     DashboardData getDashboardData();
 
     DashboardData getDashboardData(LocalDateTime startDate, LocalDateTime endDate);
+
+    List<DashboardData> getDashboardGraphData(Integer year);
 }

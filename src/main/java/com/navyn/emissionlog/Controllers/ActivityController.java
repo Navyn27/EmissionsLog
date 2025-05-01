@@ -160,4 +160,10 @@ public class ActivityController {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard data fetched successfully", activityService.getDashboardData()));
     }
 
+    @Operation(summary = "Get dashboard graph data", description = "Retrieves data for the dashboard graph.")
+    @GetMapping("/dashboard/graph")
+    public ResponseEntity<ApiResponse> getDashbaordData(@RequestParam ("year") Integer year){
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard graph data fetched successfully", activityService.getDashboardGraphData(year)));
+    }
+
 }

@@ -21,7 +21,7 @@ import org.springframework.context.annotation.Configuration;
         ),
 
         servers = @Server(
-                url = "${app.server-url:http://localhost:8088}",
+                url = "${app.server-url:http://localhost:8088/api/v1}",
                 description = "Server base URL"
         )
 
