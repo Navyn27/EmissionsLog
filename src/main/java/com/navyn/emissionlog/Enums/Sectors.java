@@ -9,5 +9,6 @@ public enum Sectors {
     RESIDENTIAL,
     AGRICULTURE,
     FORESTRY,
-    FISHERIES;
+    FISHERIES,
+    TRANSPORT;
 }

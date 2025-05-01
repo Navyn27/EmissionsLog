@@ -7,15 +7,16 @@ import jakarta.persistence.Id;
 
 import java.util.UUID;
 
-@Entity(name = "population")
-public class PopulationRecords {
+@Entity
+public class HouseholdRecords {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    private Long population;
-
     private String year;
 
-    private Double annualGrowth;
+    private Long householdNumber;
+
+    private Double growthRate;
 }
