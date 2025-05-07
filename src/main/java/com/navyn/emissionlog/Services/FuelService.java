@@ -2,8 +2,8 @@ package com.navyn.emissionlog.Services;
 
 import com.navyn.emissionlog.Enums.FuelTypes;
 import com.navyn.emissionlog.Models.Fuel;
-import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
-import com.navyn.emissionlog.Payload.Requests.ExistingFuelDto;
+import com.navyn.emissionlog.Payload.Requests.Fuel.CreateFuelDto;
+import com.navyn.emissionlog.Payload.Requests.Fuel.ExistingFuelDto;
 
 import java.util.List;
 import java.util.Optional;

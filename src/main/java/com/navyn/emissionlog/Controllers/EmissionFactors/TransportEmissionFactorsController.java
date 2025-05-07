@@ -5,7 +5,7 @@ import com.navyn.emissionlog.Models.Fuel;
 import com.navyn.emissionlog.Models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.Models.TransportVehicleDataEmissionFactors;
 import com.navyn.emissionlog.Models.Vehicle;
-import com.navyn.emissionlog.Payload.Requests.CreateFuelDto;
+import com.navyn.emissionlog.Payload.Requests.Fuel.CreateFuelDto;
 import com.navyn.emissionlog.Payload.Requests.EmissionFactors.TransportFuelEmissionFactorsDto;
 import com.navyn.emissionlog.Payload.Requests.EmissionFactors.TransportVehicleDataEmissionFactorsDto;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;

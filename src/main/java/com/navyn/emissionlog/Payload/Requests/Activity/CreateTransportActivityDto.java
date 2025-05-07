@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Payload.Requests;
+package com.navyn.emissionlog.Payload.Requests.Activity;
 
 public class CreateTransportActivityDto {
     private String modeOfTransport;

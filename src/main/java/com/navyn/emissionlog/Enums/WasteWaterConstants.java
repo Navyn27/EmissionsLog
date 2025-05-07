@@ -6,7 +6,7 @@ import lombok.Getter;
 public enum WasteWaterConstants{
 
     BOD(13.505),
-    Bo(0.6),
+    BO(0.6),
     FLUSH_TOILET_MCF(0.5),
     FLUSH_TOILET_EF(0.3),
     LATRINES_MCF(0.70),

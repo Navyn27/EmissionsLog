@@ -1,11 +1,9 @@
-package com.navyn.emissionlog.ServiceImpls;
+package com.navyn.emissionlog.ServiceImpls.UserServices;
 
 import com.navyn.emissionlog.Models.User;
 import com.navyn.emissionlog.Models.UserPrincipal;
 import com.navyn.emissionlog.Repositories.UserRepository;
-import com.navyn.emissionlog.Services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

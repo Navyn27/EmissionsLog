@@ -1,9 +1,8 @@
-package com.navyn.emissionlog.Payload.Requests;
+package com.navyn.emissionlog.Payload.Requests.Activity;
 
 import com.navyn.emissionlog.Enums.*;
 import lombok.Data;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data

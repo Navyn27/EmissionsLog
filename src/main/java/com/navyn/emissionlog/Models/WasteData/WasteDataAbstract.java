@@ -1,36 +1,35 @@
-package com.navyn.emissionlog.Models;
+package com.navyn.emissionlog.Models.WasteData;
 
-import com.navyn.emissionlog.Enums.*;
-import com.navyn.emissionlog.Models.ActivityData.ActivityData;
+import com.navyn.emissionlog.Enums.GWP;
+import com.navyn.emissionlog.Enums.Scopes;
+import com.navyn.emissionlog.Enums.WasteType;
+import com.navyn.emissionlog.Models.Region;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.util.Base64;
 import java.util.UUID;
 
 @Entity
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "waste_type")
 @Data
-public class Activity {
+@Table(name = "waste_data_abstract")
+public abstract class WasteDataAbstract {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
     @Enumerated(EnumType.STRING)
-    private Sectors sector;
+    @Column(name = "waste_type_value")
+    private WasteType wasteType;
 
     @Enumerated(EnumType.STRING)
     private Scopes scope;
 
     @ManyToOne
     private Region region;
-
-    @OneToOne
-    private ActivityData activityData;
 
     private Double CH4Emissions = 0.0;
 
@@ -39,6 +38,8 @@ public class Activity {
     private Double BioCO2Emissions = 0.0;
 
     private Double N2OEmissions = 0.0;
+
+    private Double NH4Emissions = 0.0;
 
     @Transient
     private Double CO2EqEmissions = 0.0;

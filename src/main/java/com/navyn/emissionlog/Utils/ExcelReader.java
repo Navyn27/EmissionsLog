@@ -59,13 +59,39 @@ public class ExcelReader {
         transportEmissionsByVehicleDataDtoMap.put("N2O EF", "N2OEmissionFactor");
     }
 
+    // This hashmap is responsible for reading data from population records Excel files and mapping it to DTOs.
+    private static final Map<String, String> populationRecordsToDtoMap = new HashMap<>();
+    static {
+        populationRecordsToDtoMap.put("Year", "year");
+        populationRecordsToDtoMap.put("Population", "population");
+        populationRecordsToDtoMap.put("Annual Growth", "annualGrowth");
+        populationRecordsToDtoMap.put("Country", "country");
+        populationRecordsToDtoMap.put("Number of Kigali Households", "numberOfKigaliHouseholds");
+        populationRecordsToDtoMap.put("GDP Millions", "GDPMillions");
+        populationRecordsToDtoMap.put("GDP Per Capita", "GDPPerCapita");
+        populationRecordsToDtoMap.put("Kigali GDP", "kigaliGDP");
+    }
+
+    // This hashmap is responsible for reading data from EICV reports Excel files and mapping it to DTOs.
+    private static final Map<String, String> eicvReportsToDtoMap = new HashMap<>();
+    static{
+        eicvReportsToDtoMap.put("Year", "year");
+        eicvReportsToDtoMap.put("Total Improved Sanitation", "totalImprovedSanitation");
+        eicvReportsToDtoMap.put("Improved Type Not Shared With Other HH", "improvedTypeNotSharedWithOtherHH");
+        eicvReportsToDtoMap.put("Flush Toilet", "flushToilet");
+        eicvReportsToDtoMap.put("Protected Latrines", "protectedLatrines");
+        eicvReportsToDtoMap.put("Unprotected Latrines", "unprotectedLatrines");
+        eicvReportsToDtoMap.put("Others", "others");
+        eicvReportsToDtoMap.put("No Toilet Facilities", "noToiletFacilities");
+        eicvReportsToDtoMap.put("Total Households", "totalHouseholds");
+    }
+
     public static <T> List<T> readEmissionsExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType) throws IOException {
         List<T> result = new ArrayList<>();
 
         try (Workbook workbook = WorkbookFactory.create(inputStream)) {
-            Sheet sheet = excelType.equals(ExcelType.FUEL_STATIONARY_EMISSIONS)? workbook.getSheet("Stationary Emissions"):
-                                     excelType.equals(ExcelType.FUEL_TRANSPORT_EMISSIONS) ? workbook.getSheet("Transport Fuel Emissions"):
-                                            workbook.getSheet("Vehicle Based");
+            Sheet sheet = workbook.getSheet(findSheetName(excelType));
+
             if (sheet == null) {
                 throw new IOException("Sheet not found");
             }
@@ -86,9 +112,7 @@ public class ExcelReader {
                         if (cell == null) continue;
 
                         String header = headers.get(i);
-                        String fieldName = excelType.equals(ExcelType.FUEL_STATIONARY_EMISSIONS)? stationaryEmissionsToDtoMap.get(header):
-                                                    excelType.equals(ExcelType.FUEL_TRANSPORT_EMISSIONS) ? transportEmissionsByFuelDtoMap.get(header) :
-                                                            transportEmissionsByVehicleDataDtoMap.get(header);
+                        String fieldName = findHeaderInSheet(excelType, header);
 
                         if (fieldName != null) {
                             Field field = dtoClass.getDeclaredField(fieldName);
@@ -166,5 +190,39 @@ public class ExcelReader {
             }
         }
         return true;
+    }
+
+    private static String findSheetName(ExcelType excelType){
+        switch(excelType){
+            case FUEL_STATIONARY_EMISSIONS:
+                return "Stationary Emissions";
+            case FUEL_TRANSPORT_EMISSIONS:
+                return "Transport Fuel Emissions";
+            case POPULATION_RECORDS:
+                return "Population Records";
+            case VEHICLE_DATA_TRANSPORT_EMISSIONS:
+                return "Vehicle Based";
+            case EICV_REPORT:
+                return "EICV Report";
+            default:
+                return "";
+        }
+    }
+
+    private static String findHeaderInSheet(ExcelType excelType, String header){
+        switch(excelType){
+            case FUEL_STATIONARY_EMISSIONS:
+                return stationaryEmissionsToDtoMap.get(header);
+            case FUEL_TRANSPORT_EMISSIONS:
+                return transportEmissionsByFuelDtoMap.get(header);
+            case POPULATION_RECORDS:
+                return populationRecordsToDtoMap.get(header);
+            case VEHICLE_DATA_TRANSPORT_EMISSIONS:
+                return transportEmissionsByVehicleDataDtoMap.get(header);
+            case EICV_REPORT:
+                return eicvReportsToDtoMap.get(header);
+            default:
+                return "";
+        }
     }
 }

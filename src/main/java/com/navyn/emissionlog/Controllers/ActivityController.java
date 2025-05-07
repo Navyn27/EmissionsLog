@@ -2,12 +2,11 @@ package com.navyn.emissionlog.Controllers;
 
 import com.navyn.emissionlog.Enums.Sectors;
 import com.navyn.emissionlog.Enums.TransportModes;
-import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByFuelDto;
-import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByVehicleDataDto;
-import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
+import com.navyn.emissionlog.Payload.Requests.Activity.CreateTransportActivityByFuelDto;
+import com.navyn.emissionlog.Payload.Requests.Activity.CreateTransportActivityByVehicleDataDto;
+import com.navyn.emissionlog.Payload.Requests.Activity.CreateStationaryActivityDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.cglib.core.Local;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -76,6 +75,38 @@ public class ActivityController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
+
+//    @PostMapping("/waste/solid/create")
+//    public ResponseEntity<ApiResponse> createSolidWasteActivity(@Valid @RequestBody CreateSolidWasteActivityDto activityDto) {
+//        try {
+//            Activity createdActivity = activityService.createSolidWasteActivity(activityDto);
+//            return new ResponseEntity<>(
+//                    new ApiResponse(true, "Activity created successfully", createdActivity),
+//                    HttpStatus.CREATED
+//            );
+//        } catch (IllegalArgumentException e) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+//        }
+//    }
+//
+//    @PostMapping("/waste/biologicallyTreated/create")
+//    public ResponseEntity<ApiResponse> createBiologicallTreatedWasteActivity(@Valid @RequestBody CreateBiologicallTreatedWasteDto activityDto){
+//        try{
+//            Activity createdActivity = activityService.createBiologicallyTreatedWasteActivity(activityDto);
+//            return new ResponseEntity<>(
+//                    new ApiResponse(true, "Activity created successfully", createdActivity),
+//                    HttpStatus.CREATED
+//            );
+//        }
+//        catch(IllegalArgumentException e){
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+//        }
+//    }
+//
+//    @PostMapping("/waste/burning/create")
+//
+//    @PostMapping("/waste/incineration/create")
+
 
     @Operation(summary = "Get an activity by ID", description = "Retrieves an activity using its unique identifier.")
     @GetMapping("/{id}")

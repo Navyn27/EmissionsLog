@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.ServiceImpls;
+package com.navyn.emissionlog.ServiceImpls.UserServices;
 
 import com.navyn.emissionlog.Models.User;
 import com.navyn.emissionlog.Repositories.UserRepository;

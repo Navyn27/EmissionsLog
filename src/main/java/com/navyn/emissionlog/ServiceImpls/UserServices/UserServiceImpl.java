@@ -1,10 +1,10 @@
-package com.navyn.emissionlog.ServiceImpls;
+package com.navyn.emissionlog.ServiceImpls.UserServices;
 
 import com.navyn.emissionlog.Exceptions.EmailAlreadyExistsException;
 import com.navyn.emissionlog.Exceptions.UnmatchingPasswordsException;
 import com.navyn.emissionlog.Models.User;
-import com.navyn.emissionlog.Payload.Requests.LoginDTO;
-import com.navyn.emissionlog.Payload.Requests.SignUpDTO;
+import com.navyn.emissionlog.Payload.Requests.Auth.LoginDTO;
+import com.navyn.emissionlog.Payload.Requests.Auth.SignUpDTO;
 import com.navyn.emissionlog.Repositories.UserRepository;
 import com.navyn.emissionlog.Repositories.WorkspaceRepository;
 import com.navyn.emissionlog.Services.UserService;

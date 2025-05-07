@@ -2,8 +2,8 @@ package com.navyn.emissionlog.Controllers;
 
 import com.navyn.emissionlog.Exceptions.EmailAlreadyExistsException;
 import com.navyn.emissionlog.Exceptions.UnmatchingPasswordsException;
-import com.navyn.emissionlog.Payload.Requests.LoginDTO;
-import com.navyn.emissionlog.Payload.Requests.SignUpDTO;
+import com.navyn.emissionlog.Payload.Requests.Auth.LoginDTO;
+import com.navyn.emissionlog.Payload.Requests.Auth.SignUpDTO;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.Services.UserService;
 import io.swagger.v3.oas.annotations.Operation;

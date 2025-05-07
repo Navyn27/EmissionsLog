@@ -3,11 +3,13 @@ package com.navyn.emissionlog.ServiceImpls;
 import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.Models.*;
 import com.navyn.emissionlog.Models.ActivityData.*;
-import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByFuelDto;
-import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByVehicleDataDto;
-import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
+import com.navyn.emissionlog.Payload.Requests.Activity.CreateTransportActivityByFuelDto;
+import com.navyn.emissionlog.Payload.Requests.Activity.CreateTransportActivityByVehicleDataDto;
+import com.navyn.emissionlog.Payload.Requests.Activity.CreateStationaryActivityDto;
 import com.navyn.emissionlog.Payload.Responses.DashboardData;
 import com.navyn.emissionlog.Repositories.*;
+import com.navyn.emissionlog.ServiceImpls.EmissionCalculation.StationaryEmissionCalculationServiceImpl;
+import com.navyn.emissionlog.ServiceImpls.EmissionCalculation.TransportEmissionCalculationServiceImpl;
 import com.navyn.emissionlog.Services.ActivityService;
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -262,7 +264,7 @@ public class ActivityServiceImpl implements ActivityService {
             dashboardData.setTotalFossilCO2Emissions(dashboardData.getTotalFossilCO2Emissions() + activity.getFossilCO2Emissions());
             dashboardData.setTotalBioCO2Emissions(dashboardData.getTotalBioCO2Emissions() + activity.getBioCO2Emissions());
         }
-        dashboardData.setTotalCO2EqEmissions(dashboardData.getTotalFossilCO2Emissions() + dashboardData.getTotalBioCO2Emissions() + dashboardData.getTotalCH4Emissions()*GWP.CH4.getValue() + dashboardData.getTotalN20Emissions()*GWP.NO2.getValue());
+        dashboardData.setTotalCO2EqEmissions(dashboardData.getTotalFossilCO2Emissions() + dashboardData.getTotalBioCO2Emissions() + dashboardData.getTotalCH4Emissions()*GWP.CH4.getValue() + dashboardData.getTotalN20Emissions()*GWP.N2O.getValue());
         return dashboardData;
     }
 

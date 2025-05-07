@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Payload.Requests;
+package com.navyn.emissionlog.Payload.Requests.Auth;
 
 import com.navyn.emissionlog.Enums.Roles;
 import jakarta.persistence.EnumType;

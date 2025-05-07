@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Payload.Requests;
+package com.navyn.emissionlog.Payload.Requests.Activity;
 import lombok.Data;
 
 @Data

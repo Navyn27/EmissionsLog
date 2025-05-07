@@ -1,5 +1,8 @@
 package com.navyn.emissionlog.Enums;
 
+import lombok.Getter;
+
+@Getter
 public enum GeneralWasteWaterConstants {
 
     PROTEIN_EXCRETION_PER_CAPITA(3.20),

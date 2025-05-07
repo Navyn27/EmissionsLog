@@ -1,11 +1,10 @@
 package com.navyn.emissionlog.Services;
 
 import com.navyn.emissionlog.Models.Activity;
-import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByFuelDto;
-import com.navyn.emissionlog.Payload.Requests.CreateTransportActivityByVehicleDataDto;
-import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
+import com.navyn.emissionlog.Payload.Requests.Activity.CreateTransportActivityByFuelDto;
+import com.navyn.emissionlog.Payload.Requests.Activity.CreateTransportActivityByVehicleDataDto;
+import com.navyn.emissionlog.Payload.Requests.Activity.CreateStationaryActivityDto;
 import com.navyn.emissionlog.Payload.Responses.DashboardData;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalDateTime;
 import java.util.List;

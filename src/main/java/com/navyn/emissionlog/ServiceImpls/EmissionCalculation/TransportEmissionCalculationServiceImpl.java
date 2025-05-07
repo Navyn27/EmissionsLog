@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.ServiceImpls;
+package com.navyn.emissionlog.ServiceImpls.EmissionCalculation;
 
 import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.Models.Activity;

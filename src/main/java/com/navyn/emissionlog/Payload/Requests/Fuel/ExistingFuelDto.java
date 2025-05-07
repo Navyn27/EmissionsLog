@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Payload.Requests;
+package com.navyn.emissionlog.Payload.Requests.Fuel;
 
 import com.navyn.emissionlog.Enums.FuelTypes;
 import lombok.Data;

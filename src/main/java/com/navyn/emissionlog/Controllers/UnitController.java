@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController("UnitsController")
 @SecurityRequirement(name = "BearerAuth")
-@RequestMapping(value = "/units/")
+@RequestMapping(value = "/units")
 public class UnitController {
 
     @Operation(summary = "Retrieves units by Metric", description = "Fetches supported units associated with the specified metric.")

@@ -1,0 +1,71 @@
+package com.navyn.emissionlog.Models.WasteData;
+
+import com.navyn.emissionlog.Enums.WasteType;
+import com.navyn.emissionlog.Models.PopulationRecords;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import static com.navyn.emissionlog.Enums.GeneralWasteWaterConstants.*;
+import static com.navyn.emissionlog.Enums.IndustrialWasteWaterConstants.*;
+
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "industrial_waste_water_data")
+public class IndustrialWasteWaterData extends WasteDataAbstract {
+    private Double sugarProductionAmount = 0.0;
+    private Double bearProductionAmount = 0.0;
+    private Double dairyProductionAmount = 0.0;
+    private Double meatAndPoultryProductionAmount = 0.0;
+
+    private Double sugarN2OEmissions = 0.0;
+    private Double bearN2OEmissions = 0.0;
+    private Double dairyN2OEmissions= 0.0;
+    private Double meatAndPoultryN2OEmissions = 0.0;
+
+    private Double sugarNH4Emissions = 0.0;
+    private Double bearNH4Emissions = 0.0;
+    private Double dairyNH4Emissions = 0.0;
+    private Double meatAndPoultryNH4Emissions = 0.0;
+
+    private Double sugarTOW = 0.0;
+    private Double bearTOW = 0.0;
+    private Double dairyTOW = 0.0;
+    private Double meatTOW = 0.0;
+
+    @ManyToOne
+    private PopulationRecords populationRecords;
+
+    public Double calculateN2OEmissions() {
+
+        Double generalConstantMultiplier =  PROTEIN_EXCRETION_PER_CAPITA.getValue()*F_NPR.getValue()*F_NON_CON.getValue()*F_IND_COM.getValue()*EF_EFFLUENT.getValue();
+
+        setSugarN2OEmissions((sugarProductionAmount*WASTE_WATER_GENERATED.getSugarValue()*PROTEIN_EXCRETION_PER_CAPITA.getValue()*generalConstantMultiplier*44/28)/1000.0);
+        setBearN2OEmissions((bearProductionAmount*WASTE_WATER_GENERATED.getBeerValue()*PROTEIN_EXCRETION_PER_CAPITA.getValue()*generalConstantMultiplier*44/28)/1000.0);
+        setDairyN2OEmissions((dairyProductionAmount*WASTE_WATER_GENERATED.getDairyProductsValue()*PROTEIN_EXCRETION_PER_CAPITA.getValue()*generalConstantMultiplier*44/28)/1000.0);
+        setMeatAndPoultryN2OEmissions((meatAndPoultryProductionAmount*WASTE_WATER_GENERATED.getMeatAndPoultryValue()*PROTEIN_EXCRETION_PER_CAPITA.getValue()*generalConstantMultiplier*44/28)/1000.0);
+        return sugarN2OEmissions + bearN2OEmissions + dairyN2OEmissions + meatAndPoultryN2OEmissions;
+    }
+
+    public Double calculateNH4Emissions() {
+
+        Double generalConstantMultiplier = INDUSTRIAL_WW_BO.getSugarValue()*INDUSTRIAL_WW_MCF.getSugarValue();
+
+        //calculate all the TOW
+        setSugarTOW(sugarProductionAmount*CODi.getSugarValue()* WASTE_WATER_GENERATED.getSugarValue());
+        setBearTOW(bearProductionAmount*CODi.getBeerValue()* WASTE_WATER_GENERATED.getBeerValue());
+        setDairyTOW(dairyProductionAmount*CODi.getDairyProductsValue()* WASTE_WATER_GENERATED.getDairyProductsValue());
+        setMeatTOW(meatAndPoultryProductionAmount*CODi.getMeatAndPoultryValue()* WASTE_WATER_GENERATED.getMeatAndPoultryValue());
+
+        //Calculate the emissions
+        setSugarNH4Emissions(sugarTOW*generalConstantMultiplier);
+        setBearNH4Emissions(bearTOW*generalConstantMultiplier);
+        setDairyNH4Emissions(dairyTOW*generalConstantMultiplier);
+        setMeatAndPoultryNH4Emissions(meatTOW*generalConstantMultiplier);
+
+        return sugarNH4Emissions + bearNH4Emissions + dairyNH4Emissions + meatAndPoultryNH4Emissions;
+    }
+}

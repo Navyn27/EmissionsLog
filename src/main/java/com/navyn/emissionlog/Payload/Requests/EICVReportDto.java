@@ -1,19 +1,9 @@
-package com.navyn.emissionlog.Models;
+package com.navyn.emissionlog.Payload.Requests;
 
-import jakarta.persistence.*;
 import lombok.Data;
 
-import java.util.UUID;
-
 @Data
-@Entity
-@Table(name = "eicv_reports")
-public class EICVReport {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
-
-    @Column(unique = true)
+public class EICVReportDto {
     private int year;
     private Double totalImprovedSanitation;
     private Double improvedTypeNotSharedWithOtherHH;

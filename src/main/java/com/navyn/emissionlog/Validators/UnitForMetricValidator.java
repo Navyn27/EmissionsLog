@@ -4,7 +4,7 @@ import com.navyn.emissionlog.Enums.EnergyUnits;
 import com.navyn.emissionlog.Enums.MassUnits;
 import com.navyn.emissionlog.Enums.Metrics;
 import com.navyn.emissionlog.Enums.VolumeUnits;
-import com.navyn.emissionlog.Payload.Requests.CreateStationaryActivityDto;
+import com.navyn.emissionlog.Payload.Requests.Activity.CreateStationaryActivityDto;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 

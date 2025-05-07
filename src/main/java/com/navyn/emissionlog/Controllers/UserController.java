@@ -1,8 +1,8 @@
 package com.navyn.emissionlog.Controllers;
 
-import com.navyn.emissionlog.Payload.Requests.SignUpDTO;
+import com.navyn.emissionlog.Payload.Requests.Auth.SignUpDTO;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
-import com.navyn.emissionlog.ServiceImpls.UserServiceImpl;
+import com.navyn.emissionlog.ServiceImpls.UserServices.UserServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.servlet.http.HttpServletRequest;

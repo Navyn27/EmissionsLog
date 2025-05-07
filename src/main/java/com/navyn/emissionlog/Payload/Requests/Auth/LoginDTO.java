@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Payload.Requests;
+package com.navyn.emissionlog.Payload.Requests.Auth;
 
 import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;

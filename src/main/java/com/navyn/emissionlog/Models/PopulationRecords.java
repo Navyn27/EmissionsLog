@@ -1,13 +1,15 @@
 package com.navyn.emissionlog.Models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.navyn.emissionlog.Enums.Countries;
+import jakarta.persistence.*;
+import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
-@Entity(name = "population")
+@Entity
+@Table(name = "population_records")
+@Data
 public class PopulationRecords {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -15,7 +17,18 @@ public class PopulationRecords {
 
     private Long population;
 
-    private String year;
+    private int year;
 
     private Double annualGrowth;
+
+    @Enumerated(EnumType.STRING)
+    private Countries country;
+
+    private int numberOfKigaliHouseholds;
+
+    private BigDecimal GDPMillions;
+
+    private BigDecimal GDPPerCapita;
+
+    private BigDecimal kigaliGDP;
 }
