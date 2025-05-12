@@ -42,4 +42,8 @@ public class EICVReportsController {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "EICV Reports created successfully", eicvReportService.createReportsFromExcel(file)));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateEICVReport(@PathVariable("id") UUID eicvReportId, @RequestBody EICVReportDto eicvReportDto) {
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "EICV Report updated successfully", eicvReportService.updateEICVReport(eicvReportId, eicvReportDto)));
+    }
 }

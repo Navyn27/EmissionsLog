@@ -6,11 +6,12 @@ import java.math.BigDecimal;
 
 @Data
 public class CreatePopulationRecordDto {
-    private int year;
-    private Long population;
+    private Double year;
+    private Double population;
+    private Double kigaliAnnualGrowth;
     private Double annualGrowth;
-    private String country;
-    private int numberOfKigaliHouseholds;
+    private String country = "Rwanda";
+    private Double numberOfKigaliHouseholds;
     private BigDecimal GDPMillions;
     private BigDecimal GDPPerCapita;
     private BigDecimal kigaliGDP;

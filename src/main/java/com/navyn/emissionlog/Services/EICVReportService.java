@@ -13,4 +13,6 @@ public interface EICVReportService {
     EICVReport getEICVReportById(UUID id);
     List<EICVReport> findAll();
     List<EICVReport> createReportsFromExcel(MultipartFile file);
+
+    EICVReport updateEICVReport(UUID eicvReportId, EICVReportDto eicvReportDto);
 }

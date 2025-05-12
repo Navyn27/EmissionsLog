@@ -49,7 +49,7 @@ public class TransportEmissionFactorsController {
     @PostMapping("/uploadByFuelExcel")
     public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByFuel(@RequestParam("file") MultipartFile file){
         try {
-            List<TransportFuelEmissionFactorsDto> transportFuelEmissionFactorsDtos = ExcelReader.readEmissionsExcel(file.getInputStream(), TransportFuelEmissionFactorsDto.class, ExcelType.FUEL_TRANSPORT_EMISSIONS);
+            List<TransportFuelEmissionFactorsDto> transportFuelEmissionFactorsDtos = ExcelReader.readExcel(file.getInputStream(), TransportFuelEmissionFactorsDto.class, ExcelType.FUEL_TRANSPORT_EMISSIONS);
             for (TransportFuelEmissionFactorsDto dto : transportFuelEmissionFactorsDtos) {
 
                 //Find fuel
@@ -101,7 +101,7 @@ public class TransportEmissionFactorsController {
     @PostMapping("/uploadByVehicleData")
     public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByVehicleData(@RequestParam("file") MultipartFile file){
         try {
-            List<TransportVehicleDataEmissionFactorsDto> vehicleDataEmissionFactorsDtos = ExcelReader.readEmissionsExcel(file.getInputStream(), TransportVehicleDataEmissionFactorsDto.class, ExcelType.VEHICLE_DATA_TRANSPORT_EMISSIONS);
+            List<TransportVehicleDataEmissionFactorsDto> vehicleDataEmissionFactorsDtos = ExcelReader.readExcel(file.getInputStream(), TransportVehicleDataEmissionFactorsDto.class, ExcelType.VEHICLE_DATA_TRANSPORT_EMISSIONS);
             for(TransportVehicleDataEmissionFactorsDto dto : vehicleDataEmissionFactorsDtos){
                 TransportVehicleDataEmissionFactors transportVehicleDataEmissionFactors = new TransportVehicleDataEmissionFactors();
 

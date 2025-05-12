@@ -23,7 +23,8 @@ public class EICVReportServiceImpl implements EICVReportService {
     @Override
     public EICVReport createEICVReport(EICVReportDto eicvReportDto) {
         EICVReport eicvReport = new EICVReport();
-        eicvReport.setYear(eicvReportDto.getYear());
+        eicvReport.setName(eicvReportDto.getName());
+        eicvReport.setYear(eicvReportDto.getYear().intValue());
         eicvReport.setFlushToilet(eicvReportDto.getFlushToilet());
         eicvReport.setProtectedLatrines(eicvReportDto.getProtectedLatrines());
         eicvReport.setImprovedTypeNotSharedWithOtherHH(eicvReportDto.getImprovedTypeNotSharedWithOtherHH());
@@ -54,7 +55,7 @@ public class EICVReportServiceImpl implements EICVReportService {
     public List<EICVReport> createReportsFromExcel(MultipartFile file){
         List<EICVReport> savedEicvReports = new ArrayList<>();
         try {
-            List<EICVReportDto> eicvReports = ExcelReader.readEmissionsExcel(file.getInputStream(), EICVReportDto.class, ExcelType.EICV_REPORT);
+            List<EICVReportDto> eicvReports = ExcelReader.readExcel(file.getInputStream(), EICVReportDto.class, ExcelType.EICV_REPORT);
             for (EICVReportDto eicvReport : eicvReports) {
                 savedEicvReports.add(createEICVReport(eicvReport));
             }
@@ -62,5 +63,21 @@ public class EICVReportServiceImpl implements EICVReportService {
             throw new RuntimeException("Error reading EICV Reports from Excel file", e);
         }
         return savedEicvReports;
+    }
+
+    @Override
+    public EICVReport updateEICVReport(UUID eicvReportId, EICVReportDto eicvReportDto) {
+        EICVReport eicvReport = eicvReportRepository.findById(eicvReportId).orElseThrow(() -> new RuntimeException("EICV Report not found"));
+        eicvReport.setName(eicvReportDto.getName());
+        eicvReport.setYear(eicvReportDto.getYear().intValue());
+        eicvReport.setFlushToilet(eicvReportDto.getFlushToilet());
+        eicvReport.setProtectedLatrines(eicvReportDto.getProtectedLatrines());
+        eicvReport.setImprovedTypeNotSharedWithOtherHH(eicvReportDto.getImprovedTypeNotSharedWithOtherHH());
+        eicvReport.setUnprotectedLatrines(eicvReportDto.getUnprotectedLatrines());
+        eicvReport.setTotalHouseholds(eicvReportDto.getTotalHouseholds());
+        eicvReport.setNoToiletFacilities(eicvReportDto.getNoToiletFacilities());
+        eicvReport.setTotalImprovedSanitation(eicvReportDto.getTotalImprovedSanitation());
+        eicvReport.setOthers(eicvReportDto.getOthers());
+        return eicvReportRepository.save(eicvReport);
     }
 }

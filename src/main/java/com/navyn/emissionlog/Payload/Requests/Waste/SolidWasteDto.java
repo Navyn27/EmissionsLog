@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.Payload.Requests.Waste;
 
+import com.navyn.emissionlog.Enums.MassUnits;
 import com.navyn.emissionlog.Enums.Scopes;
 import com.navyn.emissionlog.Enums.SolidWasteType;
 import jakarta.validation.constraints.NotNull;
@@ -16,6 +17,8 @@ public class SolidWasteDto {
 
     @NotNull(message = "Please provide the amount of solid waste deposited in kg")
     private Double amountDeposited;
+
+    private MassUnits massUnit = MassUnits.KILOGRAM;
 
     @NotNull(message = "Please provide the emission scope")
     private Scopes scope;

@@ -54,4 +54,6 @@ public abstract class WasteDataAbstract {
     private Double calculateCO2EqEmissions() {
         return (this.FossilCO2Emissions * 1) + (this.BioCO2Emissions * 1) + (this.N2OEmissions * GWP.N2O.getValue()) + (this.CH4Emissions * GWP.CH4.getValue());
     }
+
+    private LocalDateTime createdAt = LocalDateTime.now();
 }

@@ -1,9 +1,6 @@
 package com.navyn.emissionlog.Utils;
 
 import com.navyn.emissionlog.Enums.ExcelType;
-import com.navyn.emissionlog.Enums.RegionGroup;
-import com.navyn.emissionlog.Enums.TransportType;
-import com.navyn.emissionlog.Enums.VehicleEngineType;
 import org.apache.poi.ss.usermodel.*;
 
 import java.io.IOException;
@@ -63,18 +60,19 @@ public class ExcelReader {
     private static final Map<String, String> populationRecordsToDtoMap = new HashMap<>();
     static {
         populationRecordsToDtoMap.put("Year", "year");
-        populationRecordsToDtoMap.put("Population", "population");
-        populationRecordsToDtoMap.put("Annual Growth", "annualGrowth");
-        populationRecordsToDtoMap.put("Country", "country");
-        populationRecordsToDtoMap.put("Number of Kigali Households", "numberOfKigaliHouseholds");
+        populationRecordsToDtoMap.put("Kigali Population", "population");
+        populationRecordsToDtoMap.put("Kigali Population Annual Growth", "kigaliAnnualGrowth");
+        populationRecordsToDtoMap.put("Growth", "annualGrowth");
+        populationRecordsToDtoMap.put("Number of HHs", "numberOfKigaliHouseholds");
         populationRecordsToDtoMap.put("GDP Millions", "GDPMillions");
-        populationRecordsToDtoMap.put("GDP Per Capita", "GDPPerCapita");
-        populationRecordsToDtoMap.put("Kigali GDP", "kigaliGDP");
+        populationRecordsToDtoMap.put("Per Capita", "GDPPerCapita");
+        populationRecordsToDtoMap.put("Estimated Kigali GDP", "kigaliGDP");
     }
 
     // This hashmap is responsible for reading data from EICV reports Excel files and mapping it to DTOs.
     private static final Map<String, String> eicvReportsToDtoMap = new HashMap<>();
     static{
+        eicvReportsToDtoMap.put("Name","name");
         eicvReportsToDtoMap.put("Year", "year");
         eicvReportsToDtoMap.put("Total Improved Sanitation", "totalImprovedSanitation");
         eicvReportsToDtoMap.put("Improved Type Not Shared With Other HH", "improvedTypeNotSharedWithOtherHH");
@@ -86,7 +84,30 @@ public class ExcelReader {
         eicvReportsToDtoMap.put("Total Households", "totalHouseholds");
     }
 
-    public static <T> List<T> readEmissionsExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType) throws IOException {
+    private static final Map<String, String> solidWasteDtoMap = new HashMap<>();
+    static {
+        solidWasteDtoMap.put("Year", "year");
+        solidWasteDtoMap.put("Food Deposited Amount", "foodDepositedAmount");
+        solidWasteDtoMap.put("Garden Deposited Amount", "gardenDepositedAmount");
+        solidWasteDtoMap.put("Paper Deposited Amount", "paperDepositedAmount");
+        solidWasteDtoMap.put("Wood Deposited Amount", "woodDepositedAmount");
+        solidWasteDtoMap.put("Textiles Deposited Amount", "textilesDepositedAmount");
+        solidWasteDtoMap.put("Nappies Deposited Amount", "nappiesDepositedAmount");
+        solidWasteDtoMap.put("Sludge Deposited Amount", "sludgeDepositedAmount");
+        solidWasteDtoMap.put("MSW Deposited Amount", "mswDepositedAmount");
+        solidWasteDtoMap.put("Industry Deposited Amount", "industryDepositedAmount");
+    }
+
+    private static final Map<String, String> industrialWasteDtoMap = new HashMap<>();
+    static {
+        industrialWasteDtoMap.put("Year", "year");
+        industrialWasteDtoMap.put("Sugar Production Amount", "sugarProductionAmount");
+        industrialWasteDtoMap.put("Beer Production Amount", "beerProductionAmount");
+        industrialWasteDtoMap.put("Dairy Production Amount", "dairyProductionAmount");
+        industrialWasteDtoMap.put("Meat And Poultry Production Amount", "meatAndPoultryProductionAmount");
+    }
+
+    public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType) throws IOException {
         List<T> result = new ArrayList<>();
 
         try (Workbook workbook = WorkbookFactory.create(inputStream)) {
@@ -203,7 +224,11 @@ public class ExcelReader {
             case VEHICLE_DATA_TRANSPORT_EMISSIONS:
                 return "Vehicle Based";
             case EICV_REPORT:
-                return "EICV Report";
+                return "EICV Reports";
+            case SOLID_WASTE_STARTER_DATA:
+                return "Solid Waste Starter Data";
+            case INDUSTRIAL_WASTE_STARTER_DATA:
+                return "Industrial Waste Starter Data";
             default:
                 return "";
         }
@@ -221,6 +246,10 @@ public class ExcelReader {
                 return transportEmissionsByVehicleDataDtoMap.get(header);
             case EICV_REPORT:
                 return eicvReportsToDtoMap.get(header);
+            case SOLID_WASTE_STARTER_DATA:
+                return solidWasteDtoMap.get(header);
+            case INDUSTRIAL_WASTE_STARTER_DATA:
+                return industrialWasteDtoMap.get(header);
             default:
                 return "";
         }

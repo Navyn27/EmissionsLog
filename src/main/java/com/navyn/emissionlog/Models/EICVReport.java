@@ -13,6 +13,8 @@ public class EICVReport {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    private String name;
+
     @Column(unique = true)
     private int year;
     private Double totalImprovedSanitation;

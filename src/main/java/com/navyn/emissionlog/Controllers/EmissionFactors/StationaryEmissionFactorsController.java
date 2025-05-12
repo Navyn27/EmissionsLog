@@ -78,7 +78,7 @@ public class StationaryEmissionFactorsController {
     @PostMapping("/uploadByFuelExcel")
     public ResponseEntity<ApiResponse> uploadStationaryFuelData(@RequestParam("file") MultipartFile file) {
         try {
-            List<CreateFuelStationaryEmissionsExcelDto> fuelDtos = ExcelReader.readEmissionsExcel(file.getInputStream(), CreateFuelStationaryEmissionsExcelDto.class, ExcelType.FUEL_STATIONARY_EMISSIONS);
+            List<CreateFuelStationaryEmissionsExcelDto> fuelDtos = ExcelReader.readExcel(file.getInputStream(), CreateFuelStationaryEmissionsExcelDto.class, ExcelType.FUEL_STATIONARY_EMISSIONS);
             for (CreateFuelStationaryEmissionsExcelDto fuelDto : fuelDtos) {
                 CreateFuelDto createFuelDto = new CreateFuelDto();
 

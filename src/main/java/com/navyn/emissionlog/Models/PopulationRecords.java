@@ -17,6 +17,7 @@ public class PopulationRecords {
 
     private Long population;
 
+    @Column(unique = true)
     private int year;
 
     private Double annualGrowth;
@@ -24,9 +25,9 @@ public class PopulationRecords {
     @Enumerated(EnumType.STRING)
     private Countries country;
 
-    private int numberOfKigaliHouseholds;
-
     private BigDecimal GDPMillions;
+
+    private int numberOfKigaliHouseholds;
 
     private BigDecimal GDPPerCapita;
 

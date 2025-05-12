@@ -4,7 +4,8 @@ import lombok.Data;
 
 @Data
 public class EICVReportDto {
-    private int year;
+    private String name;
+    private Double year;
     private Double totalImprovedSanitation;
     private Double improvedTypeNotSharedWithOtherHH;
     private Double flushToilet;

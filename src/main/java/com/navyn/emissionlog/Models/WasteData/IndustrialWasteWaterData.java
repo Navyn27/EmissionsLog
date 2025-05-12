@@ -17,7 +17,7 @@ import static com.navyn.emissionlog.Enums.IndustrialWasteWaterConstants.*;
 @Table(name = "industrial_waste_water_data")
 public class IndustrialWasteWaterData extends WasteDataAbstract {
     private Double sugarProductionAmount = 0.0;
-    private Double bearProductionAmount = 0.0;
+    private Double beerProductionAmount = 0.0;
     private Double dairyProductionAmount = 0.0;
     private Double meatAndPoultryProductionAmount = 0.0;
 
@@ -44,7 +44,7 @@ public class IndustrialWasteWaterData extends WasteDataAbstract {
         Double generalConstantMultiplier =  PROTEIN_EXCRETION_PER_CAPITA.getValue()*F_NPR.getValue()*F_NON_CON.getValue()*F_IND_COM.getValue()*EF_EFFLUENT.getValue();
 
         setSugarN2OEmissions((sugarProductionAmount*WASTE_WATER_GENERATED.getSugarValue()*PROTEIN_EXCRETION_PER_CAPITA.getValue()*generalConstantMultiplier*44/28)/1000.0);
-        setBearN2OEmissions((bearProductionAmount*WASTE_WATER_GENERATED.getBeerValue()*PROTEIN_EXCRETION_PER_CAPITA.getValue()*generalConstantMultiplier*44/28)/1000.0);
+        setBearN2OEmissions((beerProductionAmount*WASTE_WATER_GENERATED.getBeerValue()*PROTEIN_EXCRETION_PER_CAPITA.getValue()*generalConstantMultiplier*44/28)/1000.0);
         setDairyN2OEmissions((dairyProductionAmount*WASTE_WATER_GENERATED.getDairyProductsValue()*PROTEIN_EXCRETION_PER_CAPITA.getValue()*generalConstantMultiplier*44/28)/1000.0);
         setMeatAndPoultryN2OEmissions((meatAndPoultryProductionAmount*WASTE_WATER_GENERATED.getMeatAndPoultryValue()*PROTEIN_EXCRETION_PER_CAPITA.getValue()*generalConstantMultiplier*44/28)/1000.0);
         return sugarN2OEmissions + bearN2OEmissions + dairyN2OEmissions + meatAndPoultryN2OEmissions;
@@ -56,7 +56,7 @@ public class IndustrialWasteWaterData extends WasteDataAbstract {
 
         //calculate all the TOW
         setSugarTOW(sugarProductionAmount*CODi.getSugarValue()* WASTE_WATER_GENERATED.getSugarValue());
-        setBearTOW(bearProductionAmount*CODi.getBeerValue()* WASTE_WATER_GENERATED.getBeerValue());
+        setBearTOW(beerProductionAmount*CODi.getBeerValue()* WASTE_WATER_GENERATED.getBeerValue());
         setDairyTOW(dairyProductionAmount*CODi.getDairyProductsValue()* WASTE_WATER_GENERATED.getDairyProductsValue());
         setMeatTOW(meatAndPoultryProductionAmount*CODi.getMeatAndPoultryValue()* WASTE_WATER_GENERATED.getMeatAndPoultryValue());
 

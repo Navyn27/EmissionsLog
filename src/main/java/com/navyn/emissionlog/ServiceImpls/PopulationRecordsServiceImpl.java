@@ -23,10 +23,14 @@ public class PopulationRecordsServiceImpl implements PopulationRecordService {
     @Override
     public PopulationRecords createPopulationRecord(CreatePopulationRecordDto createPopulationRecordDto) {
         PopulationRecords populationRecords = new PopulationRecords();
-        populationRecords.setYear(createPopulationRecordDto.getYear());
-        populationRecords.setPopulation(createPopulationRecordDto.getPopulation());
+        populationRecords.setYear(createPopulationRecordDto.getYear().intValue());
+        populationRecords.setPopulation(createPopulationRecordDto.getPopulation().longValue());
         populationRecords.setAnnualGrowth(createPopulationRecordDto.getAnnualGrowth());
         populationRecords.setCountry(Countries.RWANDA);
+        populationRecords.setGDPMillions(createPopulationRecordDto.getGDPMillions());
+        populationRecords.setGDPPerCapita(createPopulationRecordDto.getGDPPerCapita());
+        populationRecords.setKigaliGDP(createPopulationRecordDto.getKigaliGDP());
+        populationRecords.setNumberOfKigaliHouseholds(createPopulationRecordDto.getNumberOfKigaliHouseholds().intValue());
         return populationRecordRepository.save(populationRecords);
     }
 
@@ -48,7 +52,7 @@ public class PopulationRecordsServiceImpl implements PopulationRecordService {
     @Override
     public List<PopulationRecords> readPopulationRecordsFromExcel(MultipartFile file) {
         try {
-            List<CreatePopulationRecordDto> populationRecords = ExcelReader.readEmissionsExcel(file.getInputStream(), CreatePopulationRecordDto.class, ExcelType.POPULATION_RECORDS);
+            List<CreatePopulationRecordDto> populationRecords = ExcelReader.readExcel(file.getInputStream(), CreatePopulationRecordDto.class, ExcelType.POPULATION_RECORDS);
             List<PopulationRecords> savedPopulationRecords = new ArrayList<>();
             for (CreatePopulationRecordDto populationRecord : populationRecords) {
                 CreateFuelDto createFuelDto = new CreateFuelDto();
@@ -67,14 +71,15 @@ public class PopulationRecordsServiceImpl implements PopulationRecordService {
     @Override
     public PopulationRecords updatePopulationRecord(UUID id, CreatePopulationRecordDto createPopulationRecordDto) {
         PopulationRecords populationRecords = populationRecordRepository.findById(id).orElseThrow(() -> new RuntimeException("Population record not found"));
-        populationRecords.setYear(createPopulationRecordDto.getYear());
-        populationRecords.setPopulation(createPopulationRecordDto.getPopulation());
+        populationRecords.setYear(createPopulationRecordDto.getYear().intValue());
+        populationRecords.setPopulation(createPopulationRecordDto.getPopulation().longValue());
         populationRecords.setAnnualGrowth(createPopulationRecordDto.getAnnualGrowth());
         populationRecords.setCountry(Countries.RWANDA);
         populationRecords.setGDPMillions(createPopulationRecordDto.getGDPMillions());
         populationRecords.setGDPPerCapita(createPopulationRecordDto.getGDPPerCapita());
         populationRecords.setKigaliGDP(createPopulationRecordDto.getKigaliGDP());
-        populationRecords.setNumberOfKigaliHouseholds(createPopulationRecordDto.getNumberOfKigaliHouseholds());
+        populationRecords.setNumberOfKigaliHouseholds(createPopulationRecordDto.getNumberOfKigaliHouseholds().intValue());
         return populationRecordRepository.save(populationRecords);
     }
 }
+    
