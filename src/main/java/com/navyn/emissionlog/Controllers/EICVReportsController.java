@@ -23,8 +23,8 @@ public class EICVReportsController {
          return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "EICV Report created successfully", eicvReportService.createEICVReport(eicvReportDto)));
      }
 
-     @GetMapping("/{year}")
-     public ResponseEntity<ApiResponse> getEICVReportByYear(@RequestParam int year) {
+     @GetMapping("/year")
+     public ResponseEntity<ApiResponse> getEICVReportByYear(@RequestParam("year") int year) {
          return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "EICV Report fetched successfully", eicvReportService.getEICVReportByYear(year)));
      }
 
@@ -33,7 +33,7 @@ public class EICVReportsController {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "EICV Reports fetched successfully", eicvReportService.findAll()));}
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse> getEICVReportById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse> getEICVReportById(@PathVariable("id") UUID id) {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "EICV Report fetched successfully", eicvReportService.getEICVReportById(id)));
     }
 

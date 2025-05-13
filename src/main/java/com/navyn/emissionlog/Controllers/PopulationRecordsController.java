@@ -33,13 +33,13 @@ public class PopulationRecordsController {
 
      @Operation(summary = "Get Population Record By ID", description = "Get a population record by ID")
      @GetMapping("/{id}")
-     public ResponseEntity<ApiResponse> getPopulationRecordById(@PathVariable UUID id) {
+     public ResponseEntity<ApiResponse> getPopulationRecordById(@PathVariable("id") UUID id) {
          return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Population Record fetched successfully", populationRecordService.getPopulationRecordById(id)));
      }
 
      @Operation(summary = "Get Population Record By Year", description = "Get a population record by year")
      @GetMapping("/year")
-     public ResponseEntity<ApiResponse> getPopulationRecordByYear(@RequestParam int year) {
+     public ResponseEntity<ApiResponse> getPopulationRecordByYear(@RequestParam("year") int year) {
          return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Population Record fetched successfully", populationRecordService.getPopulationRecordByYear(year)));
      }
 
@@ -51,7 +51,7 @@ public class PopulationRecordsController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse> updatePopulationRecord(@PathVariable UUID id, @RequestBody CreatePopulationRecordDto createPopulationRecordDto) {
+    public ResponseEntity<ApiResponse> updatePopulationRecord(@PathVariable("id") UUID id, @RequestBody CreatePopulationRecordDto createPopulationRecordDto) {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Population Record updated successfully", populationRecordService.updatePopulationRecord(id, createPopulationRecordDto)));
     }
 }
