@@ -7,6 +7,7 @@ import com.navyn.emissionlog.Models.WasteData.WasteDataAbstract;
 import com.navyn.emissionlog.Payload.Requests.Waste.GeneralWasteByPopulationDto;
 import com.navyn.emissionlog.Payload.Requests.Waste.IndustrialWasteDto;
 import com.navyn.emissionlog.Payload.Requests.Waste.SolidWasteDto;
+import com.navyn.emissionlog.Payload.Requests.Waste.WasteWaterDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -17,7 +18,7 @@ public interface WasteService {
 
     WasteDataAbstract createSolidWasteData(SolidWasteDto wasteData);
 
-    WasteDataAbstract createWasteWaterData(GeneralWasteByPopulationDto wasteData);
+    WasteDataAbstract createWasteWaterData(WasteWaterDto wasteData);
 
     WasteDataAbstract createBioTreatedWasteWaterData(GeneralWasteByPopulationDto wasteData);
 

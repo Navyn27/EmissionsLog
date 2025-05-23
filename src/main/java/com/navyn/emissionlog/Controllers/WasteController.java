@@ -37,7 +37,7 @@ public class WasteController {
 
     @Operation(summary = "Create Waste water Data and calculate emissions")
     @PostMapping("/wasteWater")
-    public ResponseEntity<ApiResponse> createWasteWaterData(@RequestBody GeneralWasteByPopulationDto wasteData) {
+    public ResponseEntity<ApiResponse> createWasteWaterData(@RequestBody WasteWaterDto wasteData) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Waste water created successfully", wasteService.createWasteWaterData(wasteData)));
     }
 

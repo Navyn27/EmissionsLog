@@ -1,7 +1,6 @@
 package com.navyn.emissionlog.Payload.Requests.Waste;
 
 import com.navyn.emissionlog.Enums.Scopes;
-import com.navyn.emissionlog.Models.Region;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 

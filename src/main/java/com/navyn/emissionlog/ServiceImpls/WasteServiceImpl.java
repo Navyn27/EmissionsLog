@@ -20,10 +20,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static com.navyn.emissionlog.Enums.WasteType.SOLID_WASTE;
 
@@ -86,12 +88,12 @@ public class WasteServiceImpl implements WasteService {
 
     @Transactional
     @Override
-    public WasteDataAbstract createWasteWaterData(GeneralWasteByPopulationDto wasteData) {
+    public WasteDataAbstract createWasteWaterData(WasteWaterDto wasteData) {
         //Find year's EICV Report
 //        EICVReport eicvReport = eicvReportRepository.findByYear(wasteData.getActivityYear().getYear());
-        EICVReport eicvReport = eicvReportRepository.findAll().getFirst();
+        Optional<EICVReport> eicvReport = eicvReportRepository.findById(wasteData.getEicvReport());
 
-        if(eicvReport == null){
+        if(eicvReport.isEmpty()){
             //Do the interpolation and extrapolation stuff
         }
 
@@ -103,7 +105,7 @@ public class WasteServiceImpl implements WasteService {
                 .orElseThrow(() -> new RuntimeException("Region not found")));
         wasteWaterData.setActivityYear(wasteData.getActivityYear());
         wasteWaterData.setScope(wasteData.getScope());
-        wasteWaterData.setEICVReport(eicvReport);
+        wasteWaterData.setEICVReport(eicvReport.get());
         wasteWaterData.setCH4Emissions(wasteWaterData.calculateCH4Emissions());
         return wasteDataRepository.save(wasteWaterData);
     }
@@ -186,6 +188,15 @@ public class WasteServiceImpl implements WasteService {
             if(populationRecord.getYear() > 2022){
                 break;
             }
+
+            //create waste water Dto
+            WasteWaterDto  wasteWaterDto = new WasteWaterDto();
+            wasteWaterDto.setEicvReport(eicvReportRepository.findByYear(populationRecord.getYear()).getId());
+            wasteWaterDto.setPopulationRecords(populationRecord.getId());
+            wasteWaterDto.setActivityYear(LocalDateTime.of(populationRecord.getYear(),12,31,23,59));
+            wasteWaterDto.setScope(Scopes.SCOPE_1);
+            wasteWaterDto.setRegion(defaultRegion.getId());
+
             //createDto
             GeneralWasteByPopulationDto generalWasteByPopulationDto = new GeneralWasteByPopulationDto();
             generalWasteByPopulationDto.setPopulationRecords(populationRecord.getId());
@@ -194,7 +205,7 @@ public class WasteServiceImpl implements WasteService {
             generalWasteByPopulationDto.setRegion(defaultRegion.getId());
 
             //create waste data
-            wasteData.add(createWasteWaterData(generalWasteByPopulationDto));
+            wasteData.add(createWasteWaterData(wasteWaterDto));
             wasteData.add(createBioTreatedWasteWaterData(generalWasteByPopulationDto));
             wasteData.add(createBurntWasteData(generalWasteByPopulationDto));
             wasteData.add(createIncinerationWasteData(generalWasteByPopulationDto));
