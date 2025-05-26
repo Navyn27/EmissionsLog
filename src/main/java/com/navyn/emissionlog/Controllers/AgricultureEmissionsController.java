@@ -54,6 +54,20 @@ public class AgricultureEmissionsController {
     }
 
 
+    //get all manure management emissions
+    @GetMapping("/manureMgmtEmissions")
+    @Operation(summary = "Get all manure management emissions")
+    private ResponseEntity<ApiResponse> getAllManureMgmtEmissions() {
+        return ResponseEntity.ok(new ApiResponse(true, "Manure management emissions fetched successfully", agricultureEmissionsService.getAllManureMgmtEmissions()));
+    }
+
+    //get all enteric fermentation emissions
+    @GetMapping("/entericFermentationEmissions")
+    @Operation(summary = "Get all enteric fermentation emissions")
+    private ResponseEntity<ApiResponse> getAllEntericFermentationEmissions() {
+        return ResponseEntity.ok(new ApiResponse(true, "Enteric fermentation emissions fetched successfully", agricultureEmissionsService.getAllEntericFermentationEmissions()));
+    }
+
     //create all liming emissions
     @PostMapping("/limingEmissions")
     @Operation(summary = "Create new liming emissions record")
