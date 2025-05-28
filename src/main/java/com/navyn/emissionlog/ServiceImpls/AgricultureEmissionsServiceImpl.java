@@ -36,8 +36,6 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     private UreaEmissionsRepository ureaEmissionsRepository;
 
 
-    private final double FishN20EmissionsFactors = 0.0169;
-
     @Override
     public List<AquacultureEmissions> getAllAquacultureEmissions() {
         return aquacultureEmissionsRepository.findAll();
@@ -79,8 +77,10 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         emissions.setYear(emissionsDto.getYear());
         emissions.setActivityDesc(emissionsDto.getActivityDesc());
         emissions.setFishProduction(emissionsDto.getFishProduction());
-        emissions.setN2ONEmissions(emissionsDto.getFishProduction()*FishN20EmissionsFactors);
-        emissions.setN2OEmissions(emissionsDto.getFishProduction()*FishN20EmissionsFactors*44/28*1000000);
+        double fishN20EmissionsFactors = 0.0169;
+        emissions.setN2ONEmissions(emissionsDto.getFishProduction()* fishN20EmissionsFactors);
+        emissions.setN2OEmissions(emissionsDto.getFishProduction()* fishN20EmissionsFactors *44/28*1000000);
+        emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
         return aquacultureEmissionsRepository.save(emissions);
     }
 
@@ -123,7 +123,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         emissions.setPopulation(emissionsDto.getPopulation());
         emissions.setTotalN(efs.get("NEF")* emissions.getPopulation());
         emissions.setNAvailable(emissions.getTotalN()*efs.get("meanLosses"));
-        emissions.setN2ONEmissions(emissions.getNAvailable()*efs.get("CompostManureEF"));
+        emissions.setN2ONEmissions(emissions.getNAvailable()*efs.get("compostManureEF"));
         emissions.setN2OEmissions(emissions.getN2ONEmissions()* 44 / 28);
         emissions.setCH4Emissions(emissions.getPopulation()*getCH4EFBySpeciesType(emissionsDto.getSpecies()));
         emissions.setCO2EqEmissions(emissions.getN2OEmissions()*265/1000000 + emissions.getCH4Emissions() * GWP.CH4.getValue());
@@ -141,6 +141,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         //Efi=Efc*SFw*SFp*SfoA*SFs,r
         emissions.setAdjDailyEFEmissions(AFOLUConstants.EFC.getValue() * emissionsDto.getWaterRegime().getValue()* AFOLUConstants.SFP.getValue() * AFOLUConstants.SFOA.getValue() * AFOLUConstants.SFSR.getValue());
         emissions.setAnnualCH4Emissions(emissionsDto.getHarvestedArea()* emissionsDto.getCultivationPeriod()*emissions.getAdjDailyEFEmissions()/1000000);
+        emissions.setCO2EqEmissions(emissions.getAnnualCH4Emissions()* GWP.CH4.getValue());
         return riceCultivationEmissionsRepository.save(emissions);
     }
 

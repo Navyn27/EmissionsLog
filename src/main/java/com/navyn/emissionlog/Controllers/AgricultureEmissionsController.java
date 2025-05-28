@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/agriculture")
 public class AgricultureEmissionsController {
 
-
     @Autowired
     private AgricultureEmissionsService agricultureEmissionsService;
 

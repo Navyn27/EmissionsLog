@@ -20,4 +20,5 @@ public class AquacultureEmissions {
     private double fishProduction;
     private double N2ONEmissions;
     private double N2OEmissions;
+    private double CO2EqEmissions;
 }

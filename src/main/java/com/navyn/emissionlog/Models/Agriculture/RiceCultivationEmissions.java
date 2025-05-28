@@ -27,4 +27,5 @@ public class RiceCultivationEmissions {
     private double soilOrCultivarScaling;
     private double adjDailyEFEmissions;
     private double annualCH4Emissions;
+    private double CO2EqEmissions;
 }
