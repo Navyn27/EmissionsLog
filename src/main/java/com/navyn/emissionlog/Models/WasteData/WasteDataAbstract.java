@@ -39,14 +39,11 @@ public abstract class WasteDataAbstract {
 
     private Double N2OEmissions = 0.0;
 
-    private Double NH4Emissions = 0.0;
-
-    @Transient
     private Double CO2EqEmissions = 0.0;
 
     private LocalDateTime activityYear = LocalDateTime.now();
 
-    @PostLoad
+    @PrePersist
     private void setCO2EqEmissions() {
         this.CO2EqEmissions = calculateCO2EqEmissions();
     }

@@ -26,10 +26,10 @@ public class IndustrialWasteWaterData extends WasteDataAbstract {
     private Double dairyN2OEmissions= 0.0;
     private Double meatAndPoultryN2OEmissions = 0.0;
 
-    private Double sugarNH4Emissions = 0.0;
-    private Double bearNH4Emissions = 0.0;
-    private Double dairyNH4Emissions = 0.0;
-    private Double meatAndPoultryNH4Emissions = 0.0;
+    private Double sugarCH4Emissions = 0.0;
+    private Double bearCH4Emissions = 0.0;
+    private Double dairyCH4Emissions = 0.0;
+    private Double meatAndPoultryCH4Emissions = 0.0;
 
     private Double sugarTOW = 0.0;
     private Double bearTOW = 0.0;
@@ -50,7 +50,7 @@ public class IndustrialWasteWaterData extends WasteDataAbstract {
         return sugarN2OEmissions + bearN2OEmissions + dairyN2OEmissions + meatAndPoultryN2OEmissions;
     }
 
-    public Double calculateNH4Emissions() {
+    public Double calculateCH4Emissions() {
 
         Double generalConstantMultiplier = INDUSTRIAL_WW_BO.getSugarValue()*INDUSTRIAL_WW_MCF.getSugarValue();
 
@@ -61,11 +61,11 @@ public class IndustrialWasteWaterData extends WasteDataAbstract {
         setMeatTOW(meatAndPoultryProductionAmount*CODi.getMeatAndPoultryValue()* WASTE_WATER_GENERATED.getMeatAndPoultryValue());
 
         //Calculate the emissions
-        setSugarNH4Emissions(sugarTOW*generalConstantMultiplier);
-        setBearNH4Emissions(bearTOW*generalConstantMultiplier);
-        setDairyNH4Emissions(dairyTOW*generalConstantMultiplier);
-        setMeatAndPoultryNH4Emissions(meatTOW*generalConstantMultiplier);
+        setSugarCH4Emissions(sugarTOW*generalConstantMultiplier);
+        setBearCH4Emissions(bearTOW*generalConstantMultiplier);
+        setDairyCH4Emissions(dairyTOW*generalConstantMultiplier);
+        setMeatAndPoultryCH4Emissions(meatTOW*generalConstantMultiplier);
 
-        return sugarNH4Emissions + bearNH4Emissions + dairyNH4Emissions + meatAndPoultryNH4Emissions;
+        return sugarCH4Emissions + bearCH4Emissions + dairyCH4Emissions + meatAndPoultryCH4Emissions;
     }
 }

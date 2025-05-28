@@ -11,6 +11,7 @@ public enum WasteWaterConstants{
     FLUSH_TOILET_EF(0.3),
     LATRINES_MCF(0.70),
     LATRINES_EF(0.42),
+    PROTEIN_EXCRETION(3.2)
     ;
 
     private Double value;

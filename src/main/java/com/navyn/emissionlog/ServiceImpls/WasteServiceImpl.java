@@ -62,9 +62,8 @@ public class WasteServiceImpl implements WasteService {
         // Calculate emissions based on the production amounts
         industrialWasteWaterData.setFossilCO2Emissions(0.0);
         industrialWasteWaterData.setBioCO2Emissions(0.0);
-        industrialWasteWaterData.setCH4Emissions(0.0);
         industrialWasteWaterData.setN2OEmissions(industrialWasteWaterData.calculateN2OEmissions());
-        industrialWasteWaterData.setNH4Emissions(industrialWasteWaterData.calculateNH4Emissions());
+        industrialWasteWaterData.setCH4Emissions(industrialWasteWaterData.calculateCH4Emissions());
         return wasteDataRepository.save(industrialWasteWaterData);
     }
 
@@ -123,7 +122,6 @@ public class WasteServiceImpl implements WasteService {
         biologicallyTreatedWasteData.setScope(wasteData.getScope());
         biologicallyTreatedWasteData.setCH4Emissions(biologicallyTreatedWasteData.calculateCH4Emissions());
         biologicallyTreatedWasteData.setN2OEmissions(biologicallyTreatedWasteData.calculateN2OEmissions());
-        biologicallyTreatedWasteData.setNH4Emissions(biologicallyTreatedWasteData.getCH4Emissions()/1000000);
         return wasteDataRepository.save(biologicallyTreatedWasteData);
     }
 

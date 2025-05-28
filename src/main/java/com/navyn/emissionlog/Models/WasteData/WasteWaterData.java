@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.Models.WasteData;
 
+import com.navyn.emissionlog.Enums.GeneralWasteWaterConstants;
 import com.navyn.emissionlog.Enums.WasteWaterConstants;
 import com.navyn.emissionlog.Models.EICVReport;
 import com.navyn.emissionlog.Models.PopulationRecords;
@@ -28,11 +29,15 @@ public class WasteWaterData extends WasteDataAbstract {
 
     private Double TOWFlushToilets;
 
-    private Double FlushToiletsCH4;
+    private Double flushToiletsCH4;
 
     private Double TOWLatrines;
 
-    private Double LatrinesCH4;
+    private Double latrinesCH4;
+
+    private Double latrinesN2O;
+
+    private Double flushToiletsN2O;
 
     public Double calculateCH4Emissions() {
 
@@ -40,18 +45,24 @@ public class WasteWaterData extends WasteDataAbstract {
         setPopulationWithLatrines(populationRecords.getPopulation() * (EICVReport.getProtectedLatrines() +EICVReport.getUnprotectedLatrines())/100);
         setPopulationWithOtherToiletFacilities(populationRecords.getPopulation() * EICVReport.getOthers()/100);
         setPopulationWithNoToiletFacitilies(populationRecords.getPopulation() * EICVReport.getNoToiletFacilities()/100);
-        setTOWFlushToilets(0.0);
+        setTOWFlushToilets(populationWithFlushToilets * WasteWaterConstants.BOD.getValue());
 
-        Double flushToiletCH4 = populationWithFlushToilets * WasteWaterConstants.FLUSH_TOILET_MCF.getValue() * WasteWaterConstants.FLUSH_TOILET_EF.getValue();
+        Double flushToiletCH4 = TOWFlushToilets* WasteWaterConstants.BO.getValue() *WasteWaterConstants.FLUSH_TOILET_MCF.getValue();
+        setFlushToiletsCH4(flushToiletCH4);
 
-        return 0.0;
+        setTOWLatrines(populationWithLatrines * WasteWaterConstants.BOD.getValue());
+        Double latrineCH4 = TOWLatrines * WasteWaterConstants.BO.getValue() * WasteWaterConstants.LATRINES_MCF.getValue();
+        setLatrinesCH4(latrineCH4);
+        return flushToiletCH4+latrineCH4;
     }
 
     public Double calculateN2OEmissions() {
-        return 0.0;
-    }
+        Double flushToiletNitrogen = populationWithFlushToilets*WasteWaterConstants.PROTEIN_EXCRETION.getValue()* GeneralWasteWaterConstants.F_NPR.getValue()*GeneralWasteWaterConstants.F_NON_CON.getValue()*GeneralWasteWaterConstants.F_IND_COM.getValue();
+        setFlushToiletsN2O(flushToiletNitrogen * GeneralWasteWaterConstants.EF_EFFLUENT.getValue()*44/28);
 
-    private Double calculateNH4Emissions(){
-        return 0.0;
+        Double latrineNitrogen = populationWithLatrines*WasteWaterConstants.PROTEIN_EXCRETION.getValue()* GeneralWasteWaterConstants.F_NPR.getValue()*GeneralWasteWaterConstants.F_NON_CON.getValue()*GeneralWasteWaterConstants.F_IND_COM.getValue();
+        setLatrinesN2O(latrineNitrogen * GeneralWasteWaterConstants.EF_EFFLUENT.getValue()*44/28);
+
+        return flushToiletsN2O + latrinesN2O;
     }
 }
