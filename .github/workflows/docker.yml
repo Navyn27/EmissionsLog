@@ -53,8 +53,9 @@ jobs:
         run: docker-compose -f docker-compose.yml down -v --remove-orphans
 
   deploy:
+    environment: STAGING
     needs: build-and-test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
