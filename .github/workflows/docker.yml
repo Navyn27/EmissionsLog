@@ -51,7 +51,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: navyn27/emissionslog:latest
+          tags: sugirayvan/emissions-log:latest
 
       - name: Stop containers
         if: always()
