@@ -71,7 +71,7 @@ jobs:
         run: |
           sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ~/Emissions-log-backend
-            docker pull navyn27/emissionslog:latest
+            docker pull sugirayvan/emissions-log:latest
             docker-compose down
             docker-compose up -d
           EOF
