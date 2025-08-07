@@ -4,12 +4,11 @@ FROM public.ecr.aws/amazoncorretto/amazoncorretto:21
 # Set the working directory
 WORKDIR /app
 
-
 # Install Maven
 RUN apt-get update && \
     apt-get install -y maven && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/* \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy the built jar file into the container
 COPY target/*.jar app.jar
