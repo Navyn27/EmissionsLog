@@ -4,12 +4,14 @@ import com.navyn.emissionlog.Payload.Requests.Agriculture.*;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.Services.AgricultureEmissionsService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/agriculture")
+@SecurityRequirement(name = "BearerAuth")
 public class AgricultureEmissionsController {
 
     @Autowired

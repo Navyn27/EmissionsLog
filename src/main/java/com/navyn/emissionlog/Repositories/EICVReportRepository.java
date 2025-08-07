@@ -9,6 +9,8 @@ import java.util.UUID;
 
 @Repository
 public interface EICVReportRepository extends JpaRepository<EICVReport, UUID> {
-    EICVReport findByYear(int year);
+    Optional<EICVReport> findByYear(int year);
     Optional<EICVReport> findById(UUID id);
+
+    Optional<EICVReport> findByName(String name);
 }

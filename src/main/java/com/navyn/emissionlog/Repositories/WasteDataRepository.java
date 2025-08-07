@@ -7,6 +7,7 @@ import com.navyn.emissionlog.Models.WasteData.WasteDataAbstract;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,4 +18,6 @@ public interface WasteDataRepository extends JpaRepository<WasteDataAbstract, UU
     WasteDataAbstract findFirstByWasteTypeOrderByCreatedAtDesc(WasteType type);
 
     List<SolidWasteData> findAllBySolidWasteType(SolidWasteType solidWasteType);
+
+    List<WasteDataAbstract> findByActivityYearBetween(LocalDateTime startDate, LocalDateTime endDate);
 }

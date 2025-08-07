@@ -269,7 +269,7 @@ public class TransportEmissionFactorsController {
     }
 
     @Operation(summary = "Get supported vehicle/engine types for a specific fuel", description = "This endpoint retrieves the supported vehicle/engine types for a specific fuel based on its ID. It returns a list of vehicle engine types that are applicable to the specified fuel.")
-    @GetMapping("/supported/vehicleEngineType/{fuelId}")
+    @GetMapping("/supported/vehicleEngineType/{fuelId}/")
     public ResponseEntity<ApiResponse> supportedFuelsForVehicleEngineType(@PathVariable("fuelId") UUID fuelId) throws BadRequestException {
        Optional<Fuel> fuels = fuelRepository.findById(fuelId);
         List<VehicleEngineType> supportedVehicleEngineTypes = new ArrayList<>();

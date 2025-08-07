@@ -10,8 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.swing.text.html.Option;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -38,7 +40,8 @@ public class EICVReportServiceImpl implements EICVReportService {
 
     @Override
     public EICVReport getEICVReportByYear(int year) {
-        return eicvReportRepository.findByYear(year);
+        Optional<EICVReport> eicvReport = eicvReportRepository.findByYear(year);
+        return eicvReport.orElse(null);
     }
 
     @Override
@@ -79,5 +82,11 @@ public class EICVReportServiceImpl implements EICVReportService {
         eicvReport.setTotalImprovedSanitation(eicvReportDto.getTotalImprovedSanitation());
         eicvReport.setOthers(eicvReportDto.getOthers());
         return eicvReportRepository.save(eicvReport);
+    }
+
+    @Override
+    public EICVReport getEICVReportsByName(String name) {
+        return eicvReportRepository.findByName(name)
+                .orElseThrow(() -> new RuntimeException("EICV Report with name " + name + " not found"));
     }
 }

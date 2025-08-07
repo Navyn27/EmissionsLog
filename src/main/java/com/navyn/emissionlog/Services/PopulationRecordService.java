@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.Services;
 
 import com.navyn.emissionlog.Controllers.PopulationRecordsController;
+import com.navyn.emissionlog.Enums.Countries;
 import com.navyn.emissionlog.Models.PopulationRecords;
 import com.navyn.emissionlog.Payload.Requests.CreatePopulationRecordDto;
 import org.springframework.stereotype.Service;
@@ -22,4 +23,6 @@ public interface PopulationRecordService {
     List<PopulationRecords> readPopulationRecordsFromExcel(MultipartFile file);
 
     PopulationRecords updatePopulationRecord(UUID id, CreatePopulationRecordDto createPopulationRecordDto);
+
+    List<PopulationRecords> getPopulationRecordsByCountry(Countries country);
 }

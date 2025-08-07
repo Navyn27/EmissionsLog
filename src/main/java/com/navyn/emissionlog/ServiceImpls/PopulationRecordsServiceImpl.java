@@ -81,5 +81,10 @@ public class PopulationRecordsServiceImpl implements PopulationRecordService {
         populationRecords.setNumberOfKigaliHouseholds(createPopulationRecordDto.getNumberOfKigaliHouseholds().intValue());
         return populationRecordRepository.save(populationRecords);
     }
+
+    @Override
+    public List<PopulationRecords> getPopulationRecordsByCountry(Countries country) {
+        return populationRecordRepository.findByCountry(country);
+    }
 }
     

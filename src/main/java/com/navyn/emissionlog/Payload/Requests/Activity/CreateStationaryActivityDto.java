@@ -10,13 +10,17 @@ import java.util.UUID;
 @ValidUnitForMetric
 @Data
 public class CreateStationaryActivityDto {
+    //Activity related fields
     private Sectors sector;
-    private UUID fuel;
-    private String fuelUnit;
-    private Scopes scope;
-    private Double fuelAmount;
-    private Metrics metric;
-    private FuelStates fuelState;
     private LocalDateTime activityYear = LocalDateTime.now();
+
+    //Fuel related fields
+    public FuelTypes fuelType;
+    public UUID fuel;
+    public Double fuelAmount;
+    public FuelStates fuelState;
+    public Metrics metric;
+    private String fuelUnit;
+
     private UUID region;
 }

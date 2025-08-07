@@ -1,8 +1,10 @@
 package com.navyn.emissionlog.Controllers;
 
+import com.navyn.emissionlog.Enums.Countries;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.Services.PopulationRecordService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/population")
+@SecurityRequirement(name = "BearerAuth")
 public class PopulationRecordsController {
      @Autowired
      private PopulationRecordService populationRecordService;

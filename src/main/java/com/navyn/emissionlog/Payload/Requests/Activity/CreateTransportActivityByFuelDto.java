@@ -3,4 +3,5 @@ import lombok.Data;
 
 @Data
 public class CreateTransportActivityByFuelDto extends TransportActivityDto{
+
 }

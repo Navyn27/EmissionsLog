@@ -1,7 +1,6 @@
 package com.navyn.emissionlog.Controllers;
 
-import com.navyn.emissionlog.Enums.Sectors;
-import com.navyn.emissionlog.Enums.TransportModes;
+import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.Payload.Requests.Activity.CreateTransportActivityByFuelDto;
 import com.navyn.emissionlog.Payload.Requests.Activity.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.Payload.Requests.Activity.CreateStationaryActivityDto;
@@ -21,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.validation.Valid;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -75,7 +75,6 @@ public class ActivityController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
-
 //    @PostMapping("/waste/solid/create")
 //    public ResponseEntity<ApiResponse> createSolidWasteActivity(@Valid @RequestBody CreateSolidWasteActivityDto activityDto) {
 //        try {
@@ -106,7 +105,6 @@ public class ActivityController {
 //    @PostMapping("/waste/burning/create")
 //
 //    @PostMapping("/waste/incineration/create")
-
 
     @Operation(summary = "Get an activity by ID", description = "Retrieves an activity using its unique identifier.")
     @GetMapping("/{id}")
@@ -193,8 +191,7 @@ public class ActivityController {
 
     @Operation(summary = "Get dashboard graph data", description = "Retrieves data for the dashboard graph.")
     @GetMapping("/dashboard/graph")
-    public ResponseEntity<ApiResponse> getDashbaordData(@RequestParam ("year") Integer year){
+    public ResponseEntity<ApiResponse> getDashboardGraphData(@RequestParam ("year") Integer year){
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard graph data fetched successfully", activityService.getDashboardGraphData(year)));
     }
-
 }

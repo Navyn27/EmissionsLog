@@ -7,6 +7,7 @@ import com.navyn.emissionlog.Payload.Requests.Auth.SignUpDTO;
 import com.navyn.emissionlog.Payload.Responses.ApiResponse;
 import com.navyn.emissionlog.Services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController("AuthController")
 @RequestMapping(path="/auth")
+@SecurityRequirement(name = "BearerAuth")
 public class AuthController {
     @Autowired
     UserService userService;

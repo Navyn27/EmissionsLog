@@ -10,7 +10,7 @@ import java.time.Month;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DashboardData {
-    Double totalN20Emissions = 0.0;
+    Double totalN2OEmissions = 0.0;
     Double totalFossilCO2Emissions = 0.0;
     Double totalBioCO2Emissions = 0.0;
     Double totalCH4Emissions = 0.0;

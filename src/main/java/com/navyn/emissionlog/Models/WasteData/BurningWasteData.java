@@ -14,7 +14,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "burning_waste_data")
+@Table(name = "burnt_waste_data")
 public class BurningWasteData extends WasteDataAbstract {
 
     @Id

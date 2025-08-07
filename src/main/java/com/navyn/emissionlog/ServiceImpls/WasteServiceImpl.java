@@ -92,10 +92,6 @@ public class WasteServiceImpl implements WasteService {
 //        EICVReport eicvReport = eicvReportRepository.findByYear(wasteData.getActivityYear().getYear());
         Optional<EICVReport> eicvReport = eicvReportRepository.findById(wasteData.getEicvReport());
 
-        if(eicvReport.isEmpty()){
-            //Do the interpolation and extrapolation stuff
-        }
-
         WasteWaterData wasteWaterData = new WasteWaterData();
         wasteWaterData.setWasteType(WasteType.WASTE_WATER);
         wasteWaterData.setPopulationRecords(populationRecordRepository.findById(wasteData.getPopulationRecords())
@@ -172,7 +168,7 @@ public class WasteServiceImpl implements WasteService {
 
     //populate population affiliated waste data
     @Override
-    public List<WasteDataAbstract> populatePopulationAffiliatedWasteData() {
+    public List<WasteDataAbstract>  populatePopulationAffiliatedWasteData() {
 
         //default region
         Region defaultRegion = regionRepository.findAll()
@@ -189,7 +185,7 @@ public class WasteServiceImpl implements WasteService {
 
             //create waste water Dto
             WasteWaterDto  wasteWaterDto = new WasteWaterDto();
-            wasteWaterDto.setEicvReport(eicvReportRepository.findByYear(populationRecord.getYear()).getId());
+            wasteWaterDto.setEicvReport(findEICVReport(populationRecord.getYear()).getId());
             wasteWaterDto.setPopulationRecords(populationRecord.getId());
             wasteWaterDto.setActivityYear(LocalDateTime.of(populationRecord.getYear(),12,31,23,59));
             wasteWaterDto.setScope(Scopes.SCOPE_1);
@@ -313,4 +309,30 @@ public class WasteServiceImpl implements WasteService {
         solidWasteDto.setSolidWasteType(SolidWasteType.NAPPIES);
         savedRecords.add(createSolidWasteData(solidWasteDto));
     }
+
+    private EICVReport findEICVReport(int year) {
+        Optional<EICVReport> eicvReport = eicvReportRepository.findByYear(year);
+        if(eicvReport.isEmpty()){
+            if(year>2022){
+                return eicvReportRepository.findByYear(2022).get();
+            }
+            else if(year<2022 && year > 2017){
+                return eicvReportRepository.findByYear(2017).get();
+            }
+            else if(year<2017 && year > 2014){
+                return eicvReportRepository.findByYear(2014).get();
+            }
+            else if(year<2014 && year > 2011){
+                return eicvReportRepository.findByYear(2011).get();
+            }
+            else if(year<2011 && year > 2006){
+                return eicvReportRepository.findByYear(2006).get();
+            }
+            else{
+                return eicvReportRepository.findByYear(2000).get();
+            }
+        }
+        return eicvReport.get();
+    }
+
 }
