@@ -10,6 +10,7 @@ on:
 
 jobs:
   build-and-test:
+    environment: STAGING
     runs-on: ubuntu-22.04
 
     steps:

@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @RestController(value = "StationaryEmissionFactorsController")
@@ -123,20 +124,20 @@ public class StationaryEmissionFactorsController {
         SupportedCalculationOptions supportedCalculationOptions = new SupportedCalculationOptions();
 
         for(StationaryEmissionFactors factor : stationaryEmissionFactors) {
-            if (factor.getLiquidBasis() != Double.valueOf(0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.LIQUID)) {
+            if (!Objects.equals(factor.getLiquidBasis(), (double) 0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.LIQUID)) {
                 supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.LIQUID);
                 supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.VOLUME);
             }
-            if (factor.getGasBasis() != Double.valueOf(0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.GASEOUS)) {
+            if (!Objects.equals(factor.getGasBasis(), (double) 0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.GASEOUS)) {
                 supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.GASEOUS);
                 if (!supportedCalculationOptions.getSupportedCalculationMetrics().contains(Metrics.VOLUME))
                     supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.VOLUME);
             }
-            if (factor.getMassBasis() != Double.valueOf(0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.SOLID)) {
+            if (!Objects.equals(factor.getMassBasis(), (double) 0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.SOLID)) {
                 supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.SOLID);
                 supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.MASS);
             }
-            if (factor.getEnergyBasis() != Double.valueOf(0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.ENERGY)) {
+            if (!Objects.equals(factor.getEnergyBasis(), (double) 0) && !supportedCalculationOptions.getSupportedCalculationFuelStates().contains(FuelStates.ENERGY)) {
                 supportedCalculationOptions.getSupportedCalculationFuelStates().add(FuelStates.ENERGY);
                 supportedCalculationOptions.getSupportedCalculationMetrics().add(Metrics.ENERGY);
             }

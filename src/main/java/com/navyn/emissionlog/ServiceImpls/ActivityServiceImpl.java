@@ -209,18 +209,24 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public DashboardData getDashboardData() {
-        List<Activity> activities = activityRepository.findAll();
-        List<WasteDataAbstract> wasteActivities = wasteDataAbstractRepository.findAll();
-        List<AquacultureEmissions> aquacultureEmissions = aquacultureEmissionsRepository.findAll();
-        List<EntericFermentationEmissions> entericFermentationEmissions = entericFermentationEmissionsRepository.findAll();
-        List<LimingEmissions> limingEmissions = limingEmissionsRepository.findAll();
-        List<ManureMgmtEmissions> manureMgmtEmissions = manureMgmtEmissionsRepository.findAll();
-        List<RiceCultivationEmissions> riceCultivationEmissions = riceCultivationEmissionsRepository.findAll();
-        List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions = syntheticFertilizerEmissionsRepository.findAll();
-        List<UreaEmissions> ureaEmissions = ureaEmissionsRepository.findAll();
-        return calculateDashboardData(activities,wasteActivities,
-                aquacultureEmissions, entericFermentationEmissions, limingEmissions,
-                manureMgmtEmissions, riceCultivationEmissions, syntheticFertilizerEmissions, ureaEmissions);
+        try {
+            List<Activity> activities = activityRepository.findAll();
+            List<WasteDataAbstract> wasteActivities = wasteDataAbstractRepository.findAll();
+            List<AquacultureEmissions> aquacultureEmissions = aquacultureEmissionsRepository.findAll();
+            List<EntericFermentationEmissions> entericFermentationEmissions = entericFermentationEmissionsRepository.findAll();
+            List<LimingEmissions> limingEmissions = limingEmissionsRepository.findAll();
+            List<ManureMgmtEmissions> manureMgmtEmissions = manureMgmtEmissionsRepository.findAll();
+            List<RiceCultivationEmissions> riceCultivationEmissions = riceCultivationEmissionsRepository.findAll();
+            List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions = syntheticFertilizerEmissionsRepository.findAll();
+            List<UreaEmissions> ureaEmissions = ureaEmissionsRepository.findAll();
+            return calculateDashboardData(activities, wasteActivities,
+                    aquacultureEmissions, entericFermentationEmissions, limingEmissions,
+                    manureMgmtEmissions, riceCultivationEmissions, syntheticFertilizerEmissions, ureaEmissions);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
@@ -264,11 +270,11 @@ public class ActivityServiceImpl implements ActivityService {
         Map<YearMonth, List<Activity>> activitiesByYearMonth = activities.stream()
                 .collect(Collectors.groupingBy(activity ->
                         YearMonth.from(activity.getActivityYear())));
-        Map<YearMonth, List<WasteDataAbstract>> wasteDataByYearMonth = wasteDataAbstractRepository.findByActivityYearBetween(
-                LocalDateTime.of(year, 1, 1, 0, 0),
-                LocalDateTime.of(year, 12, 31, 23, 59)
-        ).stream().collect(Collectors.groupingBy(waste ->
-                YearMonth.from(waste.getActivityYear())));
+//        Map<YearMonth, List<WasteDataAbstract>> wasteDataByYearMonth = wasteDataAbstractRepository.findByActivityYearBetween(
+//                LocalDateTime.of(year, 1, 1, 0, 0),
+//                LocalDateTime.of(year, 12, 31, 23, 59)
+//        ).stream().collect(Collectors.groupingBy(waste ->
+//                YearMonth.from(waste.getActivityYear())));
 
         //Add waste emissions
 
