@@ -16,6 +16,7 @@ import com.navyn.emissionlog.Services.TransportVehicleEmissionFactorsService;
 import com.navyn.emissionlog.Services.VehicleService;
 import com.navyn.emissionlog.Utils.ExcelReader;
 import io.swagger.v3.oas.annotations.Operation;
+import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,15 +29,11 @@ import java.util.*;
 
 @RestController(value = "TransportEmissionFactorsController")
 @RequestMapping("/emissionFactors/transport")
+@RequiredArgsConstructor
 public class TransportEmissionFactorsController {
 
-    @Autowired
-    private FuelService fuelService;
-
-    @Autowired
-    private TransportFuelEmissionFactorsService transportFuelEmissionFactorsService;
-
-    @Autowired
+    private final FuelService fuelService;
+    private final TransportFuelEmissionFactorsService transportFuelEmissionFactorsService;
     private TransportVehicleEmissionFactorsService transportVehicleEmissionService;
 
     @Autowired
@@ -269,7 +266,7 @@ public class TransportEmissionFactorsController {
     }
 
     @Operation(summary = "Get supported vehicle/engine types for a specific fuel", description = "This endpoint retrieves the supported vehicle/engine types for a specific fuel based on its ID. It returns a list of vehicle engine types that are applicable to the specified fuel.")
-    @GetMapping("/supported/vehicleEngineType/{fuelId}/")
+    @GetMapping("/supported/vehicleEngineType/{fuelId}")
     public ResponseEntity<ApiResponse> supportedFuelsForVehicleEngineType(@PathVariable("fuelId") UUID fuelId) throws BadRequestException {
        Optional<Fuel> fuels = fuelRepository.findById(fuelId);
         List<VehicleEngineType> supportedVehicleEngineTypes = new ArrayList<>();

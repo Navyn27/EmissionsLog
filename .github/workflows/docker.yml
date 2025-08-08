@@ -72,7 +72,7 @@ jobs:
         run: |
           sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ~/Emissions-log-backend
-            docker pull --quiet --no-cache my-image:sleepysloth
+            docker pull --quiet sugirayvan/emissions-log:sleepysloth
             docker-compose down
             docker-compose up -d
           EOF
