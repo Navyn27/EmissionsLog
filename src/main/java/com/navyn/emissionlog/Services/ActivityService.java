@@ -7,12 +7,14 @@ import com.navyn.emissionlog.Payload.Requests.Activity.CreateTransportActivityBy
 import com.navyn.emissionlog.Payload.Requests.Activity.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.Payload.Requests.Activity.CreateStationaryActivityDto;
 import com.navyn.emissionlog.Payload.Responses.DashboardData;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Service
 public interface ActivityService {
     Activity createStationaryActivity(CreateStationaryActivityDto activity);
 

@@ -6,6 +6,7 @@ import com.navyn.emissionlog.Payload.Requests.Activity.CreateTransportActivityBy
 import com.navyn.emissionlog.Payload.Requests.Activity.CreateStationaryActivityDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,7 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.validation.Valid;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -28,10 +28,10 @@ import java.util.UUID;
 @RestController("ActivityController")
 @RequestMapping("/activities")
 @SecurityRequirement(name = "BearerAuth")
+@RequiredArgsConstructor(onConstructor = @__(@Autowired))
 public class ActivityController {
 
-    @Autowired
-    private ActivityService activityService;
+    private final ActivityService activityService;
 
     @Operation(summary = "Create a stationary activity", description = "Creates a stationary activity with the provided details.")
     @PostMapping("/stationary/create")
@@ -107,7 +107,7 @@ public class ActivityController {
 //    @PostMapping("/waste/incineration/create")
 
     @Operation(summary = "Get an activity by ID", description = "Retrieves an activity using its unique identifier.")
-    @GetMapping("/{id}")
+    @GetMapping("/id/{id}")
     public ResponseEntity<ApiResponse> getActivity(@PathVariable("id") UUID id) {
         try {
             Activity activity = activityService.getActivityById(id);
@@ -127,8 +127,8 @@ public class ActivityController {
                 new ApiResponse(true, "Activities retrieved successfully", activities)
         );
     }
-
-//    @PutMapping("/{id}")
+//
+//    @PutMapping("/id/{id}")
 //    public ResponseEntity<ApiResponse> updateActivity(@PathVariable UUID id, @Valid @RequestBody Activity activity) {
 //        try {
 //            Activity updatedActivity = activityService.updateActivity(id, activity);
@@ -141,7 +141,7 @@ public class ActivityController {
 //    }
 
     @Operation(summary = "Delete an activity", description = "Deletes an activity using its unique identifier.")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/id/{id}")
     public ResponseEntity<ApiResponse> deleteActivity(@PathVariable("id") UUID id) {
         try {
             activityService.deleteActivity(id);
