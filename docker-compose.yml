@@ -17,7 +17,7 @@ services:
         - postgres_data:/var/lib/postgresql/data
 
   app:
-    image: sugirayvan/emissions-log:latest
+    image: sugirayvan/emissions-log:sleepysloth
     container_name: emissions-log
     restart: always
     depends_on:

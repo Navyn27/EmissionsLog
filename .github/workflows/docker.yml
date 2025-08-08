@@ -52,7 +52,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: sugirayvan/emissions-log:latest
+          tags: sugirayvan/emissions-log:sleepysloth
 
       - name: Stop containers
         if: always()
@@ -72,7 +72,7 @@ jobs:
         run: |
           sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ~/Emissions-log-backend
-            docker pull sugirayvan/emissions-log:sleepysloth
+            docker pull --quiet --no-cache my-image:sleepysloth
             docker-compose down
             docker-compose up -d
           EOF
