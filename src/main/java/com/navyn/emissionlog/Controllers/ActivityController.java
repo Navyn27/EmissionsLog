@@ -107,7 +107,7 @@ public class ActivityController {
 //    @PostMapping("/waste/incineration/create")
 
     @Operation(summary = "Get an activity by ID", description = "Retrieves an activity using its unique identifier.")
-    @GetMapping("/{id}")
+    @GetMapping("/id/{id}")
     public ResponseEntity<ApiResponse> getActivity(@PathVariable("id") UUID id) {
         try {
             Activity activity = activityService.getActivityById(id);
@@ -141,7 +141,7 @@ public class ActivityController {
 //    }
 
     @Operation(summary = "Delete an activity", description = "Deletes an activity using its unique identifier.")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/id/{id}")
     public ResponseEntity<ApiResponse> deleteActivity(@PathVariable("id") UUID id) {
         try {
             activityService.deleteActivity(id);
