@@ -107,7 +107,7 @@ public class ActivityController {
 //    @PostMapping("/waste/incineration/create")
 
     @Operation(summary = "Get an activity by ID", description = "Retrieves an activity using its unique identifier.")
-    @GetMapping("/id/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getActivity(@PathVariable("id") UUID id) {
         try {
             Activity activity = activityService.getActivityById(id);
@@ -141,7 +141,7 @@ public class ActivityController {
 //    }
 
     @Operation(summary = "Delete an activity", description = "Deletes an activity using its unique identifier.")
-    @DeleteMapping("/id/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deleteActivity(@PathVariable("id") UUID id) {
         try {
             activityService.deleteActivity(id);
@@ -179,7 +179,7 @@ public class ActivityController {
     }
 
     @Operation(summary = "Get dashboard summary", description = "Retrieves a summary of the dashboard.")
-    @GetMapping("/dashboard")
+    @GetMapping("/stats/dashboard")
     public ResponseEntity<ApiResponse> getDashboardData(@RequestParam ("year") Integer year){
         if(year != null){
             LocalDateTime startDate = LocalDateTime.of(year, 1, 1, 0, 0);
@@ -190,7 +190,7 @@ public class ActivityController {
     }
 
     @Operation(summary = "Get dashboard graph data", description = "Retrieves data for the dashboard graph.")
-    @GetMapping("/dashboard/graph")
+    @GetMapping("/stats/dashboard/graph")
     public ResponseEntity<ApiResponse> getDashboardGraphData(@RequestParam ("year") Integer year){
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard graph data fetched successfully", activityService.getDashboardGraphData(year)));
     }
