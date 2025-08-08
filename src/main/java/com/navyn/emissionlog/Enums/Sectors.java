@@ -10,5 +10,5 @@ public enum Sectors {
     AGRICULTURE,
     FORESTRY,
     FISHERIES,
-    TRANSPORT;
+    TRANSPORT
 }
