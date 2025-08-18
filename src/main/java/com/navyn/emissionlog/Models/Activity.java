@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -44,6 +45,11 @@ public class Activity {
     private Double CO2EqEmissions = 0.0;
 
     private LocalDateTime activityYear = LocalDateTime.now();
+
+    public Integer getYear(){
+        return activityYear.getYear();
+    }
+
 
     @PostLoad
     private void setCO2EqEmissions() {

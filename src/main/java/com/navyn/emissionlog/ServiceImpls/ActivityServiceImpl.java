@@ -16,15 +16,17 @@ import com.navyn.emissionlog.ServiceImpls.EmissionCalculation.TransportEmissionC
 import com.navyn.emissionlog.Services.ActivityService;
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
 
 @Service
 @RequiredArgsConstructor
@@ -255,7 +257,40 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public List<DashboardData> getDashboardGraphData(Integer year) {
+    public List<DashboardData> getDashboardGraphDataByYear(Integer startingYear, Integer endingYear) {
+        List<Activity> activities;
+
+        if(startingYear == null || endingYear == null) {
+            activities = activityRepository.findAll();
+        }
+        else {
+            LocalDateTime startDate = LocalDateTime.of(startingYear, 1, 1, 0, 0);
+            LocalDateTime endDate = LocalDateTime.of(endingYear, 12, 31, 23, 59);
+            activities = activityRepository.findByActivityYearBetween(startDate, endDate);
+        }
+
+        // Group activities by year
+        Map<Integer, List<Activity>> groupedActivities = activities.stream().collect(groupingBy(Activity::getYear));
+
+        // Create aggregated dashboard data for each month
+        List<DashboardData> dashboardDataList = new ArrayList<>();
+        for(Map.Entry<Integer, List<Activity>> entry : groupedActivities.entrySet()) {
+            Integer year = entry.getKey();
+            List<Activity> yearlyActivities = entry.getValue();
+
+            DashboardData data = calculateDashboardActivityData(yearlyActivities);
+            data.setYear(year);
+            data.setIsoDate(Year.of(year).atDay(1).toString()); // Set a representative date for the year
+            // Store period information (you may need to add a field to DashboardData class)
+            data.setMonth(null); // No month for yearly data
+            dashboardDataList.add(data);
+        }
+
+        return dashboardDataList;
+    }
+
+    @Override
+    public List<DashboardData> getDashboardGraphDataByMonth(Integer year) {
         List<Activity> activities;
         if(year==0){
             activities = activityRepository.findAll();
@@ -268,24 +303,10 @@ public class ActivityServiceImpl implements ActivityService {
 
         // Group activities by year and month
         Map<YearMonth, List<Activity>> activitiesByYearMonth = activities.stream()
-                .collect(Collectors.groupingBy(activity ->
+                .collect(groupingBy(activity ->
                         YearMonth.from(activity.getActivityYear())));
-//        Map<YearMonth, List<WasteDataAbstract>> wasteDataByYearMonth = wasteDataAbstractRepository.findByActivityYearBetween(
-//                LocalDateTime.of(year, 1, 1, 0, 0),
-//                LocalDateTime.of(year, 12, 31, 23, 59)
-//        ).stream().collect(Collectors.groupingBy(waste ->
-//                YearMonth.from(waste.getActivityYear())));
 
-        //Add waste emissions
-
-
-        //Add Agriculture emissions
-
-        //
-
-
-        //Add
-
+        //Waste data
 
         // Create aggregated dashboard data for each month
         List<DashboardData> dashboardDataList = new ArrayList<>();
@@ -315,7 +336,6 @@ public class ActivityServiceImpl implements ActivityService {
         return dashboardDataList;
     }
 
-    @Override
     public List<Activity> getStationaryEmissionsFilteredData(Sectors sectors, LocalDate year, FuelTypes fuelTypes, UUID fuel) {
         // First get stationary activities
         List<Activity> activities = activityRepository.findByActivityData_ActivityType(ActivityTypes.STATIONARY);
@@ -361,7 +381,6 @@ public class ActivityServiceImpl implements ActivityService {
         return activities;
     }
 
-    @Override
     public List<Activity> getTransportEmissionsFilteredData(TransportModes transportMode, UUID region, TransportType transportType, UUID fuel, FuelTypes fuelType, UUID vehicle, Scopes scope) {
         // First get transport activities
         List<Activity> activities = activityRepository.findByActivityData_ActivityType(ActivityTypes.TRANSPORT);

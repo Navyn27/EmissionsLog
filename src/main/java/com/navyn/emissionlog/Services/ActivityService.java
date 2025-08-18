@@ -36,9 +36,7 @@ public interface ActivityService {
 
     DashboardData getDashboardData(LocalDateTime startDate, LocalDateTime endDate);
 
-    List<DashboardData> getDashboardGraphData(Integer year);
+    List<DashboardData> getDashboardGraphDataByMonth(Integer year);
 
-    List<Activity> getStationaryEmissionsFilteredData(Sectors sectors, LocalDate year, FuelTypes fuelTypes, UUID fuel);
-
-    List<Activity> getTransportEmissionsFilteredData(TransportModes transportMode, UUID region, TransportType transportType, UUID fuel, FuelTypes fuelType, UUID vehicle, Scopes scope);
+    List<DashboardData> getDashboardGraphDataByYear(Integer startingYear, Integer endingYear);
 }

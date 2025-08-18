@@ -189,9 +189,15 @@ public class ActivityController {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard data fetched successfully", activityService.getDashboardData()));
     }
 
-    @Operation(summary = "Get dashboard graph data", description = "Retrieves data for the dashboard graph.")
-    @GetMapping("/stats/dashboard/graph")
-    public ResponseEntity<ApiResponse> getDashboardGraphData(@RequestParam ("year") Integer year){
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard graph data fetched successfully", activityService.getDashboardGraphData(year)));
+    @Operation(summary = "Get dashboard graph data by Month", description = "Retrieves data for the dashboard graph by month.")
+    @GetMapping("/stats/dashboard/graph/byMonth")
+    public ResponseEntity<ApiResponse> getDashboardGraphDataByMonth(@RequestParam ("year") Integer year){
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard graph data fetched successfully", activityService.getDashboardGraphDataByMonth(year)));
+    }
+
+    @Operation(summary = "Get dashboard graph data by Year", description = "Retrieves data for the dashboard graph by year.")
+    @GetMapping("stats/dashboard/graph/byYear")
+    public ResponseEntity<ApiResponse> getDashboardGraphDataByYear(@RequestParam ("startingYear") Integer startingYear, @RequestParam ("endingYear") Integer endingYear){
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard graph data fetched successfully", activityService.getDashboardGraphDataByYear(startingYear, endingYear)));
     }
 }
