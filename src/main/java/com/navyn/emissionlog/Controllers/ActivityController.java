@@ -180,10 +180,10 @@ public class ActivityController {
 
     @Operation(summary = "Get dashboard summary", description = "Retrieves a summary of the dashboard.")
     @GetMapping("/stats/dashboard")
-    public ResponseEntity<ApiResponse> getDashboardData(@RequestParam ("year") Integer year){
-        if(year != null){
-            LocalDateTime startDate = LocalDateTime.of(year, 1, 1, 0, 0);
-            LocalDateTime endDate = LocalDateTime.of(year, 12, 31, 23, 59);
+    public ResponseEntity<ApiResponse> getDashboardData(@RequestParam ("startingYear") Integer startingYear, @RequestParam ("endingYear") Integer endingYear){
+        if(startingYear != null || endingYear != null) {
+            LocalDateTime startDate = startingYear != null ? LocalDateTime.of(startingYear, 1, 1, 0, 0) : LocalDateTime.of(endingYear, 1, 1, 0, 0);
+            LocalDateTime endDate = endingYear != null ? LocalDateTime.of(endingYear, 12, 31, 23, 59) : LocalDateTime.of(startingYear, 12, 31, 23, 59);
             return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard data fetched successfully", activityService.getDashboardData(startDate, endDate)));
         }
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard data fetched successfully", activityService.getDashboardData()));

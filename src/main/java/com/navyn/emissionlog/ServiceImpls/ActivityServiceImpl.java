@@ -497,6 +497,16 @@ public class ActivityServiceImpl implements ActivityService {
         return dashboardData;
     }
 
+    private DashboardData calculateDashboardActivityData() {
+        DashboardData dashboardData = new DashboardData();
+        dashboardData.setTotalCH4Emissions(activity.getCH4Emissions());
+        dashboardData.setTotalN2OEmissions(activity.getN2OEmissions());
+        dashboardData.setTotalFossilCO2Emissions(activity.getFossilCO2Emissions());
+        dashboardData.setTotalBioCO2Emissions(activity.getBioCO2Emissions());
+        dashboardData.setTotalCO2EqEmissions(activity.getCO2EqEmissions());
+        return dashboardData;
+    }
+
     //create FuelData
     private FuelData createFuelData(CreateStationaryActivityDto dto, Fuel fuel) {
         FuelData fuelData = new FuelData();
