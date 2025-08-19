@@ -1,6 +1,5 @@
-package com.navyn.emissionlog.Services;
+package com.navyn.emissionlog.modules.regions;
 
-import com.navyn.emissionlog.modules.regions.Region;
 import com.navyn.emissionlog.modules.regions.dtos.CreateRegionDto;
 
 import java.util.List;

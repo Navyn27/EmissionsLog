@@ -2,10 +2,8 @@ package com.navyn.emissionlog.modules.populationRecords;
 import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.modules.fuel.dtos.CreateFuelDto;
 import com.navyn.emissionlog.modules.population.dtos.CreatePopulationRecordDto;
-import com.navyn.emissionlog.Repositories.PopulationRecordsRepository;
-import com.navyn.emissionlog.Services.PopulationRecordService;
 import com.navyn.emissionlog.utils.ExcelReader;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,10 +12,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class PopulationRecordsServiceImpl implements PopulationRecordService {
 
-    @Autowired
-    private PopulationRecordsRepository populationRecordRepository;
+    private final PopulationRecordsRepository populationRecordRepository;
 
     @Override
     public PopulationRecords createPopulationRecord(CreatePopulationRecordDto createPopulationRecordDto) {

@@ -1,7 +1,6 @@
 package com.navyn.emissionlog.modules.populationRecords;
 
 import com.navyn.emissionlog.utils.ApiResponse;
-import com.navyn.emissionlog.Services.PopulationRecordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;

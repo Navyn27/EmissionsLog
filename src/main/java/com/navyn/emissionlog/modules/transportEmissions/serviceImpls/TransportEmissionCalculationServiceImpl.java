@@ -8,22 +8,19 @@ import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportVehicleDataEmissionFactors;
 import com.navyn.emissionlog.Repositories.ActivityRepository;
-import com.navyn.emissionlog.Repositories.FuelDataRepository;
-import com.navyn.emissionlog.Repositories.TransportVehicleDataEmissionFactorsRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.navyn.emissionlog.modules.fuel.repositories.FuelDataRepository;
+import com.navyn.emissionlog.modules.transportEmissions.repositories.TransportVehicleDataEmissionFactorsRepository;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class TransportEmissionCalculationServiceImpl{
 
-    @Autowired
-    private ActivityRepository activityRepository;
-
-    @Autowired
-    private FuelDataRepository fuelDataRepository;
-
-    @Autowired
-    private TransportVehicleDataEmissionFactorsRepository transportVehicleDataEmissionFactorsRepository;
+    private final ActivityRepository activityRepository;
+    private final FuelDataRepository fuelDataRepository;
+    private final TransportVehicleDataEmissionFactorsRepository transportVehicleDataEmissionFactorsRepository;
 
     public void calculateEmissionsByFuel(TransportFuelEmissionFactors factor, Fuel fuel, Activity activity, FuelData fuelData, String unit, Double rawAmount) {
 //        Calculate the amount of fuel in the SI unit of provided metric

@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.agricultureEmissions.models;
+package com.navyn.emissionlog.modules.agricultureEmissions.dtos;
 
 import lombok.Data;
 

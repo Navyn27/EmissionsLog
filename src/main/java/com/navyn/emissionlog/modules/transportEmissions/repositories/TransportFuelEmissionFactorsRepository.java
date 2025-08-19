@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Repositories;
+package com.navyn.emissionlog.modules.transportEmissions.repositories;
 
 import com.navyn.emissionlog.Enums.RegionGroup;
 import com.navyn.emissionlog.Enums.TransportType;

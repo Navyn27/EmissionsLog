@@ -3,7 +3,7 @@ package com.navyn.emissionlog.modules.eicvReports;
 import com.navyn.emissionlog.modules.eicvReports.dtos.EICVReportDto;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,10 +14,10 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/eicv")
 @SecurityRequirement(name = "BearerAuth")
+@RequiredArgsConstructor
 public class EICVReportsController {
 
-    @Autowired
-    private EICVReportService eicvReportService;
+    private final EICVReportService eicvReportService;
 
      @PostMapping
      public ResponseEntity<ApiResponse> createEICVReport(@RequestBody EICVReportDto eicvReportDto) {

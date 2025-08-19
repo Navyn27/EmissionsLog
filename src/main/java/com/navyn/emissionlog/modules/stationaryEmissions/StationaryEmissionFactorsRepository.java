@@ -1,7 +1,6 @@
-package com.navyn.emissionlog.Repositories;
+package com.navyn.emissionlog.modules.stationaryEmissions;
 
 import com.navyn.emissionlog.modules.fuel.Fuel;
-import com.navyn.emissionlog.modules.stationaryEmissions.StationaryEmissionFactors;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

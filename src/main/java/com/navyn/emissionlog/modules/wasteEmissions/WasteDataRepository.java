@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Repositories;
+package com.navyn.emissionlog.modules.wasteEmissions;
 
 import com.navyn.emissionlog.Enums.SolidWasteType;
 import com.navyn.emissionlog.Enums.WasteType;

@@ -1,6 +1,5 @@
-package com.navyn.emissionlog.Repositories;
+package com.navyn.emissionlog.modules.eicvReports;
 
-import com.navyn.emissionlog.modules.eicvReports.EICVReport;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

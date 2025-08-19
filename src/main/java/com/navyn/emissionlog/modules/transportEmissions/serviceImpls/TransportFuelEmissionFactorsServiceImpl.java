@@ -5,11 +5,11 @@ import com.navyn.emissionlog.Enums.TransportType;
 import com.navyn.emissionlog.Enums.VehicleEngineType;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmissionFactors;
-import com.navyn.emissionlog.Repositories.FuelRepository;
-import com.navyn.emissionlog.Repositories.TransportFuelEmissionFactorsRepository;
+import com.navyn.emissionlog.modules.transportEmissions.repositories.TransportFuelEmissionFactorsRepository;
+import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
+import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,13 +17,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class TransportFuelEmissionFactorsServiceImpl implements TransportFuelEmissionFactorsService {
 
-    @Autowired
-    private TransportFuelEmissionFactorsRepository transportFuelEmissionFactorsRepository;
-
-    @Autowired
-    private FuelRepository fuelRepository;
+    private final TransportFuelEmissionFactorsRepository transportFuelEmissionFactorsRepository;
+    private final FuelRepository fuelRepository;
 
     @Override
     public TransportFuelEmissionFactors saveTransportFuelEmissionFactors(TransportFuelEmissionFactors transportFuelEmissionFactors) {

@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.agricultureEmissions.models;
+package com.navyn.emissionlog.modules.agricultureEmissions.dtos;
 
 import com.navyn.emissionlog.Enums.LimingMaterials;
 import lombok.Data;

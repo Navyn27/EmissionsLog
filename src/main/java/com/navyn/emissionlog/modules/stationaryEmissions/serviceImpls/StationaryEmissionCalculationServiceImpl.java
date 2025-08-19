@@ -6,21 +6,18 @@ import com.navyn.emissionlog.modules.fuel.FuelData;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.stationaryEmissions.StationaryEmissionFactors;
 import com.navyn.emissionlog.Repositories.ActivityRepository;
-import com.navyn.emissionlog.Repositories.FuelDataRepository;
+import com.navyn.emissionlog.modules.fuel.repositories.FuelDataRepository;
 import com.navyn.emissionlog.modules.stationaryEmissions.services.StationaryEmissionsCalculationService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class StationaryEmissionCalculationServiceImpl implements StationaryEmissionsCalculationService {
 
-    @Autowired
-    ActivityRepository activityRepository;
-
-    @Autowired
-    FuelDataRepository fuelDataRepository;
+    private final FuelDataRepository fuelDataRepository;
 
     /**
      * Calculates the emissions of a stationary activity

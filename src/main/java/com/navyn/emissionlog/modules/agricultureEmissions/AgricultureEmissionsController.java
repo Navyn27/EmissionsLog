@@ -1,12 +1,13 @@
 package com.navyn.emissionlog.modules.agricultureEmissions;
 
 import com.navyn.emissionlog.utils.ApiResponse;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.*;
 
 @RestController
 @RequestMapping("/agriculture")

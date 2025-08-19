@@ -2,7 +2,6 @@ package com.navyn.emissionlog.modules.regions;
 
 import com.navyn.emissionlog.modules.regions.dtos.CreateRegionDto;
 import com.navyn.emissionlog.utils.ApiResponse;
-import com.navyn.emissionlog.Services.RegionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;

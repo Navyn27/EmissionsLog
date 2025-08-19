@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Services;
+package com.navyn.emissionlog.modules.activities;
 
 import com.navyn.emissionlog.modules.activities.models.Activity;
 import com.navyn.emissionlog.modules.activities.dtos.CreateTransportActivityByFuelDto;

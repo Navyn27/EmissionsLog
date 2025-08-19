@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.navyn.emissionlog.modules.activities.models.Activity;
 import com.navyn.emissionlog.utils.ApiResponse;
-import com.navyn.emissionlog.Services.ActivityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

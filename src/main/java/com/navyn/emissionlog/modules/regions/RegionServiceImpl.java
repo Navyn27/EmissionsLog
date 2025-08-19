@@ -1,8 +1,6 @@
 package com.navyn.emissionlog.modules.regions;
 
 import com.navyn.emissionlog.modules.regions.dtos.CreateRegionDto;
-import com.navyn.emissionlog.Repositories.RegionRepository;
-import com.navyn.emissionlog.Services.RegionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

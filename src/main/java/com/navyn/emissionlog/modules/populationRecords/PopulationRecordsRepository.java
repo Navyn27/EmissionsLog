@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Repositories;
+package com.navyn.emissionlog.modules.populationRecords;
 
 import com.navyn.emissionlog.Enums.Countries;
 import com.navyn.emissionlog.modules.populationRecords.PopulationRecords;

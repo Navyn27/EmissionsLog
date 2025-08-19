@@ -2,31 +2,37 @@ package com.navyn.emissionlog.modules.activities.serviceImpls;
 
 import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.*;
 import com.navyn.emissionlog.modules.wasteEmissions.models.WasteDataAbstract;
 import com.navyn.emissionlog.modules.activities.models.Activity;
+import com.navyn.emissionlog.modules.activities.ActivityService;
 import com.navyn.emissionlog.modules.activities.models.ActivityData;
 import com.navyn.emissionlog.modules.activities.models.TransportActivityData;
-import com.navyn.emissionlog.modules.activities.dtos.CreateTransportActivityByFuelDto;
-import com.navyn.emissionlog.modules.activities.dtos.CreateTransportActivityByVehicleDataDto;
-import com.navyn.emissionlog.modules.activities.dtos.CreateStationaryActivityDto;
+import com.navyn.emissionlog.modules.activities.dtos.*;
 import com.navyn.emissionlog.modules.activities.models.VehicleData;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.fuel.FuelData;
 import com.navyn.emissionlog.modules.stationaryEmissions.StationaryEmissionFactors;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.utils.DashboardData;
-import com.navyn.emissionlog.Repositories.*;
-import com.navyn.emissionlog.Repositories.Agriculture.*;
 import com.navyn.emissionlog.modules.stationaryEmissions.serviceImpls.StationaryEmissionCalculationServiceImpl;
 import com.navyn.emissionlog.modules.transportEmissions.serviceImpls.TransportEmissionCalculationServiceImpl;
-import com.navyn.emissionlog.Services.ActivityService;
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import com.navyn.emissionlog.modules.vehicles.Vehicle;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import com.navyn.emissionlog.Repositories.ActivityRepository;
+import com.navyn.emissionlog.Repositories.ActivityDataRepository;
+import com.navyn.emissionlog.modules.regions.RegionRepository;
+import com.navyn.emissionlog.Repositories.VehicleRepository;
+import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
+import com.navyn.emissionlog.modules.wasteEmissions.WasteDataRepository;
+import com.navyn.emissionlog.modules.fuel.repositories.FuelDataRepository;
+import com.navyn.emissionlog.Repositories.VehicleDataRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,16 +43,14 @@ import static java.util.stream.Collectors.groupingBy;
 @RequiredArgsConstructor
 public class ActivityServiceImpl implements ActivityService {
 
-    private final ActivityRepository activityRepository;
-    private final FuelRepository fuelRepository;
-    private final ActivityDataRepository activityDataRepository;
-    private final FuelDataRepository fuelDataRepository;
     private final StationaryEmissionCalculationServiceImpl stationaryEmissionCalculationService;
-    private final RegionRepository regionRepository;
     private final TransportEmissionCalculationServiceImpl transportEmissionCalculationService;
     private final TransportFuelEmissionFactorsService transportFuelEmissionFactorsService;
+    private final FuelRepository fuelRepository;
+    private final ActivityRepository activityRepository;
+    private final ActivityDataRepository activityDataRepository;
+    private final RegionRepository regionRepository;
     private final VehicleRepository vehicleRepository;
-    private final VehicleDataRepository vehicleDataRepository;
     private final WasteDataRepository wasteDataAbstractRepository;
     private final AquacultureEmissionsRepository aquacultureEmissionsRepository;
     private final EntericFermentationEmissionsRepository entericFermentationEmissionsRepository;
@@ -55,6 +59,8 @@ public class ActivityServiceImpl implements ActivityService {
     private final RiceCultivationEmissionsRepository riceCultivationEmissionsRepository;
     private final SyntheticFertilizerEmissionsRepository syntheticFertilizerEmissionsRepository;
     private final UreaEmissionsRepository ureaEmissionsRepository;
+    private final FuelDataRepository fuelDataRepository;
+    private final VehicleDataRepository vehicleDataRepository;
 
     @Override
     public Activity createStationaryActivity(CreateStationaryActivityDto activity) {
@@ -251,8 +257,8 @@ public class ActivityServiceImpl implements ActivityService {
             DashboardData dashboardData = calculateDashboardData(activities, wasteActivities,
                     aquacultureEmissions, entericFermentationEmissions, limingEmissions,
                     manureMgmtEmissions, riceCultivationEmissions, syntheticFertilizerEmissions, ureaEmissions);
-            dashboardData.setYear(startDate.getYear());
-            dashboardData.setIsoDate(startDate.toString());
+            dashboardData.setStartingDate(startDate.toString());
+            dashboardData.setEndingDate(endDate.toString());
             return dashboardData;
         }
         catch (Exception e){
@@ -283,12 +289,15 @@ public class ActivityServiceImpl implements ActivityService {
 
         // Create aggregated dashboard data for each month
         List<DashboardData> dashboardDataList = new ArrayList<>();
-        for(Map.Entry<Integer, List<Activity>> entry : groupedActivities.entrySet()) {
-            DashboardData data = generateDashboardGraphTime_DataPoint(entry.getValue(), groupedWasteActivities.get(entry.getKey()));
-            Integer year = entry.getKey();
-            data.setYear(year);
-            data.setIsoDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
-            data.setMonth(null);
+        for (int year = startingYear; year <= endingYear; year++) {
+
+            List<Activity> activityList = groupedActivities.getOrDefault(year, List.of());
+            List<WasteDataAbstract> wasteList = groupedWasteActivities.getOrDefault(year, List.of());
+
+            DashboardData data = generateDashboardGraphTime_DataPoint(activityList, wasteList);
+            data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
+            data.setEndingDate(LocalDateTime.of(year, 12, 31 , 23, 59).toString());
+            data.setYear(Year.of(year));
             dashboardDataList.add(data);
         }
 
@@ -297,18 +306,12 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public List<DashboardData> getDashboardGraphDataByMonth(Integer year) {
-        List<Activity> activities;
-        List<WasteDataAbstract> wasteData;
-        if(year==0){
-            activities = activityRepository.findAll();
-            wasteData = wasteDataAbstractRepository.findAll();
-        }
-        else {
-            LocalDateTime startDate = LocalDateTime.of(year, 1, 1, 0, 0);
-            LocalDateTime endDate = LocalDateTime.of(year, 12, 31, 23, 59);
-            activities = activityRepository.findByActivityYearBetween(startDate, endDate);
-            wasteData = wasteDataAbstractRepository.findByActivityYearBetween(startDate, endDate);
-        }
+
+        LocalDateTime startDate = LocalDateTime.of(year, 1, 1, 0, 0);
+        LocalDateTime endDate = LocalDateTime.of(year, 12, 31, 23, 59);
+
+        List<Activity> activities = activityRepository.findByActivityYearBetween(startDate, endDate);
+        List<WasteDataAbstract> wasteData = wasteDataAbstractRepository.findByActivityYearBetween(startDate, endDate);
 
         // Group activities by year and month
         Map<YearMonth, List<Activity>> activitiesByYearMonth = activities.stream()
@@ -322,15 +325,19 @@ public class ActivityServiceImpl implements ActivityService {
         // Create aggregated dashboard data for each month
         List<DashboardData> dashboardDataList = new ArrayList<>();
 
+        for (int month = 1; month <= 12; month++) {
+            YearMonth ym = YearMonth.of(year, month);
 
-        for (Map.Entry<YearMonth, List<Activity>> entry : activitiesByYearMonth.entrySet()) {
-            YearMonth yearMonth = entry.getKey();
-            DashboardData data = generateDashboardGraphTime_DataPoint(entry.getValue(), wasteDataByYearMonth.get(entry.getKey()));
-            data.setYear(yearMonth.getYear());
-            data.setMonth(yearMonth.getMonth());
-            data.setIsoDate(yearMonth.atDay(1).toString());
+            List<Activity> activityList = activitiesByYearMonth.getOrDefault(ym, List.of());
+            List<WasteDataAbstract> wasteList = wasteDataByYearMonth.getOrDefault(ym, List.of());
+
+            DashboardData data = generateDashboardGraphTime_DataPoint(activityList, wasteList);
+            data.setStartingDate(LocalDateTime.of(year, month, 1, 0, 0).toString());
+            data.setEndingDate(LocalDateTime.of(year, month, ym.lengthOfMonth() , 23, 59).toString());
+            data.setMonth(ym.getMonth());
             dashboardDataList.add(data);
         }
+
 
         return dashboardDataList;
     }

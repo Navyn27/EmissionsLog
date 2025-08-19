@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.agricultureEmissions;
 
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.*;
 
 import java.util.List;

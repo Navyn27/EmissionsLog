@@ -9,7 +9,7 @@ import com.navyn.emissionlog.modules.fuel.dtos.CreateFuelDto;
 import com.navyn.emissionlog.modules.transportEmissions.dtos.TransportFuelEmissionFactorsDto;
 import com.navyn.emissionlog.modules.transportEmissions.dtos.TransportVehicleDataEmissionFactorsDto;
 import com.navyn.emissionlog.utils.ApiResponse;
-import com.navyn.emissionlog.Repositories.FuelRepository;
+import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
 import com.navyn.emissionlog.Services.FuelService;
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import com.navyn.emissionlog.Services.TransportVehicleEmissionFactorsService;
@@ -34,13 +34,9 @@ public class TransportEmissionFactorsController {
 
     private final FuelService fuelService;
     private final TransportFuelEmissionFactorsService transportFuelEmissionFactorsService;
-    private TransportVehicleEmissionFactorsService transportVehicleEmissionService;
-
-    @Autowired
-    private FuelRepository fuelRepository;
-
-    @Autowired
-    private VehicleService vehicleService;
+    private final TransportVehicleEmissionFactorsService transportVehicleEmissionService;
+    private final FuelRepository fuelRepository;
+    private final VehicleService vehicleService;
 
     @Operation(summary = "Upload transport emission factors by fuel", description = "This endpoint upload transport emission factors in bulk basing on provided fuel data in an Excel File. The Excel file should contain the following columns: Fuel, Region Group, Fossil CO2 Emission Factor, Biogenic CO2 Emission Factor, Transport Type, Vehicle Engine Type, CH4 Emission Factor, N2O Emission Factor.  The uploaded data is processed and saved to the database.")
     @PostMapping("/uploadByFuelExcel")

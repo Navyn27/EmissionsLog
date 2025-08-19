@@ -3,10 +3,10 @@ package com.navyn.emissionlog.modules.stationaryEmissions.serviceImpls;
 import com.navyn.emissionlog.modules.stationaryEmissions.StationaryEmissionFactors;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.stationaryEmissions.dtos.StationaryEmissionFactorsDto;
-import com.navyn.emissionlog.Repositories.StationaryEmissionFactorsRepository;
+import com.navyn.emissionlog.modules.stationaryEmissions.StationaryEmissionFactorsRepository;
 import com.navyn.emissionlog.modules.stationaryEmissions.services.StationaryEmissionFactorsService;
-import com.navyn.emissionlog.Repositories.FuelRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,13 +14,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class StationaryEmissionFactorsServiceImpl implements StationaryEmissionFactorsService {
 
-    @Autowired
-    FuelRepository fuelRepository;
-
-    @Autowired
-    StationaryEmissionFactorsRepository stationaryEmissionFactorsRepository;
+    private final FuelRepository fuelRepository;
+    private final StationaryEmissionFactorsRepository stationaryEmissionFactorsRepository;
 
     @Override
     public StationaryEmissionFactors createStationaryEmissionFactor(StationaryEmissionFactorsDto stationaryEmissionFactorsDto) {

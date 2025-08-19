@@ -4,9 +4,9 @@ import com.navyn.emissionlog.Enums.FuelSourceType;
 import com.navyn.emissionlog.Enums.FuelTypes;
 import com.navyn.emissionlog.modules.fuel.dtos.CreateFuelDto;
 import com.navyn.emissionlog.modules.fuel.dtos.ExistingFuelDto;
-import com.navyn.emissionlog.Repositories.FuelRepository;
+import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
 import com.navyn.emissionlog.Services.FuelService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,10 +14,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class FuelServiceImpl implements FuelService {
 
-    @Autowired
-    private FuelRepository fuelRepository;
+    private final FuelRepository fuelRepository;
 
     @Override
     public Fuel saveFuel(CreateFuelDto fuel) {

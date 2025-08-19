@@ -7,16 +7,15 @@ import com.navyn.emissionlog.Enums.WasteType;
 import com.navyn.emissionlog.modules.eicvReports.EICVReport;
 import com.navyn.emissionlog.modules.populationRecords.PopulationRecords;
 import com.navyn.emissionlog.modules.regions.Region;
-import com.navyn.emissionlog.Repositories.EICVReportRepository;
-import com.navyn.emissionlog.Repositories.PopulationRecordsRepository;
-import com.navyn.emissionlog.Repositories.RegionRepository;
-import com.navyn.emissionlog.Repositories.WasteDataRepository;
+import com.navyn.emissionlog.modules.eicvReports.EICVReportRepository;
+import com.navyn.emissionlog.modules.populationRecords.PopulationRecordsRepository;
+import com.navyn.emissionlog.modules.regions.RegionRepository;
 import com.navyn.emissionlog.Services.WasteService;
 import com.navyn.emissionlog.utils.ExcelReader;
 import com.navyn.emissionlog.modules.wasteEmissions.models.*;
 import com.navyn.emissionlog.modules.wasteEmissions.dtos.*;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,19 +28,13 @@ import java.util.Optional;
 import static com.navyn.emissionlog.Enums.WasteType.SOLID_WASTE;
 
 @Service
+@RequiredArgsConstructor
 public class WasteServiceImpl implements WasteService {
 
-    @Autowired
-    private PopulationRecordsRepository populationRecordRepository;
-
-    @Autowired
-    private RegionRepository regionRepository;
-
-    @Autowired
-    private WasteDataRepository wasteDataRepository;
-
-    @Autowired
-    private EICVReportRepository eicvReportRepository;
+    private final PopulationRecordsRepository populationRecordRepository;
+    private final RegionRepository regionRepository;
+    private final WasteDataRepository wasteDataRepository;
+    private final EICVReportRepository eicvReportRepository;
 
     @Override
     public WasteDataAbstract createIndustrialWasteWaterData(IndustrialWasteDto wasteData) {

@@ -1,38 +1,27 @@
 package com.navyn.emissionlog.modules.agricultureEmissions.serviceImpls;
 
 import com.navyn.emissionlog.Enums.*;
-import com.navyn.emissionlog.Repositories.Agriculture.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.AgricultureEmissionsService;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsService {
 
-    @Autowired
-    private AquacultureEmissionsRepository aquacultureEmissionsRepository;
-
-    @Autowired
-    private EntericFermentationEmissionsRepository entericFermentationEmissionsRepository;
-
-    @Autowired
-    private LimingEmissionsRepository limingEmissionsRepository;
-
-    @Autowired
-    private ManureMgmtEmissionsRepository manureMgmtEmissionsRepository;
-
-    @Autowired
-    private RiceCultivationEmissionsRepository riceCultivationEmissionsRepository;
-
-    @Autowired
-    private SyntheticFertilizerEmissionsRepository syntheticFertilizerEmissionsRepository;
-
-    @Autowired
-    private UreaEmissionsRepository ureaEmissionsRepository;
+    private final AquacultureEmissionsRepository aquacultureEmissionsRepository;
+    private final EntericFermentationEmissionsRepository entericFermentationEmissionsRepository;
+    private final LimingEmissionsRepository limingEmissionsRepository;
+    private final ManureMgmtEmissionsRepository manureMgmtEmissionsRepository;
+    private final RiceCultivationEmissionsRepository riceCultivationEmissionsRepository;
+    private final SyntheticFertilizerEmissionsRepository syntheticFertilizerEmissionsRepository;
+    private final UreaEmissionsRepository ureaEmissionsRepository;
 
 
     @Override
@@ -183,22 +172,15 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     }
 
     private Double getEntericEFBySpeciesType(LivestockSpecies species){
-        switch(species){
-            case DAIRY_GROWING_COWS:
-                return AFOLUConstants.ENTERIC_DAIRY_GROWING_COWS_CH4_EF.getValue();
-            case DAIRY_LACTATING_COWS:
-                return AFOLUConstants.ENTERIC_DAIRY_LACTATING_COWS_CH4_EF.getValue();
-            case DAIRY_MATURE_COWS:
-                return AFOLUConstants.ENTERIC_DAIRY_MATURE_COWS_CH4_EF.getValue();
-            case SHEEP:
-                return AFOLUConstants.ENTERIC_SHEEP_CH4_EF.getValue();
-            case GOATS:
-                return AFOLUConstants.ENTERIC_GOATS_CH4_EF.getValue();
-            case SWINE:
-                return AFOLUConstants.ENTERIC_SWINE_CH4_EF.getValue();
-            default:
-                return 0.0;
-        }
+        return switch (species) {
+            case DAIRY_GROWING_COWS -> AFOLUConstants.ENTERIC_DAIRY_GROWING_COWS_CH4_EF.getValue();
+            case DAIRY_LACTATING_COWS -> AFOLUConstants.ENTERIC_DAIRY_LACTATING_COWS_CH4_EF.getValue();
+            case DAIRY_MATURE_COWS -> AFOLUConstants.ENTERIC_DAIRY_MATURE_COWS_CH4_EF.getValue();
+            case SHEEP -> AFOLUConstants.ENTERIC_SHEEP_CH4_EF.getValue();
+            case GOATS -> AFOLUConstants.ENTERIC_GOATS_CH4_EF.getValue();
+            case SWINE -> AFOLUConstants.ENTERIC_SWINE_CH4_EF.getValue();
+            default -> 0.0;
+        };
     }
 
     private HashMap<String, Double> getNEFBySpecieType(LivestockSpecies species){
@@ -252,26 +234,17 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     }
 
     private Double getCH4EFBySpeciesType(LivestockSpecies species) {
-        switch (species) {
-            case DAIRY_GROWING_COWS:
-                return AFOLUConstants.MANURE_DAIRY_GROWING_COWS_CH4_EF.getValue();
-            case DAIRY_LACTATING_COWS:
-                return AFOLUConstants.MANURE_DAIRY_LACTATING_COWS_CH4_EF.getValue();
-            case DAIRY_MATURE_COWS:
-                return AFOLUConstants.MANURE_DAIRY_MATURE_COWS_CH4_EF.getValue();
-            case SHEEP:
-                return AFOLUConstants.MANURE_SHEEP_CH4_EF.getValue();
-            case GOATS:
-                return AFOLUConstants.MANURE_GOATS_CH4_EF.getValue();
-            case SWINE:
-                return AFOLUConstants.MANURE_SWINE_CH4_EF.getValue();
-            case POULTRY:
-                return AFOLUConstants.MANURE_POULTRY_CH4_EF.getValue();
-            case RABBITS:
-                return AFOLUConstants.MANURE_RABBITS_CH4_EF.getValue();
-            default:
-                return 0.0;
-        }
+        return switch (species) {
+            case DAIRY_GROWING_COWS -> AFOLUConstants.MANURE_DAIRY_GROWING_COWS_CH4_EF.getValue();
+            case DAIRY_LACTATING_COWS -> AFOLUConstants.MANURE_DAIRY_LACTATING_COWS_CH4_EF.getValue();
+            case DAIRY_MATURE_COWS -> AFOLUConstants.MANURE_DAIRY_MATURE_COWS_CH4_EF.getValue();
+            case SHEEP -> AFOLUConstants.MANURE_SHEEP_CH4_EF.getValue();
+            case GOATS -> AFOLUConstants.MANURE_GOATS_CH4_EF.getValue();
+            case SWINE -> AFOLUConstants.MANURE_SWINE_CH4_EF.getValue();
+            case POULTRY -> AFOLUConstants.MANURE_POULTRY_CH4_EF.getValue();
+            case RABBITS -> AFOLUConstants.MANURE_RABBITS_CH4_EF.getValue();
+            default -> 0.0;
+        };
     }
 
 }

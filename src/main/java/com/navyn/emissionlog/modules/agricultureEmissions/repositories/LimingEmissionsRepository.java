@@ -1,4 +1,5 @@
-package com.navyn.emissionlog.Repositories.Agriculture;
+package com.navyn.emissionlog.modules.agricultureEmissions.repositories;
+
 
 import com.navyn.emissionlog.modules.agricultureEmissions.models.LimingEmissions;
 import org.springframework.data.jpa.repository.JpaRepository;

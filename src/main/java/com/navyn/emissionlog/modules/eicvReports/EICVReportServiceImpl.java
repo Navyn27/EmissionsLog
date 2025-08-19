@@ -2,9 +2,8 @@ package com.navyn.emissionlog.modules.eicvReports;
 
 import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.modules.eicvReports.dtos.EICVReportDto;
-import com.navyn.emissionlog.Repositories.EICVReportRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,10 +13,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class EICVReportServiceImpl implements EICVReportService {
 
-    @Autowired
-    private EICVReportRepository eicvReportRepository;
+    private final EICVReportRepository eicvReportRepository;
 
     @Override
     public EICVReport createEICVReport(EICVReportDto eicvReportDto) {

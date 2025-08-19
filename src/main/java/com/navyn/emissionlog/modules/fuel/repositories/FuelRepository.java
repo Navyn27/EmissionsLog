@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Repositories;
+package com.navyn.emissionlog.modules.fuel.repositories;
 
 import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.modules.fuel.Fuel;

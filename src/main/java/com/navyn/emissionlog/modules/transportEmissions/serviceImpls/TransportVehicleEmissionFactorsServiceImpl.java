@@ -2,10 +2,10 @@ package com.navyn.emissionlog.modules.transportEmissions.serviceImpls;
 
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportVehicleDataEmissionFactors;
-import com.navyn.emissionlog.Repositories.FuelRepository;
-import com.navyn.emissionlog.Repositories.TransportVehicleDataEmissionFactorsRepository;
+import com.navyn.emissionlog.modules.transportEmissions.repositories.TransportVehicleDataEmissionFactorsRepository;
+import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
 import com.navyn.emissionlog.Services.TransportVehicleEmissionFactorsService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,12 +13,11 @@ import java.util.UUID;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class TransportVehicleEmissionFactorsServiceImpl implements TransportVehicleEmissionFactorsService {
 
-    @Autowired
-    private TransportVehicleDataEmissionFactorsRepository transportVehicleDataEmissionFactorsRepository;
-    @Autowired
-    private FuelRepository fuelRepository;
+    private final TransportVehicleDataEmissionFactorsRepository transportVehicleDataEmissionFactorsRepository;
+    private final FuelRepository fuelRepository;
 
     @Override
     public TransportVehicleDataEmissionFactors createTransportVehicleEmissionFactors(TransportVehicleDataEmissionFactors transportVehicleDataEmissionFactors) {
