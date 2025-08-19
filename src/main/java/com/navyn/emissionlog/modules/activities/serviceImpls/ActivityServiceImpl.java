@@ -20,6 +20,7 @@ import com.navyn.emissionlog.modules.transportEmissions.serviceImpls.TransportEm
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import com.navyn.emissionlog.modules.vehicles.Vehicle;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import com.navyn.emissionlog.Repositories.ActivityRepository;
 import com.navyn.emissionlog.Repositories.ActivityDataRepository;
@@ -37,6 +38,7 @@ import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.navyn.emissionlog.utils.Specifications.TransportActivitySpecifications.*;
 import static java.util.stream.Collectors.groupingBy;
 
 @Service
@@ -216,8 +218,19 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public List<Activity> getTransportActivities() {
-        return activityRepository.findByActivityData_ActivityType(ActivityTypes.TRANSPORT);
+    public List<Activity> getTransportActivities(TransportModes transportMode, UUID region, TransportType transportType, UUID fuel, FuelTypes fuelType, UUID vehicle, Scopes scope) {
+
+        Specification<Activity> spec = Specification
+                .where(isTransportActivity())
+                .and(hasTransportMode(transportMode))
+                .and(hasTransportType(transportType))
+                .and(hasRegion(region))
+                .and(hasFuel(fuel))
+                .and(hasFuelType(fuelType))
+                .and(hasVehicle(vehicle))
+                .and(hasScope(scope));
+
+        return activityRepository.findAll(spec);
     }
 
     @Override
@@ -338,7 +351,6 @@ public class ActivityServiceImpl implements ActivityService {
             dashboardDataList.add(data);
         }
 
-
         return dashboardDataList;
     }
 
@@ -352,115 +364,6 @@ public class ActivityServiceImpl implements ActivityService {
         activityDashboardData.setTotalFossilCO2Emissions(activityDashboardData.getTotalFossilCO2Emissions() + wasteDashboardData.getTotalFossilCO2Emissions());
         activityDashboardData.setTotalBioCO2Emissions(activityDashboardData.getTotalBioCO2Emissions() + wasteDashboardData.getTotalBioCO2Emissions());
         return activityDashboardData;
-    }
-
-    public List<Activity> getStationaryEmissionsFilteredData(Sectors sectors, LocalDate year, FuelTypes fuelTypes, UUID fuel) {
-        // First get stationary activities
-        List<Activity> activities = activityRepository.findByActivityData_ActivityType(ActivityTypes.STATIONARY);
-
-        // Filter by sector if provided
-        if (sectors != null) {
-            activities = activities.stream()
-                    .filter(activity -> activity.getSector() == sectors)
-                    .collect(Collectors.toList());
-        }
-
-        // Filter by fuel ID if provided
-        if (fuel != null) {
-            activities = activities.stream()
-                    .filter(activity -> {
-                        FuelData fuelData = activity.getActivityData().getFuelData();
-                        return fuelData != null && fuelData.getFuel().getId().equals(fuel);
-                    })
-                    .collect(Collectors.toList());
-        }
-
-        // Filter by fuel type if provided
-        if (fuelTypes != null) {
-            activities = activities.stream()
-                    .filter(activity -> {
-                        FuelData fuelData = activity.getActivityData().getFuelData();
-                        return fuelData != null && fuelData.getFuel().getFuelTypes() == fuelTypes;
-                    })
-                    .collect(Collectors.toList());
-        }
-
-        // Filter by year if provided
-        if (year != null) {
-            LocalDateTime startDate = year.atStartOfDay();
-            LocalDateTime endDate = year.plusYears(1).atStartOfDay();
-            activities = activities.stream()
-                    .filter(activity -> {
-                        LocalDateTime activityDate = activity.getActivityYear();
-                        return activityDate.isAfter(startDate) && activityDate.isBefore(endDate);
-                    })
-                    .collect(Collectors.toList());
-        }
-        return activities;
-    }
-
-    public List<Activity> getTransportEmissionsFilteredData(TransportModes transportMode, UUID region, TransportType transportType, UUID fuel, FuelTypes fuelType, UUID vehicle, Scopes scope) {
-        // First get transport activities
-        List<Activity> activities = activityRepository.findByActivityData_ActivityType(ActivityTypes.TRANSPORT);
-
-        // Filter by transport mode if provided
-        if (transportMode != null) {
-            activities = activities.stream()
-                    .filter(activity -> activity.getActivityData() instanceof TransportActivityData)
-                    .filter(activity -> ((TransportActivityData) activity.getActivityData()).getModeOfTransport() == transportMode)
-                    .collect(Collectors.toList());
-        }
-
-        // Filter by region if provided
-        if (region != null) {
-            activities = activities.stream()
-                    .filter(activity -> activity.getRegion().getId().equals(region))
-                    .collect(Collectors.toList());
-        }
-
-        // Filter by vehicle type if provided
-        if (vehicle != null) {
-            activities = activities.stream()
-                    .filter(activity -> activity.getActivityData() instanceof TransportActivityData)
-                    .filter(activity -> ((TransportActivityData) activity.getActivityData()).getVehicleData().getVehicle().getId() == vehicle)
-                    .collect(Collectors.toList());
-        }
-
-        // Filter by transport type if provided
-        if (transportType != null) {
-            activities = activities.stream()
-                    .filter(activity -> activity.getActivityData() instanceof TransportActivityData)
-                    .filter(activity -> ((TransportActivityData) activity.getActivityData()).getTransportType() == transportType)
-                    .collect(Collectors.toList());
-        }
-
-        // Filter by fuel ID if provided
-        if (fuel != null) {
-            activities = activities.stream()
-                    .filter(activity -> {
-                        FuelData fuelData = activity.getActivityData().getFuelData();
-                        return fuelData != null && fuelData.getFuel().getId().equals(fuel);
-                    })
-                    .collect(Collectors.toList());
-        }
-
-        // Filter by fuel type if provided
-        if (fuelType != null) {
-            activities = activities.stream()
-                    .filter(activity -> {
-                        FuelData fuelData = activity.getActivityData().getFuelData();
-                        return fuelData != null && fuelData.getFuel().getFuelTypes() == fuelType;
-                    })
-                    .collect(Collectors.toList());
-        }
-
-        // Filter by scope if provided
-        if (scope != null) {
-            activities = activities.stream()
-                    .filter(activity -> activity.getScope() == scope)
-                    .collect(Collectors.toList());
-        }
-        return activities;
     }
 
     private DashboardData calculateDashboardData(List<Activity> activities, List<WasteDataAbstract> wasteData, List<AquacultureEmissions> aquacultureEmissions, List<EntericFermentationEmissions> entericFermentationEmissions, List<LimingEmissions> limingEmissions, List<ManureMgmtEmissions> manureMgmtEmissions, List<RiceCultivationEmissions> riceCultivationEmissions, List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions, List<UreaEmissions> ureaEmissions) {

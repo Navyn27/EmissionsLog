@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.utils;
+package com.navyn.emissionlog.modules.auth.dtos;
 
 import com.navyn.emissionlog.modules.workspace.Workspace;
 import lombok.AllArgsConstructor;

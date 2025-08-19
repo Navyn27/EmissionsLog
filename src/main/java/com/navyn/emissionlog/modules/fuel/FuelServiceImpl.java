@@ -40,15 +40,15 @@ public class FuelServiceImpl implements FuelService {
                 if(existingFuel1.getFuelDescription() == null || existingFuel.get().getFuelDescription().isEmpty()) {
                     fuel.setFuelDescription(existingFuel.get().getFuelDescription());
                 }
-                if(existingFuel1.getFuelTypes() == null || existingFuel.get().getFuelTypes() == null) {
-                    fuel.setFuelTypes(existingFuel.get().getFuelTypes());
+                if(existingFuel1.getFuelType() == null || existingFuel.get().getFuelType() == null) {
+                    fuel.setFuelTypes(existingFuel.get().getFuelType());
                 }
 
                 return fuelRepository.save(existingFuel1);
             }
 
             Fuel fuel1 = new Fuel();
-            fuel1.setFuelTypes(fuel.getFuelTypes());
+            fuel1.setFuelType(fuel.getFuelTypes());
             fuel1.setFuel(fuel.getFuel());
             fuel1.setFuelDescription(fuel.getFuelDescription());
             fuel1.setLiquidDensity(fuel.getFuelDensityLiquids());
@@ -82,7 +82,7 @@ public class FuelServiceImpl implements FuelService {
     public Fuel updateFuel(UUID id, CreateFuelDto fuel) {
         return fuelRepository.findById(id)
                 .map(existingFuel -> {
-                    existingFuel.setFuelTypes(fuel.getFuelTypes());
+                    existingFuel.setFuelType(fuel.getFuelTypes());
                     existingFuel.setFuel(fuel.getFuel());
                     existingFuel.setLowerHeatingValue(fuel.getLowerHeatingValue());
                     existingFuel.setLiquidDensity(fuel.getFuelDensityLiquids());
@@ -99,7 +99,7 @@ public class FuelServiceImpl implements FuelService {
 
     @Override
     public Fuel getExistingFuel(ExistingFuelDto existingFuel){
-        return fuelRepository.findByFuelTypesAndFuelAndLowerHeatingValueAndLiquidDensityAndGasDensity(
+        return fuelRepository.findByFuelTypeAndFuelAndLowerHeatingValueAndLiquidDensityAndGasDensity(
                 existingFuel.getFuelType(),
                 existingFuel.getFuel(),
                 existingFuel.getLowerHeatingValue(),
@@ -115,16 +115,16 @@ public class FuelServiceImpl implements FuelService {
 
     @Override
     public List<Fuel> getFuelsByFuelType(FuelTypes fuelType) {
-        return fuelRepository.findByFuelTypes(fuelType);
+        return fuelRepository.findByFuelType(fuelType);
     }
 
     @Override
     public List<Fuel> getStationaryFuelsByFuelType(FuelTypes fuelType) {
-        return fuelRepository.findByFuelTypesAndFuelSourceTypesContaining(fuelType, FuelSourceType.STATIONARY);
+        return fuelRepository.findByFuelTypeAndFuelSourceTypesContaining(fuelType, FuelSourceType.STATIONARY);
     }
 
     @Override
     public List<Fuel> getTransportFuelsByFuelType(FuelTypes fuelType) {
-        return fuelRepository.findByFuelTypesAndFuelSourceTypesContaining(fuelType, FuelSourceType.TRANSPORT);
+        return fuelRepository.findByFuelTypeAndFuelSourceTypesContaining(fuelType, FuelSourceType.TRANSPORT);
     }
 }

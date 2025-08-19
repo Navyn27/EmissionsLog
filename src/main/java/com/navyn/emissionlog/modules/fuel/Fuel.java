@@ -26,7 +26,7 @@ public class Fuel {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private FuelTypes fuelTypes;
+    private FuelTypes fuelType;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)

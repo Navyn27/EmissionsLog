@@ -174,8 +174,8 @@ public class ActivityController {
 
     @Operation(summary = "Get all transport activities", description = "Retrieves a list of all transport activities and their emissions.")
     @GetMapping("/transport")
-    public ResponseEntity<ApiResponse> getTransportActivities(){
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Transport activities fetched succesfully", activityService.getTransportActivities()));
+    public ResponseEntity<ApiResponse> getTransportActivities(@RequestParam(required = false, value = "transportMode") TransportModes transportMode, @RequestParam(required = false, value = "region") UUID region, @RequestParam(required = false, value = "transportType") TransportType transportType, @RequestParam(required = false, value = "fuel") UUID fuel, @RequestParam(required = false, value = "fuelType") FuelTypes fuelType, @RequestParam(required = false, value = "vehicle") UUID vehicle, @RequestParam(required = false, value = "scope") Scopes scope){
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Transport activities fetched succesfully", activityService.getTransportActivities(transportMode, region, transportType, fuel, fuelType, vehicle, scope)));
     }
 
     @Operation(summary = "Get dashboard summary", description = "Retrieves a summary of the dashboard.")

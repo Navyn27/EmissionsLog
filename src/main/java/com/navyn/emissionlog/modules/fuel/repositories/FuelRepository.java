@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Repository
 public interface FuelRepository extends JpaRepository<Fuel, UUID> {
-    Optional<Fuel> findByFuelTypesAndFuelAndLowerHeatingValueAndLiquidDensityAndGasDensity(
+    Optional<Fuel> findByFuelTypeAndFuelAndLowerHeatingValueAndLiquidDensityAndGasDensity(
             FuelTypes fuelTypes,
             String fuel,
             Double lowerHeatingValue,
@@ -22,7 +22,7 @@ public interface FuelRepository extends JpaRepository<Fuel, UUID> {
 
     Optional<Fuel> findByFuel(String fuelName);
 
-    List<Fuel> findByFuelTypes(FuelTypes fuelType);
+    List<Fuel> findByFuelType(FuelTypes fuelType);
 
-    List<Fuel> findByFuelTypesAndFuelSourceTypesContaining(FuelTypes fuelType, FuelSourceType fuelSourceType);
+    List<Fuel> findByFuelTypeAndFuelSourceTypesContaining(FuelTypes fuelType, FuelSourceType fuelSourceType);
 }
