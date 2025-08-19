@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.Exceptions;
 
-import com.navyn.emissionlog.Payload.Responses.ApiResponse;
+import com.navyn.emissionlog.utils.ApiResponse;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
