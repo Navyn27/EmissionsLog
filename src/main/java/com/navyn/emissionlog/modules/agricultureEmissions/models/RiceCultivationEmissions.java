@@ -9,15 +9,9 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = "rice_cultivation")
-public class RiceCultivationEmissions {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
-
+public class RiceCultivationEmissions extends AgricultureAbstractClass {
     private String riceEcosystem;
 
-    @Column(unique = true)
-    private int year;
 
     @Enumerated(EnumType.STRING)
     private WaterRegime waterRegime;

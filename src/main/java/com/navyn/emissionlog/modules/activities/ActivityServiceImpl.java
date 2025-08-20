@@ -1,24 +1,20 @@
-package com.navyn.emissionlog.modules.activities.serviceImpls;
+package com.navyn.emissionlog.modules.activities;
 
 import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.modules.activities.models.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.*;
 import com.navyn.emissionlog.modules.wasteEmissions.models.WasteDataAbstract;
-import com.navyn.emissionlog.modules.activities.models.Activity;
-import com.navyn.emissionlog.modules.activities.ActivityService;
-import com.navyn.emissionlog.modules.activities.models.ActivityData;
-import com.navyn.emissionlog.modules.activities.models.TransportActivityData;
 import com.navyn.emissionlog.modules.activities.dtos.*;
-import com.navyn.emissionlog.modules.activities.models.VehicleData;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.fuel.FuelData;
-import com.navyn.emissionlog.modules.stationaryEmissions.StationaryEmissionFactors;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.utils.DashboardData;
 import com.navyn.emissionlog.modules.stationaryEmissions.serviceImpls.StationaryEmissionCalculationServiceImpl;
 import com.navyn.emissionlog.modules.transportEmissions.serviceImpls.TransportEmissionCalculationServiceImpl;
 import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
 import com.navyn.emissionlog.modules.vehicles.Vehicle;
+import com.navyn.emissionlog.utils.Specifications.ActivitySpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -31,14 +27,12 @@ import com.navyn.emissionlog.modules.wasteEmissions.WasteDataRepository;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelDataRepository;
 import com.navyn.emissionlog.Repositories.VehicleDataRepository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.YearMonth;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static com.navyn.emissionlog.utils.Specifications.TransportActivitySpecifications.*;
+import static com.navyn.emissionlog.utils.Specifications.ActivitySpecifications.*;
 import static java.util.stream.Collectors.groupingBy;
 
 @Service
@@ -77,7 +71,7 @@ public class ActivityServiceImpl implements ActivityService {
             FuelData fuelData = createFuelData(activity, fuel.get());
 
             //Create ActivityData
-            ActivityData stationaryActivityData = new StationaryEmissionFactors.StationaryActivityData();
+            ActivityData stationaryActivityData = new StationaryActivityData();
             stationaryActivityData.setActivityType(ActivityTypes.STATIONARY);
             stationaryActivityData.setFuelData(fuelData);
             stationaryActivityData = activityDataRepository.save(stationaryActivityData);
@@ -213,20 +207,30 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public List<Activity> getStationaryActivities() {
-        return activityRepository.findByActivityData_ActivityType(ActivityTypes.STATIONARY);
+    public List<Activity> getStationaryActivities(UUID region, Sectors sector, UUID fuel, FuelTypes fuelType, Integer year) {
+
+        Specification<Activity> spec = Specification
+                .where(isStationaryActivity())
+                .and(hasSector(sector))
+                .and(hasFuel(fuel))
+                .and(hasFuelType(fuelType))
+                .and(hasYear(year))
+                .and(hasRegion(region));
+
+        return activityRepository.findAll(spec);
     }
 
     @Override
-    public List<Activity> getTransportActivities(TransportModes transportMode, UUID region, TransportType transportType, UUID fuel, FuelTypes fuelType, UUID vehicle, Scopes scope) {
+    public List<Activity> getTransportActivities(TransportModes transportMode, UUID region, TransportType transportType, UUID fuel, FuelTypes fuelType, UUID vehicle, Scopes scope, Integer year) {
 
         Specification<Activity> spec = Specification
                 .where(isTransportActivity())
                 .and(hasTransportMode(transportMode))
                 .and(hasTransportType(transportType))
-                .and(hasRegion(region))
-                .and(hasFuel(fuel))
-                .and(hasFuelType(fuelType))
+                .and(hasYear(year))
+                .and(ActivitySpecifications.hasRegion(region))
+                .and(ActivitySpecifications.hasFuel(fuel))
+                .and(ActivitySpecifications.hasFuelType(fuelType))
                 .and(hasVehicle(vehicle))
                 .and(hasScope(scope));
 

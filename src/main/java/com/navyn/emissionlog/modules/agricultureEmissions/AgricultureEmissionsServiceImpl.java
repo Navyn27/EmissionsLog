@@ -1,15 +1,18 @@
-package com.navyn.emissionlog.modules.agricultureEmissions.serviceImpls;
+package com.navyn.emissionlog.modules.agricultureEmissions;
 
 import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.*;
-import com.navyn.emissionlog.modules.agricultureEmissions.AgricultureEmissionsService;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.*;
+import com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
+
+import static com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications.*;
 
 @Service
 @RequiredArgsConstructor
@@ -25,38 +28,52 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
 
 
     @Override
-    public List<AquacultureEmissions> getAllAquacultureEmissions() {
-        return aquacultureEmissionsRepository.findAll();
+    public List<AquacultureEmissions> getAllAquacultureEmissions(Integer year) {
+        Specification<AquacultureEmissions> spec = Specification.where(hasYear_Aquaculture(year));
+        return aquacultureEmissionsRepository.findAll(spec);
     }
 
     @Override
-    public List<EntericFermentationEmissions> getAllEntericFermentationEmissions() {
-        return entericFermentationEmissionsRepository.findAll();
+    public List<EntericFermentationEmissions> getAllEntericFermentationEmissions(Integer year, LivestockSpecies species) {
+        Specification<EntericFermentationEmissions> spec = Specification.where(hasSpecies_Enteric(species)).and(hasYear_EntericEmissions(year));
+        return entericFermentationEmissionsRepository.findAll(spec);
     }
 
     @Override
-    public List<LimingEmissions> getAllLimingEmissions(){
-        return limingEmissionsRepository.findAll();
+    public List<LimingEmissions> getAllLimingEmissions(Integer year, LimingMaterials limingMaterials) {
+        Specification<LimingEmissions> spec = Specification.where(hasLimingMaterial(limingMaterials)).and(hasYear_LimingEmissions(year));
+        return limingEmissionsRepository.findAll(spec);
     }
 
     @Override
-    public List<ManureMgmtEmissions> getAllManureMgmtEmissions() {
-        return manureMgmtEmissionsRepository.findAll();
+    public List<ManureMgmtEmissions> getAllManureMgmtEmissions(Integer year, OrganicAmendmentTypes amendmentType, LivestockSpecies species) {
+        Specification<ManureMgmtEmissions> spec = Specification.where(hasSpecies_Manure(species))
+                .and(AgricultureSpecifications.hasAmendmentType(amendmentType))
+                .and(AgricultureSpecifications.hasYear_ManureMgmt(year));
+        return manureMgmtEmissionsRepository.findAll(spec);
     }
 
     @Override
-    public List<RiceCultivationEmissions> getAllRiceCultivationEmissions() {
-        return riceCultivationEmissionsRepository.findAll();
+    public List<RiceCultivationEmissions> getAllRiceCultivationEmissions(String riceEcosystem, WaterRegime waterRegime, Integer year) {
+        Specification<RiceCultivationEmissions> spec = Specification.where(AgricultureSpecifications.hasRiceEcosystem(riceEcosystem))
+                .and(AgricultureSpecifications.hasWaterRegime(waterRegime))
+                .and(AgricultureSpecifications.hasYear_RiceCultivation(year));
+        return riceCultivationEmissionsRepository.findAll(spec);
     }
 
     @Override
-    public List<SyntheticFertilizerEmissions> getAllSyntheticFertilizerEmissions() {
-        return syntheticFertilizerEmissionsRepository.findAll();
+    public List<SyntheticFertilizerEmissions> getAllSyntheticFertilizerEmissions(Integer year, CropTypes cropType) {
+        Specification<SyntheticFertilizerEmissions> spec = Specification.where(AgricultureSpecifications.hasCropType(cropType))
+                .and(AgricultureSpecifications.hasYear_SyntheticFertilizer(year));
+        return syntheticFertilizerEmissionsRepository.findAll(spec);
     }
 
     @Override
-    public List<UreaEmissions> getAllUreaEmissions() {
-        return ureaEmissionsRepository.findAll();
+    public List<UreaEmissions> getAllUreaEmissions(Fertilizers fertilizer, Integer year) {
+
+        Specification<UreaEmissions> spec = Specification.where(AgricultureSpecifications.hasFertilizerName_Urea(fertilizer))
+                .and(AgricultureSpecifications.hasYear_UreaEmissions(year));
+        return ureaEmissionsRepository.findAll(spec);
     }
 
     @Override

@@ -46,7 +46,16 @@ public class EICVReportServiceImpl implements EICVReportService {
     }
 
     @Override
-    public List<EICVReport> findAll(){
+    public List<EICVReport> findAll(String name, Integer year) {
+        if(name != null && year == null) {
+            return eicvReportRepository.findByNameContainingIgnoreCase(name);
+        }
+        if(name == null && year != null) {
+            return List.of(getEICVReportByYear(year));
+        }
+        if(name != null) {
+            return eicvReportRepository.findByNameContainingIgnoreCaseAndYear(name, year);
+        }
         return eicvReportRepository.findAll();
     }
 

@@ -13,4 +13,6 @@ public interface PopulationRecordsRepository extends JpaRepository<PopulationRec
     PopulationRecords findByYear(int year);
 
     List<PopulationRecords> findByCountry(Countries country);
+
+    List<PopulationRecords> findByCountryAndYear(Countries country, Integer year);
 }

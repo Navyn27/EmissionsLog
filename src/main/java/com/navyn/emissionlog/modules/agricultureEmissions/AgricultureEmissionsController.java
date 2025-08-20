@@ -1,72 +1,72 @@
 package com.navyn.emissionlog.modules.agricultureEmissions;
 
+import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.utils.ApiResponse;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.navyn.emissionlog.modules.agricultureEmissions.dtos.*;
 
 @RestController
 @RequestMapping("/agriculture")
 @SecurityRequirement(name = "BearerAuth")
+@RequiredArgsConstructor
 public class AgricultureEmissionsController {
 
-    @Autowired
-    private AgricultureEmissionsService agricultureEmissionsService;
+    private final AgricultureEmissionsService agricultureEmissionsService;
 
     //get all liming emissions
     @GetMapping("/limingEmissions")
     @Operation(summary = "Get all liming emissions")
-    private ResponseEntity<ApiResponse> getAllLimingEmissions() {
-        return ResponseEntity.ok(new ApiResponse(true,"Liming emissions fetched successfully", agricultureEmissionsService.getAllLimingEmissions()));
+    private ResponseEntity<ApiResponse> getAllLimingEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "limingMaterial") LimingMaterials limingMaterials) {
+        return ResponseEntity.ok(new ApiResponse(true,"Liming emissions fetched successfully", agricultureEmissionsService.getAllLimingEmissions(year, limingMaterials)));
     }
 
 
-    //get all aquacultureemissions
+    //get all aquaculture emissions
     @GetMapping("/aquacultureEmissions")
     @Operation(summary = "Get all aquaculture emissions")
-    private ResponseEntity<ApiResponse> getAllAquacultureEmissions() {
-        return ResponseEntity.ok(new ApiResponse(true, "Aquaculture emissions fetched successfully", agricultureEmissionsService.getAllAquacultureEmissions()));
+    private ResponseEntity<ApiResponse> getAllAquacultureEmissions(@RequestParam(required = false, value = "year") Integer year) {
+        return ResponseEntity.ok(new ApiResponse(true, "Aquaculture emissions fetched successfully", agricultureEmissionsService.getAllAquacultureEmissions(year)));
     }
 
 
     //get all synthetic emissions
     @GetMapping("/syntheticFertilizerEmissions")
     @Operation(summary = "Get all synthetic fertilizer emissions")
-    private ResponseEntity<ApiResponse> getAllSyntheticFertilizerEmissions() {
-        return ResponseEntity.ok(new ApiResponse(true, "Synthetic fertilizer emissions fetched successfully", agricultureEmissionsService.getAllSyntheticFertilizerEmissions()));
+    private ResponseEntity<ApiResponse> getAllSyntheticFertilizerEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "cropType") CropTypes cropType) {
+        return ResponseEntity.ok(new ApiResponse(true, "Synthetic fertilizer emissions fetched successfully", agricultureEmissionsService.getAllSyntheticFertilizerEmissions(year, cropType)));
     }
 
     //get all animal manure and compost emissions
     @GetMapping("/ureaEmissions")
     @Operation(summary = "Get all urea emissions")
-    private ResponseEntity<ApiResponse> getAllUreaEmissions() {
-        return ResponseEntity.ok(new ApiResponse(true, "Urea emissions fetched successfully", agricultureEmissionsService.getAllUreaEmissions()));
+    private ResponseEntity<ApiResponse> getAllUreaEmissions(@RequestParam(required = false, value = "fertilizerName") Fertilizers fertilizer, @RequestParam(required = false, value = "year") Integer year) {
+        return ResponseEntity.ok(new ApiResponse(true, "Urea emissions fetched successfully", agricultureEmissionsService.getAllUreaEmissions(fertilizer, year)));
     }
 
     //get all rice cultivation emissions
     @GetMapping("/riceCultivationEmissions")
     @Operation(summary = "Get all rice cultivation emissions")
-    private ResponseEntity<ApiResponse> getAllRiceCultivationEmissions() {
-        return ResponseEntity.ok(new ApiResponse(true, "Rice cultivation emissions fetched successfully", agricultureEmissionsService.getAllRiceCultivationEmissions()));
+    private ResponseEntity<ApiResponse> getAllRiceCultivationEmissions(@RequestParam(required = false, value = "riceEcosystem") String riceEcosystem, @RequestParam(required = false, value = "waterRegime") WaterRegime waterRegime, @RequestParam(required = false, value = "year") Integer year) {
+        return ResponseEntity.ok(new ApiResponse(true, "Rice cultivation emissions fetched successfully", agricultureEmissionsService.getAllRiceCultivationEmissions(riceEcosystem, waterRegime, year)));
     }
 
 
     //get all manure management emissions
     @GetMapping("/manureMgmtEmissions")
     @Operation(summary = "Get all manure management emissions")
-    private ResponseEntity<ApiResponse> getAllManureMgmtEmissions() {
-        return ResponseEntity.ok(new ApiResponse(true, "Manure management emissions fetched successfully", agricultureEmissionsService.getAllManureMgmtEmissions()));
+    private ResponseEntity<ApiResponse> getAllManureMgmtEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "amendmentType") OrganicAmendmentTypes amendmentType, @RequestParam(required = false, value = "species") LivestockSpecies species) {
+        return ResponseEntity.ok(new ApiResponse(true, "Manure management emissions fetched successfully", agricultureEmissionsService.getAllManureMgmtEmissions(year, amendmentType, species)));
     }
 
     //get all enteric fermentation emissions
     @GetMapping("/entericFermentationEmissions")
     @Operation(summary = "Get all enteric fermentation emissions")
-    private ResponseEntity<ApiResponse> getAllEntericFermentationEmissions() {
-        return ResponseEntity.ok(new ApiResponse(true, "Enteric fermentation emissions fetched successfully", agricultureEmissionsService.getAllEntericFermentationEmissions()));
+    private ResponseEntity<ApiResponse> getAllEntericFermentationEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "species") LivestockSpecies species) {
+        return ResponseEntity.ok(new ApiResponse(true, "Enteric fermentation emissions fetched successfully", agricultureEmissionsService.getAllEntericFermentationEmissions(year, species)));
     }
 
     //create all liming emissions

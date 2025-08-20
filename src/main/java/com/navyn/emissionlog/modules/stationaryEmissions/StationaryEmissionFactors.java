@@ -58,8 +58,4 @@ public class StationaryEmissionFactors {
         byte[] hashBytes = digest.digest(data.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(hashBytes);
     }
-
-    @Entity
-    public static class StationaryActivityData extends ActivityData {
-    }
 }

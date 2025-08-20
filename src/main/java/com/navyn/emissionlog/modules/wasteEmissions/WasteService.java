@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Services;
+package com.navyn.emissionlog.modules.wasteEmissions;
 
 import com.navyn.emissionlog.Enums.SolidWasteType;
 import com.navyn.emissionlog.Enums.WasteType;
@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 public interface WasteService {
     WasteDataAbstract createIndustrialWasteWaterData(IndustrialWasteDto wasteData);
@@ -28,7 +29,7 @@ public interface WasteService {
 
     List<WasteDataAbstract> getAllWasteData();
 
-    List<WasteDataAbstract> getWasteDataByType(WasteType wasteType);
+    List<WasteDataAbstract> getWasteData(WasteType wasteType, Integer year, UUID regionId);
 
     //populate population affiliated waste data
     List<WasteDataAbstract> populatePopulationAffiliatedWasteData();
@@ -37,5 +38,5 @@ public interface WasteService {
 
     List<WasteDataAbstract> populateSolidWasteData(MultipartFile file) throws IOException;
 
-    List<SolidWasteData> getSolidWasteDataByType(SolidWasteType solidWasteType);
+    List<SolidWasteData> getSolidWasteData(SolidWasteType solidWasteType, Integer year, UUID regionId);
 }

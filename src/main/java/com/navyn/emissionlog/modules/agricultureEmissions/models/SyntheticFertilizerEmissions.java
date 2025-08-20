@@ -10,13 +10,7 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = "synthetic_fertilizer_emissions")
-public class SyntheticFertilizerEmissions {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
-
-    @Column(unique = true)
-    private int year;
+public class SyntheticFertilizerEmissions extends  AgricultureAbstractClass {
 
     @Enumerated(EnumType.STRING)
     private CropTypes cropType;

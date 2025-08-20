@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.populationRecords;
 
+import com.navyn.emissionlog.Enums.Countries;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -27,8 +28,8 @@ public class PopulationRecordsController {
 
      @Operation(summary = "Get All Population Records", description = "Get all population records")
      @GetMapping
-     public ResponseEntity<ApiResponse> getAllPopulationRecords() {
-         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Population Records fetched successfully", populationRecordService.getAllPopulationRecords()));
+     public ResponseEntity<ApiResponse> getAllPopulationRecords(@RequestParam(required = false, value = "country") Countries country, @RequestParam(required = false, value = "year") Integer year) {
+         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Population Records fetched successfully", populationRecordService.getAllPopulationRecords(country, year)));
      }
 
      @Operation(summary = "Get Population Record By ID", description = "Get a population record by ID")

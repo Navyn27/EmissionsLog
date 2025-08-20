@@ -3,6 +3,7 @@ package com.navyn.emissionlog.modules.populationRecords;
 import com.navyn.emissionlog.Enums.Countries;
 import com.navyn.emissionlog.modules.populationRecords.PopulationRecords;
 import com.navyn.emissionlog.modules.population.dtos.CreatePopulationRecordDto;
+import org.apache.poi.ss.formula.functions.Count;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,7 +14,7 @@ import java.util.UUID;
 public interface PopulationRecordService {
     PopulationRecords createPopulationRecord(CreatePopulationRecordDto createPopulationRecordDto);
 
-    List<PopulationRecords> getAllPopulationRecords();
+    List<PopulationRecords> getAllPopulationRecords(Countries country, Integer year);
 
     PopulationRecords getPopulationRecordById(UUID id);
 

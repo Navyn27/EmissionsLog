@@ -32,7 +32,17 @@ public class PopulationRecordsServiceImpl implements PopulationRecordService {
     }
 
     @Override
-    public List<PopulationRecords> getAllPopulationRecords() {
+    public List<PopulationRecords> getAllPopulationRecords(Countries country, Integer year) {
+        if (country != null && year == null) {
+            return populationRecordRepository.findByCountry(country);
+        }
+        if (country == null && year != null) {
+            PopulationRecords populationRecord = getPopulationRecordByYear(year);
+            return populationRecord != null ? List.of(populationRecord) : List.of();
+        }
+        if (country != null) {
+            return populationRecordRepository.findByCountryAndYear(country, year);
+        }
         return populationRecordRepository.findAll();
     }
 
@@ -52,8 +62,6 @@ public class PopulationRecordsServiceImpl implements PopulationRecordService {
             List<CreatePopulationRecordDto> populationRecords = ExcelReader.readExcel(file.getInputStream(), CreatePopulationRecordDto.class, ExcelType.POPULATION_RECORDS);
             List<PopulationRecords> savedPopulationRecords = new ArrayList<>();
             for (CreatePopulationRecordDto populationRecord : populationRecords) {
-                CreateFuelDto createFuelDto = new CreateFuelDto();
-
                 //Create Population Record
                 savedPopulationRecords.add(createPopulationRecord(populationRecord));
             }

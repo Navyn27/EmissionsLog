@@ -3,6 +3,7 @@ package com.navyn.emissionlog.modules.eicvReports;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,4 +13,8 @@ public interface EICVReportRepository extends JpaRepository<EICVReport, UUID> {
     Optional<EICVReport> findById(UUID id);
 
     Optional<EICVReport> findByName(String name);
+
+    List<EICVReport> findByNameContainingIgnoreCase(String name);
+
+    List<EICVReport> findByNameContainingIgnoreCaseAndYear(String name, Integer year);
 }

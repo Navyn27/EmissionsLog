@@ -3,7 +3,6 @@ package com.navyn.emissionlog.modules.wasteEmissions;
 import com.navyn.emissionlog.Enums.SolidWasteType;
 import com.navyn.emissionlog.Enums.WasteType;
 import com.navyn.emissionlog.utils.ApiResponse;
-import com.navyn.emissionlog.Services.WasteService;
 
 import com.navyn.emissionlog.modules.wasteEmissions.dtos.GeneralWasteByPopulationDto;
 import com.navyn.emissionlog.modules.wasteEmissions.dtos.IndustrialWasteDto;
@@ -11,21 +10,22 @@ import com.navyn.emissionlog.modules.wasteEmissions.dtos.SolidWasteDto;
 import com.navyn.emissionlog.modules.wasteEmissions.dtos.WasteWaterDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/waste")
 @SecurityRequirement(name = "BearerAuth")
+@RequiredArgsConstructor
 public class WasteController {
 
-    @Autowired
-    private WasteService wasteService;
+    private final WasteService wasteService;
 
     @Operation(summary = "Create Industrial Waste Water Data and calculate emissions")
     @PostMapping("/industrialWasteWater")
@@ -71,15 +71,19 @@ public class WasteController {
     }
 
     @Operation(summary = "Get Waste Data by type")
-    @GetMapping("/wasteType/{wasteType}")
-    public ResponseEntity<ApiResponse> getWasteDataByType(@PathVariable("wasteType") WasteType wasteType) {
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Waste data fetched successfully", wasteService.getWasteDataByType(wasteType)));
+    @GetMapping("/wasteType")
+    public ResponseEntity<ApiResponse> getWasteData(@RequestParam(required = false, value = "wasteType") WasteType wasteType,
+                                                          @RequestParam(required = false, value = "year") Integer year,
+                                                          @RequestParam(required = false, value = "region") UUID regionId) {
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Waste data fetched successfully", wasteService.getWasteData(wasteType, year, regionId)));
     }
 
     @Operation(summary = "Get Solid Waste Data and their emissions by solid waste Type")
-    @GetMapping("/solidWaste/{wasteType}")
-    public ResponseEntity<ApiResponse> getSolidWasteDataByType(@PathVariable("wasteType") SolidWasteType solidWasteType) {
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Waste data fetched successfully", wasteService.getSolidWasteDataByType(solidWasteType)));
+    @GetMapping("/solidWaste")
+    public ResponseEntity<ApiResponse> getSolidWasteDataByType(@RequestParam(required = false, value = "wasteType") SolidWasteType solidWasteType,
+                                                               @RequestParam(required = false, value = "year") Integer year,
+                                                               @RequestParam(required = false, value = "region") UUID regionId) {
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Waste data fetched successfully", wasteService.getSolidWasteData(solidWasteType, year, regionId)));
     }
 
     @Operation(summary = "Populate the DB with population records affiliated wasteData")

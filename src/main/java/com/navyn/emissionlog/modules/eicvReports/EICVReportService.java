@@ -10,7 +10,7 @@ public interface EICVReportService {
     EICVReport createEICVReport(EICVReportDto eicvReportDto);
     EICVReport getEICVReportByYear(int year);
     EICVReport getEICVReportById(UUID id);
-    List<EICVReport> findAll();
+    List<EICVReport> findAll(String name, Integer year);
     List<EICVReport> createReportsFromExcel(MultipartFile file);
 
     EICVReport updateEICVReport(UUID eicvReportId, EICVReportDto eicvReportDto);

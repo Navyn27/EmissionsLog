@@ -30,8 +30,9 @@ public class EICVReportsController {
      }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> getAllEICVReports(){
-        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "EICV Reports fetched successfully", eicvReportService.findAll()));}
+    public ResponseEntity<ApiResponse> getAllEICVReports(@RequestParam(required = false, value = "name") String name,
+                                                         @RequestParam(required = false, value = "year") Integer year) {
+        return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "EICV Reports fetched successfully", eicvReportService.findAll(name, year)));}
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getEICVReportById(@PathVariable("id") UUID id) {

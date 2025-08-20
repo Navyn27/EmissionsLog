@@ -18,8 +18,6 @@ public interface ActivityRepository extends JpaRepository<Activity, UUID>, JpaSp
 
     List<Activity> findByActivityYearBetween(LocalDateTime startDate, LocalDateTime endDate);
 
-    List<Activity> findAll(Specification<Activity> spec);
-
     List<Activity> findByRegion_IdAndActivityData_ActivityType(UUID region, ActivityTypes activityTypes);
     List<Activity> findBySector(Sectors sector);
 }

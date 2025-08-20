@@ -10,19 +10,12 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = "manure_mgmt_emissions")
-public class ManureMgmtEmissions {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
-
+public class ManureMgmtEmissions extends  AgricultureAbstractClass {
     @Enumerated(EnumType.STRING)
     private LivestockSpecies species;
 
     @Enumerated(EnumType.STRING)
     private OrganicAmendmentTypes amendmentType;
-
-    @Column(unique = true)
-    private int year;
     private double population;
     private double totalN;
     private double NAvailable;

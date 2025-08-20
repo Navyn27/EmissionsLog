@@ -11,7 +11,7 @@ import com.navyn.emissionlog.Services.FuelService;
 import com.navyn.emissionlog.modules.stationaryEmissions.services.StationaryEmissionFactorsService;
 import com.navyn.emissionlog.utils.ExcelReader;
 import io.swagger.v3.oas.annotations.Operation;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,13 +24,11 @@ import java.util.UUID;
 
 @RestController(value = "StationaryEmissionFactorsController")
 @RequestMapping("/emissionFactors/stationary")
+@RequiredArgsConstructor
 public class StationaryEmissionFactorsController {
 
-    @Autowired
-    private StationaryEmissionFactorsService stationaryEmissionFactorsService;
-
-    @Autowired
-    private FuelService fuelService;
+    private final StationaryEmissionFactorsService stationaryEmissionFactorsService;
+    private final FuelService fuelService;
 
     @Operation(summary = "Create new emission factors", description="This endpoint creates new stationary emission factors. It accepts a request body containing the details of the emission factors to be created.")
     @PostMapping("/create")

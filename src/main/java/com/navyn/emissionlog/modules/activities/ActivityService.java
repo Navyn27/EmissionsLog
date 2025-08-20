@@ -1,9 +1,6 @@
 package com.navyn.emissionlog.modules.activities;
 
-import com.navyn.emissionlog.Enums.FuelTypes;
-import com.navyn.emissionlog.Enums.Scopes;
-import com.navyn.emissionlog.Enums.TransportModes;
-import com.navyn.emissionlog.Enums.TransportType;
+import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.modules.activities.models.Activity;
 import com.navyn.emissionlog.modules.activities.dtos.CreateTransportActivityByFuelDto;
 import com.navyn.emissionlog.modules.activities.dtos.CreateTransportActivityByVehicleDataDto;
@@ -29,9 +26,9 @@ public interface ActivityService {
 
     Activity createTransportActivityByVehicleData(CreateTransportActivityByVehicleDataDto activityDto);
 
-    List<Activity> getStationaryActivities();
+    List<Activity> getStationaryActivities(UUID region, Sectors sector, UUID fuel, FuelTypes fuelType, Integer year);
 
-    List<Activity> getTransportActivities(TransportModes transportMode, UUID region, TransportType transportType, UUID fuel, FuelTypes fuelType, UUID vehicle, Scopes scope);
+    List<Activity> getTransportActivities(TransportModes transportMode, UUID region, TransportType transportType, UUID fuel, FuelTypes fuelType, UUID vehicle, Scopes scope, Integer year);
 
     DashboardData getDashboardData();
 

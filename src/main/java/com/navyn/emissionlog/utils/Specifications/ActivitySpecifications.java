@@ -7,7 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.UUID;
 
-public class TransportActivitySpecifications {
+public class ActivitySpecifications {
 
     public static Specification<Activity> isTransportActivity() {
         return (root, query, cb) ->
@@ -36,13 +36,6 @@ public class TransportActivitySpecifications {
         };
     }
 
-    public static Specification<Activity> hasVehicle(UUID vehicleId) {
-        return (root, query, cb) -> {
-            if (vehicleId == null) return cb.conjunction();
-            return cb.equal(root.get("activityData").get("vehicleData").get("id"), vehicleId);
-        };
-    }
-
     public static Specification<Activity> hasFuelType(FuelTypes fuelType) {
         return (root, query, cb) -> {
             if (fuelType == null) return cb.conjunction();
@@ -57,10 +50,36 @@ public class TransportActivitySpecifications {
         };
     }
 
+    public static Specification<Activity> hasVehicle(UUID vehicleId) {
+        return (root, query, cb) -> {
+            if (vehicleId == null) return cb.conjunction();
+            return cb.equal(root.get("activityData").get("vehicleData").get("id"), vehicleId);
+        };
+    }
+
     public static Specification<Activity> hasScope(Scopes scope) {
         return (root, query, cb) -> {
             if (scope == null) return cb.conjunction();
             return cb.equal(root.get("scope"), scope);
+        };
+    }
+
+    public static Specification<Activity> hasYear(Integer year) {
+        return (root, query, cb) -> {
+            if (year == null) return cb.conjunction(); // no filter
+            return cb.equal(root.get("activityYear").get("year"), year);
+        };
+    }
+
+    public static Specification<Activity> isStationaryActivity() {
+        return (root,query, cb) ->
+                cb.equal(root.get("activityData").get("activityType"), ActivityTypes.STATIONARY);
+    }
+
+    public static Specification<Activity> hasSector(Sectors sector) {
+        return (root, query, cb) -> {
+            if (sector == null) return cb.conjunction(); // no filter
+            return cb.equal(root.get("sector"), sector);
         };
     }
 }

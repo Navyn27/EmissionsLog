@@ -10,12 +10,13 @@ import com.navyn.emissionlog.modules.regions.Region;
 import com.navyn.emissionlog.modules.eicvReports.EICVReportRepository;
 import com.navyn.emissionlog.modules.populationRecords.PopulationRecordsRepository;
 import com.navyn.emissionlog.modules.regions.RegionRepository;
-import com.navyn.emissionlog.Services.WasteService;
 import com.navyn.emissionlog.utils.ExcelReader;
 import com.navyn.emissionlog.modules.wasteEmissions.models.*;
 import com.navyn.emissionlog.modules.wasteEmissions.dtos.*;
+import com.navyn.emissionlog.utils.Specifications.WasteSpecifications;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.Enums.WasteType.SOLID_WASTE;
 
@@ -154,8 +156,14 @@ public class WasteServiceImpl implements WasteService {
     }
 
     @Override
-    public List<WasteDataAbstract> getWasteDataByType(WasteType wasteType) {
-        return wasteDataRepository.findAllByWasteType(wasteType);
+    public List<WasteDataAbstract> getWasteData(WasteType wasteType, Integer year, UUID regionId) {
+
+        Specification<WasteDataAbstract> spec = Specification
+                .where(WasteSpecifications.hasWasteType(wasteType))
+                .and(WasteSpecifications.hasRegion(regionId))
+                .and(WasteSpecifications.hasYear(year));
+
+        return wasteDataRepository.findAll(spec);
     }
 
     //populate population affiliated waste data
@@ -251,7 +259,13 @@ public class WasteServiceImpl implements WasteService {
     }
 
     @Override
-    public List<SolidWasteData> getSolidWasteDataByType(SolidWasteType solidWasteType) {
+    public List<SolidWasteData> getSolidWasteData(SolidWasteType solidWasteType, Integer year, UUID regionId) {
+
+        Specification<SolidWasteData> spec = Specification
+                .where(WasteSpecifications.hasSolidWasteType(solidWasteType))
+                .and(WasteSpecifications.hasRegion_solidWaste(regionId))
+                .and(WasteSpecifications.hasYear_solidWaste(year));
+
         return wasteDataRepository.findAllBySolidWasteType(solidWasteType);
     }
 

@@ -8,16 +8,9 @@ import java.util.UUID;
 @Data
 @Entity
 @Table(name = "urea_emissions")
-public class UreaEmissions {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+public class UreaEmissions extends  AgricultureAbstractClass {
 
     private String fertilizerName;
-
-    @Column(unique = true)
-    private int year;
     private double qty;
     private double CO2Emissions;
 }
-
