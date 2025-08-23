@@ -6,7 +6,7 @@ public enum VehicleEngineType {
     TWO_STROKE("2_STROKE"),
     OFF_ROAD_TRUCK("OFF_ROAD"),
     EQUIPMENT("EQUIPMENT"),
-    NONE("NONE");
+    ANY("ANY");
 
     VehicleEngineType(String s) {
     }

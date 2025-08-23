@@ -25,7 +25,11 @@ public class TransportFuelEmissionFactorsServiceImpl implements TransportFuelEmi
 
     @Override
     public TransportFuelEmissionFactors saveTransportFuelEmissionFactors(TransportFuelEmissionFactors transportFuelEmissionFactors) {
-       return transportFuelEmissionFactorsRepository.save(transportFuelEmissionFactors);
+        System.out.println(transportFuelEmissionFactors);
+        if(transportFuelEmissionFactorsRepository.findByCheckSum(transportFuelEmissionFactors.getCheckSum()).isPresent()) {
+            return null;
+        }
+        return transportFuelEmissionFactorsRepository.save(transportFuelEmissionFactors);
     }
 
     @Override

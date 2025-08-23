@@ -1,6 +1,10 @@
 package com.navyn.emissionlog.Enums;
 
-
 public enum RegionGroup {
-    USA, UK, OTHER
+    USA("USA"),
+    UK("UK"),
+    OTHER("OTHER");
+
+    RegionGroup(String s) {
+    }
 }

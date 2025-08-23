@@ -22,6 +22,7 @@ public class TransportVehicleEmissionFactorsServiceImpl implements TransportVehi
     @Override
     public TransportVehicleDataEmissionFactors createTransportVehicleEmissionFactors(TransportVehicleDataEmissionFactors transportVehicleDataEmissionFactors) {
         // Implementation for creating transport vehicle emission factors
+        System.out.println(transportVehicleDataEmissionFactors);
         return transportVehicleDataEmissionFactorsRepository.save(transportVehicleDataEmissionFactors);
     }
 

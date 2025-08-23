@@ -38,10 +38,8 @@ public class StationaryEmissionFactors {
     @Column(nullable = false)
     private Double massBasis = 0.0; // kg CO₂/tonne
 
-    @Column(nullable = true)
     private Double liquidBasis = 0.0; // kg CO₂/litre (for liquid fuels)
 
-    @Column(nullable = true)
     private Double gasBasis = 0.0; // kg CO₂/m³ (for gaseous fuels)
 
     @Column(nullable = false, unique = true)

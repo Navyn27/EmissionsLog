@@ -44,7 +44,7 @@ public class TransportVehicleDataEmissionFactors {
     @PrePersist
     @PreUpdate
     private void generateCheckSum() throws NoSuchAlgorithmException {
-        this.checkSum = generateHashValue(this.fuel.toString() + this.vehicle.getId() + this.regionGroup.toString() + this.CO2EmissionFactor + this.CH4EmissionFactor + this.N2OEmissionFactor);
+        this.checkSum = generateHashValue( this.regionGroup.toString() + this.vehicle.getId() + this.fuel.getId());
     }
 
     private String generateHashValue(String data) throws NoSuchAlgorithmException {

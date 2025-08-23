@@ -47,7 +47,7 @@ public class ExcelReader {
         transportEmissionsByVehicleDataDtoMap.put("Region", "regionGroup");
         transportEmissionsByVehicleDataDtoMap.put("Vehicle", "vehicle");
         transportEmissionsByVehicleDataDtoMap.put("Size", "size");
-        transportEmissionsByVehicleDataDtoMap.put("% Weight Laden", "weightLaden");
+        transportEmissionsByVehicleDataDtoMap.put("Weight Laden", "weightLaden");
         transportEmissionsByVehicleDataDtoMap.put("Vehicle Year", "vehicleYear");
         transportEmissionsByVehicleDataDtoMap.put("Fuel", "fuel");
         transportEmissionsByVehicleDataDtoMap.put("Fuel Type", "fuelType");

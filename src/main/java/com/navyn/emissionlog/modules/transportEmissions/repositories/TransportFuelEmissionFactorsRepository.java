@@ -23,4 +23,6 @@ public interface TransportFuelEmissionFactorsRepository extends JpaRepository<Tr
     List<TransportFuelEmissionFactors> findByTransportType(TransportType transportType);
 
     List<TransportFuelEmissionFactors> findByVehicleEngineType(VehicleEngineType vehicleEngineType);
+
+    Optional<TransportFuelEmissionFactors> findByCheckSum(String checkSum);
 }
