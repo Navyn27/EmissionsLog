@@ -4,13 +4,15 @@ import com.navyn.emissionlog.Enums.Agriculture.WaterRegime;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgricultureAbstractClass;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
 @Table(name = "rice_cultivation")
 public class RiceCultivationEmissions extends AgricultureAbstractClass {
-    private String riceEcosystem;
 
+    private String riceEcosystem;
 
     @Enumerated(EnumType.STRING)
     private WaterRegime waterRegime;

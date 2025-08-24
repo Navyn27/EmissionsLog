@@ -4,9 +4,11 @@ import com.navyn.emissionlog.Enums.Agriculture.LimingMaterials;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgricultureAbstractClass;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.UUID;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
 @Table(name = "liming")

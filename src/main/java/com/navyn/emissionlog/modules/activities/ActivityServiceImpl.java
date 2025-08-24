@@ -7,8 +7,9 @@ import com.navyn.emissionlog.Enums.Transport.TransportModes;
 import com.navyn.emissionlog.Enums.Transport.TransportType;
 import com.navyn.emissionlog.modules.activities.models.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.SyntheticFertilizerEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureMgmtEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.AnimalManureAndCompostEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.*;
 import com.navyn.emissionlog.modules.wasteEmissions.models.WasteDataAbstract;
 import com.navyn.emissionlog.modules.activities.dtos.*;
@@ -251,13 +252,13 @@ public class ActivityServiceImpl implements ActivityService {
             List<AquacultureEmissions> aquacultureEmissions = aquacultureEmissionsRepository.findAll();
             List<EntericFermentationEmissions> entericFermentationEmissions = entericFermentationEmissionsRepository.findAll();
             List<LimingEmissions> limingEmissions = limingEmissionsRepository.findAll();
-            List<ManureMgmtEmissions> manureMgmtEmissions = manureMgmtEmissionsRepository.findAll();
+            List<AnimalManureAndCompostEmissions> animalManureAndCompostEmissions = manureMgmtEmissionsRepository.findAll();
             List<RiceCultivationEmissions> riceCultivationEmissions = riceCultivationEmissionsRepository.findAll();
             List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions = syntheticFertilizerEmissionsRepository.findAll();
             List<UreaEmissions> ureaEmissions = ureaEmissionsRepository.findAll();
             return calculateDashboardData(activities, wasteActivities,
                     aquacultureEmissions, entericFermentationEmissions, limingEmissions,
-                    manureMgmtEmissions, riceCultivationEmissions, syntheticFertilizerEmissions, ureaEmissions);
+                    animalManureAndCompostEmissions, riceCultivationEmissions, syntheticFertilizerEmissions, ureaEmissions);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -273,13 +274,13 @@ public class ActivityServiceImpl implements ActivityService {
             List<AquacultureEmissions> aquacultureEmissions = aquacultureEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<EntericFermentationEmissions> entericFermentationEmissions = entericFermentationEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<LimingEmissions> limingEmissions = limingEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
-            List<ManureMgmtEmissions> manureMgmtEmissions = manureMgmtEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
+            List<AnimalManureAndCompostEmissions> animalManureAndCompostEmissions = manureMgmtEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<RiceCultivationEmissions> riceCultivationEmissions = riceCultivationEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions = syntheticFertilizerEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<UreaEmissions> ureaEmissions = ureaEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             DashboardData dashboardData = calculateDashboardData(activities, wasteActivities,
                     aquacultureEmissions, entericFermentationEmissions, limingEmissions,
-                    manureMgmtEmissions, riceCultivationEmissions, syntheticFertilizerEmissions, ureaEmissions);
+                    animalManureAndCompostEmissions, riceCultivationEmissions, syntheticFertilizerEmissions, ureaEmissions);
             dashboardData.setStartingDate(startDate.toString());
             dashboardData.setEndingDate(endDate.toString());
             return dashboardData;
@@ -376,7 +377,7 @@ public class ActivityServiceImpl implements ActivityService {
         return activityDashboardData;
     }
 
-    private DashboardData calculateDashboardData(List<Activity> activities, List<WasteDataAbstract> wasteData, List<AquacultureEmissions> aquacultureEmissions, List<EntericFermentationEmissions> entericFermentationEmissions, List<LimingEmissions> limingEmissions, List<ManureMgmtEmissions> manureMgmtEmissions, List<RiceCultivationEmissions> riceCultivationEmissions, List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions, List<UreaEmissions> ureaEmissions) {
+    private DashboardData calculateDashboardData(List<Activity> activities, List<WasteDataAbstract> wasteData, List<AquacultureEmissions> aquacultureEmissions, List<EntericFermentationEmissions> entericFermentationEmissions, List<LimingEmissions> limingEmissions, List<AnimalManureAndCompostEmissions> animalManureAndCompostEmissions, List<RiceCultivationEmissions> riceCultivationEmissions, List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions, List<UreaEmissions> ureaEmissions) {
         DashboardData dashboardData = new DashboardData();
         for(Activity activity : activities){
             dashboardData.setTotalCH4Emissions(dashboardData.getTotalCH4Emissions() + activity.getCH4Emissions());
@@ -399,7 +400,7 @@ public class ActivityServiceImpl implements ActivityService {
         for (LimingEmissions limingEmission : limingEmissions) {
             dashboardData.setTotalBioCO2Emissions(dashboardData.getTotalBioCO2Emissions() + limingEmission.getCO2Emissions());
         }
-        for (ManureMgmtEmissions manureEmission : manureMgmtEmissions) {
+        for (AnimalManureAndCompostEmissions manureEmission : animalManureAndCompostEmissions) {
             dashboardData.setTotalCH4Emissions(dashboardData.getTotalCH4Emissions() + manureEmission.getCH4Emissions());
             dashboardData.setTotalN2OEmissions(dashboardData.getTotalN2OEmissions() + manureEmission.getN2OEmissions());
         }

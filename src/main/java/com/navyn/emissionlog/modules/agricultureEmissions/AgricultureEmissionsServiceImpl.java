@@ -6,8 +6,9 @@ import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.EntericFermentationEmissionsDto;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.ManureMgmtEmissionsDto;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.SyntheticFertilizerEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureMgmtEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.AnimalManureAndCompostEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.*;
 import com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications;
 import lombok.RequiredArgsConstructor;
@@ -53,8 +54,8 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     }
 
     @Override
-    public List<ManureMgmtEmissions> getAllManureMgmtEmissions(Integer year, OrganicAmendmentTypes amendmentType, LivestockSpecies species) {
-        Specification<ManureMgmtEmissions> spec = Specification.where(hasSpecies_Manure(species))
+    public List<AnimalManureAndCompostEmissions> getAllManureMgmtEmissions(Integer year, OrganicAmendmentTypes amendmentType, LivestockSpecies species) {
+        Specification<AnimalManureAndCompostEmissions> spec = Specification.where(hasSpecies_Manure(species))
                 .and(AgricultureSpecifications.hasAmendmentType(amendmentType))
                 .and(AgricultureSpecifications.hasYear(year));
         return manureMgmtEmissionsRepository.findAll(spec);
@@ -127,8 +128,8 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     }
 
     @Override
-    public ManureMgmtEmissions createManureMgmtEmissions(ManureMgmtEmissionsDto emissionsDto) {
-        ManureMgmtEmissions emissions = new ManureMgmtEmissions();
+    public AnimalManureAndCompostEmissions createManureMgmtEmissions(ManureMgmtEmissionsDto emissionsDto) {
+        AnimalManureAndCompostEmissions emissions = new AnimalManureAndCompostEmissions();
         HashMap<String, Double> efs = getNEFBySpecieType(emissionsDto.getSpecies());
         emissions.setYear(emissionsDto.getYear());
         emissions.setSpecies(emissionsDto.getSpecies());

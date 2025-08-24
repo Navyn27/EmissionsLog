@@ -3,7 +3,9 @@ package com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLa
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgricultureAbstractClass;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
 @Table(name = "urea_emissions")

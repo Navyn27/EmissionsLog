@@ -2,8 +2,9 @@ package com.navyn.emissionlog.utils.Specifications;
 
 import com.navyn.emissionlog.Enums.Agriculture.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.SyntheticFertilizerEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureMgmtEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.AnimalManureAndCompostEmissions;
 import org.springframework.data.jpa.domain.Specification;
 
 public class AgricultureSpecifications {
@@ -28,7 +29,7 @@ public class AgricultureSpecifications {
         };
     }
 
-    public static Specification<ManureMgmtEmissions> hasSpecies_Manure(LivestockSpecies species) {
+    public static Specification<AnimalManureAndCompostEmissions> hasSpecies_Manure(LivestockSpecies species) {
         return (root, query, cb) -> {
             if (species == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("species"), species);
@@ -77,7 +78,7 @@ public class AgricultureSpecifications {
         };
     }
 
-    public static Specification<ManureMgmtEmissions> hasAmendmentType(OrganicAmendmentTypes amendmentType) {
+    public static Specification<AnimalManureAndCompostEmissions> hasAmendmentType(OrganicAmendmentTypes amendmentType) {
         return (root, query, cb) -> {
             if (amendmentType == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("amendmentType"), amendmentType);

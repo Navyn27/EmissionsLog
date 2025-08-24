@@ -4,7 +4,9 @@ import com.navyn.emissionlog.Enums.Agriculture.LivestockSpecies;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgricultureAbstractClass;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
 @Table(name = "enteric_fermentation")

@@ -4,7 +4,9 @@ import com.navyn.emissionlog.Enums.Agriculture.BurningAgentType;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgricultureAbstractClass;
 import jakarta.persistence.Entity;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Data
 public class BurningEmissions extends AgricultureAbstractClass {
