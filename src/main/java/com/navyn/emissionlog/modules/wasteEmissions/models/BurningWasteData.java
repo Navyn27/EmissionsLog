@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.modules.wasteEmissions.models;
 
-import com.navyn.emissionlog.Enums.BurntWasteConstants;
+import com.navyn.emissionlog.Enums.Waste.BurntWasteConstants;
 import com.navyn.emissionlog.modules.populationRecords.PopulationRecords;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

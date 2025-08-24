@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.utils;
 
-import com.navyn.emissionlog.Enums.FuelStates;
-import com.navyn.emissionlog.Enums.Metrics;
+import com.navyn.emissionlog.Enums.Fuel.FuelStates;
+import com.navyn.emissionlog.Enums.Metrics.Metrics;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

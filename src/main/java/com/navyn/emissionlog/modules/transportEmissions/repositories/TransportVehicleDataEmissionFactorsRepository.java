@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.modules.transportEmissions.repositories;
 
-import com.navyn.emissionlog.Enums.RegionGroup;
+import com.navyn.emissionlog.Enums.Transport.RegionGroup;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportVehicleDataEmissionFactors;
 import com.navyn.emissionlog.modules.vehicles.Vehicle;

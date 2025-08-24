@@ -1,6 +1,9 @@
 package com.navyn.emissionlog.utils.Specifications;
 
 import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Fuel.FuelTypes;
+import com.navyn.emissionlog.Enums.Transport.TransportModes;
+import com.navyn.emissionlog.Enums.Transport.TransportType;
 import com.navyn.emissionlog.modules.activities.models.Activity;
 import com.navyn.emissionlog.modules.activities.models.TransportActivityData;
 import org.springframework.data.jpa.domain.Specification;

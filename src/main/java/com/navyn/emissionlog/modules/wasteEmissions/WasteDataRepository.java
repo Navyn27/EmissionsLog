@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.wasteEmissions;
 
-import com.navyn.emissionlog.Enums.SolidWasteType;
-import com.navyn.emissionlog.Enums.WasteType;
+import com.navyn.emissionlog.Enums.Waste.SolidWasteType;
+import com.navyn.emissionlog.Enums.Waste.WasteType;
 import com.navyn.emissionlog.modules.wasteEmissions.models.SolidWasteData;
 import com.navyn.emissionlog.modules.wasteEmissions.models.WasteDataAbstract;
 import org.springframework.data.jpa.repository.JpaRepository;

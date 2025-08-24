@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.modules.agricultureEmissions.repositories;
 
-import com.navyn.emissionlog.modules.agricultureEmissions.models.ManureMgmtEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureMgmtEmissions;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;

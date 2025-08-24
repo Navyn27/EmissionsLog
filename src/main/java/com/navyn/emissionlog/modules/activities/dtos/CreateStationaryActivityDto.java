@@ -1,6 +1,9 @@
 package com.navyn.emissionlog.modules.activities.dtos;
 
 import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Fuel.FuelStates;
+import com.navyn.emissionlog.Enums.Fuel.FuelTypes;
+import com.navyn.emissionlog.Enums.Metrics.Metrics;
 import com.navyn.emissionlog.utils.Validators.ValidUnitForMetric;
 import lombok.Data;
 

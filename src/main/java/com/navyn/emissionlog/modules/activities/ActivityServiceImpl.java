@@ -1,8 +1,14 @@
 package com.navyn.emissionlog.modules.activities;
 
 import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Fuel.FuelTypes;
+import com.navyn.emissionlog.Enums.Transport.MobileActivityDataType;
+import com.navyn.emissionlog.Enums.Transport.TransportModes;
+import com.navyn.emissionlog.Enums.Transport.TransportType;
 import com.navyn.emissionlog.modules.activities.models.*;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureMgmtEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.*;
 import com.navyn.emissionlog.modules.wasteEmissions.models.WasteDataAbstract;
 import com.navyn.emissionlog.modules.activities.dtos.*;

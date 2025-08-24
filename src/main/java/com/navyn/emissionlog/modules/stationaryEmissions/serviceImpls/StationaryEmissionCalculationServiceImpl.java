@@ -1,11 +1,14 @@
 package com.navyn.emissionlog.modules.stationaryEmissions.serviceImpls;
 
-import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Fuel.FuelStates;
+import com.navyn.emissionlog.Enums.Metrics.EnergyUnits;
+import com.navyn.emissionlog.Enums.Metrics.MassUnits;
+import com.navyn.emissionlog.Enums.Metrics.Metrics;
+import com.navyn.emissionlog.Enums.Metrics.VolumeUnits;
 import com.navyn.emissionlog.modules.activities.models.Activity;
 import com.navyn.emissionlog.modules.fuel.FuelData;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.stationaryEmissions.StationaryEmissionFactors;
-import com.navyn.emissionlog.Repositories.ActivityRepository;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelDataRepository;
 import com.navyn.emissionlog.modules.stationaryEmissions.services.StationaryEmissionsCalculationService;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.modules.fuel.dtos;
 
-import com.navyn.emissionlog.Enums.FuelTypes;
+import com.navyn.emissionlog.Enums.Fuel.FuelTypes;
 import lombok.Data;
 
 @Data

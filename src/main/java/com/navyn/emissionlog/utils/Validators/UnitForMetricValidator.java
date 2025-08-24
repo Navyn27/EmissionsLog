@@ -1,9 +1,9 @@
 package com.navyn.emissionlog.utils.Validators;
 
-import com.navyn.emissionlog.Enums.EnergyUnits;
-import com.navyn.emissionlog.Enums.MassUnits;
-import com.navyn.emissionlog.Enums.Metrics;
-import com.navyn.emissionlog.Enums.VolumeUnits;
+import com.navyn.emissionlog.Enums.Metrics.EnergyUnits;
+import com.navyn.emissionlog.Enums.Metrics.MassUnits;
+import com.navyn.emissionlog.Enums.Metrics.Metrics;
+import com.navyn.emissionlog.Enums.Metrics.VolumeUnits;
 import com.navyn.emissionlog.modules.activities.dtos.CreateStationaryActivityDto;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.wasteEmissions;
 
-import com.navyn.emissionlog.Enums.SolidWasteType;
-import com.navyn.emissionlog.Enums.WasteType;
+import com.navyn.emissionlog.Enums.Waste.SolidWasteType;
+import com.navyn.emissionlog.Enums.Waste.WasteType;
 import com.navyn.emissionlog.utils.ApiResponse;
 
 import com.navyn.emissionlog.modules.wasteEmissions.dtos.GeneralWasteByPopulationDto;
@@ -103,5 +103,4 @@ public class WasteController {
     public ResponseEntity<ApiResponse> populateWasteDataWithSolid(@RequestParam("file") MultipartFile file) throws IOException {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Waste data populated successfully", wasteService.populateSolidWasteData(file)));
     }
-
 }

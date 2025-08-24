@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.utils;
 
-import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Metrics.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.HttpStatus;

@@ -1,6 +1,14 @@
 package com.navyn.emissionlog.modules.transportEmissions;
 
 import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Fuel.FuelSourceType;
+import com.navyn.emissionlog.Enums.Fuel.FuelStates;
+import com.navyn.emissionlog.Enums.Fuel.FuelTypes;
+import com.navyn.emissionlog.Enums.Metrics.Metrics;
+import com.navyn.emissionlog.Enums.Transport.MobileActivityDataType;
+import com.navyn.emissionlog.Enums.Transport.RegionGroup;
+import com.navyn.emissionlog.Enums.Transport.TransportType;
+import com.navyn.emissionlog.Enums.Transport.VehicleEngineType;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportVehicleDataEmissionFactors;
@@ -18,7 +26,6 @@ import com.navyn.emissionlog.utils.ExcelReader;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

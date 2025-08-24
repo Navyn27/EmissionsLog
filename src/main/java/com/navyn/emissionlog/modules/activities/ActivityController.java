@@ -1,6 +1,9 @@
 package com.navyn.emissionlog.modules.activities;
 
 import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Fuel.FuelTypes;
+import com.navyn.emissionlog.Enums.Transport.TransportModes;
+import com.navyn.emissionlog.Enums.Transport.TransportType;
 import com.navyn.emissionlog.modules.activities.dtos.CreateTransportActivityByFuelDto;
 import com.navyn.emissionlog.modules.activities.dtos.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.modules.activities.dtos.CreateStationaryActivityDto;

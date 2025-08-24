@@ -85,7 +85,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse> handleUnmatchingPasswordsException(UnmatchingPasswordsException ex) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error("Passwords do not match - " + ex.getMessage()));
+                .body(ApiResponse.error("Passwords do not match"));
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)

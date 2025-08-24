@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.modules.wasteEmissions.dtos;
 
-import com.navyn.emissionlog.Enums.MassUnits;
+import com.navyn.emissionlog.Enums.Metrics.MassUnits;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 

@@ -1,8 +1,8 @@
 package com.navyn.emissionlog.modules.transportEmissions.models;
 
-import com.navyn.emissionlog.Enums.VehicleEngineType;
-import com.navyn.emissionlog.Enums.RegionGroup;
-import com.navyn.emissionlog.Enums.TransportType;
+import com.navyn.emissionlog.Enums.Transport.VehicleEngineType;
+import com.navyn.emissionlog.Enums.Transport.RegionGroup;
+import com.navyn.emissionlog.Enums.Transport.TransportType;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

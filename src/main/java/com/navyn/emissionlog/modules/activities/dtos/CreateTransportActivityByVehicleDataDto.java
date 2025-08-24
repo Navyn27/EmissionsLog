@@ -1,6 +1,8 @@
 package com.navyn.emissionlog.modules.activities.dtos;
 
-import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Metrics.DistanceUnits;
+import com.navyn.emissionlog.Enums.Metrics.MassUnits;
+import com.navyn.emissionlog.Enums.Transport.MobileActivityDataType;
 import lombok.Data;
 
 import java.util.UUID;

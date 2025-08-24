@@ -6,8 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import static com.navyn.emissionlog.Enums.GeneralWasteWaterConstants.*;
-import static com.navyn.emissionlog.Enums.IndustrialWasteWaterConstants.*;
+import static com.navyn.emissionlog.Enums.Waste.GeneralWasteWaterConstants.*;
+import static com.navyn.emissionlog.Enums.Waste.IndustrialWasteWaterConstants.*;
 
 @Entity
 @Data

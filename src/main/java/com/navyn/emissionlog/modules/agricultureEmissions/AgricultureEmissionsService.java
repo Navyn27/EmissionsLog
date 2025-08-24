@@ -1,8 +1,12 @@
 package com.navyn.emissionlog.modules.agricultureEmissions;
 
-import com.navyn.emissionlog.Enums.*;
-import com.navyn.emissionlog.modules.agricultureEmissions.dtos.*;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.*;
+import com.navyn.emissionlog.Enums.Agriculture.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.EntericFermentationEmissionsDto;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.ManureMgmtEmissionsDto;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureMgmtEmissions;
 
 import java.util.List;
 
@@ -25,4 +29,7 @@ public interface AgricultureEmissionsService {
     SyntheticFertilizerEmissions createSyntheticFertilizerEmissions(SyntheticFertilizerEmissionsDto emissions);
     UreaEmissions createUreaEmissions(UreaEmissionsDto emissions);
 
+    BurningEmissions createBurningEmissions(BurningEmissionsDto burningEmissionsDto);
+
+    List<BurningEmissions> getAllBurningEmissions(Integer year, BurningAgentType forestType);
 }

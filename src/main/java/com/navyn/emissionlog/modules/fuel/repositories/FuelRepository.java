@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.modules.fuel.repositories;
 
-import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Fuel.FuelSourceType;
+import com.navyn.emissionlog.Enums.Fuel.FuelTypes;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

@@ -1,6 +1,10 @@
 package com.navyn.emissionlog.modules.stationaryEmissions;
 
 import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Fuel.FuelSourceType;
+import com.navyn.emissionlog.Enums.Fuel.FuelStates;
+import com.navyn.emissionlog.Enums.Fuel.FuelTypes;
+import com.navyn.emissionlog.Enums.Metrics.Metrics;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.fuel.dtos.CreateFuelDto;
 import com.navyn.emissionlog.modules.stationaryEmissions.dtos.CreateFuelStationaryEmissionsExcelDto;

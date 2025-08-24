@@ -2,7 +2,7 @@ package com.navyn.emissionlog.modules.wasteEmissions.models;
 
 import com.navyn.emissionlog.Enums.GWP;
 import com.navyn.emissionlog.Enums.Scopes;
-import com.navyn.emissionlog.Enums.WasteType;
+import com.navyn.emissionlog.Enums.Waste.WasteType;
 import com.navyn.emissionlog.modules.regions.Region;
 import jakarta.persistence.*;
 import lombok.Data;

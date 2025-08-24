@@ -1,6 +1,11 @@
 package com.navyn.emissionlog.modules.activities.dtos;
 
 import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Metrics.MassUnits;
+import com.navyn.emissionlog.Enums.Transport.RegionGroup;
+import com.navyn.emissionlog.Enums.Transport.TransportModes;
+import com.navyn.emissionlog.Enums.Transport.TransportType;
+import com.navyn.emissionlog.Enums.Transport.VehicleEngineType;
 import lombok.Data;
 
 @Data

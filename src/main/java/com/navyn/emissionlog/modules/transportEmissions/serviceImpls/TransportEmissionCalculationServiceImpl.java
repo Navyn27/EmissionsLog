@@ -1,6 +1,11 @@
 package com.navyn.emissionlog.modules.transportEmissions.serviceImpls;
 
-import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Metrics.EnergyUnits;
+import com.navyn.emissionlog.Enums.Metrics.MassUnits;
+import com.navyn.emissionlog.Enums.Metrics.Metrics;
+import com.navyn.emissionlog.Enums.Metrics.VolumeUnits;
+import com.navyn.emissionlog.Enums.Transport.MobileActivityDataType;
+import com.navyn.emissionlog.Enums.Transport.RegionGroup;
 import com.navyn.emissionlog.modules.activities.models.Activity;
 import com.navyn.emissionlog.modules.fuel.FuelData;
 import com.navyn.emissionlog.modules.activities.models.VehicleData;

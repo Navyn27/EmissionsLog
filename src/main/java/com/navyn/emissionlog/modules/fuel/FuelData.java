@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.fuel;
 
-import com.navyn.emissionlog.Enums.FuelStates;
-import com.navyn.emissionlog.Enums.Metrics;
+import com.navyn.emissionlog.Enums.Fuel.FuelStates;
+import com.navyn.emissionlog.Enums.Metrics.Metrics;
 import jakarta.persistence.*;
 import lombok.Data;
 

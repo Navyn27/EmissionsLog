@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.modules.agricultureEmissions.repositories;
 
-import com.navyn.emissionlog.modules.agricultureEmissions.models.RiceCultivationEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.RiceCultivationEmissions;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;

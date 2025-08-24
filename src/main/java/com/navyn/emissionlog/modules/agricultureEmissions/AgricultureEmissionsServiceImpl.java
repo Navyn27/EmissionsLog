@@ -1,9 +1,14 @@
 package com.navyn.emissionlog.modules.agricultureEmissions;
 
 import com.navyn.emissionlog.Enums.*;
+import com.navyn.emissionlog.Enums.Agriculture.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.EntericFermentationEmissionsDto;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.ManureMgmtEmissionsDto;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureMgmtEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.*;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.*;
-import com.navyn.emissionlog.modules.agricultureEmissions.dtos.*;
 import com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
@@ -12,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.navyn.emissionlog.Enums.Agriculture.AFOLUConstants.OTHER_FOREST_CF;
 import static com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications.*;
 
 @Service
@@ -25,23 +31,24 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     private final RiceCultivationEmissionsRepository riceCultivationEmissionsRepository;
     private final SyntheticFertilizerEmissionsRepository syntheticFertilizerEmissionsRepository;
     private final UreaEmissionsRepository ureaEmissionsRepository;
+    private final BurningEmissionsRepository burningEmissionsRepository;
 
 
     @Override
     public List<AquacultureEmissions> getAllAquacultureEmissions(Integer year) {
-        Specification<AquacultureEmissions> spec = Specification.where(hasYear_Aquaculture(year));
+        Specification<AquacultureEmissions> spec = Specification.where(hasYear(year));
         return aquacultureEmissionsRepository.findAll(spec);
     }
 
     @Override
     public List<EntericFermentationEmissions> getAllEntericFermentationEmissions(Integer year, LivestockSpecies species) {
-        Specification<EntericFermentationEmissions> spec = Specification.where(hasSpecies_Enteric(species)).and(hasYear_EntericEmissions(year));
+        Specification<EntericFermentationEmissions> spec = Specification.where(hasSpecies_Enteric(species)).and(hasYear(year));
         return entericFermentationEmissionsRepository.findAll(spec);
     }
 
     @Override
     public List<LimingEmissions> getAllLimingEmissions(Integer year, LimingMaterials limingMaterials) {
-        Specification<LimingEmissions> spec = Specification.where(hasLimingMaterial(limingMaterials)).and(hasYear_LimingEmissions(year));
+        Specification<LimingEmissions> spec = Specification.where(hasLimingMaterial(limingMaterials)).and(hasYear(year));
         return limingEmissionsRepository.findAll(spec);
     }
 
@@ -49,7 +56,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     public List<ManureMgmtEmissions> getAllManureMgmtEmissions(Integer year, OrganicAmendmentTypes amendmentType, LivestockSpecies species) {
         Specification<ManureMgmtEmissions> spec = Specification.where(hasSpecies_Manure(species))
                 .and(AgricultureSpecifications.hasAmendmentType(amendmentType))
-                .and(AgricultureSpecifications.hasYear_ManureMgmt(year));
+                .and(AgricultureSpecifications.hasYear(year));
         return manureMgmtEmissionsRepository.findAll(spec);
     }
 
@@ -57,14 +64,14 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     public List<RiceCultivationEmissions> getAllRiceCultivationEmissions(String riceEcosystem, WaterRegime waterRegime, Integer year) {
         Specification<RiceCultivationEmissions> spec = Specification.where(AgricultureSpecifications.hasRiceEcosystem(riceEcosystem))
                 .and(AgricultureSpecifications.hasWaterRegime(waterRegime))
-                .and(AgricultureSpecifications.hasYear_RiceCultivation(year));
+                .and(AgricultureSpecifications.hasYear(year));
         return riceCultivationEmissionsRepository.findAll(spec);
     }
 
     @Override
     public List<SyntheticFertilizerEmissions> getAllSyntheticFertilizerEmissions(Integer year, CropTypes cropType, Fertilizers fertilizerType) {
         Specification<SyntheticFertilizerEmissions> spec = Specification.where(AgricultureSpecifications.hasCropType(cropType))
-                .and(AgricultureSpecifications.hasYear_SyntheticFertilizer(year))
+                .and(AgricultureSpecifications.hasYear(year))
                 .and(AgricultureSpecifications.hasFertilizerType(fertilizerType));
         return syntheticFertilizerEmissionsRepository.findAll(spec);
     }
@@ -108,7 +115,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         emissions.setMaterial(emissionsDto.getMaterial());
         emissions.setCaCO3Qty(emissionsDto.getCaCO3Qty());
         if(emissions.getMaterial() == LimingMaterials.LIMESTONE) {
-            emissions.setCO2Emissions(emissions.getCaCO3Qty()*AFOLUConstants.LIMESTONE.getValue()*AFOLUConstants.CONVERSION_FACTOR.getValue());
+            emissions.setCO2Emissions(emissions.getCaCO3Qty()* AFOLUConstants.LIMESTONE.getValue()*AFOLUConstants.CONVERSION_FACTOR.getValue());
         }
         else if(emissions.getMaterial() == LimingMaterials.DOLOMITE) {
             emissions.setCO2Emissions(emissions.getCaCO3Qty()*AFOLUConstants.DOLOMITE.getValue()*AFOLUConstants.CONVERSION_FACTOR.getValue());
@@ -187,6 +194,54 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         emissions.setQty(emissionsDto.getQty());
         emissions.setCO2Emissions(emissions.getQty() * AFOLUConstants.UREA_EMISSION_FACTOR.getValue() * AFOLUConstants.CONVERSION_FACTOR.getValue());
         return ureaEmissionsRepository.save(emissions);
+    }
+
+    @Override
+    public BurningEmissions createBurningEmissions(BurningEmissionsDto burningEmissionsDto) {
+        BurningEmissions emissions = new BurningEmissions();
+        emissions.setYear(burningEmissionsDto.getYear());
+        emissions.setBurningAgentType(burningEmissionsDto.getBurningAgentType());
+        emissions.setBurntArea(burningEmissionsDto.getBurntArea());
+        emissions.setFuelMassAvailable(burningEmissionsDto.getFuelMassUnit().toKilograms(burningEmissionsDto.getFuelMassAvailable()));
+        emissions.setFireType(burningEmissionsDto.getFireType());
+
+        Double combustionFactor = burningEmissionsDto.getIsEucalyptusForest() ? AFOLUConstants.EUCALYPTUS_FOREST_CF.getValue(): OTHER_FOREST_CF.getValue() ;
+        emissions.setFuelMassConsumed(emissions.getFuelMassAvailable() * combustionFactor);
+        
+        //Emissions Calculation
+        switch (burningEmissionsDto.getBurningAgentType()){
+            case SAVANNA_AND_GRASSLAND -> {
+                emissions.setCO2Emissions(emissions.getFuelMassConsumed() * AFOLUConstants.SAVANNA_AND_GRASSLAND_CO2.getValue());
+                emissions.setCH4Emissions(emissions.getFuelMassConsumed() * AFOLUConstants.SAVANNA_AND_GRASSLAND_CH4.getValue());
+                emissions.setN2OEmissions(emissions.getFuelMassConsumed() * AFOLUConstants.SAVANNA_AND_GRASSLAND_N2O.getValue());
+            }
+            case AGRICULTURAL_RESIDUES -> {
+                emissions.setCO2Emissions(emissions.getFuelMassConsumed() * AFOLUConstants.AGRICULTURAL_RESIDUES_CO2.getValue());
+                emissions.setCH4Emissions(emissions.getFuelMassConsumed() * AFOLUConstants.AGRICULTURAL_RESIDUES_CH4.getValue());
+                emissions.setN2OEmissions(emissions.getFuelMassConsumed() * AFOLUConstants.AGRICULTURAL_RESIDUES_N2O.getValue());
+            }
+            case FOREST -> {
+                emissions.setCO2Emissions(emissions.getFuelMassConsumed() * AFOLUConstants.FOREST_CO2.getValue());
+                emissions.setCH4Emissions(emissions.getFuelMassConsumed() * AFOLUConstants.FOREST_CH4.getValue());
+                emissions.setN2OEmissions(emissions.getFuelMassConsumed() * AFOLUConstants.FOREST_N2O.getValue());
+            }
+            case BIOFUEL_BURNING -> {
+                emissions.setCO2Emissions(emissions.getFuelMassConsumed() * AFOLUConstants.BIOFUEL_BURNING_CO2.getValue());
+                emissions.setCH4Emissions(emissions.getFuelMassConsumed() * AFOLUConstants.BIOFUEL_BURNING_CH4.getValue());
+                emissions.setN2OEmissions(emissions.getFuelMassConsumed() * AFOLUConstants.BIOFUEL_BURNING_N2O.getValue());
+            }
+            default -> throw new IllegalArgumentException("Invalid burning agent type: " + burningEmissionsDto.getBurningAgentType());
+        }
+
+        emissions.setCO2EqEmissions(emissions.getCO2Emissions() + (emissions.getCH4Emissions() * GWP.CH4.getValue()) + (emissions.getN2OEmissions() * GWP.N2O.getValue()));
+        return burningEmissionsRepository.save(emissions);
+    }
+
+    @Override
+    public List<BurningEmissions> getAllBurningEmissions(Integer year, BurningAgentType forestType) {
+        Specification<BurningEmissions> spec = Specification.where(AgricultureSpecifications.hasBurningAgentType(forestType))
+                .and(AgricultureSpecifications.hasYear(year));
+        return burningEmissionsRepository.findAll(spec);
     }
 
     private Double getEntericEFBySpeciesType(LivestockSpecies species){

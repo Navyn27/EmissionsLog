@@ -1,8 +1,8 @@
 package com.navyn.emissionlog.modules.fuel;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.navyn.emissionlog.Enums.FuelSourceType;
-import com.navyn.emissionlog.Enums.FuelTypes;
+import com.navyn.emissionlog.Enums.Fuel.FuelSourceType;
+import com.navyn.emissionlog.Enums.Fuel.FuelTypes;
 import com.navyn.emissionlog.modules.stationaryEmissions.StationaryEmissionFactors;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportVehicleDataEmissionFactors;

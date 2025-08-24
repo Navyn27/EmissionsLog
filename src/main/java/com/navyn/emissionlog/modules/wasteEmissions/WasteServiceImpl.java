@@ -2,8 +2,8 @@ package com.navyn.emissionlog.modules.wasteEmissions;
 
 import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.Enums.Scopes;
-import com.navyn.emissionlog.Enums.SolidWasteType;
-import com.navyn.emissionlog.Enums.WasteType;
+import com.navyn.emissionlog.Enums.Waste.SolidWasteType;
+import com.navyn.emissionlog.Enums.Waste.WasteType;
 import com.navyn.emissionlog.modules.eicvReports.EICVReport;
 import com.navyn.emissionlog.modules.populationRecords.PopulationRecords;
 import com.navyn.emissionlog.modules.regions.Region;
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static com.navyn.emissionlog.Enums.WasteType.SOLID_WASTE;
+import static com.navyn.emissionlog.Enums.Waste.WasteType.SOLID_WASTE;
 
 @Service
 @RequiredArgsConstructor

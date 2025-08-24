@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.wasteEmissions.models;
 
-import com.navyn.emissionlog.Enums.GeneralWasteWaterConstants;
-import com.navyn.emissionlog.Enums.WasteWaterConstants;
+import com.navyn.emissionlog.Enums.Waste.GeneralWasteWaterConstants;
+import com.navyn.emissionlog.Enums.Waste.WasteWaterConstants;
 import com.navyn.emissionlog.modules.eicvReports.EICVReport;
 import com.navyn.emissionlog.modules.populationRecords.PopulationRecords;
 import jakarta.persistence.Entity;

@@ -1,48 +1,13 @@
 package com.navyn.emissionlog.utils.Specifications;
 
-import com.navyn.emissionlog.Enums.*;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.*;
+import com.navyn.emissionlog.Enums.Agriculture.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureMgmtEmissions;
 import org.springframework.data.jpa.domain.Specification;
 
 public class AgricultureSpecifications {
-
-    //year
-    public static Specification<AquacultureEmissions> hasYear_Aquaculture(Integer year) {
-        return (root, query, cb) -> {
-            if (year == null) return cb.conjunction(); // no filter
-            return cb.equal(root.get("year"), year);
-        };
-    }
-
-    public static Specification<EntericFermentationEmissions> hasYear_EntericEmissions(Integer year) {
-        return (root, query, cb) -> {
-            if (year == null) return cb.conjunction(); // no filter
-            return cb.equal(root.get("year"), year);
-        };
-    }
-
-    public static Specification<LimingEmissions> hasYear_LimingEmissions(Integer year) {
-        return (root, query, cb) -> {
-            if (year == null) return cb.conjunction(); // no filter
-            return cb.equal(root.get("year"), year);
-        };
-    }
-
-    public static Specification<ManureMgmtEmissions> hasYear_ManureMgmt(Integer year) {
-        return (root, query, cb) -> {
-            if (year == null) return cb.conjunction(); // no filter
-            return cb.equal(root.get("year"), year);
-        };
-    }
-
-    public static Specification<RiceCultivationEmissions> hasYear_RiceCultivation(Integer year) {
-        return (root, query, cb) -> {
-            if (year == null) return cb.conjunction(); // no filter
-            return cb.equal(root.get("year"), year);
-        };
-    }
-
-    public static Specification<SyntheticFertilizerEmissions> hasYear_SyntheticFertilizer(Integer year) {
+    public static <T>Specification<T> hasYear(Integer year) {
         return (root, query, cb) -> {
             if (year == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("year"), year);
@@ -116,6 +81,13 @@ public class AgricultureSpecifications {
         return (root, query, cb) -> {
             if (amendmentType == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("amendmentType"), amendmentType);
+        };
+    }
+
+    public static Specification<BurningEmissions> hasBurningAgentType(BurningAgentType burningAgentType) {
+        return (root, query, cb) -> {
+            if (burningAgentType == null) return cb.conjunction(); // no filter
+            return cb.equal(root.get("burningAgentType"), burningAgentType);
         };
     }
 }

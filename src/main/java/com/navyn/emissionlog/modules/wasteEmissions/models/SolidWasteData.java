@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.modules.wasteEmissions.models;
 
-import com.navyn.emissionlog.Enums.SolidWasteType;
+import com.navyn.emissionlog.Enums.Waste.SolidWasteType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;

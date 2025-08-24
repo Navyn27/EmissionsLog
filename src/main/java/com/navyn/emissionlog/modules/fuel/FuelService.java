@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.Services;
 
-import com.navyn.emissionlog.Enums.FuelTypes;
+import com.navyn.emissionlog.Enums.Fuel.FuelTypes;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.fuel.dtos.CreateFuelDto;
 import com.navyn.emissionlog.modules.fuel.dtos.ExistingFuelDto;

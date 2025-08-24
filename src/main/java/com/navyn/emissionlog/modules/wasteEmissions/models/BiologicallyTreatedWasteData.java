@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.modules.wasteEmissions.models;
 
-import com.navyn.emissionlog.Enums.BioTreatedWasteConstants;
+import com.navyn.emissionlog.Enums.Waste.BioTreatedWasteConstants;
 import com.navyn.emissionlog.modules.populationRecords.PopulationRecords;
 import jakarta.persistence.*;
 import lombok.Data;
