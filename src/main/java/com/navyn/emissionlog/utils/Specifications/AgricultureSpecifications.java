@@ -77,14 +77,14 @@ public class AgricultureSpecifications {
         };
     }
 
-    public static Specification<SyntheticFertilizerEmissions> hasFertilizerName(Fertilizers fertilizerType) {
+    public static Specification<SyntheticFertilizerEmissions> hasFertilizerType(Fertilizers fertilizerType) {
         return (root, query, cb) -> {
             if (fertilizerType == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("fertType"), fertilizerType);
         };
     }
 
-    public static Specification<UreaEmissions> hasFertilizerName_Urea(Fertilizers fertilizerType) {
+    public static Specification<UreaEmissions> hasFertilizerName_Urea(String fertilizerType) {
         return (root, query, cb) -> {
             if (fertilizerType == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("fertilizerName"), fertilizerType);

@@ -12,8 +12,8 @@ public interface AgricultureEmissionsService {
     List<LimingEmissions> getAllLimingEmissions(Integer year, LimingMaterials limingMaterials);
     List<ManureMgmtEmissions> getAllManureMgmtEmissions(Integer year, OrganicAmendmentTypes amendmentType, LivestockSpecies species);
     List<RiceCultivationEmissions> getAllRiceCultivationEmissions(String riceEcosystem, WaterRegime waterRegime, Integer year);
-    List<SyntheticFertilizerEmissions> getAllSyntheticFertilizerEmissions(Integer year, CropTypes cropType);
-    List<UreaEmissions> getAllUreaEmissions(Fertilizers fertilizer, Integer year);
+    List<SyntheticFertilizerEmissions> getAllSyntheticFertilizerEmissions(Integer year, CropTypes cropType, Fertilizers fertilizerType);
+    List<UreaEmissions> getAllUreaEmissions(String fertilizer, Integer year);
 
     AquacultureEmissions createAquacultureEmissions(AquacultureEmissionsDto emissions);
     EntericFermentationEmissions createEntericFermentationEmissions(EntericFermentationEmissionsDto emissionsDto);

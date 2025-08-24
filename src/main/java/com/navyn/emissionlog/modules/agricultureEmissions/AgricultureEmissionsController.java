@@ -36,14 +36,14 @@ public class AgricultureEmissionsController {
     //get all synthetic emissions
     @GetMapping("/syntheticFertilizerEmissions")
     @Operation(summary = "Get all synthetic fertilizer emissions")
-    private ResponseEntity<ApiResponse> getAllSyntheticFertilizerEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "cropType") CropTypes cropType) {
-        return ResponseEntity.ok(new ApiResponse(true, "Synthetic fertilizer emissions fetched successfully", agricultureEmissionsService.getAllSyntheticFertilizerEmissions(year, cropType)));
+    private ResponseEntity<ApiResponse> getAllSyntheticFertilizerEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "fertilizerType") Fertilizers fertilizerType, @RequestParam(required = false, value = "cropType") CropTypes cropType) {
+        return ResponseEntity.ok(new ApiResponse(true, "Synthetic fertilizer emissions fetched successfully", agricultureEmissionsService.getAllSyntheticFertilizerEmissions(year, cropType, fertilizerType)));
     }
 
     //get all animal manure and compost emissions
     @GetMapping("/ureaEmissions")
     @Operation(summary = "Get all urea emissions")
-    private ResponseEntity<ApiResponse> getAllUreaEmissions(@RequestParam(required = false, value = "fertilizerName") Fertilizers fertilizer, @RequestParam(required = false, value = "year") Integer year) {
+    private ResponseEntity<ApiResponse> getAllUreaEmissions(@RequestParam(required = false, value = "fertilizerName") String fertilizer, @RequestParam(required = false, value = "year") Integer year) {
         return ResponseEntity.ok(new ApiResponse(true, "Urea emissions fetched successfully", agricultureEmissionsService.getAllUreaEmissions(fertilizer, year)));
     }
 

@@ -62,14 +62,15 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     }
 
     @Override
-    public List<SyntheticFertilizerEmissions> getAllSyntheticFertilizerEmissions(Integer year, CropTypes cropType) {
+    public List<SyntheticFertilizerEmissions> getAllSyntheticFertilizerEmissions(Integer year, CropTypes cropType, Fertilizers fertilizerType) {
         Specification<SyntheticFertilizerEmissions> spec = Specification.where(AgricultureSpecifications.hasCropType(cropType))
-                .and(AgricultureSpecifications.hasYear_SyntheticFertilizer(year));
+                .and(AgricultureSpecifications.hasYear_SyntheticFertilizer(year))
+                .and(AgricultureSpecifications.hasFertilizerType(fertilizerType));
         return syntheticFertilizerEmissionsRepository.findAll(spec);
     }
 
     @Override
-    public List<UreaEmissions> getAllUreaEmissions(Fertilizers fertilizer, Integer year) {
+    public List<UreaEmissions> getAllUreaEmissions(String fertilizer, Integer year) {
 
         Specification<UreaEmissions> spec = Specification.where(AgricultureSpecifications.hasFertilizerName_Urea(fertilizer))
                 .and(AgricultureSpecifications.hasYear_UreaEmissions(year));
