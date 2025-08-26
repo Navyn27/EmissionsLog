@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions;
 
 
+import com.navyn.emissionlog.Enums.Agriculture.LandUseCategory;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgricultureAbstractClass;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,10 +16,10 @@ public class MineralSoilEmissions extends AgricultureAbstractClass {
 
 
     @Enumerated(EnumType.STRING)
-    private String initialLandUse;
+    private LandUseCategory initialLandUse;
 
     @Enumerated(EnumType.STRING)
-    private String landUseInReportingYear;
+    private LandUseCategory landUseInReportingYear;
 
     private double avLossOfSoilC = 0.0;
     private double NMineralisedInMineralSoil = 0.0;

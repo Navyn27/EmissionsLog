@@ -13,10 +13,6 @@ import java.util.UUID;
 @Entity
 @Table(name = "liming")
 public class LimingEmissions extends AgricultureAbstractClass {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
-
     @Enumerated(EnumType.STRING)
     private LimingMaterials material;
 

@@ -17,6 +17,7 @@ public class PastureExcretionEmissions extends AgricultureAbstractClass {
     @Enumerated(EnumType.STRING)
     private MMS mms;
 
+    @Enumerated(EnumType.STRING)
     private LivestockCategory livestockCategory;
 
     private double numberOfAnimals = 0.0;

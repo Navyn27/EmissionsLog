@@ -203,4 +203,11 @@ public class ActivityController {
     public ResponseEntity<ApiResponse> getDashboardGraphDataByYear(@RequestParam ("startingYear") Integer startingYear, @RequestParam ("endingYear") Integer endingYear){
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard graph data fetched successfully", activityService.getDashboardGraphDataByYear(startingYear, endingYear)));
     }
+
+    @Operation(summary = "Get all countries", description = "Retrieves a list of all countries.")
+    @GetMapping("/countries")
+    public ResponseEntity<ApiResponse> getCountries() {
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(new ApiResponse(true, "Countries fetched successfully", Countries.values()));
+    }
 }

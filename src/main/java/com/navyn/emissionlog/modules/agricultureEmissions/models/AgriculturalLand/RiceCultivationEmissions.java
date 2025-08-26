@@ -16,6 +16,7 @@ public class RiceCultivationEmissions extends AgricultureAbstractClass {
 
     @Enumerated(EnumType.STRING)
     private WaterRegime waterRegime;
+
     private double harvestedArea = 0.0; // in hectares
     private int cultivationPeriod = 0; // in days
     private double orgAmendScalingFactor = 0.0;

@@ -1,8 +1,11 @@
 package com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.IndirectLandEmissions;
 
 
+import com.navyn.emissionlog.Enums.Agriculture.LandUseCategory;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgricultureAbstractClass;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -11,7 +14,9 @@ import lombok.EqualsAndHashCode;
 @Data
 public class AtmosphericDepositionEmissions extends AgricultureAbstractClass {
 
-    private String landUseSubdivision;
+    @Enumerated(EnumType.STRING)
+    private LandUseCategory landUseSubdivision;
+
     private double syntheticNVolatilized;
     private double organicNAdditions;
     private double excretionsDepositedByGrazingAnimals;

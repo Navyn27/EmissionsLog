@@ -15,6 +15,7 @@ public class AnimalManureAndCompostEmissions extends AgricultureAbstractClass {
 
     @Enumerated(EnumType.STRING)
     private OrganicAmendmentTypes amendmentType;
+
     private double population = 0.0;
     private double totalN = 0.0;
     private double NAvailable = 0.0;
