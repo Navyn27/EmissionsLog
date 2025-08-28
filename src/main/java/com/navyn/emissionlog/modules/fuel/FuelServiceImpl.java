@@ -22,7 +22,7 @@ public class FuelServiceImpl implements FuelService {
     @Override
     public Fuel saveFuel(CreateFuelDto fuel) {
         try {
-            Optional<Fuel> existingFuel = fuelRepository.findByFuel(fuel.getFuel());
+            Optional<Fuel> existingFuel = fuelRepository.findByCheckSum((fuel.getCheckSum()));
 
             if(existingFuel.isPresent()) {
 
@@ -109,8 +109,9 @@ public class FuelServiceImpl implements FuelService {
     }
 
     @Override
-    public Optional<Fuel> getExistingFuel(String fuelName) {
-        return fuelRepository.findByFuel(fuelName);
+    public Optional<Fuel> getExistingFuel(String fuelName, FuelTypes fuelType) {
+
+        return fuelRepository.findByCheckSum(fuelName+fuelType.toString());
     }
 
     @Override

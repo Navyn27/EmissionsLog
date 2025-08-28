@@ -24,7 +24,7 @@ public interface FuelService {
 
     Fuel getExistingFuel(ExistingFuelDto existingFuel);
 
-    Optional<Fuel> getExistingFuel(String fuelName);
+    Optional<Fuel> getExistingFuel(String fuelName, FuelTypes fuelType);
 
     List<Fuel> getFuelsByFuelType(FuelTypes fuelType);
 

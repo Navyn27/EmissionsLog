@@ -35,11 +35,11 @@ public class Fuel {
 
     private String fuelDescription; // Description of the fuel
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String fuel; // Fuel type (e.g., Diesel, Natural Gas)
 
     @Column(nullable = true)
-    private Double lowerHeatingValue; // LHV (TJ/Gg) or NCV
+    private Double lowerHeatingValue = 0.0; // LHV (TJ/Gg) or NCV
 
     @Column(nullable = true)
     private Double liquidDensity = 0.0; // kg/litre (only for liquid fuels)
@@ -59,6 +59,18 @@ public class Fuel {
     @OneToMany(mappedBy = "fuel", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnore
     private List<TransportVehicleDataEmissionFactors> transportVehicleDataEmissionFactorsList = new ArrayList<>();
+
+    @Column(nullable = false, unique = true)
+    private String checkSum;
+
+    @PrePersist
+    public void prePersist() {
+        checkSum = fuel+fuelType.toString();
+    }
+
+    public String getCheckSum() {
+        return fuel+fuelType.toString();
+    }
 
     @Override
     public String toString() {

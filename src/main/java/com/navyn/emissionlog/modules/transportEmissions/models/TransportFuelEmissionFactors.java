@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.transportEmissions.models;
 
+import com.navyn.emissionlog.Enums.EmissionBasis;
 import com.navyn.emissionlog.Enums.Transport.VehicleEngineType;
 import com.navyn.emissionlog.Enums.Transport.RegionGroup;
 import com.navyn.emissionlog.Enums.Transport.TransportType;
@@ -33,6 +34,9 @@ public class TransportFuelEmissionFactors {
 
     @Enumerated(EnumType.STRING)
     private TransportType transportType;
+
+    @Enumerated(EnumType.STRING)
+    private EmissionBasis basis;
 
     @ManyToOne
     private Fuel fuel;

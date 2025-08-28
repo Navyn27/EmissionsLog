@@ -39,6 +39,7 @@ public class ExcelReader {
         transportEmissionsByFuelDtoMap.put("Vehicle/Engine Type", "vehicleEngineType");
         transportEmissionsByFuelDtoMap.put("CH4 EF", "CH4EmissionFactor");
         transportEmissionsByFuelDtoMap.put("N2O EF", "N2OEmissionFactor");
+        transportEmissionsByFuelDtoMap.put("Basis", "basis");
     }
 
     // This hashmap is responsible for reading data from transport emissions by vehicle data Excel files and mapping it to DTOs.
@@ -54,6 +55,7 @@ public class ExcelReader {
         transportEmissionsByVehicleDataDtoMap.put("CO2 EF", "CO2EmissionFactor");
         transportEmissionsByVehicleDataDtoMap.put("CH4 EF", "CH4EmissionFactor");
         transportEmissionsByVehicleDataDtoMap.put("N2O EF", "N2OEmissionFactor");
+        transportEmissionsByVehicleDataDtoMap.put("Basis", "basis");
     }
 
     // This hashmap is responsible for reading data from population records Excel files and mapping it to DTOs.

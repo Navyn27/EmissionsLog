@@ -374,6 +374,7 @@ public class ActivityServiceImpl implements ActivityService {
         activityDashboardData.setTotalN2OEmissions(activityDashboardData.getTotalN2OEmissions() + wasteDashboardData.getTotalN2OEmissions());
         activityDashboardData.setTotalFossilCO2Emissions(activityDashboardData.getTotalFossilCO2Emissions() + wasteDashboardData.getTotalFossilCO2Emissions());
         activityDashboardData.setTotalBioCO2Emissions(activityDashboardData.getTotalBioCO2Emissions() + wasteDashboardData.getTotalBioCO2Emissions());
+        activityDashboardData.setTotalCO2EqEmissions(activityDashboardData.getTotalCO2EqEmissions() + wasteDashboardData.getTotalCO2EqEmissions());
         return activityDashboardData;
     }
 
@@ -384,6 +385,7 @@ public class ActivityServiceImpl implements ActivityService {
             dashboardData.setTotalN2OEmissions(dashboardData.getTotalN2OEmissions() + activity.getN2OEmissions());
             dashboardData.setTotalFossilCO2Emissions(dashboardData.getTotalFossilCO2Emissions() + activity.getFossilCO2Emissions());
             dashboardData.setTotalBioCO2Emissions(dashboardData.getTotalBioCO2Emissions() + activity.getBioCO2Emissions());
+            dashboardData.setTotalCO2EqEmissions(dashboardData.getTotalCO2EqEmissions() + activity.getCO2EqEmissions());
         }
         for (WasteDataAbstract waste : wasteData) {
             dashboardData.setTotalCH4Emissions(dashboardData.getTotalCH4Emissions() + waste.getCH4Emissions());

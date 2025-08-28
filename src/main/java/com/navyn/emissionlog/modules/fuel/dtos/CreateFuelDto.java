@@ -13,4 +13,8 @@ public class CreateFuelDto {
     private Double fuelDensityLiquids = 0.0;
     private Double fuelDensityGases=0.0;
     private FuelSourceType fuelSourceType;
+
+    public String getCheckSum(){
+        return fuel+ fuelTypes.toString();
+    }
 }

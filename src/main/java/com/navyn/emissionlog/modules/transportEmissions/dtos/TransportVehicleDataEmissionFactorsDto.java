@@ -4,14 +4,15 @@ import lombok.Data;
 
 @Data
 public class TransportVehicleDataEmissionFactorsDto {
-    public String regionGroup;
-    public String vehicle;
-    public String size;
-    public String weightLaden;
-    public String vehicleYear;
-    public String fuelType;
-    public String fuel;
-    public Double CO2EmissionFactor;
-    public Double CH4EmissionFactor;
-    public Double N2OEmissionFactor;
+    private String regionGroup;
+    private String vehicle;
+    private String size;
+    private String weightLaden;
+    private String vehicleYear;
+    private String fuelType;
+    private String fuel;
+    private Double CO2EmissionFactor;
+    private Double CH4EmissionFactor;
+    private Double N2OEmissionFactor;
+    private String basis;
 }

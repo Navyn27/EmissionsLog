@@ -26,4 +26,6 @@ public interface FuelRepository extends JpaRepository<Fuel, UUID> {
     List<Fuel> findByFuelType(FuelTypes fuelType);
 
     List<Fuel> findByFuelTypeAndFuelSourceTypesContaining(FuelTypes fuelType, FuelSourceType fuelSourceType);
+
+    Optional<Fuel> findByCheckSum(String checkSum);
 }

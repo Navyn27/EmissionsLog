@@ -200,7 +200,7 @@ public class ActivityController {
 
     @Operation(summary = "Get dashboard graph data by Year", description = "Retrieves data for the dashboard graph by year.")
     @GetMapping("stats/dashboard/graph/groupedByYear")
-    public ResponseEntity<ApiResponse> getDashboardGraphDataByYear(@RequestParam ("startingYear") Integer startingYear, @RequestParam ("endingYear") Integer endingYear){
+    public ResponseEntity<ApiResponse> getDashboardGraphDataByYear(@RequestParam ( value = "startingYear") Integer startingYear, @RequestParam ("endingYear") Integer endingYear){
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Dashboard graph data fetched successfully", activityService.getDashboardGraphDataByYear(startingYear, endingYear)));
     }
 

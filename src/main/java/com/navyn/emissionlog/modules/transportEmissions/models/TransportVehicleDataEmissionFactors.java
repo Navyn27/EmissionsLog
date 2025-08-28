@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.transportEmissions.models;
 
+import com.navyn.emissionlog.Enums.EmissionBasis;
 import com.navyn.emissionlog.Enums.Transport.RegionGroup;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.vehicles.Vehicle;
@@ -33,6 +34,9 @@ public class TransportVehicleDataEmissionFactors {
 
     @Enumerated(EnumType.STRING)
     private RegionGroup regionGroup;
+
+    @Enumerated(EnumType.STRING)
+    private EmissionBasis basis;
 
     private Double CO2EmissionFactor = 0.0;
     private Double CH4EmissionFactor = 0.0;

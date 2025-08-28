@@ -13,4 +13,5 @@ public class TransportFuelEmissionFactorsDto {
     private String vehicleEngineType;
     private Double CH4EmissionFactor;
     private Double N2OEmissionFactor;
+    private String basis;
 }
