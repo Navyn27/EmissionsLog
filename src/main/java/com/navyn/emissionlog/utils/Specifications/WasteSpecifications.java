@@ -4,6 +4,7 @@ import com.navyn.emissionlog.Enums.Waste.SolidWasteType;
 import com.navyn.emissionlog.Enums.Waste.WasteType;
 import com.navyn.emissionlog.modules.wasteEmissions.models.SolidWasteData;
 import com.navyn.emissionlog.modules.wasteEmissions.models.WasteDataAbstract;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.UUID;
@@ -24,7 +25,7 @@ public class WasteSpecifications {
         };
     }
 
-    public static Specification<WasteDataAbstract> hasYear(Integer year) {
+    public static <T>Specification<T> hasYear(Integer year) {
         return (root, query, cb) -> {
             if (year == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("activityYear").get("year"), year);
@@ -49,13 +50,6 @@ public class WasteSpecifications {
         return (root, query, cb) -> {
             if (regionId == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("region").get("id"), regionId);
-        };
-    }
-
-    public static Specification<SolidWasteData> hasYear_solidWaste(Integer year) {
-        return (root, query, cb) -> {
-            if (year == null) return cb.conjunction(); // no filter
-            return cb.equal(root.get("activityYear").get("year"), year);
         };
     }
 

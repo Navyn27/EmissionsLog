@@ -264,7 +264,7 @@ public class WasteServiceImpl implements WasteService {
         Specification<SolidWasteData> spec = Specification
                 .where(WasteSpecifications.hasSolidWasteType(solidWasteType))
                 .and(WasteSpecifications.hasRegion_solidWaste(regionId))
-                .and(WasteSpecifications.hasYear_solidWaste(year));
+                .and(WasteSpecifications.hasYear(year));
 
         return wasteDataRepository.findAllBySolidWasteType(solidWasteType);
     }

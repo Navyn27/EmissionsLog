@@ -15,21 +15,7 @@ public class AgricultureSpecifications {
         };
     }
 
-    public static Specification<UreaEmissions> hasYear_UreaEmissions(Integer year) {
-        return (root, query, cb) -> {
-            if (year == null) return cb.conjunction(); // no filter
-            return cb.equal(root.get("year"), year);
-        };
-    }
-
-    public static Specification<EntericFermentationEmissions> hasSpecies_Enteric(LivestockSpecies species) {
-        return (root, query, cb) -> {
-            if (species == null) return cb.conjunction(); // no filter
-            return cb.equal(root.get("species"), species);
-        };
-    }
-
-    public static Specification<AnimalManureAndCompostEmissions> hasSpecies_Manure(LivestockSpecies species) {
+    public static <T> Specification<T> hasSpecies(LivestockSpecies species) {
         return (root, query, cb) -> {
             if (species == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("species"), species);
@@ -50,7 +36,7 @@ public class AgricultureSpecifications {
         };
     }
 
-    public static Specification<UreaEmissions> hasFertilizerName_Urea(String fertilizerType) {
+    public static Specification<UreaEmissions> hasFertilizerName(String fertilizerType) {
         return (root, query, cb) -> {
             if (fertilizerType == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("fertilizerName"), fertilizerType);

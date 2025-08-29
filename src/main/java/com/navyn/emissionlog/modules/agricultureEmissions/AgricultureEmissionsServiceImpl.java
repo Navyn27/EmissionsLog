@@ -11,6 +11,7 @@ import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.Enter
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.AnimalManureAndCompostEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.*;
 import com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications;
+import com.navyn.emissionlog.utils.Specifications.WasteSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,9 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
 
     @Override
     public List<EntericFermentationEmissions> getAllEntericFermentationEmissions(Integer year, LivestockSpecies species) {
-        Specification<EntericFermentationEmissions> spec = Specification.where(hasSpecies_Enteric(species)).and(hasYear(year));
+        Specification<EntericFermentationEmissions> spec =
+                Specification.<EntericFermentationEmissions>where(hasYear(year))
+                        .and(hasSpecies(species));
         return entericFermentationEmissionsRepository.findAll(spec);
     }
 
@@ -55,8 +58,8 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
 
     @Override
     public List<AnimalManureAndCompostEmissions> getAllManureMgmtEmissions(Integer year, OrganicAmendmentTypes amendmentType, LivestockSpecies species) {
-        Specification<AnimalManureAndCompostEmissions> spec = Specification.where(hasSpecies_Manure(species))
-                .and(AgricultureSpecifications.hasAmendmentType(amendmentType))
+        Specification<AnimalManureAndCompostEmissions> spec = Specification.where(AgricultureSpecifications.hasAmendmentType(amendmentType))
+                .and(hasSpecies(species))
                 .and(AgricultureSpecifications.hasYear(year));
         return manureMgmtEmissionsRepository.findAll(spec);
     }
@@ -80,8 +83,8 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     @Override
     public List<UreaEmissions> getAllUreaEmissions(String fertilizer, Integer year) {
 
-        Specification<UreaEmissions> spec = Specification.where(AgricultureSpecifications.hasFertilizerName_Urea(fertilizer))
-                .and(AgricultureSpecifications.hasYear_UreaEmissions(year));
+        Specification<UreaEmissions> spec = Specification.where(AgricultureSpecifications.hasFertilizerName(fertilizer))
+                .and(AgricultureSpecifications.hasYear(year));
         return ureaEmissionsRepository.findAll(spec);
     }
 
