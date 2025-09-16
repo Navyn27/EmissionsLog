@@ -1,6 +1,6 @@
 package com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions;
 
-import com.navyn.emissionlog.Enums.Agriculture.LivestockCategory;
+import com.navyn.emissionlog.Enums.Agriculture.LivestockSpecies;
 import com.navyn.emissionlog.Enums.Agriculture.MMS;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgricultureAbstractClass;
 import jakarta.persistence.Entity;
@@ -18,9 +18,9 @@ public class PastureExcretionEmissions extends AgricultureAbstractClass {
     private MMS mms;
 
     @Enumerated(EnumType.STRING)
-    private LivestockCategory livestockCategory;
+    private LivestockSpecies livestockSpecies;
 
-    private double numberOfAnimals = 0.0;
+    private double animalPopulation = 0.0;
     private double totalNExcretionDeposited = 0.0;
     private double N2OEmissions = 0.0;
     private double N20NEmissions = 0.0;

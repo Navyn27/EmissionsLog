@@ -1,9 +1,6 @@
 package com.navyn.emissionlog.Enums.Agriculture;
 
 public enum MMS {
-
-
-
     SOLID_STORAGE,
     PIT_STORAGE,
     DRY_LOT,

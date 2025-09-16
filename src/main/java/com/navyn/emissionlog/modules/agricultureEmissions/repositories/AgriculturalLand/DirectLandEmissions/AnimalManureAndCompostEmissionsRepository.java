@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.agricultureEmissions.repositories;
+package com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.DirectLandEmissions;
 
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.AnimalManureAndCompostEmissions;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface ManureMgmtEmissionsRepository extends JpaRepository<AnimalManureAndCompostEmissions, UUID>, JpaSpecificationExecutor<AnimalManureAndCompostEmissions> {
+public interface AnimalManureAndCompostEmissionsRepository extends JpaRepository<AnimalManureAndCompostEmissions, UUID>, JpaSpecificationExecutor<AnimalManureAndCompostEmissions> {
     @Query(value = "SELECT * FROM manure_mgmt_emissions WHERE year BETWEEN :startYear AND :endYear", nativeQuery = true)
     List<AnimalManureAndCompostEmissions> findByYearRange(@Param("startYear") int startYear, @Param("endYear") int endYear);
 }

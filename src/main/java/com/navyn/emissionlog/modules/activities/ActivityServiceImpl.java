@@ -10,7 +10,13 @@ import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLan
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.SyntheticFertilizerEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.AnimalManureAndCompostEmissions;
-import com.navyn.emissionlog.modules.agricultureEmissions.repositories.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.AquacultureEmissionsRepository;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.DirectLandEmissions.AnimalManureAndCompostEmissionsRepository;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.DirectLandEmissions.SyntheticFertilizerEmissionsRepository;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.LimingEmissionsRepository;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.RiceCultivationEmissionsRepository;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.UreaEmissionsRepository;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.Livestock.EntericFermentationEmissionsRepository;
 import com.navyn.emissionlog.modules.wasteEmissions.models.WasteDataAbstract;
 import com.navyn.emissionlog.modules.activities.dtos.*;
 import com.navyn.emissionlog.modules.fuel.Fuel;
@@ -58,12 +64,12 @@ public class ActivityServiceImpl implements ActivityService {
     private final AquacultureEmissionsRepository aquacultureEmissionsRepository;
     private final EntericFermentationEmissionsRepository entericFermentationEmissionsRepository;
     private final LimingEmissionsRepository limingEmissionsRepository;
-    private final ManureMgmtEmissionsRepository manureMgmtEmissionsRepository;
     private final RiceCultivationEmissionsRepository riceCultivationEmissionsRepository;
     private final SyntheticFertilizerEmissionsRepository syntheticFertilizerEmissionsRepository;
     private final UreaEmissionsRepository ureaEmissionsRepository;
     private final FuelDataRepository fuelDataRepository;
     private final VehicleDataRepository vehicleDataRepository;
+    private final AnimalManureAndCompostEmissionsRepository animalManureAndCompostEmissionsRepository;
 
     @Override
     public Activity createStationaryActivity(CreateStationaryActivityDto activity) {
@@ -252,7 +258,7 @@ public class ActivityServiceImpl implements ActivityService {
             List<AquacultureEmissions> aquacultureEmissions = aquacultureEmissionsRepository.findAll();
             List<EntericFermentationEmissions> entericFermentationEmissions = entericFermentationEmissionsRepository.findAll();
             List<LimingEmissions> limingEmissions = limingEmissionsRepository.findAll();
-            List<AnimalManureAndCompostEmissions> animalManureAndCompostEmissions = manureMgmtEmissionsRepository.findAll();
+            List<AnimalManureAndCompostEmissions> animalManureAndCompostEmissions = animalManureAndCompostEmissionsRepository.findAll();
             List<RiceCultivationEmissions> riceCultivationEmissions = riceCultivationEmissionsRepository.findAll();
             List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions = syntheticFertilizerEmissionsRepository.findAll();
             List<UreaEmissions> ureaEmissions = ureaEmissionsRepository.findAll();
@@ -274,7 +280,7 @@ public class ActivityServiceImpl implements ActivityService {
             List<AquacultureEmissions> aquacultureEmissions = aquacultureEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<EntericFermentationEmissions> entericFermentationEmissions = entericFermentationEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<LimingEmissions> limingEmissions = limingEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
-            List<AnimalManureAndCompostEmissions> animalManureAndCompostEmissions = manureMgmtEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
+            List<AnimalManureAndCompostEmissions> animalManureAndCompostEmissions = animalManureAndCompostEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<RiceCultivationEmissions> riceCultivationEmissions = riceCultivationEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions = syntheticFertilizerEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<UreaEmissions> ureaEmissions = ureaEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());

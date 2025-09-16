@@ -2,9 +2,8 @@ package com.navyn.emissionlog.utils.Specifications;
 
 import com.navyn.emissionlog.Enums.Agriculture.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.*;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.SyntheticFertilizerEmissions;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.AnimalManureAndCompostEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.*;
+import jakarta.validation.constraints.Past;
 import org.springframework.data.jpa.domain.Specification;
 
 public class AgricultureSpecifications {
@@ -43,7 +42,7 @@ public class AgricultureSpecifications {
         };
     }
 
-    public static Specification<SyntheticFertilizerEmissions> hasCropType(CropTypes cropType) {
+    public static<T> Specification<T> hasCropType(CropTypes cropType) {
         return (root, query, cb) -> {
             if (cropType == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("cropType"), cropType);
@@ -75,6 +74,48 @@ public class AgricultureSpecifications {
         return (root, query, cb) -> {
             if (burningAgentType == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("burningAgentType"), burningAgentType);
+        };
+    }
+
+    public static Specification<CropResiduesEmissions> hasLandUseCategory_CropResidue(LandUseCategory landUseCategory) {
+        return (root, query, cb) -> {
+            if (landUseCategory == null) return cb.conjunction(); // no filter
+            return cb.equal(root.get("landUseCategory"), landUseCategory);
+        };
+    }
+
+    public static<T> Specification<T> hasCropResiduesCropType(CropResiduesCropType cropType) {
+        return (root, query, cb) -> {
+            if (cropType == null) return cb.conjunction(); // no filter
+            return cb.equal(root.get("burningAgentType"), cropType);
+        };
+    }
+
+    public static Specification<PastureExcretionEmissions> hasMMS(MMS mms) {
+        return (root, query, cb) -> {
+            if (mms == null) return cb.conjunction(); // no filter
+            return cb.equal(root.get("mms"), mms);
+        };
+    }
+
+    public static Specification<PastureExcretionEmissions> hasLivestockCategory(LivestockSpecies species) {
+        return (root, query, cb) -> {
+            if (species == null) return cb.conjunction(); // no filter
+            return cb.equal(root.get("livestockSpecies"), species);
+        };
+    }
+
+    public static Specification<MineralSoilEmissions> hasInitialLandUse(LandUseCategory initialLandUse) {
+        return (root, query, cb) -> {
+            if (initialLandUse == null) return cb.conjunction(); // no filter
+            return cb.equal(root.get("initialLandUse"), initialLandUse);
+        };
+    }
+
+    public static Specification<MineralSoilEmissions> hasLandUseInReportingYear(LandUseCategory landUseInReportingYear) {
+        return (root, query, cb) -> {
+            if (landUseInReportingYear == null) return cb.conjunction(); // no filter
+            return cb.equal(root.get("landUseInReportingYear"), landUseInReportingYear);
         };
     }
 }

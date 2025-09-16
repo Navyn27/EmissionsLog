@@ -26,5 +26,4 @@ public class MineralSoilEmissions extends AgricultureAbstractClass {
     private double N2OEmissions = 0.0;
     private double N20NEmissions = 0.0;
     private double CO2EqEmissions = 0.0;
-
 }

@@ -3,15 +3,16 @@ package com.navyn.emissionlog.modules.agricultureEmissions;
 import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.Enums.Agriculture.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.DirectLand.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.EntericFermentationEmissionsDto;
-import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.ManureMgmtEmissionsDto;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.*;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.SyntheticFertilizerEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
-import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.AnimalManureAndCompostEmissions;
-import com.navyn.emissionlog.modules.agricultureEmissions.repositories.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.DirectLandEmissions.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.Livestock.EntericFermentationEmissionsRepository;
 import com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications;
-import com.navyn.emissionlog.utils.Specifications.WasteSpecifications;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -29,12 +30,14 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     private final AquacultureEmissionsRepository aquacultureEmissionsRepository;
     private final EntericFermentationEmissionsRepository entericFermentationEmissionsRepository;
     private final LimingEmissionsRepository limingEmissionsRepository;
-    private final ManureMgmtEmissionsRepository manureMgmtEmissionsRepository;
+    private final AnimalManureAndCompostEmissionsRepository animalManureAndCompostEmissionsRepository;
     private final RiceCultivationEmissionsRepository riceCultivationEmissionsRepository;
     private final SyntheticFertilizerEmissionsRepository syntheticFertilizerEmissionsRepository;
     private final UreaEmissionsRepository ureaEmissionsRepository;
     private final BurningEmissionsRepository burningEmissionsRepository;
-
+    private final CropResiduesEmissionsRepository cropResiduesEmissionsRepository;
+    private final PastureExcretionEmissionsRepository pastureExcretionEmissionsRepository;
+    private final MineralSoilEmissionsRepository mineralSoilEmissionsRepository;
 
     @Override
     public List<AquacultureEmissions> getAllAquacultureEmissions(Integer year) {
@@ -57,11 +60,11 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     }
 
     @Override
-    public List<AnimalManureAndCompostEmissions> getAllManureMgmtEmissions(Integer year, OrganicAmendmentTypes amendmentType, LivestockSpecies species) {
+    public List<AnimalManureAndCompostEmissions> getAllAnimalManureAndCompostEmissions(Integer year, OrganicAmendmentTypes amendmentType, LivestockSpecies species) {
         Specification<AnimalManureAndCompostEmissions> spec = Specification.where(AgricultureSpecifications.hasAmendmentType(amendmentType))
                 .and(hasSpecies(species))
                 .and(AgricultureSpecifications.hasYear(year));
-        return manureMgmtEmissionsRepository.findAll(spec);
+        return animalManureAndCompostEmissionsRepository.findAll(spec);
     }
 
     @Override
@@ -74,9 +77,9 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
 
     @Override
     public List<SyntheticFertilizerEmissions> getAllSyntheticFertilizerEmissions(Integer year, CropTypes cropType, Fertilizers fertilizerType) {
-        Specification<SyntheticFertilizerEmissions> spec = Specification.where(AgricultureSpecifications.hasCropType(cropType))
+        Specification<SyntheticFertilizerEmissions> spec = Specification.where(AgricultureSpecifications.hasFertilizerType(fertilizerType))
                 .and(AgricultureSpecifications.hasYear(year))
-                .and(AgricultureSpecifications.hasFertilizerType(fertilizerType));
+                .and(AgricultureSpecifications.hasCropType(cropType));
         return syntheticFertilizerEmissionsRepository.findAll(spec);
     }
 
@@ -131,11 +134,11 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     }
 
     @Override
-    public AnimalManureAndCompostEmissions createManureMgmtEmissions(ManureMgmtEmissionsDto emissionsDto) {
+    public AnimalManureAndCompostEmissions createAnimalManureAndCompostEmissions(AnimalManureAndCompostEmissionsDto emissionsDto) {
         AnimalManureAndCompostEmissions emissions = new AnimalManureAndCompostEmissions();
         HashMap<String, Double> efs = getNEFBySpecieType(emissionsDto.getSpecies());
         emissions.setYear(emissionsDto.getYear());
-        emissions.setSpecies(emissionsDto.getSpecies());
+        emissions.setLivestockSpecies(emissionsDto.getSpecies());
         emissions.setAmendmentType(emissionsDto.getAmendmentType());
         emissions.setPopulation(emissionsDto.getPopulation());
         emissions.setTotalN(efs.get("NEF")* emissions.getPopulation());
@@ -144,7 +147,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         emissions.setN2OEmissions(emissions.getN2ONEmissions()* 44 / 28);
         emissions.setCH4Emissions(emissions.getPopulation()*getCH4EFBySpeciesType(emissionsDto.getSpecies()));
         emissions.setCO2EqEmissions(emissions.getN2OEmissions()*265/1000000 + emissions.getCH4Emissions() * GWP.CH4.getValue());
-        return manureMgmtEmissionsRepository.save(emissions);
+        return animalManureAndCompostEmissionsRepository.save(emissions);
     }
 
     @Override
@@ -247,6 +250,79 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
                 .and(AgricultureSpecifications.hasYear(year));
         return burningEmissionsRepository.findAll(spec);
     }
+
+    @Override
+    public CropResiduesEmissions createCropResidueEmissions(CropResiduesEmissionsDto cropResidueEmissionsDto) {
+        CropResiduesEmissions emissions = new CropResiduesEmissions();
+        emissions.setYear(cropResidueEmissionsDto.getYear());
+        emissions.setLandUseCategory(cropResidueEmissionsDto.getLandUseCategory());
+        emissions.setCropType(cropResidueEmissionsDto.getCropType());
+        emissions.setTotalAreaHarvested(cropResidueEmissionsDto.getTotalAreaHarvested());
+        emissions.setHarvestedFreshCropYield(cropResidueEmissionsDto.getHarvestedFreshCropYield());
+        emissions.setHarvestedDMYield(emissions.getTotalAreaHarvested() * emissions.getHarvestedFreshCropYield() * cropResidueEmissionsDto.getCropType().getDMFraction());
+        emissions.setAGResiduesDryMatter(cropResidueEmissionsDto.getAGResiduesDryMatter());
+        emissions.setRatioOfAGResiduesDMToHarvestedYield(emissions.getAGResiduesDryMatter() * 1000 / emissions.getHarvestedDMYield());
+        emissions.setRatioOfBelowGroundResiduesToHarvestedYield(cropResidueEmissionsDto.getCropType().getRatioOfBGRToAGBiomass() * (emissions.getAGResiduesDryMatter()*1000 + emissions.getHarvestedDMYield())/emissions.getHarvestedDMYield());
+        emissions.setNInCropResiduesReturned(cropResidueEmissionsDto.getNInCropResiduesReturned());
+        emissions.setN2ONEmissions(emissions.getNInCropResiduesReturned() * AFOLUConstants.N_CROP_RESIDUES_EF.getValue());
+        emissions.setN2OEmissions(emissions.getN2ONEmissions() * 44 / 28);
+        emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
+        return cropResiduesEmissionsRepository.save(emissions);
+    }
+
+    @Override
+    public List<CropResiduesEmissions> getAllCropResidueEmissions(Integer year, CropResiduesCropType cropType, LandUseCategory landUseCategory) {
+        Specification<CropResiduesEmissions> spec = Specification.where(AgricultureSpecifications.hasLandUseCategory_CropResidue(landUseCategory))
+                .and(AgricultureSpecifications.hasCropResiduesCropType(cropType))
+                .and(AgricultureSpecifications.hasYear(year));
+        return cropResiduesEmissionsRepository.findAll(spec);
+    }
+
+    @Override
+    public PastureExcretionEmissions createPastureExcretionEmissions(PastureExcretionsEmissionsDto pastureExcretionEmissionsDto) {
+        PastureExcretionEmissions emissions = new PastureExcretionEmissions();
+        emissions.setYear(pastureExcretionEmissionsDto.getYear());
+        emissions.setLivestockSpecies(pastureExcretionEmissionsDto.getLivestockSpecies());
+        emissions.setMms(pastureExcretionEmissionsDto.getMms());
+        emissions.setAnimalPopulation(pastureExcretionEmissionsDto.getAnimalPopulation());
+        emissions.setTotalNExcretionDeposited(emissions.getAnimalPopulation() * emissions.getLivestockSpecies().getAnnualNExcretion() * emissions.getLivestockSpecies().getFractionOfManureDepositedOnPasture());
+        emissions.setN20NEmissions(emissions.getTotalNExcretionDeposited() * emissions.getLivestockSpecies().getNEFManureDepositedOnPasture());
+        emissions.setN2OEmissions(emissions.getN20NEmissions() * 44 / 28);
+        emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
+        return pastureExcretionEmissionsRepository.save(emissions);
+    }
+
+    @Override
+    public MineralSoilEmissions createMineralSoilEmissions(MineralSoilEmissionsDto mineralSoilEmissionsDto) {
+        MineralSoilEmissions emissions = new MineralSoilEmissions();
+        emissions.setYear(mineralSoilEmissionsDto.getYear());
+        emissions.setInitialLandUse(mineralSoilEmissionsDto.getInitialLandUse());
+        emissions.setLandUseInReportingYear(mineralSoilEmissionsDto.getLandUseInReportingYear());
+        emissions.setAvLossOfSoilC(mineralSoilEmissionsDto.getAvLossOfSoilC());
+        emissions.setNMineralisedInMineralSoil(emissions.getAvLossOfSoilC() * 1/emissions.getLandUseInReportingYear().getCNRatioOfSoilOrganicMatter()* 1000);
+        emissions.setN20NEmissions(emissions.getNMineralisedInMineralSoil() * emissions.getLandUseInReportingYear().getEFNMineralised());
+        emissions.setN2OEmissions(emissions.getN20NEmissions() * 44 / 28);
+        emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
+        return mineralSoilEmissionsRepository.save(emissions);
+    }
+
+    @Override
+    public List<MineralSoilEmissions> getAllMineralSoilEmissions(Integer year, LandUseCategory initialLandUse, LandUseCategory landUseInReportingYear) {
+        Specification<MineralSoilEmissions> specification = Specification.where(AgricultureSpecifications.hasInitialLandUse(initialLandUse))
+                .and(AgricultureSpecifications.hasLandUseInReportingYear(landUseInReportingYear))
+                .and(AgricultureSpecifications.hasYear(year));
+        return mineralSoilEmissionsRepository.findAll(specification);
+    }
+
+    @Override
+    public List<PastureExcretionEmissions> getAllPastureExcretionEmissions(Integer year, LivestockSpecies species, MMS mms) {
+        Specification<PastureExcretionEmissions> spec = Specification.where(AgricultureSpecifications.hasMMS(mms))
+                .and(AgricultureSpecifications.hasYear(year))
+                .and(AgricultureSpecifications.hasLivestockCategory(species));
+        return pastureExcretionEmissionsRepository.findAll(spec);
+    }
+
+
 
     private Double getEntericEFBySpeciesType(LivestockSpecies species){
         return switch (species) {

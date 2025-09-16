@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.agricultureEmissions.repositories;
+package com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand;
 
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.UreaEmissions;
 import org.springframework.data.jpa.repository.JpaRepository;

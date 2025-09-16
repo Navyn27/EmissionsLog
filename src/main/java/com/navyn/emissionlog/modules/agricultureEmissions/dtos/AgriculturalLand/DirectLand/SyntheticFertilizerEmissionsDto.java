@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand;
+package com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.DirectLand;
 
 import com.navyn.emissionlog.Enums.Agriculture.CropTypes;
 import com.navyn.emissionlog.Enums.Agriculture.Fertilizers;

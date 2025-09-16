@@ -10,11 +10,12 @@ import lombok.Data;
 @Entity
 @Table(name = "manure_mgmt_emissions")
 public class AnimalManureAndCompostEmissions extends AgricultureAbstractClass {
-    @Enumerated(EnumType.STRING)
-    private LivestockSpecies species;
 
     @Enumerated(EnumType.STRING)
     private OrganicAmendmentTypes amendmentType;
+
+    @Enumerated(EnumType.STRING)
+    private LivestockSpecies livestockSpecies;
 
     private double population = 0.0;
     private double totalN = 0.0;

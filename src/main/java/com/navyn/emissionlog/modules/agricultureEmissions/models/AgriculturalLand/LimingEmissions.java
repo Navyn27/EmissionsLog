@@ -11,7 +11,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
-@Table(name = "liming")
+@Table(name = "liming_emissions")
 public class LimingEmissions extends AgricultureAbstractClass {
     @Enumerated(EnumType.STRING)
     private LimingMaterials material;

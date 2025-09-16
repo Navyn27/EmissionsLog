@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.agricultureEmissions.repositories;
+package com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.DirectLandEmissions;
 
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.SyntheticFertilizerEmissions;
 import org.springframework.data.jpa.repository.JpaRepository;

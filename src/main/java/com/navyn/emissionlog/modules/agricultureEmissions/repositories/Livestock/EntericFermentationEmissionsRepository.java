@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.agricultureEmissions.repositories;
+package com.navyn.emissionlog.modules.agricultureEmissions.repositories.Livestock;
 
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
 import org.springframework.data.jpa.repository.JpaRepository;

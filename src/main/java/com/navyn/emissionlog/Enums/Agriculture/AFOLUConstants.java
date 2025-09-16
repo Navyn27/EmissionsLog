@@ -105,8 +105,12 @@ public enum AFOLUConstants {
 
     //Fuel Biomass Consumption Values
     EUCALYPTUS_FOREST_FBC(3.5),
-    OTHER_FOREST_FBC(2.5);
-    
+    OTHER_FOREST_FBC(2.5),
+
+
+    //Crop Residue Emissions Factors
+    N_CROP_RESIDUES_EF(0.01);
+
     private final Double value;
 
     AFOLUConstants(Double value) {
