@@ -19,13 +19,11 @@ public class VolatilizationEmissions extends AgricultureAbstractClass {
     private MMS MMS;
 
     @Enumerated(EnumType.STRING)
-    private LivestockCategory livestockCategory;
+    private LivestockSpecies livestockSpecies   ;
 
-    @Enumerated(EnumType.STRING)
-    private LivestockSpecies livestockSubCategory;
-
-    private int numberOfAnimals = 0;
+    private int animalPopulation = 0;
     private double totalNExcretionForMMS = 0.0;
     private double manureVolatilizationNLoss = 0.0;
     private double indirectVolatilizationN2OEmissionsFromVolatilization = 0.0;
+    private double CO2EqEmissions = 0.0;
 }

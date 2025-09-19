@@ -14,14 +14,14 @@ import lombok.EqualsAndHashCode;
 public class LeachingAndRunoffEmissions extends AgricultureAbstractClass {
 
     @Enumerated(EnumType.STRING)
-    private LandUseCategory landUseSubdivision;
+    private LandUseCategory landUseCategory;
 
     private double syntheticNAppliedToSoil;
     private double organicAdditionsAppliedToSoil;
     private double excretionsDepositedByGrazingAnimals;
     private double NInCropResidues;
     private double NMineralizedInMineralSoils;
-    private double N2OProducedFromLeachingAndRunoff;
+    private double N2ONProducedFromLeachingAndRunoff;
     private double N2OEmissions;
     private double CO2EqEmissions;
 

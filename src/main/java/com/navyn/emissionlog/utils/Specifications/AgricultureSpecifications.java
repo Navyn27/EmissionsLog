@@ -77,28 +77,28 @@ public class AgricultureSpecifications {
         };
     }
 
-    public static Specification<CropResiduesEmissions> hasLandUseCategory_CropResidue(LandUseCategory landUseCategory) {
+    public static<T> Specification<T> hasLandUseCategory(LandUseCategory landUseCategory) {
         return (root, query, cb) -> {
             if (landUseCategory == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("landUseCategory"), landUseCategory);
         };
     }
 
-    public static<T> Specification<T> hasCropResiduesCropType(CropResiduesCropType cropType) {
+    public static Specification<CropResiduesEmissions> hasCropResiduesCropType(CropResiduesCropType cropType) {
         return (root, query, cb) -> {
             if (cropType == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("burningAgentType"), cropType);
         };
     }
 
-    public static Specification<PastureExcretionEmissions> hasMMS(MMS mms) {
+    public static<T> Specification<T> hasMMS(MMS mms) {
         return (root, query, cb) -> {
             if (mms == null) return cb.conjunction(); // no filter
-            return cb.equal(root.get("mms"), mms);
+            return cb.equal(root.get("MMS"), mms);
         };
     }
 
-    public static Specification<PastureExcretionEmissions> hasLivestockCategory(LivestockSpecies species) {
+    public static<T> Specification<T> hasLivestockCategory(LivestockSpecies species) {
         return (root, query, cb) -> {
             if (species == null) return cb.conjunction(); // no filter
             return cb.equal(root.get("livestockSpecies"), species);

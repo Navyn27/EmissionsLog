@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.DirectLand;
+package com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.DirectLandEmissions;
 
 import com.navyn.emissionlog.Enums.Agriculture.LandUseCategory;
 import lombok.Data;

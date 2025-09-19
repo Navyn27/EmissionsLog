@@ -2,10 +2,17 @@ package com.navyn.emissionlog.modules.agricultureEmissions;
 
 import com.navyn.emissionlog.Enums.Agriculture.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.*;
-import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.DirectLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.DirectLandEmissions.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.IndirectLandEmissions.AtmosphericDepositionEmissionsDto;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.IndirectLandEmissions.LeachingAndRunoffEmissionsDto;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.IndirectManureEmissions.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.EntericFermentationEmissionsDto;
+
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.IndirectLandEmissions.AtmosphericDepositionEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.IndirectLandEmissions.LeachingAndRunoffEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.IndirectManureEmissions.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
 
 import java.util.List;
@@ -44,4 +51,20 @@ public interface AgricultureEmissionsService {
     List<MineralSoilEmissions> getAllMineralSoilEmissions(Integer year, LandUseCategory initialLandUse, LandUseCategory landUseInReportingYear);
 
     List<PastureExcretionEmissions> getAllPastureExcretionEmissions(Integer year, LivestockSpecies species, MMS mms);
+
+    VolatilizationEmissions createVolatilizationEmissions(VolatilizationEmissionsDto volatilizationEmissionsDto);
+
+    LeachingEmissions createLeachingEmissions(LeachingEmissionsDto leachingEmissionsDto);
+
+    AtmosphericDepositionEmissions createAtmosphericNDepositionEmissions(AtmosphericDepositionEmissionsDto atmosphericNDepositionEmissionsDto);
+
+    LeachingAndRunoffEmissions createLeachingAndRunoffEmissions(LeachingAndRunoffEmissionsDto leachingAndRunoffEmissionsDto);
+
+    List<AtmosphericDepositionEmissions> getAllAtmosphericNDepositionEmissions(Integer year, LandUseCategory landUseCategory);
+
+    List<LeachingAndRunoffEmissions> getAllLeachingAndRunoffEmissions(Integer year, LandUseCategory landUseCategory);
+
+    List<LeachingEmissions> getAllLeachingEmissions(Integer year, MMS mms, LivestockSpecies species);
+
+    List<VolatilizationEmissions> getAllVolatilizationEmissions(Integer year, MMS mms, LivestockSpecies species);
 }

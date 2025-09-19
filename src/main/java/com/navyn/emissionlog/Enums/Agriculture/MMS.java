@@ -1,23 +1,20 @@
 package com.navyn.emissionlog.Enums.Agriculture;
 
+import lombok.Getter;
+
+@Getter
 public enum MMS {
-    SOLID_STORAGE,
-    PIT_STORAGE,
-    DRY_LOT,
-    WITH_LITTER,
-    WITHOUT_LITTER,
-    OTHER
+    SOLID_STORAGE(0.4),
+    PIT_STORAGE(0.28),
+    DRY_LOT(0.2),
+    WITH_LITTER(0.4),
+    WITHOUT_LITTER(0.55),
+    OTHER(0.15);
 
-//    Solid storage
-//    Pit storage
-//    Dry lot
-//    Solid storage
-//    Pit storage
-//    Dry lot
-//    Solid storage
-//    Pit storage
-//    With litter
-//    Without litter
-//    Other type of MMS
+    MMS(double fractionOfManureNThatVolatilizes) {
+        this.fractionOfManureNThatVolatilizes = fractionOfManureNThatVolatilizes;
+    }
 
+    private double fractionOfManureNThatVolatilizes = 0.0;
+    private final double fractionOfManureNThatLeaches = 0.1;
 }

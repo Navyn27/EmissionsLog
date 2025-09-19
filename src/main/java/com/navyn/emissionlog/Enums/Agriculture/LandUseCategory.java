@@ -13,4 +13,7 @@ public enum LandUseCategory {
 
     private final double CNRatioOfSoilOrganicMatter = 15.0;
     private final double EFNMineralised = 0.01;
+    private final double NFractionAddedToSoilPostLeaching = 0.3;
+    private final double EF_N2O_LeachAndRunoffNSoilAdditive = 0.0075;
+
 }

@@ -2,7 +2,11 @@ package com.navyn.emissionlog.modules.agricultureEmissions;
 
 import com.navyn.emissionlog.Enums.Agriculture.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.*;
-import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.DirectLand.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.DirectLandEmissions.*;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.IndirectLandEmissions.AtmosphericDepositionEmissionsDto;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.IndirectLandEmissions.LeachingAndRunoffEmissionsDto;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.IndirectManureEmissions.LeachingEmissionsDto;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.IndirectManureEmissions.VolatilizationEmissionsDto;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.EntericFermentationEmissionsDto;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -173,6 +177,62 @@ public class AgricultureEmissionsController {
     @Operation(summary = "Get all mineral soil emissions")
     private ResponseEntity<ApiResponse> getAllMineralSoilEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "initialLandUse") LandUseCategory initialLandUse, @RequestParam(required = false, value = "landUseInReportingYear") LandUseCategory landUseInReportingYear) {
         return ResponseEntity.ok(new ApiResponse(true, "Mineral soil emissions fetched successfully", agricultureEmissionsService.getAllMineralSoilEmissions(year, initialLandUse, landUseInReportingYear)));
+    }
+
+    //Create Volatilization Emissions logs
+    @PostMapping("/volatilizationEmissions")
+    @Operation(summary = "Create new volatilization emissions record")
+    private ResponseEntity<ApiResponse> createVolatilizationEmissions(@RequestBody VolatilizationEmissionsDto volatilizationEmissionsDto) {
+        return ResponseEntity.ok(new ApiResponse(true, "Volatilization emissions created successfully", agricultureEmissionsService.createVolatilizationEmissions(volatilizationEmissionsDto)));
+    }
+
+    //Get all Volatilization Emissions logs
+    @GetMapping("/volatilizationEmissions")
+    @Operation(summary = "Get all volatilization emissions")
+    private ResponseEntity<ApiResponse> getAllVolatilizationEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "mms") MMS mms, @RequestParam(required = false, value = "species") LivestockSpecies species) {
+        return ResponseEntity.ok(new ApiResponse(true, "Volatilization emissions fetched successfully", agricultureEmissionsService.getAllVolatilizationEmissions(year, mms, species)));
+    }
+
+    //Create Leaching Emissions logs
+    @PostMapping("/leachingEmissions")
+    @Operation(summary = "Create new leaching emissions record")
+    private ResponseEntity<ApiResponse> createLeachingEmissions(@RequestBody LeachingEmissionsDto leachingEmissionsDto) {
+        return ResponseEntity.ok(new ApiResponse(true, "Leaching emissions created successfully", agricultureEmissionsService.createLeachingEmissions(leachingEmissionsDto)));
+    }
+
+    //Get all Leaching Emissions logs
+    @GetMapping("/leachingEmissions")
+    @Operation(summary = "Get all leaching emissions")
+    private ResponseEntity<ApiResponse> getAllLeachingEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "mms") MMS mms, @RequestParam(required = false, value = "species") LivestockSpecies species) {
+        return ResponseEntity.ok(new ApiResponse(true, "Leaching emissions fetched successfully", agricultureEmissionsService.getAllLeachingEmissions(year, mms, species)));
+    }
+
+    //Atmospheric N Deposition Emissions logs
+    @PostMapping("/atmosphericDepositionEmissions")
+    @Operation(summary = "Create new atmospheric N deposition emissions record")
+    private ResponseEntity<ApiResponse> createAtmosphericNDepositionEmissions(@RequestBody AtmosphericDepositionEmissionsDto atmosphericNDepositionEmissionsDto) {
+        return ResponseEntity.ok(new ApiResponse(true, "Atmospheric N deposition emissions created successfully", agricultureEmissionsService.createAtmosphericNDepositionEmissions(atmosphericNDepositionEmissionsDto)));
+    }
+
+    //Get all Atmospheric N Deposition Emissions logs
+    @GetMapping("/atmosphericNDepositionEmissions")
+    @Operation(summary = "Get all atmospheric N deposition emissions")
+    private ResponseEntity<ApiResponse> getAllAtmosphericNDepositionEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "landUseCategory") LandUseCategory landUseCategory) {
+        return ResponseEntity.ok(new ApiResponse(true, "Atmospheric N deposition emissions fetched successfully", agricultureEmissionsService.getAllAtmosphericNDepositionEmissions(year, landUseCategory)));
+    }
+
+    //Create LeachingAndRunoff Emissions logs
+    @PostMapping("/leachingAndRunoffEmissions")
+    @Operation(summary = "Create new leaching and runoff emissions record")
+    private ResponseEntity<ApiResponse> createLeachingAndRunoffEmissions(@RequestBody LeachingAndRunoffEmissionsDto leachingAndRunoffEmissionsDto) {
+        return ResponseEntity.ok(new ApiResponse(true, "Leaching and runoff emissions created successfully", agricultureEmissionsService.createLeachingAndRunoffEmissions(leachingAndRunoffEmissionsDto)));
+    }
+
+    //Get all LeachingAndRunoff Emissions logs
+    @GetMapping("/leachingAndRunoffEmissions")
+    @Operation(summary = "Get all leaching and runoff emissions")
+    private ResponseEntity<ApiResponse> getAllLeachingAndRunoffEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "landUseCategory") LandUseCategory landUseCategory) {
+        return ResponseEntity.ok(new ApiResponse(true, "Leaching and runoff emissions fetched successfully", agricultureEmissionsService.getAllLeachingAndRunoffEmissions(year, landUseCategory)));
     }
 
 }

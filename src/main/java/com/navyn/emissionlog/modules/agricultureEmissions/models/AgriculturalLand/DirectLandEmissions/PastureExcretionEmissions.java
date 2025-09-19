@@ -15,7 +15,7 @@ import lombok.EqualsAndHashCode;
 public class PastureExcretionEmissions extends AgricultureAbstractClass {
 
     @Enumerated(EnumType.STRING)
-    private MMS mms;
+    private MMS MMS;
 
     @Enumerated(EnumType.STRING)
     private LivestockSpecies livestockSpecies;

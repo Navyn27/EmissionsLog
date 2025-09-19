@@ -15,12 +15,12 @@ import lombok.EqualsAndHashCode;
 public class AtmosphericDepositionEmissions extends AgricultureAbstractClass {
 
     @Enumerated(EnumType.STRING)
-    private LandUseCategory landUseSubdivision;
+    private LandUseCategory landUseCategory;
 
     private double syntheticNVolatilized;
     private double organicNAdditions;
     private double excretionsDepositedByGrazingAnimals;
-    private double annualN2OFromAtmosphericDeposition;
+    private double annualN2ONFromAtmosphericDeposition;
     private double N2OEmissions;
     private double CO2EqEmissions;
 
