@@ -8,12 +8,14 @@ import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.IndirectManureEmissions.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.EntericFermentationEmissionsDto;
 
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.ManureManagementEmissionsDto;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.IndirectLandEmissions.AtmosphericDepositionEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.IndirectLandEmissions.LeachingAndRunoffEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.IndirectManureEmissions.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureManagementEmissions;
 
 import java.util.List;
 
@@ -67,4 +69,9 @@ public interface AgricultureEmissionsService {
     List<LeachingEmissions> getAllLeachingEmissions(Integer year, MMS mms, LivestockSpecies species);
 
     List<VolatilizationEmissions> getAllVolatilizationEmissions(Integer year, MMS mms, LivestockSpecies species);
+
+    ManureManagementEmissions createAnimalManureMgmtEmissions(ManureManagementEmissionsDto manureAndCompostEmissionsDto);
+
+    List<ManureManagementEmissions> getAllAnimalManureMgmtEmissions(Integer year, LivestockSpecies species, MMS mms);
+
 }

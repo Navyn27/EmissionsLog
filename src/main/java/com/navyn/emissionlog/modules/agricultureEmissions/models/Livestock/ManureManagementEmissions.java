@@ -14,10 +14,6 @@ import lombok.EqualsAndHashCode;
 @Data
 public class ManureManagementEmissions extends AgricultureAbstractClass {
 
-    //fract is fraction
-    @Enumerated(EnumType.STRING)
-    private LivestockCategory livestockCategory;
-
     @Enumerated(EnumType.STRING)
     private LivestockSpecies livestockSpecies;
 

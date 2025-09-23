@@ -43,9 +43,12 @@ public abstract class WasteDataAbstract {
 
     private LocalDateTime activityYear = LocalDateTime.now();
 
+    private Integer year = activityYear.getYear();
+
     @PrePersist
     private void setCO2EqEmissions() {
         this.CO2EqEmissions = calculateCO2EqEmissions();
+        this.year = activityYear.getYear();
     }
 
     private Double calculateCO2EqEmissions() {

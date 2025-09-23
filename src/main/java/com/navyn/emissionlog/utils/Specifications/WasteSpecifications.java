@@ -28,7 +28,7 @@ public class WasteSpecifications {
     public static <T>Specification<T> hasYear(Integer year) {
         return (root, query, cb) -> {
             if (year == null) return cb.conjunction(); // no filter
-            return cb.equal(root.get("activityYear").get("year"), year);
+            return cb.equal(root.get("year").get("year"), year);
         };
     }
 
