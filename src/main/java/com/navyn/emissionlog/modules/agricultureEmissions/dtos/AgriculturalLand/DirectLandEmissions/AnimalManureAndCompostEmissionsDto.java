@@ -8,6 +8,5 @@ import lombok.Data;
 public class AnimalManureAndCompostEmissionsDto {
     private int year;
     private double population;
-    private OrganicAmendmentTypes amendmentType;
     private LivestockSpecies species;
 }

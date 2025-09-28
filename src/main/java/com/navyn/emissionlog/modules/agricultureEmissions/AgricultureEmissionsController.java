@@ -15,6 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @RestController
 @RequestMapping("/agriculture")
 @SecurityRequirement(name = "BearerAuth")
@@ -234,6 +237,4 @@ public class AgricultureEmissionsController {
     private ResponseEntity<ApiResponse> getAllLeachingAndRunoffEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "landUseCategory") LandUseCategory landUseCategory) {
         return ResponseEntity.ok(new ApiResponse(true, "Leaching and runoff emissions fetched successfully", agricultureEmissionsService.getAllLeachingAndRunoffEmissions(year, landUseCategory)));
     }
-
-//    @GetMapping
 }

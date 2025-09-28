@@ -144,7 +144,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         AnimalManureAndCompostEmissions emissions = new AnimalManureAndCompostEmissions();
         emissions.setYear(emissionsDto.getYear());
         emissions.setLivestockSpecies(emissionsDto.getSpecies());
-        emissions.setAmendmentType(emissionsDto.getAmendmentType());
+        emissions.setAmendmentType(getAmendmentTypeByLivestockSpecies(emissionsDto.getSpecies()));
         emissions.setPopulation(emissionsDto.getPopulation());
         emissions.setTotalN(emissions.getLivestockSpecies().getManureNitrogenEF()* emissions.getPopulation());
         emissions.setNAvailable(emissions.getTotalN()*emissions.getLivestockSpecies().getMeanLossesOfNinManureMMS());
@@ -163,6 +163,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         emissions.setHarvestedArea(emissionsDto.getHarvestedArea());
         emissions.setRiceEcosystem(emissionsDto.getRiceEcosystem());
         emissions.setWaterRegime(emissionsDto.getWaterRegime());
+
         //Efi=Efc*SFw*SFp*SfoA*SFs,r
         emissions.setAdjDailyEFEmissions(AFOLUConstants.EFC.getValue() * emissionsDto.getWaterRegime().getValue()* AFOLUConstants.SFP.getValue() * AFOLUConstants.SFOA.getValue() * AFOLUConstants.SFSR.getValue());
         emissions.setAnnualCH4Emissions(emissionsDto.getHarvestedArea()* emissionsDto.getCultivationPeriod()*emissions.getAdjDailyEFEmissions()/1000000);
@@ -381,5 +382,26 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
                 .and(hasMMS(mms))
                 .and(hasLivestockCategory(species));
         return volatilizationEmissionsRepository.findAll(spec);
+    }
+
+    private OrganicAmendmentTypes getAmendmentTypeByLivestockSpecies(LivestockSpecies species){
+        switch (species) {
+            case DAIRY_LACTATING_COWS:
+                return OrganicAmendmentTypes.MANURE_LACTATING_COWS;
+            case DAIRY_GROWING_COWS:
+                return OrganicAmendmentTypes.MANURE_GROWING_COWS;
+            case DAIRY_MATURE_COWS:
+                return OrganicAmendmentTypes.MANURE_MATURE_COWS;
+            case SWINE:
+                return OrganicAmendmentTypes.MANURE_SWINE;
+            case POULTRY:
+                return OrganicAmendmentTypes.MANURE_POULTRY;
+            case SHEEP:
+                return OrganicAmendmentTypes.MANURE_SHEEP;
+            case GOATS:
+                return OrganicAmendmentTypes.MANURE_GOATS;
+            default:
+                return OrganicAmendmentTypes.MANURE_RABBITS;
+        }
     }
 }
