@@ -1,11 +1,10 @@
 package com.navyn.emissionlog.modules.populationRecords;
 
 import com.navyn.emissionlog.Enums.Countries;
-import com.navyn.emissionlog.modules.populationRecords.PopulationRecords;
-import com.navyn.emissionlog.modules.population.dtos.CreatePopulationRecordDto;
-import org.apache.poi.ss.formula.functions.Count;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.navyn.emissionlog.modules.populationRecords.dtos.CreatePopulationRecordDto;
 
 import java.util.List;
 import java.util.UUID;

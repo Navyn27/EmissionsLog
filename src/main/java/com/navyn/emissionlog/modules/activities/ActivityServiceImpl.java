@@ -25,21 +25,20 @@ import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmis
 import com.navyn.emissionlog.utils.DashboardData;
 import com.navyn.emissionlog.modules.stationaryEmissions.serviceImpls.StationaryEmissionCalculationServiceImpl;
 import com.navyn.emissionlog.modules.transportEmissions.serviceImpls.TransportEmissionCalculationServiceImpl;
-import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
+import com.navyn.emissionlog.modules.transportEmissions.services.TransportFuelEmissionFactorsService;
 import com.navyn.emissionlog.modules.vehicles.Vehicle;
 import com.navyn.emissionlog.utils.Specifications.ActivitySpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import com.navyn.emissionlog.Repositories.ActivityRepository;
-import com.navyn.emissionlog.Repositories.ActivityDataRepository;
+import com.navyn.emissionlog.modules.activities.repositories.ActivityRepository;
+import com.navyn.emissionlog.modules.activities.repositories.ActivityDataRepository;
 import com.navyn.emissionlog.modules.regions.RegionRepository;
-import com.navyn.emissionlog.Repositories.VehicleRepository;
+import com.navyn.emissionlog.modules.vehicles.VehicleRepository;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
 import com.navyn.emissionlog.modules.wasteEmissions.WasteDataRepository;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelDataRepository;
-import com.navyn.emissionlog.Repositories.VehicleDataRepository;
-
+import com.navyn.emissionlog.modules.vehicles.VehicleDataRepository;
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.YearMonth;

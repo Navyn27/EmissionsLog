@@ -7,7 +7,7 @@ import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.modules.transportEmissions.repositories.TransportFuelEmissionFactorsRepository;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
-import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
+import com.navyn.emissionlog.modules.transportEmissions.services.TransportFuelEmissionFactorsService;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.population.dtos;
+package com.navyn.emissionlog.modules.populationRecords.dtos;
 
 import lombok.Data;
 

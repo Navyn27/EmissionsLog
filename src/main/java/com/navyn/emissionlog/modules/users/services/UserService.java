@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Services;
+package com.navyn.emissionlog.modules.users.services;
 
 import com.navyn.emissionlog.Exceptions.EmailAlreadyExistsException;
 import com.navyn.emissionlog.Exceptions.UnmatchingPasswordsException;

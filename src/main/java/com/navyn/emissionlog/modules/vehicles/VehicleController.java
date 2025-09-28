@@ -1,7 +1,6 @@
 package com.navyn.emissionlog.modules.vehicles;
 
 import com.navyn.emissionlog.utils.ApiResponse;
-import com.navyn.emissionlog.Services.VehicleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;

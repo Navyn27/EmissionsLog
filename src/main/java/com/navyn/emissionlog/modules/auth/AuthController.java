@@ -5,7 +5,7 @@ import com.navyn.emissionlog.Exceptions.UnmatchingPasswordsException;
 import com.navyn.emissionlog.modules.auth.dtos.LoginDTO;
 import com.navyn.emissionlog.modules.auth.dtos.SignUpDTO;
 import com.navyn.emissionlog.utils.ApiResponse;
-import com.navyn.emissionlog.Services.UserService;
+import com.navyn.emissionlog.modules.users.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;

@@ -11,7 +11,7 @@ import com.navyn.emissionlog.modules.stationaryEmissions.dtos.CreateFuelStationa
 import com.navyn.emissionlog.modules.stationaryEmissions.dtos.StationaryEmissionFactorsDto;
 import com.navyn.emissionlog.utils.ApiResponse;
 import com.navyn.emissionlog.utils.SupportedCalculationOptions;
-import com.navyn.emissionlog.Services.FuelService;
+import com.navyn.emissionlog.modules.fuel.FuelService;
 import com.navyn.emissionlog.modules.stationaryEmissions.services.StationaryEmissionFactorsService;
 import com.navyn.emissionlog.utils.ExcelReader;
 import io.swagger.v3.oas.annotations.Operation;

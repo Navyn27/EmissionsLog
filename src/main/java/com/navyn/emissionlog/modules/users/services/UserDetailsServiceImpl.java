@@ -2,7 +2,7 @@ package com.navyn.emissionlog.modules.users.services;
 
 import com.navyn.emissionlog.modules.users.User;
 import com.navyn.emissionlog.modules.auth.UserPrincipal;
-import com.navyn.emissionlog.Repositories.UserRepository;
+import com.navyn.emissionlog.modules.users.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

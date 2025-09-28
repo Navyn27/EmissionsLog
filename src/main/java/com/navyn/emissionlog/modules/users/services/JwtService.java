@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.users.services;
 
 import com.navyn.emissionlog.modules.users.User;
-import com.navyn.emissionlog.Repositories.UserRepository;
+import com.navyn.emissionlog.modules.users.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;

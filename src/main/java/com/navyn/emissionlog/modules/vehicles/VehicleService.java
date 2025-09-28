@@ -1,10 +1,11 @@
-package com.navyn.emissionlog.Services;
+package com.navyn.emissionlog.modules.vehicles;
 
-import com.navyn.emissionlog.modules.vehicles.Vehicle;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
+@Service
 public interface VehicleService {
     List<Vehicle> getAllVehicles();
 

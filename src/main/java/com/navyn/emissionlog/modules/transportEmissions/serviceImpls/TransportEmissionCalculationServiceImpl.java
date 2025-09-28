@@ -12,7 +12,7 @@ import com.navyn.emissionlog.modules.activities.models.VehicleData;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportVehicleDataEmissionFactors;
-import com.navyn.emissionlog.Repositories.ActivityRepository;
+import com.navyn.emissionlog.modules.activities.repositories.ActivityRepository;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelDataRepository;
 import com.navyn.emissionlog.modules.transportEmissions.repositories.TransportVehicleDataEmissionFactorsRepository;
 

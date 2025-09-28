@@ -5,9 +5,8 @@ import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmis
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportVehicleDataEmissionFactors;
 import com.navyn.emissionlog.modules.fuel.dtos.CreateFuelDto;
 import com.navyn.emissionlog.utils.ApiResponse;
-import com.navyn.emissionlog.Services.FuelService;
-import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
-import com.navyn.emissionlog.Services.TransportVehicleEmissionFactorsService;
+import com.navyn.emissionlog.modules.transportEmissions.services.TransportFuelEmissionFactorsService;
+import com.navyn.emissionlog.modules.transportEmissions.services.TransportVehicleEmissionFactorsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.apache.coyote.BadRequestException;

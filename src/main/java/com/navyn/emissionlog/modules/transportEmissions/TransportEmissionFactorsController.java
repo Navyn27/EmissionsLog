@@ -10,6 +10,7 @@ import com.navyn.emissionlog.Enums.Transport.RegionGroup;
 import com.navyn.emissionlog.Enums.Transport.TransportType;
 import com.navyn.emissionlog.Enums.Transport.VehicleEngineType;
 import com.navyn.emissionlog.modules.fuel.Fuel;
+import com.navyn.emissionlog.modules.fuel.FuelService;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportVehicleDataEmissionFactors;
 import com.navyn.emissionlog.modules.vehicles.Vehicle;
@@ -18,10 +19,9 @@ import com.navyn.emissionlog.modules.transportEmissions.dtos.TransportFuelEmissi
 import com.navyn.emissionlog.modules.transportEmissions.dtos.TransportVehicleDataEmissionFactorsDto;
 import com.navyn.emissionlog.utils.ApiResponse;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
-import com.navyn.emissionlog.Services.FuelService;
-import com.navyn.emissionlog.Services.TransportFuelEmissionFactorsService;
-import com.navyn.emissionlog.Services.TransportVehicleEmissionFactorsService;
-import com.navyn.emissionlog.Services.VehicleService;
+import com.navyn.emissionlog.modules.transportEmissions.services.TransportFuelEmissionFactorsService;
+import com.navyn.emissionlog.modules.transportEmissions.services.TransportVehicleEmissionFactorsService;
+import com.navyn.emissionlog.modules.vehicles.VehicleService;
 import com.navyn.emissionlog.utils.ExcelReader;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.util.*;
 

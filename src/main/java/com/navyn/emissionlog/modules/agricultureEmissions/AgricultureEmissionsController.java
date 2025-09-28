@@ -235,4 +235,5 @@ public class AgricultureEmissionsController {
         return ResponseEntity.ok(new ApiResponse(true, "Leaching and runoff emissions fetched successfully", agricultureEmissionsService.getAllLeachingAndRunoffEmissions(year, landUseCategory)));
     }
 
+//    @GetMapping
 }

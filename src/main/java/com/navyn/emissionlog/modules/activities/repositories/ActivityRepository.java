@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Repositories;
+package com.navyn.emissionlog.modules.activities.repositories;
 
 import com.navyn.emissionlog.Enums.ActivityTypes;
 import com.navyn.emissionlog.Enums.Sectors;

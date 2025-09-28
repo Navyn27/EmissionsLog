@@ -5,7 +5,6 @@ import com.navyn.emissionlog.Enums.Fuel.FuelTypes;
 import com.navyn.emissionlog.modules.fuel.dtos.CreateFuelDto;
 import com.navyn.emissionlog.modules.fuel.dtos.ExistingFuelDto;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
-import com.navyn.emissionlog.Services.FuelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,14 +1,15 @@
-package com.navyn.emissionlog.Services;
+package com.navyn.emissionlog.modules.fuel;
 
 import com.navyn.emissionlog.Enums.Fuel.FuelTypes;
-import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.fuel.dtos.CreateFuelDto;
 import com.navyn.emissionlog.modules.fuel.dtos.ExistingFuelDto;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Service
 public interface FuelService {
 
     Fuel saveFuel(CreateFuelDto fuel);

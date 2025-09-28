@@ -1,6 +1,4 @@
-package com.navyn.emissionlog.Repositories;
-
-import com.navyn.emissionlog.modules.users.User;
+package com.navyn.emissionlog.modules.users;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

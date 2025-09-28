@@ -1,7 +1,6 @@
 package com.navyn.emissionlog.modules.populationRecords;
 import com.navyn.emissionlog.Enums.*;
-import com.navyn.emissionlog.modules.fuel.dtos.CreateFuelDto;
-import com.navyn.emissionlog.modules.population.dtos.CreatePopulationRecordDto;
+import com.navyn.emissionlog.modules.populationRecords.dtos.CreatePopulationRecordDto;
 import com.navyn.emissionlog.utils.ExcelReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

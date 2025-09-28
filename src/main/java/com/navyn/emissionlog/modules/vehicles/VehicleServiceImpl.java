@@ -1,9 +1,6 @@
 package com.navyn.emissionlog.modules.vehicles;
 
 import java.util.Optional;
-
-import com.navyn.emissionlog.Repositories.VehicleRepository;
-import com.navyn.emissionlog.Services.VehicleService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
