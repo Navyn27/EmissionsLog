@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.Repositories;
+package com.navyn.emissionlog.modules.vehicles;
 
 import com.navyn.emissionlog.modules.activities.models.VehicleData;
 import org.springframework.data.jpa.repository.JpaRepository;
