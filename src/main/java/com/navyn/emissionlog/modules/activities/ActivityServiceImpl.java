@@ -17,6 +17,7 @@ import com.navyn.emissionlog.modules.agricultureEmissions.repositories.Agricultu
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.RiceCultivationEmissionsRepository;
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.UreaEmissionsRepository;
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.Livestock.EntericFermentationEmissionsRepository;
+import com.navyn.emissionlog.modules.vehicles.VehicleRepository;
 import com.navyn.emissionlog.modules.wasteEmissions.models.WasteDataAbstract;
 import com.navyn.emissionlog.modules.activities.dtos.*;
 import com.navyn.emissionlog.modules.fuel.Fuel;
@@ -34,7 +35,6 @@ import org.springframework.stereotype.Service;
 import com.navyn.emissionlog.modules.activities.repositories.ActivityRepository;
 import com.navyn.emissionlog.modules.activities.repositories.ActivityDataRepository;
 import com.navyn.emissionlog.modules.regions.RegionRepository;
-import com.navyn.emissionlog.modules.vehicles.VehicleRepository;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
 import com.navyn.emissionlog.modules.wasteEmissions.WasteDataRepository;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelDataRepository;
