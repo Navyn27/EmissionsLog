@@ -7,5 +7,5 @@ import lombok.Data;
 public class HarvestedBiomassLossDto {
     private Integer year;
     private LandCategory landCategory;
-    private double harvestedwood;
+    private double harvestedWood;
 }

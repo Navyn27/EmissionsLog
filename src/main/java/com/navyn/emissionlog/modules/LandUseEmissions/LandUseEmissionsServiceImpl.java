@@ -100,12 +100,17 @@ public class LandUseEmissionsServiceImpl implements LandUseEmissionsService {
         HarvestedBiomassLoss harvestedBiomassLoss = new HarvestedBiomassLoss();
         harvestedBiomassLoss.setYear(harvestedBiomassLossDto.getYear());
         harvestedBiomassLoss.setLandCategory(harvestedBiomassLossDto.getLandCategory());
-        harvestedBiomassLoss.setHarvestedWood(harvestedBiomassLossDto.getHarvestedwood());
+        harvestedBiomassLoss.setHarvestedWood(harvestedBiomassLossDto.getHarvestedWood());
 
         // Calculate lossOfBiomassCarbon
-        harvestedBiomassLoss.setTotalBiomass(total_AGB_BGB * harvestedBiomassLossDto.getHarvestedwood());
+        harvestedBiomassLoss.setTotalBiomass(total_AGB_BGB * harvestedBiomassLossDto.getHarvestedWood());
         harvestedBiomassLoss.setLossOfBiomassCarbon(harvestedBiomassLoss.getTotalBiomass() * LandUseConstants.C_FRACT_DRY_MATTER.getValue());
         harvestedBiomassLoss.setCO2EqOfBiomassCarbonLoss(harvestedBiomassLoss.getLossOfBiomassCarbon() * LandUseConstants.C_TO_CO2_FACTOR.getValue());
+
+        System.out.println("harvestedWood:"+harvestedBiomassLoss.getHarvestedWood());
+        System.out.println(harvestedBiomassLossDto);
+        System.out.println(harvestedBiomassLoss);
+
         return harvestedBiomassLossRepository.save(harvestedBiomassLoss);
     }
     
