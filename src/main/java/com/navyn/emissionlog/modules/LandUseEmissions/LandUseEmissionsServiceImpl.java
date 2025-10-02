@@ -35,7 +35,7 @@ public class LandUseEmissionsServiceImpl implements LandUseEmissionsService {
         biomassGain.setForestArea(biomassGainDto.getForestArea());
         biomassGain.setTotalBiomassGrowth(total_AGB_BGB + biomassGainDto.getForestArea());
         biomassGain.setIncreaseOfBiomassCarbon( (total_AGB_BGB + biomassGainDto.getForestArea()) * LandUseConstants.C_FRACT_DRY_MATTER.getValue());
-        biomassGain.setCO2EqOfBiomassCarbonGained(biomassGain.getCO2EqOfBiomassCarbonGained() * LandUseConstants.C_TO_CO2_FACTOR.getValue());
+        biomassGain.setCO2EqOfBiomassCarbonGained(biomassGain.getIncreaseOfBiomassCarbon() * LandUseConstants.C_TO_CO2_FACTOR.getValue());
         return biomassGainRepository.save(biomassGain);
     }
     
