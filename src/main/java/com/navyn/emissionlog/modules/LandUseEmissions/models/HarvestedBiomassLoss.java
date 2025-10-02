@@ -21,7 +21,7 @@ public class HarvestedBiomassLoss {
     @Enumerated(EnumType.STRING)
     private LandCategory landCategory;
 
-    private double harvestedwood = 0.0;
+    private double harvestedWood = 0.0;
 
     private double totalBiomass = 0.0;
 
