@@ -260,6 +260,14 @@ public class WasteServiceImpl implements WasteService {
 
     @Override
     public List<SolidWasteData> getSolidWasteData(SolidWasteType solidWasteType, Integer year, UUID regionId) {
+        List<SolidWasteData> solidWasteDataList = new ArrayList<>();
+
+        if(solidWasteType == null){
+            for(SolidWasteType type : SolidWasteType.values()) {
+                solidWasteDataList.addAll(wasteDataRepository.findAllBySolidWasteType(type));
+            }
+            return solidWasteDataList;
+        }
 
         Specification<SolidWasteData> spec = Specification
                 .where(WasteSpecifications.hasSolidWasteType(solidWasteType))
