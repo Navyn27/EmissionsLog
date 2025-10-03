@@ -7,6 +7,7 @@ import com.navyn.emissionlog.modules.LandUseEmissions.Dtos.*;
 import com.navyn.emissionlog.modules.LandUseEmissions.Repositories.*;
 import com.navyn.emissionlog.modules.LandUseEmissions.models.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +44,7 @@ public class LandUseEmissionsServiceImpl implements LandUseEmissionsService {
     public List<BiomassGain> getAllBiomassGain(Integer year, LandCategory landCategory) {
         Specification<BiomassGain> spec = Specification.<BiomassGain>where(hasYear(year))
                 .and(hasLandCategory(landCategory));
-        return biomassGainRepository.findAll(spec);
+        return biomassGainRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
     
     @Override
@@ -65,7 +66,7 @@ public class LandUseEmissionsServiceImpl implements LandUseEmissionsService {
     public List<DisturbanceBiomassLoss> getAllDisturbanceBiomassLoss(Integer year, LandCategory landCategory) {
         Specification<DisturbanceBiomassLoss> spec = Specification.<DisturbanceBiomassLoss>where(hasYear(year))
                 .and(hasLandCategory(landCategory));
-        return disturbanceBiomassLossRepository.findAll(spec);
+        return disturbanceBiomassLossRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
     
     @Override
@@ -89,7 +90,7 @@ public class LandUseEmissionsServiceImpl implements LandUseEmissionsService {
     public List<FirewoodRemovalBiomassLoss> getAllFirewoodRemovalBiomassLoss(Integer year, LandCategory landCategory) {
         Specification<FirewoodRemovalBiomassLoss> spec = Specification.<FirewoodRemovalBiomassLoss>where(hasYear(year))
                 .and(hasLandCategory(landCategory));
-        return firewoodRemovalBiomassLossRepository.findAll(spec);
+        return firewoodRemovalBiomassLossRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
     
     @Override
@@ -118,7 +119,7 @@ public class LandUseEmissionsServiceImpl implements LandUseEmissionsService {
     public List<HarvestedBiomassLoss> getAllHarvestedBiomassLoss(Integer year, LandCategory landCategory) {
         Specification<HarvestedBiomassLoss> spec = Specification.<HarvestedBiomassLoss>where(hasYear(year))
                 .and(hasLandCategory(landCategory));
-        return harvestedBiomassLossRepository.findAll(spec);
+        return harvestedBiomassLossRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
     
     @Override
@@ -136,6 +137,6 @@ public class LandUseEmissionsServiceImpl implements LandUseEmissionsService {
     @Override
     public List<RewettedMineralWetlands> getAllRewettedMineralWetlands(Integer year) {
         Specification<RewettedMineralWetlands> spec = Specification.<RewettedMineralWetlands>where(hasYear(year));
-        return rewettedMineralWetlandsRepository.findAll(spec);
+        return rewettedMineralWetlandsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 }

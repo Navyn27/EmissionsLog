@@ -26,6 +26,7 @@ import com.navyn.emissionlog.modules.agricultureEmissions.repositories.Livestock
 
 import com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -57,7 +58,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     @Override
     public List<AquacultureEmissions> getAllAquacultureEmissions(Integer year) {
         Specification<AquacultureEmissions> spec = Specification.where(hasYear(year));
-        return aquacultureEmissionsRepository.findAll(spec);
+        return aquacultureEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -65,13 +66,13 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         Specification<EntericFermentationEmissions> spec =
                 Specification.<EntericFermentationEmissions>where(hasYear(year))
                         .and(hasSpecies(species));
-        return entericFermentationEmissionsRepository.findAll(spec);
+        return entericFermentationEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
     public List<LimingEmissions> getAllLimingEmissions(Integer year, LimingMaterials limingMaterials) {
         Specification<LimingEmissions> spec = Specification.where(hasLimingMaterial(limingMaterials)).and(hasYear(year));
-        return limingEmissionsRepository.findAll(spec);
+        return limingEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -79,7 +80,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         Specification<AnimalManureAndCompostEmissions> spec = Specification.where(hasAmendmentType(amendmentType))
                 .and(hasSpecies(species))
                 .and(hasYear(year));
-        return animalManureAndCompostEmissionsRepository.findAll(spec);
+        return animalManureAndCompostEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -87,7 +88,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         Specification<RiceCultivationEmissions> spec = Specification.where(hasRiceEcosystem(riceEcosystem))
                 .and(hasWaterRegime(waterRegime))
                 .and(hasYear(year));
-        return riceCultivationEmissionsRepository.findAll(spec);
+        return riceCultivationEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -95,7 +96,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         Specification<SyntheticFertilizerEmissions> spec = Specification.where(hasFertilizerType(fertilizerType))
                 .and(hasYear(year))
                 .and(hasCropType(cropType));
-        return syntheticFertilizerEmissionsRepository.findAll(spec);
+        return syntheticFertilizerEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -103,7 +104,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
 
         Specification<UreaEmissions> spec = Specification.where(hasFertilizerName(fertilizer))
                 .and(hasYear(year));
-        return ureaEmissionsRepository.findAll(spec);
+        return ureaEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -220,7 +221,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     public List<BurningEmissions> getAllBurningEmissions(Integer year, BurningAgentType forestType) {
         Specification<BurningEmissions> spec = Specification.where(hasBurningAgentType(forestType))
                 .and(hasYear(year));
-        return burningEmissionsRepository.findAll(spec);
+        return burningEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -247,7 +248,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         Specification<CropResiduesEmissions> spec = Specification.where(hasCropResiduesCropType(cropType))
                 .and(hasLandUseCategory(landUseCategory))
                 .and(hasYear(year));
-        return cropResiduesEmissionsRepository.findAll(spec);
+        return cropResiduesEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -283,7 +284,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         Specification<MineralSoilEmissions> specification = Specification.where(hasInitialLandUse(initialLandUse))
                 .and(hasLandUseInReportingYear(landUseInReportingYear))
                 .and(hasYear(year));
-        return mineralSoilEmissionsRepository.findAll(specification);
+        return mineralSoilEmissionsRepository.findAll(specification, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -291,7 +292,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         Specification<PastureExcretionEmissions> spec = Specification.where(AgricultureSpecifications.<PastureExcretionEmissions>hasMMS(mms))
                 .and(hasYear(year))
                 .and(hasLivestockCategory(species));
-        return pastureExcretionEmissionsRepository.findAll(spec);
+        return pastureExcretionEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -358,14 +359,14 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     public List<AtmosphericDepositionEmissions> getAllAtmosphericNDepositionEmissions(Integer year, LandUseCategory landUseCategory) {
         Specification<AtmosphericDepositionEmissions> spec = Specification.where(AgricultureSpecifications.<AtmosphericDepositionEmissions> hasYear(year))
                 .and(hasLandUseCategory(landUseCategory));
-        return atmosphericDepositionEmissionsRepository.findAll(spec);
+        return atmosphericDepositionEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
     public List<LeachingAndRunoffEmissions> getAllLeachingAndRunoffEmissions(Integer year, LandUseCategory landUseCategory) {
         Specification<LeachingAndRunoffEmissions> spec = Specification.where(AgricultureSpecifications.<LeachingAndRunoffEmissions>hasLandUseCategory(landUseCategory))
                 .and(hasYear(year));
-        return leachingAndRunoffEmissionsRepository.findAll(spec);
+        return leachingAndRunoffEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -373,7 +374,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         Specification<LeachingEmissions> spec = Specification.where(AgricultureSpecifications.<LeachingEmissions> hasYear(year))
                 .and(hasMMS(mms))
                 .and(hasLivestockCategory(species));
-        return leachingEmissionsRepository.findAll(spec);
+        return leachingEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -381,7 +382,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         Specification<VolatilizationEmissions> spec = Specification.where(AgricultureSpecifications.<VolatilizationEmissions>hasYear(year))
                 .and(hasMMS(mms))
                 .and(hasLivestockCategory(species));
-        return volatilizationEmissionsRepository.findAll(spec);
+        return volatilizationEmissionsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     private OrganicAmendmentTypes getAmendmentTypeByLivestockSpecies(LivestockSpecies species){

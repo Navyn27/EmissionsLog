@@ -30,6 +30,7 @@ import com.navyn.emissionlog.modules.transportEmissions.services.TransportFuelEm
 import com.navyn.emissionlog.modules.vehicles.Vehicle;
 import com.navyn.emissionlog.utils.Specifications.ActivitySpecifications;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import com.navyn.emissionlog.modules.activities.repositories.ActivityRepository;
@@ -229,7 +230,7 @@ public class ActivityServiceImpl implements ActivityService {
                 .and(hasYear(year))
                 .and(hasRegion(region));
 
-        return activityRepository.findAll(spec);
+        return activityRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "activityYear"));
     }
 
     @Override
@@ -246,7 +247,7 @@ public class ActivityServiceImpl implements ActivityService {
                 .and(hasVehicle(vehicle))
                 .and(hasScope(scope));
 
-        return activityRepository.findAll(spec);
+        return activityRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "activityYear"));
     }
 
     @Override

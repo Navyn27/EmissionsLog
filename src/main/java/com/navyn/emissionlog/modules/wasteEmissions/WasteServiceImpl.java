@@ -16,6 +16,7 @@ import com.navyn.emissionlog.modules.wasteEmissions.dtos.*;
 import com.navyn.emissionlog.utils.Specifications.WasteSpecifications;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -152,7 +154,7 @@ public class WasteServiceImpl implements WasteService {
 
     @Override
     public List<WasteDataAbstract> getAllWasteData() {
-        return wasteDataRepository.findAll();
+        return wasteDataRepository.findAll(Sort.by(Sort.Direction.DESC, "year"));
     }
 
     @Override
@@ -163,7 +165,7 @@ public class WasteServiceImpl implements WasteService {
                 .and(WasteSpecifications.hasRegion(regionId))
                 .and(WasteSpecifications.hasYear(year));
 
-        return wasteDataRepository.findAll(spec);
+        return wasteDataRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
 
     //populate population affiliated waste data
@@ -264,7 +266,9 @@ public class WasteServiceImpl implements WasteService {
 
         if(solidWasteType == null){
             for(SolidWasteType type : SolidWasteType.values()) {
-                solidWasteDataList.addAll(wasteDataRepository.findAllBySolidWasteType(type));
+                List<SolidWasteData> dataByType = wasteDataRepository.findAllBySolidWasteType(type);
+                dataByType.sort(Comparator.comparing(SolidWasteData::getYear).reversed());
+                solidWasteDataList.addAll(dataByType);
             }
             return solidWasteDataList;
         }
@@ -274,7 +278,9 @@ public class WasteServiceImpl implements WasteService {
                 .and(WasteSpecifications.hasRegion_solidWaste(regionId))
                 .and(WasteSpecifications.hasYear(year));
 
-        return wasteDataRepository.findAllBySolidWasteType(solidWasteType);
+        List<SolidWasteData> solidWasteDataByType = wasteDataRepository.findAllBySolidWasteType(solidWasteType);
+        solidWasteDataByType.sort(Comparator.comparing(SolidWasteData::getYear).reversed());
+        return solidWasteDataByType;
     }
 
     private void handleMultipleSolidWasteTypes(SolidWasteExcelDto solidWasteExcelDto, List<WasteDataAbstract> savedRecords, SolidWasteDto solidWasteDto){
