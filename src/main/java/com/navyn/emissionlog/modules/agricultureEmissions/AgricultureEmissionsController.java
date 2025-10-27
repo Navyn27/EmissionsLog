@@ -11,6 +11,7 @@ import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.Enteric
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -80,56 +81,56 @@ public class AgricultureEmissionsController {
     //Create all liming emissions log
     @PostMapping("/limingEmissions")
     @Operation(summary = "Create new liming emissions record")
-    private ResponseEntity<ApiResponse> createLimingEmissions(@RequestBody LimingEmissionsDto limingEmissionsDto) {
+    private ResponseEntity<ApiResponse> createLimingEmissions(@Valid @RequestBody LimingEmissionsDto limingEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Liming emissions created successfully", agricultureEmissionsService.createLimingEmissions(limingEmissionsDto)));
     }
 
     //Create all urea emissions log
     @PostMapping("/ureaEmissions")
     @Operation(summary = "Create new urea emissions record")
-    private ResponseEntity<ApiResponse> createUreaEmissions(@RequestBody UreaEmissionsDto ureaEmissionsDto) {
+    private ResponseEntity<ApiResponse> createUreaEmissions(@Valid @RequestBody UreaEmissionsDto ureaEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Urea emissions created successfully", agricultureEmissionsService.createUreaEmissions(ureaEmissionsDto)));
     }
 
     //Create all aquaculture emissions log
     @PostMapping("/aquacultureEmissions")
     @Operation(summary = "Create new aquaculture emissions record")
-    private ResponseEntity<ApiResponse> createAquacultureEmissions(@RequestBody AquacultureEmissionsDto aquacultureEmissionsDto) {
+    private ResponseEntity<ApiResponse> createAquacultureEmissions(@Valid @RequestBody AquacultureEmissionsDto aquacultureEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Aquaculture emissions created successfully", agricultureEmissionsService.createAquacultureEmissions(aquacultureEmissionsDto)));
     }
 
     //Create all synthetic emissions log
     @PostMapping("/syntheticFertilizerEmissions")
     @Operation(summary = "Create new synthetic fertilizer emissions record")
-    private ResponseEntity<ApiResponse> createSyntheticFertilizerEmissions(@RequestBody SyntheticFertilizerEmissionsDto syntheticFertilizerEmissionsDto) {
+    private ResponseEntity<ApiResponse> createSyntheticFertilizerEmissions(@Valid @RequestBody SyntheticFertilizerEmissionsDto syntheticFertilizerEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Synthetic fertilizer emissions created successfully", agricultureEmissionsService.createSyntheticFertilizerEmissions(syntheticFertilizerEmissionsDto)));
     }
 
     //Create all rice cultivation emissions log
     @PostMapping("/riceCultivationEmissions")
     @Operation(summary = "Create new rice cultivation emissions record")
-    private ResponseEntity<ApiResponse> createRiceCultivationEmissions(@RequestBody RiceCultivationEmissionsDto riceCultivationEmissionsDto) {
+    private ResponseEntity<ApiResponse> createRiceCultivationEmissions(@Valid @RequestBody RiceCultivationEmissionsDto riceCultivationEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Rice cultivation emissions created successfully", agricultureEmissionsService.createRiceCultivationEmissions(riceCultivationEmissionsDto)));
     }
 
     //Create manure and compost emissions log
     @PostMapping("/manureAndCompostEmissions")
     @Operation(summary = "Create new manure and compost emissions record")
-    private ResponseEntity<ApiResponse> createManureAndCompostEmissions(@RequestBody AnimalManureAndCompostEmissionsDto manureAndCompostEmissionsDto) {
+    private ResponseEntity<ApiResponse> createManureAndCompostEmissions(@Valid @RequestBody AnimalManureAndCompostEmissionsDto manureAndCompostEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Manure and Compost emissions created successfully", agricultureEmissionsService.createAnimalManureAndCompostEmissions(manureAndCompostEmissionsDto)));
     }
 
     //Create enteric fermentation emissions log
     @PostMapping("/entericFermentationEmissions")
     @Operation(summary = "Create new enteric fermentation emissions record")
-    private ResponseEntity<ApiResponse> createEntericFermentationEmissions(@RequestBody EntericFermentationEmissionsDto entericFermentationEmissionsDto) {
+    private ResponseEntity<ApiResponse> createEntericFermentationEmissions(@Valid @RequestBody EntericFermentationEmissionsDto entericFermentationEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Enteric fermentation emissions created successfully", agricultureEmissionsService.createEntericFermentationEmissions(entericFermentationEmissionsDto)));
     }
 
     //Create burning emissions log
     @PostMapping("/burningEmissions")
     @Operation(summary = "Create new burning emissions record")
-    private ResponseEntity<ApiResponse> createBurningEmissions(@RequestBody BurningEmissionsDto burningEmissionsDto) {
+    private ResponseEntity<ApiResponse> createBurningEmissions(@Valid @RequestBody BurningEmissionsDto burningEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Burning emissions created successfully", agricultureEmissionsService.createBurningEmissions(burningEmissionsDto)));
     }
 
@@ -143,7 +144,7 @@ public class AgricultureEmissionsController {
     //Create crop residue emissions logs
     @PostMapping("/cropResidueEmissions")
     @Operation(summary = "Create new crop residue emissions record")
-    private ResponseEntity<ApiResponse> createCropResidueEmissions(@RequestBody CropResiduesEmissionsDto cropResidueEmissionsDto) {
+    private ResponseEntity<ApiResponse> createCropResidueEmissions(@Valid @RequestBody CropResiduesEmissionsDto cropResidueEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Crop residue emissions created successfully", agricultureEmissionsService.createCropResidueEmissions(cropResidueEmissionsDto)));
     }
 
@@ -157,7 +158,7 @@ public class AgricultureEmissionsController {
     //Create pasture excretion emissions logs
     @PostMapping("/pastureExcretionEmissions")
     @Operation(summary = "Create new pasture excretion emissions record")
-    private ResponseEntity<ApiResponse> createPastureExcretionEmissions(@RequestBody PastureExcretionsEmissionsDto pastureExcretionEmissionsDto) {
+    private ResponseEntity<ApiResponse> createPastureExcretionEmissions(@Valid @RequestBody PastureExcretionsEmissionsDto pastureExcretionEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Pasture excretion emissions created successfully", agricultureEmissionsService.createPastureExcretionEmissions(pastureExcretionEmissionsDto)));
     }
 
@@ -171,7 +172,7 @@ public class AgricultureEmissionsController {
     //Create Mineral Soil Emissions logs
     @PostMapping("/mineralSoilEmissions")
     @Operation(summary = "Create new mineral soil emissions record")
-    private ResponseEntity<ApiResponse> createMineralSoilEmissions(@RequestBody MineralSoilEmissionsDto mineralSoilEmissionsDto) {
+    private ResponseEntity<ApiResponse> createMineralSoilEmissions(@Valid @RequestBody MineralSoilEmissionsDto mineralSoilEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Mineral soil emissions created successfully", agricultureEmissionsService.createMineralSoilEmissions(mineralSoilEmissionsDto)));
     }
 
@@ -185,7 +186,7 @@ public class AgricultureEmissionsController {
     //Create Volatilization Emissions logs
     @PostMapping("/volatilizationEmissions")
     @Operation(summary = "Create new volatilization emissions record")
-    private ResponseEntity<ApiResponse> createVolatilizationEmissions(@RequestBody VolatilizationEmissionsDto volatilizationEmissionsDto) {
+    private ResponseEntity<ApiResponse> createVolatilizationEmissions(@Valid @RequestBody VolatilizationEmissionsDto volatilizationEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Volatilization emissions created successfully", agricultureEmissionsService.createVolatilizationEmissions(volatilizationEmissionsDto)));
     }
 
@@ -199,7 +200,7 @@ public class AgricultureEmissionsController {
     //Create Leaching Emissions logs
     @PostMapping("/leachingEmissions")
     @Operation(summary = "Create new leaching emissions record")
-    private ResponseEntity<ApiResponse> createLeachingEmissions(@RequestBody LeachingEmissionsDto leachingEmissionsDto) {
+    private ResponseEntity<ApiResponse> createLeachingEmissions(@Valid @RequestBody LeachingEmissionsDto leachingEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Leaching emissions created successfully", agricultureEmissionsService.createLeachingEmissions(leachingEmissionsDto)));
     }
 
@@ -213,7 +214,7 @@ public class AgricultureEmissionsController {
     //Atmospheric N Deposition Emissions logs
     @PostMapping("/atmosphericDepositionEmissions")
     @Operation(summary = "Create new atmospheric N deposition emissions record")
-    private ResponseEntity<ApiResponse> createAtmosphericNDepositionEmissions(@RequestBody AtmosphericDepositionEmissionsDto atmosphericNDepositionEmissionsDto) {
+    private ResponseEntity<ApiResponse> createAtmosphericNDepositionEmissions(@Valid @RequestBody AtmosphericDepositionEmissionsDto atmosphericNDepositionEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Atmospheric N deposition emissions created successfully", agricultureEmissionsService.createAtmosphericNDepositionEmissions(atmosphericNDepositionEmissionsDto)));
     }
 
@@ -227,7 +228,7 @@ public class AgricultureEmissionsController {
     //Create LeachingAndRunoff Emissions logs
     @PostMapping("/leachingAndRunoffEmissions")
     @Operation(summary = "Create new leaching and runoff emissions record")
-    private ResponseEntity<ApiResponse> createLeachingAndRunoffEmissions(@RequestBody LeachingAndRunoffEmissionsDto leachingAndRunoffEmissionsDto) {
+    private ResponseEntity<ApiResponse> createLeachingAndRunoffEmissions(@Valid @RequestBody LeachingAndRunoffEmissionsDto leachingAndRunoffEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Leaching and runoff emissions created successfully", agricultureEmissionsService.createLeachingAndRunoffEmissions(leachingAndRunoffEmissionsDto)));
     }
 

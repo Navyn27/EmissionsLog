@@ -10,6 +10,7 @@ import com.navyn.emissionlog.modules.wasteEmissions.dtos.SolidWasteDto;
 import com.navyn.emissionlog.modules.wasteEmissions.dtos.WasteWaterDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,38 +30,38 @@ public class WasteController {
 
     @Operation(summary = "Create Industrial Waste Water Data and calculate emissions")
     @PostMapping("/industrialWasteWater")
-    public ResponseEntity<ApiResponse>createIndustrialWasteWaterData(@RequestBody IndustrialWasteDto wasteData) {
+    public ResponseEntity<ApiResponse>createIndustrialWasteWaterData(@Valid @RequestBody IndustrialWasteDto wasteData) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Industrial waste water created successfully", wasteService.createIndustrialWasteWaterData(wasteData)));
     }
 
     @Operation(summary = "Create Solid Waste Data and calculate emissions")
     @PostMapping("/solidWaste")
-    public ResponseEntity<ApiResponse> createSolidWasteData(@RequestBody SolidWasteDto wasteData) {
+    public ResponseEntity<ApiResponse> createSolidWasteData(@Valid @RequestBody SolidWasteDto wasteData) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Solid waste created successfully", wasteService.createSolidWasteData(wasteData)));
     }
 
     @Operation(summary = "Create Waste water Data and calculate emissions")
     @PostMapping("/wasteWater")
-    public ResponseEntity<ApiResponse> createWasteWaterData(@RequestBody WasteWaterDto wasteData) {
+    public ResponseEntity<ApiResponse> createWasteWaterData(@Valid @RequestBody WasteWaterDto wasteData) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Waste water created successfully", wasteService.createWasteWaterData(wasteData)));
     }
 
 
     @Operation(summary = "Create Bio Treated Waste Water Data and calculate emissions")
     @PostMapping("/bioTreatedWasteWater")
-    public ResponseEntity<ApiResponse> createBioTreatedWasteWaterData(@RequestBody GeneralWasteByPopulationDto wasteData) {
+    public ResponseEntity<ApiResponse> createBioTreatedWasteWaterData(@Valid @RequestBody GeneralWasteByPopulationDto wasteData) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Bio treated waste water created successfully", wasteService.createBioTreatedWasteWaterData(wasteData)));
     }
 
     @Operation(summary = "Create Bio Treated Waste Water Data and calculate emissions")
     @PostMapping("/burntWaste")
-    public ResponseEntity<ApiResponse> createBurntWasteData(@RequestBody GeneralWasteByPopulationDto wasteData) {
+    public ResponseEntity<ApiResponse> createBurntWasteData(@Valid @RequestBody GeneralWasteByPopulationDto wasteData) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Burnt waste created successfully", wasteService.createBurntWasteData(wasteData)));
     }
 
     @Operation(summary = "Create Incineration Waste Data and calculate emissions")
     @PostMapping("/incinerationWaste")
-    public ResponseEntity<ApiResponse> createWasteData(@RequestBody GeneralWasteByPopulationDto wasteData) {
+    public ResponseEntity<ApiResponse> createWasteData(@Valid @RequestBody GeneralWasteByPopulationDto wasteData) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Incineration waste created successfully", wasteService.createIncinerationWasteData(wasteData)));
     }
 

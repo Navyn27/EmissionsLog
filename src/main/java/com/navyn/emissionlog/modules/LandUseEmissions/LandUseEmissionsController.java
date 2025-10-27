@@ -4,6 +4,7 @@ import com.navyn.emissionlog.Enums.LandUse.LandCategory;
 import com.navyn.emissionlog.modules.LandUseEmissions.Dtos.*;
 import com.navyn.emissionlog.modules.LandUseEmissions.models.*;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,7 @@ public class LandUseEmissionsController {
     
     // BiomassGain endpoints
     @PostMapping("/biomassGain")
-    public ResponseEntity<BiomassGain> createBiomassGain(@RequestBody BiomassGainDto biomassGainDto) {
+    public ResponseEntity<BiomassGain> createBiomassGain(@Valid @RequestBody BiomassGainDto biomassGainDto) {
         BiomassGain biomassGain = landUseEmissionsService.createBiomassGain(biomassGainDto);
         return ResponseEntity.ok(biomassGain);
     }
@@ -35,7 +36,7 @@ public class LandUseEmissionsController {
     
     // DisturbanceBiomassLoss endpoints
     @PostMapping("/disturbanceBiomassLoss")
-    public ResponseEntity<DisturbanceBiomassLoss> createDisturbanceBiomassLoss(@RequestBody DisturbanceBiomassLossDto disturbanceBiomassLossDto) {
+    public ResponseEntity<DisturbanceBiomassLoss> createDisturbanceBiomassLoss(@Valid @RequestBody DisturbanceBiomassLossDto disturbanceBiomassLossDto) {
         DisturbanceBiomassLoss disturbanceBiomassLoss = landUseEmissionsService.createDisturbanceBiomassLoss(disturbanceBiomassLossDto);
         return ResponseEntity.ok(disturbanceBiomassLoss);
     }
@@ -50,7 +51,7 @@ public class LandUseEmissionsController {
     
     // FirewoodRemovalBiomassLoss endpoints
     @PostMapping("/firewoodRemovalBiomassLoss")
-    public ResponseEntity<FirewoodRemovalBiomassLoss> createFirewoodRemovalBiomassLoss(@RequestBody FirewoodRemovalBiomassLossDto firewoodRemovalBiomassLossDto) {
+    public ResponseEntity<FirewoodRemovalBiomassLoss> createFirewoodRemovalBiomassLoss(@Valid @RequestBody FirewoodRemovalBiomassLossDto firewoodRemovalBiomassLossDto) {
         FirewoodRemovalBiomassLoss firewoodRemovalBiomassLoss = landUseEmissionsService.createFirewoodRemovalBiomassLoss(firewoodRemovalBiomassLossDto);
         return ResponseEntity.ok(firewoodRemovalBiomassLoss);
     }
@@ -65,7 +66,7 @@ public class LandUseEmissionsController {
     
     // HarvestedBiomassLoss endpoints
     @PostMapping("/harvestedBiomassLoss")
-    public ResponseEntity<HarvestedBiomassLoss> createHarvestedBiomassLoss(@RequestBody HarvestedBiomassLossDto harvestedBiomassLossDto) {
+    public ResponseEntity<HarvestedBiomassLoss> createHarvestedBiomassLoss(@Valid @RequestBody HarvestedBiomassLossDto harvestedBiomassLossDto) {
         HarvestedBiomassLoss harvestedBiomassLoss = landUseEmissionsService.createHarvestedBiomassLoss(harvestedBiomassLossDto);
         return ResponseEntity.ok(harvestedBiomassLoss);
     }
@@ -80,7 +81,7 @@ public class LandUseEmissionsController {
     
     // RewettedMineralWetlands endpoints (no LandCategory filter)
     @PostMapping("/rewettedMineralWetlands")
-    public ResponseEntity<RewettedMineralWetlands> createRewettedMineralWetlands(@RequestBody RewettedMineralWetlandsDto rewettedMineralWetlandsDto) {
+    public ResponseEntity<RewettedMineralWetlands> createRewettedMineralWetlands(@Valid @RequestBody RewettedMineralWetlandsDto rewettedMineralWetlandsDto) {
         RewettedMineralWetlands rewettedMineralWetlands = landUseEmissionsService.createRewettedMineralWetlands(rewettedMineralWetlandsDto);
         return ResponseEntity.ok(rewettedMineralWetlands);
     }
