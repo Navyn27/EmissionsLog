@@ -12,6 +12,6 @@ import java.util.UUID;
 
 @Repository
 public interface SyntheticFertilizerEmissionsRepository extends JpaRepository<SyntheticFertilizerEmissions, UUID>, JpaSpecificationExecutor<SyntheticFertilizerEmissions> {
-    @Query("SELECT sfe FROM SyntheticFertilizerEmissions sfe WHERE sfe.year BETWEEN :startYear AND :endYear")
+    @Query("SELECT sfe FROM SyntheticFertilizerEmissions sfe WHERE sfe.year BETWEEN :startYear AND :endYear ORDER BY sfe.year DESC")
     List<SyntheticFertilizerEmissions> findByYearRange(@Param("startYear") int startYear, @Param("endYear") int endYear);
 }

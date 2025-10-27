@@ -12,6 +12,6 @@ import java.util.UUID;
 
 @Repository
 public interface EntericFermentationEmissionsRepository extends JpaRepository<EntericFermentationEmissions, UUID>, JpaSpecificationExecutor<EntericFermentationEmissions> {
-    @Query("SELECT efe FROM EntericFermentationEmissions efe WHERE efe.year BETWEEN :startYear AND :endYear")
+    @Query("SELECT efe FROM EntericFermentationEmissions efe WHERE efe.year BETWEEN :startYear AND :endYear ORDER BY efe.year DESC")
     List<EntericFermentationEmissions> findByYearRange(@Param("startYear") int startYear, @Param("endYear") int endYear);
 }

@@ -12,6 +12,6 @@ import java.util.UUID;
 
 @Repository
 public interface UreaEmissionsRepository extends JpaRepository<UreaEmissions, UUID>, JpaSpecificationExecutor<UreaEmissions> {
-    @Query("SELECT ue FROM UreaEmissions ue WHERE ue.year BETWEEN :startYear AND :endYear")
+    @Query("SELECT ue FROM UreaEmissions ue WHERE ue.year BETWEEN :startYear AND :endYear ORDER BY ue.year DESC")
     List<UreaEmissions> findByYearRange(@Param("startYear") int startYear, @Param("endYear") int endYear);
 }

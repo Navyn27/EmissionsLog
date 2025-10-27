@@ -12,6 +12,6 @@ import java.util.UUID;
 
 @Repository
 public interface AnimalManureAndCompostEmissionsRepository extends JpaRepository<AnimalManureAndCompostEmissions, UUID>, JpaSpecificationExecutor<AnimalManureAndCompostEmissions> {
-    @Query(value = "SELECT * FROM manure_mgmt_emissions WHERE year BETWEEN :startYear AND :endYear", nativeQuery = true)
+    @Query(value = "SELECT * FROM manure_mgmt_emissions WHERE year BETWEEN :startYear AND :endYear ORDER BY year DESC", nativeQuery = true)
     List<AnimalManureAndCompostEmissions> findByYearRange(@Param("startYear") int startYear, @Param("endYear") int endYear);
 }

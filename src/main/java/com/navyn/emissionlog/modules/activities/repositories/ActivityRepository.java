@@ -14,10 +14,10 @@ import java.util.UUID;
 
 @Repository
 public interface ActivityRepository extends JpaRepository<Activity, UUID>, JpaSpecificationExecutor<Activity> {
-    List<Activity> findByActivityData_ActivityType(ActivityTypes activityType);
+    List<Activity> findByActivityData_ActivityTypeOrderByActivityYearDesc(ActivityTypes activityType);
 
-    List<Activity> findByActivityYearBetween(LocalDateTime startDate, LocalDateTime endDate);
+    List<Activity> findAllByActivityYearBetweenOrderByActivityYearDesc(LocalDateTime startDate, LocalDateTime endDate);
 
-    List<Activity> findByRegion_IdAndActivityData_ActivityType(UUID region, ActivityTypes activityTypes);
-    List<Activity> findBySector(Sectors sector);
+    List<Activity> findAllByRegion_IdAndActivityData_ActivityTypeOrderByActivityYearDesc(UUID region, ActivityTypes activityTypes);
+    List<Activity> findAllBySectorOrderByActivityYearDesc(Sectors sector);
 }

@@ -33,16 +33,16 @@ public class PopulationRecordsServiceImpl implements PopulationRecordService {
     @Override
     public List<PopulationRecords> getAllPopulationRecords(Countries country, Integer year) {
         if (country != null && year == null) {
-            return populationRecordRepository.findByCountry(country);
+            return populationRecordRepository.findByCountryOrderByYearDesc(country);
         }
         if (country == null && year != null) {
             PopulationRecords populationRecord = getPopulationRecordByYear(year);
             return populationRecord != null ? List.of(populationRecord) : List.of();
         }
         if (country != null) {
-            return populationRecordRepository.findByCountryAndYear(country, year);
+            return populationRecordRepository.findByCountryAndYearOrderByYearDesc(country, year);
         }
-        return populationRecordRepository.findAll();
+        return populationRecordRepository.findAllByOrderByYearDesc();
     }
 
     @Override
@@ -88,7 +88,7 @@ public class PopulationRecordsServiceImpl implements PopulationRecordService {
 
     @Override
     public List<PopulationRecords> getPopulationRecordsByCountry(Countries country) {
-        return populationRecordRepository.findByCountry(country);
+        return populationRecordRepository.findByCountryOrderByYearDesc(country);
     }
 }
     

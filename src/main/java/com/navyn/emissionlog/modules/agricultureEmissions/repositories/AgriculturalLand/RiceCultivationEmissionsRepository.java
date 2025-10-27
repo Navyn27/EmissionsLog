@@ -12,6 +12,6 @@ import java.util.UUID;
 
 @Repository
 public interface RiceCultivationEmissionsRepository extends JpaRepository<RiceCultivationEmissions, UUID>, JpaSpecificationExecutor<RiceCultivationEmissions> {
-    @Query("SELECT rce FROM RiceCultivationEmissions rce WHERE rce.year BETWEEN :startYear AND :endYear")
+    @Query("SELECT rce FROM RiceCultivationEmissions rce WHERE rce.year BETWEEN :startYear AND :endYear ORDER BY rce.year DESC")
     List<RiceCultivationEmissions> findByYearRange(@Param("startYear") int startYear, @Param("endYear") int endYear);
 }

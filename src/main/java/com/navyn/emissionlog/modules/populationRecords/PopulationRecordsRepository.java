@@ -12,7 +12,9 @@ import java.util.UUID;
 public interface PopulationRecordsRepository extends JpaRepository<PopulationRecords, UUID> {
     PopulationRecords findByYear(int year);
 
-    List<PopulationRecords> findByCountry(Countries country);
+    List<PopulationRecords> findByCountryOrderByYearDesc(Countries country);
 
-    List<PopulationRecords> findByCountryAndYear(Countries country, Integer year);
+    List<PopulationRecords> findByCountryAndYearOrderByYearDesc(Countries country, Integer year);
+    
+    List<PopulationRecords> findAllByOrderByYearDesc();
 }

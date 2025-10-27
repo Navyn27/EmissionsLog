@@ -24,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -266,8 +265,7 @@ public class WasteServiceImpl implements WasteService {
 
         if(solidWasteType == null){
             for(SolidWasteType type : SolidWasteType.values()) {
-                List<SolidWasteData> dataByType = wasteDataRepository.findAllBySolidWasteType(type);
-                dataByType.sort(Comparator.comparing(SolidWasteData::getYear).reversed());
+                List<SolidWasteData> dataByType = wasteDataRepository.findAllBySolidWasteTypeOrderByYearDesc(type);
                 solidWasteDataList.addAll(dataByType);
             }
             return solidWasteDataList;
@@ -278,8 +276,7 @@ public class WasteServiceImpl implements WasteService {
                 .and(WasteSpecifications.hasRegion_solidWaste(regionId))
                 .and(WasteSpecifications.hasYear(year));
 
-        List<SolidWasteData> solidWasteDataByType = wasteDataRepository.findAllBySolidWasteType(solidWasteType);
-        solidWasteDataByType.sort(Comparator.comparing(SolidWasteData::getYear).reversed());
+        List<SolidWasteData> solidWasteDataByType = wasteDataRepository.findAllBySolidWasteTypeOrderByYearDesc(solidWasteType);
         return solidWasteDataByType;
     }
 
@@ -334,22 +331,22 @@ public class WasteServiceImpl implements WasteService {
         Optional<EICVReport> eicvReport = eicvReportRepository.findByYear(year);
         if(eicvReport.isEmpty()){
             if(year>2022){
-                return eicvReportRepository.findByYear(2022).get();
+                return eicvReportRepository.findByYear(2022).isPresent() ? eicvReportRepository.findByYear(2022).get() : null ;
             }
             else if(year<2022 && year > 2017){
-                return eicvReportRepository.findByYear(2017).get();
+                return eicvReportRepository.findByYear(2017).isPresent() ? eicvReportRepository.findByYear(2017).get() : null ;
             }
             else if(year<2017 && year > 2014){
-                return eicvReportRepository.findByYear(2014).get();
+                return eicvReportRepository.findByYear(2014).isPresent() ? eicvReportRepository.findByYear(2014).get() : null ;
             }
             else if(year<2014 && year > 2011){
-                return eicvReportRepository.findByYear(2011).get();
+                return eicvReportRepository.findByYear(2011).isPresent() ? eicvReportRepository.findByYear(2011).get() : null ;
             }
             else if(year<2011 && year > 2006){
-                return eicvReportRepository.findByYear(2006).get();
+                return eicvReportRepository.findByYear(2006).isPresent() ? eicvReportRepository.findByYear(2006).get() : null ;
             }
             else{
-                return eicvReportRepository.findByYear(2000).get();
+                return eicvReportRepository.findByYear(2000).isPresent() ? eicvReportRepository.findByYear(2000).get() : null ;
             }
         }
         return eicvReport.get();

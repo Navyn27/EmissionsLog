@@ -13,6 +13,6 @@ import java.util.UUID;
 
 @Repository
 public interface LimingEmissionsRepository extends JpaRepository<LimingEmissions, UUID>, JpaSpecificationExecutor<LimingEmissions> {
-    @Query("SELECT le FROM LimingEmissions le WHERE le.year BETWEEN :startYear AND :endYear")
+    @Query("SELECT le FROM LimingEmissions le WHERE le.year BETWEEN :startYear AND :endYear ORDER BY le.year DESC")
     List<LimingEmissions> findByYearRange(@Param("startYear") int startYear, @Param("endYear") int endYear);
 }

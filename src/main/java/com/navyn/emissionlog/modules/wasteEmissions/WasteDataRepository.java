@@ -14,11 +14,13 @@ import java.util.UUID;
 
 @Repository
 public interface WasteDataRepository extends JpaRepository<WasteDataAbstract, UUID>, JpaSpecificationExecutor<WasteDataAbstract> {
-    List<WasteDataAbstract> findAllByWasteType(WasteType type);
+    List<WasteDataAbstract> findAllByWasteTypeOrderByYearDesc(WasteType type);
     //findLatestByWasteType
     WasteDataAbstract findFirstByWasteTypeOrderByCreatedAtDesc(WasteType type);
 
-    List<SolidWasteData> findAllBySolidWasteType(SolidWasteType solidWasteType);
+    List<SolidWasteData> findAllBySolidWasteTypeOrderByYearDesc(SolidWasteType solidWasteType);
 
-    List<WasteDataAbstract> findByActivityYearBetween(LocalDateTime startDate, LocalDateTime endDate);
+    List<WasteDataAbstract> findByActivityYearBetweenOrderByYearDesc(LocalDateTime startDate, LocalDateTime endDate);
+    
+    List<WasteDataAbstract> findAllByOrderByYearDesc();
 }

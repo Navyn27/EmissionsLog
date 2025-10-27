@@ -14,7 +14,9 @@ public interface EICVReportRepository extends JpaRepository<EICVReport, UUID> {
 
     Optional<EICVReport> findByName(String name);
 
-    List<EICVReport> findByNameContainingIgnoreCase(String name);
+    List<EICVReport> findByNameContainingIgnoreCaseOrderByYearDesc(String name);
 
-    List<EICVReport> findByNameContainingIgnoreCaseAndYear(String name, Integer year);
+    List<EICVReport> findByNameContainingIgnoreCaseAndYearOrderByYearDesc(String name, Integer year);
+    
+    List<EICVReport> findAllByOrderByYearDesc();
 }

@@ -275,8 +275,8 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public DashboardData getDashboardData(LocalDateTime startDate, LocalDateTime endDate) {
         try {
-            List<Activity> activities = activityRepository.findByActivityYearBetween(startDate, endDate);
-            List<WasteDataAbstract> wasteActivities = wasteDataAbstractRepository.findByActivityYearBetween(startDate, endDate);
+            List<Activity> activities = activityRepository.findAllByActivityYearBetweenOrderByActivityYearDesc(startDate, endDate);
+            List<WasteDataAbstract> wasteActivities = wasteDataAbstractRepository.findByActivityYearBetweenOrderByYearDesc(startDate, endDate);
             List<AquacultureEmissions> aquacultureEmissions = aquacultureEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<EntericFermentationEmissions> entericFermentationEmissions = entericFermentationEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<LimingEmissions> limingEmissions = limingEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
@@ -309,8 +309,8 @@ public class ActivityServiceImpl implements ActivityService {
         else {
             LocalDateTime startDate = LocalDateTime.of(startingYear, 1, 1, 0, 0);
             LocalDateTime endDate = LocalDateTime.of(endingYear, 12, 31, 23, 59);
-            activities = activityRepository.findByActivityYearBetween(startDate, endDate);
-            wasteActivities = wasteDataAbstractRepository.findByActivityYearBetween(startDate, endDate);
+            activities = activityRepository.findAllByActivityYearBetweenOrderByActivityYearDesc(startDate, endDate);
+            wasteActivities = wasteDataAbstractRepository.findByActivityYearBetweenOrderByYearDesc(startDate, endDate);
         }
 
         // Group activities by year
@@ -340,8 +340,8 @@ public class ActivityServiceImpl implements ActivityService {
         LocalDateTime startDate = LocalDateTime.of(year, 1, 1, 0, 0);
         LocalDateTime endDate = LocalDateTime.of(year, 12, 31, 23, 59);
 
-        List<Activity> activities = activityRepository.findByActivityYearBetween(startDate, endDate);
-        List<WasteDataAbstract> wasteData = wasteDataAbstractRepository.findByActivityYearBetween(startDate, endDate);
+        List<Activity> activities = activityRepository.findAllByActivityYearBetweenOrderByActivityYearDesc(startDate, endDate);
+        List<WasteDataAbstract> wasteData = wasteDataAbstractRepository.findByActivityYearBetweenOrderByYearDesc(startDate, endDate);
 
         // Group activities by year and month
         Map<YearMonth, List<Activity>> activitiesByYearMonth = activities.stream()
