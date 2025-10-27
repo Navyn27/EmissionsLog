@@ -69,9 +69,9 @@ public interface AgricultureEmissionsService {
     List<LeachingEmissions> getAllLeachingEmissions(Integer year, MMS mms, LivestockSpecies species);
 
     List<VolatilizationEmissions> getAllVolatilizationEmissions(Integer year, MMS mms, LivestockSpecies species);
-//
-//    ManureManagementEmissions createAnimalManureMgmtEmissions(ManureManagementEmissionsDto manureAndCompostEmissionsDto);
-//
-//    List<ManureManagementEmissions> getAllAnimalManureMgmtEmissions(Integer year, LivestockSpecies species, MMS mms);
+
+    ManureManagementEmissions createManureManagementEmissions(ManureManagementEmissionsDto dto);
+
+    List<ManureManagementEmissions> getAllManureManagementEmissions(Integer year, ManureManagementLivestock species, ManureManagementSystem mms);
 
 }

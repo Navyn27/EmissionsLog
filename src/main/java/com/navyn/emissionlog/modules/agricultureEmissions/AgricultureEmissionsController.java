@@ -8,6 +8,8 @@ import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.IndirectManureEmissions.LeachingEmissionsDto;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.AgriculturalLand.IndirectManureEmissions.VolatilizationEmissionsDto;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.EntericFermentationEmissionsDto;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.ManureManagementEmissionsDto;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureManagementEmissions;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -16,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -65,7 +66,7 @@ public class AgricultureEmissionsController {
     }
 
     //Get all manure and compost emissions log
-    @GetMapping("/animalManureAndCompostEmissions")
+    @GetMapping("/manureAndCompostEmissions")
     @Operation(summary = "Get all manure and compost emissions")
     private ResponseEntity<ApiResponse> getAllManureAndCompostEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "amendmentType") OrganicAmendmentTypes amendmentType, @RequestParam(required = false, value = "species") LivestockSpecies species) {
         return ResponseEntity.ok(new ApiResponse(true, "Manure and Compost emissions fetched successfully", agricultureEmissionsService.getAllAnimalManureAndCompostEmissions(year, amendmentType, species)));
@@ -114,7 +115,7 @@ public class AgricultureEmissionsController {
     }
 
     //Create manure and compost emissions log
-    @PostMapping("/animalManureAndCompostEmissions")
+    @PostMapping("/manureAndCompostEmissions")
     @Operation(summary = "Create new manure and compost emissions record")
     private ResponseEntity<ApiResponse> createManureAndCompostEmissions(@Valid @RequestBody AnimalManureAndCompostEmissionsDto manureAndCompostEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Manure and Compost emissions created successfully", agricultureEmissionsService.createAnimalManureAndCompostEmissions(manureAndCompostEmissionsDto)));
@@ -237,5 +238,24 @@ public class AgricultureEmissionsController {
     @Operation(summary = "Get all leaching and runoff emissions")
     private ResponseEntity<ApiResponse> getAllLeachingAndRunoffEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "landUseCategory") LandUseCategory landUseCategory) {
         return ResponseEntity.ok(new ApiResponse(true, "Leaching and runoff emissions fetched successfully", agricultureEmissionsService.getAllLeachingAndRunoffEmissions(year, landUseCategory)));
+    }
+
+    //Create manure management emissions log
+    @PostMapping("/manureManagementEmissions")
+    @Operation(summary = "Create new manure management emissions record")
+    private ResponseEntity<ApiResponse> createManureManagementEmissions(@Valid @RequestBody ManureManagementEmissionsDto dto) {
+        ManureManagementEmissions emissions = agricultureEmissionsService.createManureManagementEmissions(dto);
+        return ResponseEntity.ok(new ApiResponse(true, "Manure management emissions created successfully", emissions));
+    }
+
+    //Get all manure management emissions logs
+    @GetMapping("/manureManagementEmissions")
+    @Operation(summary = "Get all manure management emissions")
+    private ResponseEntity<ApiResponse> getAllManureManagementEmissions(
+            @RequestParam(required = false, value = "year") Integer year,
+            @RequestParam(required = false, value = "species") ManureManagementLivestock species,
+            @RequestParam(required = false, value = "mms") ManureManagementSystem mms) {
+        List<ManureManagementEmissions> emissions = agricultureEmissionsService.getAllManureManagementEmissions(year, species, mms);
+        return ResponseEntity.ok(new ApiResponse(true, "Manure management emissions fetched successfully", emissions));
     }
 }

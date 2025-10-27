@@ -23,6 +23,9 @@ import com.navyn.emissionlog.modules.agricultureEmissions.repositories.Agricultu
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.IndirectManureEmissions.LeachingEmissionsRepository;
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.AgriculturalLand.IndirectManureEmissions.VolatilizationEmissionsRepository;
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.Livestock.EntericFermentationEmissionsRepository;
+import com.navyn.emissionlog.modules.agricultureEmissions.repositories.Livestock.ManureManagementEmissionsRepository;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureManagementEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.ManureManagementEmissionsDto;
 
 import com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +57,7 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     private final AtmosphericDepositionEmissionsRepository atmosphericDepositionEmissionsRepository;
     private final LeachingEmissionsRepository leachingEmissionsRepository;
     private final LeachingAndRunoffEmissionsRepository leachingAndRunoffEmissionsRepository;
+    private final ManureManagementEmissionsRepository manureManagementEmissionsRepository;
 
     @Override
     public List<AquacultureEmissions> getAllAquacultureEmissions(Integer year) {
@@ -404,5 +408,161 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
             default:
                 return OrganicAmendmentTypes.MANURE_RABBITS;
         }
+    }
+
+    @Override
+    public ManureManagementEmissions createManureManagementEmissions(ManureManagementEmissionsDto dto) {
+        ManureManagementEmissions emission = new ManureManagementEmissions();
+        
+        // Map input fields
+        emission.setYear(dto.getYear());
+        emission.setSpecies(dto.getSpecies());
+        emission.setManureManagementSystem(dto.getManureManagementSystem());
+        emission.setAnimalPopulation(dto.getAnimalPopulation());
+        emission.setAverageAnnualTemperature(dto.getAverageAnnualTemperature());
+        emission.setAverageAnimalWeight(dto.getAverageAnimalWeight() != null ? 
+            dto.getAverageAnimalWeight() : getDefaultWeight(dto.getSpecies()));
+        
+        // 1. Calculate Volatile Solids
+        double vsRate = getVolatileSolidsRate(dto.getSpecies()); // kg VS/day/animal
+        emission.setVolatileSolidsExcretion(vsRate);
+        emission.setTotalVolatileSolids(vsRate * dto.getAnimalPopulation() * 365);
+        
+        // 2. Calculate Methane Emissions
+        double mcf = getMethaneConversionFactor(dto.getManureManagementSystem(), 
+                                                 dto.getAverageAnnualTemperature());
+        emission.setMethaneConversionFactor(mcf);
+        
+        double ch4Emissions = emission.getTotalVolatileSolids() * 
+                              ManureManagementConstants.BO_FACTOR.getValue() * 
+                              mcf * 
+                              ManureManagementConstants.CH4_DENSITY.getValue();
+        emission.setCH4EmissionsFromManure(ch4Emissions);
+        emission.setCH4_CO2Eq(ch4Emissions * GWP.CH4.getValue());
+        
+        // 3. Calculate Nitrogen Excretion
+        double nExcretion = getNitrogenExcretionRate(dto.getSpecies()) * 
+                            dto.getAnimalPopulation();
+        emission.setNitrogenExcretion(nExcretion);
+        emission.setNitrogenInManure(nExcretion); // Simplified - could have loss factors
+        
+        // 4. Calculate Direct N2O Emissions
+        double directN2O = emission.getNitrogenInManure() * 
+                           ManureManagementConstants.N2O_DIRECT_EF.getValue() * 
+                           ManureManagementConstants.N2O_CONVERSION_FACTOR.getValue();
+        emission.setDirectN2OEmissions(directN2O);
+        emission.setDirectN2O_CO2Eq(directN2O * GWP.N2O.getValue());
+        
+        // 5. Calculate Indirect N2O - Volatilization
+        double volatilizedN = emission.getNitrogenInManure() * 
+                              ManureManagementConstants.FRAC_GASMS.getValue();
+        emission.setVolatilizedNitrogen(volatilizedN);
+        
+        double indirectN2OVol = volatilizedN * 
+                                ManureManagementConstants.N2O_VOLATILIZATION_EF.getValue() * 
+                                ManureManagementConstants.N2O_CONVERSION_FACTOR.getValue();
+        emission.setIndirectN2OFromVolatilization(indirectN2OVol);
+        emission.setVolatilizationN2O_CO2Eq(indirectN2OVol * GWP.N2O.getValue());
+        
+        // 6. Calculate Indirect N2O - Leaching
+        double leachedN = emission.getNitrogenInManure() * 
+                          ManureManagementConstants.FRAC_LEACH.getValue();
+        emission.setLeachedNitrogen(leachedN);
+        
+        double indirectN2OLeach = leachedN * 
+                                  ManureManagementConstants.N2O_LEACHING_EF.getValue() * 
+                                  ManureManagementConstants.N2O_CONVERSION_FACTOR.getValue();
+        emission.setIndirectN2OFromLeaching(indirectN2OLeach);
+        emission.setLeachingN2O_CO2Eq(indirectN2OLeach * GWP.N2O.getValue());
+        
+        // 7. Calculate Totals
+        emission.setTotalN2OEmissions(directN2O + indirectN2OVol + indirectN2OLeach);
+        emission.setTotalN2O_CO2Eq(emission.getDirectN2O_CO2Eq() + 
+                                    emission.getVolatilizationN2O_CO2Eq() + 
+                                    emission.getLeachingN2O_CO2Eq());
+        emission.setTotalCO2EqEmissions(emission.getCH4_CO2Eq() + 
+                                         emission.getTotalN2O_CO2Eq());
+        
+        return manureManagementEmissionsRepository.save(emission);
+    }
+
+    @Override
+    public List<ManureManagementEmissions> getAllManureManagementEmissions(
+            Integer year, ManureManagementLivestock species, ManureManagementSystem mms) {
+        Specification<ManureManagementEmissions> spec = 
+            Specification.<ManureManagementEmissions>where(hasYear(year))
+                .and(hasManureManagementLivestock(species))
+                .and(hasManureManagementSystem(mms));
+        return manureManagementEmissionsRepository.findAll(
+            spec, Sort.by(Sort.Direction.DESC, "year")
+        );
+    }
+    
+    // Helper methods for Manure Management
+    private double getVolatileSolidsRate(ManureManagementLivestock species) {
+        return switch (species) {
+            case DAIRY_CATTLE -> ManureManagementConstants.VS_DAIRY_CATTLE.getValue();
+            case NON_DAIRY_CATTLE -> ManureManagementConstants.VS_NON_DAIRY_CATTLE.getValue();
+            case BUFFALO -> ManureManagementConstants.VS_BUFFALO.getValue();
+            case SWINE -> ManureManagementConstants.VS_SWINE.getValue();
+            case SHEEP -> ManureManagementConstants.VS_SHEEP.getValue();
+            case GOATS -> ManureManagementConstants.VS_GOATS.getValue();
+            case CAMELS -> ManureManagementConstants.VS_CAMELS.getValue();
+            case HORSES -> ManureManagementConstants.VS_HORSES.getValue();
+            case MULES_ASSES -> ManureManagementConstants.VS_MULES_ASSES.getValue();
+            case POULTRY_CHICKEN, POULTRY_DUCKS, POULTRY_TURKEYS -> 
+                ManureManagementConstants.VS_POULTRY.getValue();
+        };
+    }
+    
+    private double getMethaneConversionFactor(ManureManagementSystem mms, double temperature) {
+        // Base MCF values - could add temperature adjustment logic here if needed
+        return switch (mms) {
+            case PASTURE_RANGE_PADDOCK -> ManureManagementConstants.MCF_PASTURE.getValue();
+            case DAILY_SPREAD -> ManureManagementConstants.MCF_DAILY_SPREAD.getValue();
+            case SOLID_STORAGE -> ManureManagementConstants.MCF_SOLID_STORAGE.getValue();
+            case DRY_LOT -> ManureManagementConstants.MCF_DRY_LOT.getValue();
+            case LIQUID_SLURRY -> ManureManagementConstants.MCF_LIQUID_SLURRY.getValue();
+            case ANAEROBIC_LAGOON -> ManureManagementConstants.MCF_ANAEROBIC_LAGOON.getValue();
+            case ANAEROBIC_DIGESTER -> ManureManagementConstants.MCF_ANAEROBIC_DIGESTER.getValue();
+            case COMPOSTING_INTENSIVE -> ManureManagementConstants.MCF_COMPOSTING_INTENSIVE.getValue();
+            case COMPOSTING_STATIC_PILE -> ManureManagementConstants.MCF_COMPOSTING_STATIC_PILE.getValue();
+            case DEEP_BEDDING -> ManureManagementConstants.MCF_DEEP_BEDDING.getValue();
+            case POULTRY_MANURE_WITH_LITTER -> ManureManagementConstants.MCF_POULTRY_WITH_LITTER.getValue();
+            case POULTRY_MANURE_WITHOUT_LITTER -> ManureManagementConstants.MCF_POULTRY_WITHOUT_LITTER.getValue();
+            case BURNED_FOR_FUEL -> ManureManagementConstants.MCF_BURNED.getValue();
+        };
+    }
+    
+    private double getNitrogenExcretionRate(ManureManagementLivestock species) {
+        return switch (species) {
+            case DAIRY_CATTLE -> ManureManagementConstants.N_EXCRETION_DAIRY_CATTLE.getValue();
+            case NON_DAIRY_CATTLE -> ManureManagementConstants.N_EXCRETION_NON_DAIRY_CATTLE.getValue();
+            case BUFFALO -> ManureManagementConstants.N_EXCRETION_BUFFALO.getValue();
+            case SWINE -> ManureManagementConstants.N_EXCRETION_SWINE.getValue();
+            case SHEEP -> ManureManagementConstants.N_EXCRETION_SHEEP.getValue();
+            case GOATS -> ManureManagementConstants.N_EXCRETION_GOATS.getValue();
+            case CAMELS -> ManureManagementConstants.N_EXCRETION_CAMELS.getValue();
+            case HORSES -> ManureManagementConstants.N_EXCRETION_HORSES.getValue();
+            case MULES_ASSES -> ManureManagementConstants.N_EXCRETION_MULES_ASSES.getValue();
+            case POULTRY_CHICKEN, POULTRY_DUCKS, POULTRY_TURKEYS -> 
+                ManureManagementConstants.N_EXCRETION_POULTRY.getValue();
+        };
+    }
+    
+    private double getDefaultWeight(ManureManagementLivestock species) {
+        return switch (species) {
+            case DAIRY_CATTLE -> ManureManagementConstants.WEIGHT_DAIRY_CATTLE.getValue();
+            case NON_DAIRY_CATTLE -> ManureManagementConstants.WEIGHT_NON_DAIRY_CATTLE.getValue();
+            case BUFFALO -> ManureManagementConstants.WEIGHT_BUFFALO.getValue();
+            case SWINE -> ManureManagementConstants.WEIGHT_SWINE.getValue();
+            case SHEEP -> ManureManagementConstants.WEIGHT_SHEEP.getValue();
+            case GOATS -> ManureManagementConstants.WEIGHT_GOATS.getValue();
+            case CAMELS -> ManureManagementConstants.WEIGHT_CAMELS.getValue();
+            case HORSES -> ManureManagementConstants.WEIGHT_HORSES.getValue();
+            case MULES_ASSES -> ManureManagementConstants.WEIGHT_MULES_ASSES.getValue();
+            case POULTRY_CHICKEN, POULTRY_DUCKS, POULTRY_TURKEYS -> 
+                ManureManagementConstants.WEIGHT_POULTRY.getValue();
+        };
     }
 }

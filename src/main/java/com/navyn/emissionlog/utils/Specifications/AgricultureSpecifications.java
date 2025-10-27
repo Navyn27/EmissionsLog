@@ -118,4 +118,19 @@ public class AgricultureSpecifications {
             return cb.equal(root.get("landUseInReportingYear"), landUseInReportingYear);
         };
     }
+
+    // Manure Management specifications
+    public static<T> Specification<T> hasManureManagementLivestock(ManureManagementLivestock species) {
+        return (root, query, cb) -> {
+            if (species == null) return cb.conjunction(); // no filter
+            return cb.equal(root.get("species"), species);
+        };
+    }
+
+    public static<T> Specification<T> hasManureManagementSystem(ManureManagementSystem mms) {
+        return (root, query, cb) -> {
+            if (mms == null) return cb.conjunction(); // no filter
+            return cb.equal(root.get("manureManagementSystem"), mms);
+        };
+    }
 }
