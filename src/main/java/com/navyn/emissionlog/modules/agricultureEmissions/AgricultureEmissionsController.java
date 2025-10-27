@@ -65,7 +65,7 @@ public class AgricultureEmissionsController {
     }
 
     //Get all manure and compost emissions log
-    @GetMapping("/manureAndCompostEmissions")
+    @GetMapping("/animalManureAndCompostEmissions")
     @Operation(summary = "Get all manure and compost emissions")
     private ResponseEntity<ApiResponse> getAllManureAndCompostEmissions(@RequestParam(required = false, value = "year") Integer year, @RequestParam(required = false, value = "amendmentType") OrganicAmendmentTypes amendmentType, @RequestParam(required = false, value = "species") LivestockSpecies species) {
         return ResponseEntity.ok(new ApiResponse(true, "Manure and Compost emissions fetched successfully", agricultureEmissionsService.getAllAnimalManureAndCompostEmissions(year, amendmentType, species)));
@@ -114,7 +114,7 @@ public class AgricultureEmissionsController {
     }
 
     //Create manure and compost emissions log
-    @PostMapping("/manureAndCompostEmissions")
+    @PostMapping("/animalManureAndCompostEmissions")
     @Operation(summary = "Create new manure and compost emissions record")
     private ResponseEntity<ApiResponse> createManureAndCompostEmissions(@Valid @RequestBody AnimalManureAndCompostEmissionsDto manureAndCompostEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Manure and Compost emissions created successfully", agricultureEmissionsService.createAnimalManureAndCompostEmissions(manureAndCompostEmissionsDto)));
