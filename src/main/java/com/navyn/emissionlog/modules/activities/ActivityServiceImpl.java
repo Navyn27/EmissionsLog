@@ -151,11 +151,11 @@ public class ActivityServiceImpl implements ActivityService {
         activity.setActivityData(transportActivityData);
         activity.setActivityYear(activityDto.getActivityYear());
 
-        //find the emissions factors
-        Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findByFuelAndRegionGroupAndTransportTypeAndVehicleEngineType(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
+        //find the emissions factors with wildcard support for ANY values
+        Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findBestMatchWithWildcardSupport(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
 
         if(transportEmissionFactorsList.isEmpty()){
-            throw new IllegalArgumentException("Transport Emission Factors not found for specified region");
+            throw new IllegalArgumentException("Transport Emission Factors not found for specified fuel, region, transport type, and vehicle type combination");
         }
 
         // Calculate emissions
@@ -206,10 +206,11 @@ public class ActivityServiceImpl implements ActivityService {
             transportEmissionCalculationService.calculateEmissionsByVehicleData(activity, vehicleData, fuel.get(), activityDto.getRegionGroup(), activityDto.getMobileActivityDataType());
         }
         else{
-            Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findByFuelAndRegionGroupAndTransportTypeAndVehicleEngineType(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
+            // Use flexible wildcard-aware matching to support ANY values
+            Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findBestMatchWithWildcardSupport(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
 
             if(transportEmissionFactorsList.isEmpty()){
-                throw new IllegalArgumentException("Transport Emission Factors not found for specified region");
+                throw new IllegalArgumentException("Transport Emission Factors not found for specified fuel, region, transport type, and vehicle type combination");
             }
             transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData,
                     activityDto.getFuelUnit(), activityDto.getFuelAmount());

@@ -6,6 +6,7 @@ import com.navyn.emissionlog.Enums.Transport.VehicleEngineType;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmissionFactors;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -13,7 +14,7 @@ import java.util.UUID;
 import java.util.List;
 
 @Repository
-public interface TransportFuelEmissionFactorsRepository extends JpaRepository<TransportFuelEmissionFactors, UUID> {
+public interface TransportFuelEmissionFactorsRepository extends JpaRepository<TransportFuelEmissionFactors, UUID>, JpaSpecificationExecutor<TransportFuelEmissionFactors> {
     List<TransportFuelEmissionFactors> findByFuel(Fuel fuel);
 
     List<TransportFuelEmissionFactors> findByRegionGroup(RegionGroup regionGroup);

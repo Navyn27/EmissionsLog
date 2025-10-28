@@ -273,7 +273,7 @@ public class TransportEmissionFactorsController {
         );
     }
 
-    @Operation(summary = "Get supported transport types for a specific fuel", description = "This endpoint retrieves the supported transport types for a specific fuel based on its ID. It returns a list of transport types that are applicable to the specified fuel.")
+    @Operation(summary = "Get supported transport types for a specific fuel", description = "This endpoint retrieves the supported transport types for a specific fuel based on its ID. It returns a list of transport types that are applicable to the specified fuel, including ANY wildcard values.")
     @GetMapping("/supported/transportType/{fuelId}/{regionGroup}")
     public ResponseEntity<ApiResponse> supportedFuelsForTransportType(@PathVariable("fuelId") UUID fuelId, @PathVariable("regionGroup") RegionGroup regionGroup) throws BadRequestException {
         Optional<Fuel> fuels = fuelRepository.findById(fuelId);
@@ -287,6 +287,7 @@ public class TransportEmissionFactorsController {
 
         List<TransportFuelEmissionFactors> transportFuelEmissionFactors = transportFuelEmissionFactorsService.findByFuel(fuels.get().getId());
         for(TransportFuelEmissionFactors factor : transportFuelEmissionFactors){
+            // Include records that match the region (no filtering by transport type yet)
             if(!supportedTransportTypes.contains(factor.getTransportType()) && factor.getRegionGroup().equals(regionGroup)){
                 supportedTransportTypes.add(factor.getTransportType());
             }
@@ -297,7 +298,7 @@ public class TransportEmissionFactorsController {
         );
     }
 
-    @Operation(summary = "Get supported vehicle/engine types for a specific fuel", description = "This endpoint retrieves the supported vehicle/engine types for a specific fuel based on its ID. It returns a list of vehicle engine types that are applicable to the specified fuel.")
+    @Operation(summary = "Get supported vehicle/engine types for a specific fuel", description = "This endpoint retrieves the supported vehicle/engine types for a specific fuel based on its ID. It returns a list of vehicle engine types that are applicable to the specified fuel, including ANY wildcard values.")
     @GetMapping("/supported/vehicleEngineType/{fuelId}/{regionGroup}/{transportType}")
     public ResponseEntity<ApiResponse> supportedFuelsForVehicleEngineType(@PathVariable("fuelId") UUID fuelId, @PathVariable("regionGroup") RegionGroup regionGroup, @PathVariable("transportType") TransportType transportType) throws BadRequestException {
        Optional<Fuel> fuels = fuelRepository.findById(fuelId);
@@ -311,7 +312,12 @@ public class TransportEmissionFactorsController {
 
         List<TransportFuelEmissionFactors> transportFuelEmissionFactors = transportFuelEmissionFactorsService.findByFuel(fuels.get().getId());
         for(TransportFuelEmissionFactors factor : transportFuelEmissionFactors){
-            if(!supportedVehicleEngineTypes.contains(factor.getVehicleEngineType()) && factor.getRegionGroup().equals(regionGroup) && factor.getTransportType().equals(transportType)){
+            // Include records where:
+            // 1. Region matches exactly
+            // 2. TransportType is ANY (wildcard) OR matches exactly
+            if(!supportedVehicleEngineTypes.contains(factor.getVehicleEngineType()) 
+                && factor.getRegionGroup().equals(regionGroup) 
+                && (factor.getTransportType() == TransportType.ANY || factor.getTransportType().equals(transportType))){
                 supportedVehicleEngineTypes.add(factor.getVehicleEngineType());
             }
         }
