@@ -16,6 +16,16 @@ public class DashboardData {
     Double totalBioCO2Emissions = 0.0;
     Double totalCH4Emissions = 0.0;
     Double totalCO2EqEmissions = 0.0;
+    
+    // Land Use Emissions
+    Double totalLandUseEmissions = 0.0;  // CO2eq from land use changes
+    
+    // Mitigation Projects
+    Double totalMitigationKtCO2e = 0.0;  // Total carbon sequestration (Kt CO2e)
+    
+    // Net Emissions
+    Double netEmissionsKtCO2e = 0.0;  // Gross emissions - Mitigation
+    
     String startingDate;
     String endingDate;
     Month month;
