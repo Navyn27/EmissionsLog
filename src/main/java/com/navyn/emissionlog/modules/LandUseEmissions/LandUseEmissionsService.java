@@ -3,6 +3,7 @@ package com.navyn.emissionlog.modules.LandUseEmissions;
 import com.navyn.emissionlog.Enums.LandUse.LandCategory;
 import com.navyn.emissionlog.modules.LandUseEmissions.Dtos.*;
 import com.navyn.emissionlog.modules.LandUseEmissions.models.*;
+import com.navyn.emissionlog.utils.DashboardData;
 import java.util.List;
 
 public interface LandUseEmissionsService {
@@ -26,4 +27,9 @@ public interface LandUseEmissionsService {
     // RewettedMineralWetlands methods (no LandCategory filter)
     RewettedMineralWetlands createRewettedMineralWetlands(RewettedMineralWetlandsDto rewettedMineralWetlandsDto);
     List<RewettedMineralWetlands> getAllRewettedMineralWetlands(Integer year);
+    
+    // Mini Dashboards
+    DashboardData getLandUseDashboardSummary(Integer startingYear, Integer endingYear);
+    
+    List<DashboardData> getLandUseDashboardGraph(Integer startingYear, Integer endingYear);
 }

@@ -849,4 +849,104 @@ public class ActivityServiceImpl implements ActivityService {
         vehicleData.setFreightWeight_Kg(dto.getFreightWeightUnit().toKilograms(dto.getFreightWeight()));
         return vehicleDataRepository.save(vehicleData);
     }
+    
+    // ============= MINI DASHBOARDS =============
+    
+    @Override
+    public DashboardData getTransportDashboardSummary(Integer startingYear, Integer endingYear) {
+        List<Activity> transportActivities = activityRepository.findByActivityData_ActivityTypeOrderByActivityYearDesc(ActivityTypes.TRANSPORT);
+        
+        if (startingYear != null && endingYear != null) {
+            transportActivities = transportActivities.stream()
+                    .filter(a -> a.getYear() >= startingYear && a.getYear() <= endingYear)
+                    .toList();
+        }
+        
+        return calculateDashboardActivityData(transportActivities);
+    }
+    
+    @Override
+    public List<DashboardData> getTransportDashboardGraph(Integer startingYear, Integer endingYear) {
+        List<Activity> transportActivities = activityRepository.findByActivityData_ActivityTypeOrderByActivityYearDesc(ActivityTypes.TRANSPORT);
+        
+        // Default to last 5 years if not specified
+        if (startingYear == null || endingYear == null) {
+            int currentYear = LocalDateTime.now().getYear();
+            startingYear = currentYear - 4;
+            endingYear = currentYear;
+        }
+        
+        // Filter by year range
+        final int finalStartYear = startingYear;
+        final int finalEndYear = endingYear;
+        transportActivities = transportActivities.stream()
+                .filter(a -> a.getYear() >= finalStartYear && a.getYear() <= finalEndYear)
+                .toList();
+        
+        // Group by year
+        Map<Integer, List<Activity>> groupedByYear = transportActivities.stream()
+                .collect(groupingBy(Activity::getYear));
+        
+        // Create dashboard data for each year
+        List<DashboardData> dashboardDataList = new ArrayList<>();
+        for (int year = startingYear; year <= endingYear; year++) {
+            List<Activity> yearActivities = groupedByYear.getOrDefault(year, List.of());
+            DashboardData data = calculateDashboardActivityData(yearActivities);
+            data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
+            data.setEndingDate(LocalDateTime.of(year, 12, 31, 23, 59).toString());
+            data.setYear(Year.of(year));
+            dashboardDataList.add(data);
+        }
+        
+        return dashboardDataList;
+    }
+    
+    @Override
+    public DashboardData getStationaryDashboardSummary(Integer startingYear, Integer endingYear) {
+        List<Activity> stationaryActivities = activityRepository.findByActivityData_ActivityTypeOrderByActivityYearDesc(ActivityTypes.STATIONARY);
+        
+        if (startingYear != null && endingYear != null) {
+            stationaryActivities = stationaryActivities.stream()
+                    .filter(a -> a.getYear() >= startingYear && a.getYear() <= endingYear)
+                    .toList();
+        }
+        
+        return calculateDashboardActivityData(stationaryActivities);
+    }
+    
+    @Override
+    public List<DashboardData> getStationaryDashboardGraph(Integer startingYear, Integer endingYear) {
+        List<Activity> stationaryActivities = activityRepository.findByActivityData_ActivityTypeOrderByActivityYearDesc(ActivityTypes.STATIONARY);
+        
+        // Default to last 5 years if not specified
+        if (startingYear == null || endingYear == null) {
+            int currentYear = LocalDateTime.now().getYear();
+            startingYear = currentYear - 4;
+            endingYear = currentYear;
+        }
+        
+        // Filter by year range
+        final int finalStartYear = startingYear;
+        final int finalEndYear = endingYear;
+        stationaryActivities = stationaryActivities.stream()
+                .filter(a -> a.getYear() >= finalStartYear && a.getYear() <= finalEndYear)
+                .toList();
+        
+        // Group by year
+        Map<Integer, List<Activity>> groupedByYear = stationaryActivities.stream()
+                .collect(groupingBy(Activity::getYear));
+        
+        // Create dashboard data for each year
+        List<DashboardData> dashboardDataList = new ArrayList<>();
+        for (int year = startingYear; year <= endingYear; year++) {
+            List<Activity> yearActivities = groupedByYear.getOrDefault(year, List.of());
+            DashboardData data = calculateDashboardActivityData(yearActivities);
+            data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
+            data.setEndingDate(LocalDateTime.of(year, 12, 31, 23, 59).toString());
+            data.setYear(Year.of(year));
+            dashboardDataList.add(data);
+        }
+        
+        return dashboardDataList;
+    }
 }

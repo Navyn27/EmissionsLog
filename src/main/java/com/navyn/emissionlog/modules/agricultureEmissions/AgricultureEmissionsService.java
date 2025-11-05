@@ -16,6 +16,7 @@ import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLan
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.IndirectManureEmissions.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureManagementEmissions;
+import com.navyn.emissionlog.utils.DashboardData;
 
 import java.util.List;
 
@@ -73,5 +74,10 @@ public interface AgricultureEmissionsService {
     ManureManagementEmissions createManureManagementEmissions(ManureManagementEmissionsDto dto);
 
     List<ManureManagementEmissions> getAllManureManagementEmissions(Integer year, ManureManagementLivestock species, ManureManagementSystem mms);
+    
+    // Mini Dashboards
+    DashboardData getAgricultureDashboardSummary(Integer startingYear, Integer endingYear);
+    
+    List<DashboardData> getAgricultureDashboardGraph(Integer startingYear, Integer endingYear);
 
 }

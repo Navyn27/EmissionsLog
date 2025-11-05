@@ -40,4 +40,13 @@ public interface ActivityService {
     List<DashboardData> getDashboardGraphDataByMonth(Integer year);
 
     List<DashboardData> getDashboardGraphDataByYear(Integer startingYear, Integer endingYear);
+    
+    // Mini Dashboards for Transport and Stationary
+    DashboardData getTransportDashboardSummary(Integer startingYear, Integer endingYear);
+    
+    List<DashboardData> getTransportDashboardGraph(Integer startingYear, Integer endingYear);
+    
+    DashboardData getStationaryDashboardSummary(Integer startingYear, Integer endingYear);
+    
+    List<DashboardData> getStationaryDashboardGraph(Integer startingYear, Integer endingYear);
 }

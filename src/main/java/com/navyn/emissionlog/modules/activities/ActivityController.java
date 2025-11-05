@@ -210,4 +210,46 @@ public class ActivityController {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new ApiResponse(true, "Countries fetched successfully", Countries.values()));
     }
+    
+    // ============= MINI DASHBOARDS =============
+    
+    @Operation(summary = "Get Transport dashboard summary", description = "Retrieves transport emissions summary.")
+    @GetMapping("/transport/dashboard/summary")
+    public ResponseEntity<ApiResponse> getTransportDashboardSummary(
+            @RequestParam(required = false, value = "startingYear") Integer startingYear,
+            @RequestParam(required = false, value = "endingYear") Integer endingYear) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ApiResponse(true, "Transport dashboard summary fetched successfully", 
+                        activityService.getTransportDashboardSummary(startingYear, endingYear)));
+    }
+    
+    @Operation(summary = "Get Transport dashboard graph", description = "Retrieves transport emissions graph data by year.")
+    @GetMapping("/transport/dashboard/graph")
+    public ResponseEntity<ApiResponse> getTransportDashboardGraph(
+            @RequestParam(required = false, value = "startingYear") Integer startingYear,
+            @RequestParam(required = false, value = "endingYear") Integer endingYear) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ApiResponse(true, "Transport dashboard graph fetched successfully", 
+                        activityService.getTransportDashboardGraph(startingYear, endingYear)));
+    }
+    
+    @Operation(summary = "Get Stationary dashboard summary", description = "Retrieves stationary emissions summary.")
+    @GetMapping("/stationary/dashboard/summary")
+    public ResponseEntity<ApiResponse> getStationaryDashboardSummary(
+            @RequestParam(required = false, value = "startingYear") Integer startingYear,
+            @RequestParam(required = false, value = "endingYear") Integer endingYear) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ApiResponse(true, "Stationary dashboard summary fetched successfully", 
+                        activityService.getStationaryDashboardSummary(startingYear, endingYear)));
+    }
+    
+    @Operation(summary = "Get Stationary dashboard graph", description = "Retrieves stationary emissions graph data by year.")
+    @GetMapping("/stationary/dashboard/graph")
+    public ResponseEntity<ApiResponse> getStationaryDashboardGraph(
+            @RequestParam(required = false, value = "startingYear") Integer startingYear,
+            @RequestParam(required = false, value = "endingYear") Integer endingYear) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ApiResponse(true, "Stationary dashboard graph fetched successfully", 
+                        activityService.getStationaryDashboardGraph(startingYear, endingYear)));
+    }
 }

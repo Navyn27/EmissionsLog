@@ -27,16 +27,22 @@ import com.navyn.emissionlog.modules.agricultureEmissions.repositories.Livestock
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureManagementEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.ManureManagementEmissionsDto;
 
+import com.navyn.emissionlog.utils.DashboardData;
 import com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.navyn.emissionlog.Enums.Agriculture.AFOLUConstants.OTHER_FOREST_CF;
 import static com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications.*;
+import static java.util.stream.Collectors.groupingBy;
 
 @Service
 @RequiredArgsConstructor
@@ -564,5 +570,178 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
             case POULTRY_CHICKEN, POULTRY_DUCKS, POULTRY_TURKEYS -> 
                 ManureManagementConstants.WEIGHT_POULTRY.getValue();
         };
+    }
+    
+    // ============= MINI DASHBOARDS =============
+    
+    @Override
+    public DashboardData getAgricultureDashboardSummary(Integer startingYear, Integer endingYear) {
+        // Fetch all 7 agriculture modules
+        List<AquacultureEmissions> aquaculture = aquacultureEmissionsRepository.findAll();
+        List<EntericFermentationEmissions> enteric = entericFermentationEmissionsRepository.findAll();
+        List<LimingEmissions> liming = limingEmissionsRepository.findAll();
+        List<AnimalManureAndCompostEmissions> manure = animalManureAndCompostEmissionsRepository.findAll();
+        List<RiceCultivationEmissions> rice = riceCultivationEmissionsRepository.findAll();
+        List<SyntheticFertilizerEmissions> fertilizer = syntheticFertilizerEmissionsRepository.findAll();
+        List<UreaEmissions> urea = ureaEmissionsRepository.findAll();
+        
+        // Filter by year if specified
+        if (startingYear != null && endingYear != null) {
+            aquaculture = aquaculture.stream()
+                .filter(a -> a.getYear() >= startingYear && a.getYear() <= endingYear)
+                .toList();
+            enteric = enteric.stream()
+                .filter(e -> e.getYear() >= startingYear && e.getYear() <= endingYear)
+                .toList();
+            liming = liming.stream()
+                .filter(l -> l.getYear() >= startingYear && l.getYear() <= endingYear)
+                .toList();
+            manure = manure.stream()
+                .filter(m -> m.getYear() >= startingYear && m.getYear() <= endingYear)
+                .toList();
+            rice = rice.stream()
+                .filter(r -> r.getYear() >= startingYear && r.getYear() <= endingYear)
+                .toList();
+            fertilizer = fertilizer.stream()
+                .filter(f -> f.getYear() >= startingYear && f.getYear() <= endingYear)
+                .toList();
+            urea = urea.stream()
+                .filter(u -> u.getYear() >= startingYear && u.getYear() <= endingYear)
+                .toList();
+        }
+        
+        return calculateAgricultureDashboardData(aquaculture, enteric, liming, manure, rice, fertilizer, urea);
+    }
+    
+    @Override
+    public List<DashboardData> getAgricultureDashboardGraph(Integer startingYear, Integer endingYear) {
+        // Default to last 5 years if not specified
+        if (startingYear == null || endingYear == null) {
+            int currentYear = LocalDateTime.now().getYear();
+            startingYear = currentYear - 4;
+            endingYear = currentYear;
+        }
+        
+        // Fetch all data
+        List<AquacultureEmissions> aquaculture = aquacultureEmissionsRepository.findAll();
+        List<EntericFermentationEmissions> enteric = entericFermentationEmissionsRepository.findAll();
+        List<LimingEmissions> liming = limingEmissionsRepository.findAll();
+        List<AnimalManureAndCompostEmissions> manure = animalManureAndCompostEmissionsRepository.findAll();
+        List<RiceCultivationEmissions> rice = riceCultivationEmissionsRepository.findAll();
+        List<SyntheticFertilizerEmissions> fertilizer = syntheticFertilizerEmissionsRepository.findAll();
+        List<UreaEmissions> urea = ureaEmissionsRepository.findAll();
+        
+        // Filter by year range
+        final int finalStartYear = startingYear;
+        final int finalEndYear = endingYear;
+        
+        aquaculture = aquaculture.stream()
+            .filter(a -> a.getYear() >= finalStartYear && a.getYear() <= finalEndYear)
+            .toList();
+        enteric = enteric.stream()
+            .filter(e -> e.getYear() >= finalStartYear && e.getYear() <= finalEndYear)
+            .toList();
+        liming = liming.stream()
+            .filter(l -> l.getYear() >= finalStartYear && l.getYear() <= finalEndYear)
+            .toList();
+        manure = manure.stream()
+            .filter(m -> m.getYear() >= finalStartYear && m.getYear() <= finalEndYear)
+            .toList();
+        rice = rice.stream()
+            .filter(r -> r.getYear() >= finalStartYear && r.getYear() <= finalEndYear)
+            .toList();
+        fertilizer = fertilizer.stream()
+            .filter(f -> f.getYear() >= finalStartYear && f.getYear() <= finalEndYear)
+            .toList();
+        urea = urea.stream()
+            .filter(u -> u.getYear() >= finalStartYear && u.getYear() <= finalEndYear)
+            .toList();
+        
+        // Group by year
+        Map<Integer, List<AquacultureEmissions>> aquacultureByYear = aquaculture.stream().collect(groupingBy(AquacultureEmissions::getYear));
+        Map<Integer, List<EntericFermentationEmissions>> entericByYear = enteric.stream().collect(groupingBy(EntericFermentationEmissions::getYear));
+        Map<Integer, List<LimingEmissions>> limingByYear = liming.stream().collect(groupingBy(LimingEmissions::getYear));
+        Map<Integer, List<AnimalManureAndCompostEmissions>> manureByYear = manure.stream().collect(groupingBy(AnimalManureAndCompostEmissions::getYear));
+        Map<Integer, List<RiceCultivationEmissions>> riceByYear = rice.stream().collect(groupingBy(RiceCultivationEmissions::getYear));
+        Map<Integer, List<SyntheticFertilizerEmissions>> fertilizerByYear = fertilizer.stream().collect(groupingBy(SyntheticFertilizerEmissions::getYear));
+        Map<Integer, List<UreaEmissions>> ureaByYear = urea.stream().collect(groupingBy(UreaEmissions::getYear));
+        
+        // Create dashboard data for each year
+        List<DashboardData> dashboardDataList = new ArrayList<>();
+        for (int year = startingYear; year <= endingYear; year++) {
+            DashboardData data = calculateAgricultureDashboardData(
+                aquacultureByYear.getOrDefault(year, List.of()),
+                entericByYear.getOrDefault(year, List.of()),
+                limingByYear.getOrDefault(year, List.of()),
+                manureByYear.getOrDefault(year, List.of()),
+                riceByYear.getOrDefault(year, List.of()),
+                fertilizerByYear.getOrDefault(year, List.of()),
+                ureaByYear.getOrDefault(year, List.of())
+            );
+            data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
+            data.setEndingDate(LocalDateTime.of(year, 12, 31, 23, 59).toString());
+            data.setYear(Year.of(year));
+            dashboardDataList.add(data);
+        }
+        
+        return dashboardDataList;
+    }
+    
+    private DashboardData calculateAgricultureDashboardData(
+            List<AquacultureEmissions> aquaculture,
+            List<EntericFermentationEmissions> enteric,
+            List<LimingEmissions> liming,
+            List<AnimalManureAndCompostEmissions> manure,
+            List<RiceCultivationEmissions> rice,
+            List<SyntheticFertilizerEmissions> fertilizer,
+            List<UreaEmissions> urea) {
+        
+        DashboardData data = new DashboardData();
+        
+        // Aquaculture: N2O only
+        for (AquacultureEmissions a : aquaculture) {
+            data.setTotalN2OEmissions(data.getTotalN2OEmissions() + a.getN2OEmissions());
+        }
+        
+        // Enteric: CH4 only
+        for (EntericFermentationEmissions e : enteric) {
+            data.setTotalCH4Emissions(data.getTotalCH4Emissions() + e.getCH4Emissions());
+        }
+        
+        // Liming: BioCO2 only
+        for (LimingEmissions l : liming) {
+            data.setTotalBioCO2Emissions(data.getTotalBioCO2Emissions() + l.getCO2Emissions());
+        }
+        
+        // Manure: CH4 + N2O
+        for (AnimalManureAndCompostEmissions m : manure) {
+            data.setTotalCH4Emissions(data.getTotalCH4Emissions() + m.getCH4Emissions());
+            data.setTotalN2OEmissions(data.getTotalN2OEmissions() + m.getN2OEmissions());
+        }
+        
+        // Rice: CH4 only
+        for (RiceCultivationEmissions r : rice) {
+            data.setTotalCH4Emissions(data.getTotalCH4Emissions() + r.getAnnualCH4Emissions());
+        }
+        
+        // Fertilizer: N2O only
+        for (SyntheticFertilizerEmissions f : fertilizer) {
+            data.setTotalN2OEmissions(data.getTotalN2OEmissions() + f.getN2OEmissions());
+        }
+        
+        // Urea: BioCO2 only
+        for (UreaEmissions u : urea) {
+            data.setTotalBioCO2Emissions(data.getTotalBioCO2Emissions() + u.getCO2Emissions());
+        }
+        
+        // Calculate CO2eq
+        data.setTotalCO2EqEmissions(
+            data.getTotalFossilCO2Emissions() + 
+            data.getTotalBioCO2Emissions() + 
+            data.getTotalCH4Emissions() * GWP.CH4.getValue() + 
+            data.getTotalN2OEmissions() * GWP.N2O.getValue()
+        );
+        
+        return data;
     }
 }

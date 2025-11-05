@@ -8,6 +8,7 @@ import com.navyn.emissionlog.modules.wasteEmissions.dtos.GeneralWasteByPopulatio
 import com.navyn.emissionlog.modules.wasteEmissions.dtos.IndustrialWasteDto;
 import com.navyn.emissionlog.modules.wasteEmissions.dtos.SolidWasteDto;
 import com.navyn.emissionlog.modules.wasteEmissions.dtos.WasteWaterDto;
+import com.navyn.emissionlog.utils.DashboardData;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -39,4 +40,9 @@ public interface WasteService {
     List<WasteDataAbstract> populateSolidWasteData(MultipartFile file) throws IOException;
 
     List<SolidWasteData> getSolidWasteData(SolidWasteType solidWasteType, Integer year, UUID regionId);
+    
+    // Mini Dashboards
+    DashboardData getWasteDashboardSummary(Integer startingYear, Integer endingYear);
+    
+    List<DashboardData> getWasteDashboardGraph(Integer startingYear, Integer endingYear);
 }

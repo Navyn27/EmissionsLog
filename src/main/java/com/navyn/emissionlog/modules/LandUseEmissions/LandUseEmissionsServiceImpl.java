@@ -6,14 +6,20 @@ import com.navyn.emissionlog.Enums.LandUse.LandUseConstants;
 import com.navyn.emissionlog.modules.LandUseEmissions.Dtos.*;
 import com.navyn.emissionlog.modules.LandUseEmissions.Repositories.*;
 import com.navyn.emissionlog.modules.LandUseEmissions.models.*;
+import com.navyn.emissionlog.utils.DashboardData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.Year;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static com.navyn.emissionlog.utils.Specifications.LandUseEmissionsSpecification.*;
+import static java.util.stream.Collectors.groupingBy;
 
 @Service
 @RequiredArgsConstructor
@@ -138,5 +144,143 @@ public class LandUseEmissionsServiceImpl implements LandUseEmissionsService {
     public List<RewettedMineralWetlands> getAllRewettedMineralWetlands(Integer year) {
         Specification<RewettedMineralWetlands> spec = Specification.<RewettedMineralWetlands>where(hasYear(year));
         return rewettedMineralWetlandsRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+    }
+    
+    // ============= MINI DASHBOARDS =============
+    
+    @Override
+    public DashboardData getLandUseDashboardSummary(Integer startingYear, Integer endingYear) {
+        // Fetch all 5 land use modules
+        List<BiomassGain> gains = biomassGainRepository.findAll();
+        List<DisturbanceBiomassLoss> disturbanceLosses = disturbanceBiomassLossRepository.findAll();
+        List<FirewoodRemovalBiomassLoss> firewoodLosses = firewoodRemovalBiomassLossRepository.findAll();
+        List<HarvestedBiomassLoss> harvestedLosses = harvestedBiomassLossRepository.findAll();
+        List<RewettedMineralWetlands> wetlands = rewettedMineralWetlandsRepository.findAll();
+        
+        // Filter by year if specified
+        if (startingYear != null && endingYear != null) {
+            gains = gains.stream()
+                .filter(g -> g.getYear() >= startingYear && g.getYear() <= endingYear)
+                .toList();
+            disturbanceLosses = disturbanceLosses.stream()
+                .filter(d -> d.getYear() >= startingYear && d.getYear() <= endingYear)
+                .toList();
+            firewoodLosses = firewoodLosses.stream()
+                .filter(f -> f.getYear() >= startingYear && f.getYear() <= endingYear)
+                .toList();
+            harvestedLosses = harvestedLosses.stream()
+                .filter(h -> h.getYear() >= startingYear && h.getYear() <= endingYear)
+                .toList();
+            wetlands = wetlands.stream()
+                .filter(w -> w.getYear() >= startingYear && w.getYear() <= endingYear)
+                .toList();
+        }
+        
+        return calculateLandUseDashboardData(gains, disturbanceLosses, firewoodLosses, harvestedLosses, wetlands);
+    }
+    
+    @Override
+    public List<DashboardData> getLandUseDashboardGraph(Integer startingYear, Integer endingYear) {
+        // Default to last 5 years if not specified
+        if (startingYear == null || endingYear == null) {
+            int currentYear = LocalDateTime.now().getYear();
+            startingYear = currentYear - 4;
+            endingYear = currentYear;
+        }
+        
+        // Fetch all data
+        List<BiomassGain> gains = biomassGainRepository.findAll();
+        List<DisturbanceBiomassLoss> disturbanceLosses = disturbanceBiomassLossRepository.findAll();
+        List<FirewoodRemovalBiomassLoss> firewoodLosses = firewoodRemovalBiomassLossRepository.findAll();
+        List<HarvestedBiomassLoss> harvestedLosses = harvestedBiomassLossRepository.findAll();
+        List<RewettedMineralWetlands> wetlands = rewettedMineralWetlandsRepository.findAll();
+        
+        // Filter by year range
+        final int finalStartYear = startingYear;
+        final int finalEndYear = endingYear;
+        
+        gains = gains.stream()
+            .filter(g -> g.getYear() >= finalStartYear && g.getYear() <= finalEndYear)
+            .toList();
+        disturbanceLosses = disturbanceLosses.stream()
+            .filter(d -> d.getYear() >= finalStartYear && d.getYear() <= finalEndYear)
+            .toList();
+        firewoodLosses = firewoodLosses.stream()
+            .filter(f -> f.getYear() >= finalStartYear && f.getYear() <= finalEndYear)
+            .toList();
+        harvestedLosses = harvestedLosses.stream()
+            .filter(h -> h.getYear() >= finalStartYear && h.getYear() <= finalEndYear)
+            .toList();
+        wetlands = wetlands.stream()
+            .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
+            .toList();
+        
+        // Group by year
+        Map<Integer, List<BiomassGain>> gainsByYear = gains.stream().collect(groupingBy(BiomassGain::getYear));
+        Map<Integer, List<DisturbanceBiomassLoss>> disturbanceByYear = disturbanceLosses.stream().collect(groupingBy(DisturbanceBiomassLoss::getYear));
+        Map<Integer, List<FirewoodRemovalBiomassLoss>> firewoodByYear = firewoodLosses.stream().collect(groupingBy(FirewoodRemovalBiomassLoss::getYear));
+        Map<Integer, List<HarvestedBiomassLoss>> harvestedByYear = harvestedLosses.stream().collect(groupingBy(HarvestedBiomassLoss::getYear));
+        Map<Integer, List<RewettedMineralWetlands>> wetlandsByYear = wetlands.stream().collect(groupingBy(RewettedMineralWetlands::getYear));
+        
+        // Create dashboard data for each year
+        List<DashboardData> dashboardDataList = new ArrayList<>();
+        for (int year = startingYear; year <= endingYear; year++) {
+            DashboardData data = calculateLandUseDashboardData(
+                gainsByYear.getOrDefault(year, List.of()),
+                disturbanceByYear.getOrDefault(year, List.of()),
+                firewoodByYear.getOrDefault(year, List.of()),
+                harvestedByYear.getOrDefault(year, List.of()),
+                wetlandsByYear.getOrDefault(year, List.of())
+            );
+            data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
+            data.setEndingDate(LocalDateTime.of(year, 12, 31, 23, 59).toString());
+            data.setYear(Year.of(year));
+            dashboardDataList.add(data);
+        }
+        
+        return dashboardDataList;
+    }
+    
+    private DashboardData calculateLandUseDashboardData(
+            List<BiomassGain> gains,
+            List<DisturbanceBiomassLoss> disturbanceLosses,
+            List<FirewoodRemovalBiomassLoss> firewoodLosses,
+            List<HarvestedBiomassLoss> harvestedLosses,
+            List<RewettedMineralWetlands> wetlands) {
+        
+        DashboardData data = new DashboardData();
+        Double landUseTotal = 0.0;
+        
+        // BiomassGain (carbon removal - subtract)
+        for (BiomassGain gain : gains) {
+            landUseTotal -= gain.getCO2EqOfBiomassCarbonGained();
+        }
+        
+        // Biomass Losses (positive emissions - add)
+        for (DisturbanceBiomassLoss loss : disturbanceLosses) {
+            landUseTotal += loss.getCO2EqOfBiomassCarbonLoss();
+        }
+        for (FirewoodRemovalBiomassLoss loss : firewoodLosses) {
+            landUseTotal += loss.getCO2EqOfBiomassCarbonLoss();
+        }
+        for (HarvestedBiomassLoss loss : harvestedLosses) {
+            landUseTotal += loss.getCO2EqOfBiomassCarbonLoss();
+        }
+        
+        // Rewetted Wetlands (positive emissions + CH4)
+        for (RewettedMineralWetlands wetland : wetlands) {
+            landUseTotal += wetland.getCO2EqEmissions();
+            data.setTotalCH4Emissions(data.getTotalCH4Emissions() + wetland.getCH4Emissions());
+        }
+        
+        data.setTotalLandUseEmissions(landUseTotal);
+        
+        // Calculate total CO2eq (land use + CH4 from wetlands)
+        data.setTotalCO2EqEmissions(
+            landUseTotal + 
+            data.getTotalCH4Emissions() * GWP.CH4.getValue()
+        );
+        
+        return data;
     }
 }

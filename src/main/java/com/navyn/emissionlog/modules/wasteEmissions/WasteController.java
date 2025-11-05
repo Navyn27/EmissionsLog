@@ -104,4 +104,26 @@ public class WasteController {
     public ResponseEntity<ApiResponse> populateWasteDataWithSolid(@RequestParam("file") MultipartFile file) throws IOException {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Waste data populated successfully", wasteService.populateSolidWasteData(file)));
     }
+    
+    // ============= MINI DASHBOARDS =============
+    
+    @Operation(summary = "Get Waste dashboard summary", description = "Retrieves waste emissions summary.")
+    @GetMapping("/dashboard/summary")
+    public ResponseEntity<ApiResponse> getWasteDashboardSummary(
+            @RequestParam(required = false, value = "startingYear") Integer startingYear,
+            @RequestParam(required = false, value = "endingYear") Integer endingYear) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ApiResponse(true, "Waste dashboard summary fetched successfully", 
+                        wasteService.getWasteDashboardSummary(startingYear, endingYear)));
+    }
+    
+    @Operation(summary = "Get Waste dashboard graph", description = "Retrieves waste emissions graph data by year.")
+    @GetMapping("/dashboard/graph")
+    public ResponseEntity<ApiResponse> getWasteDashboardGraph(
+            @RequestParam(required = false, value = "startingYear") Integer startingYear,
+            @RequestParam(required = false, value = "endingYear") Integer endingYear) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ApiResponse(true, "Waste dashboard graph fetched successfully", 
+                        wasteService.getWasteDashboardGraph(startingYear, endingYear)));
+    }
 }

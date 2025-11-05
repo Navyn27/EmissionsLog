@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -257,5 +258,27 @@ public class AgricultureEmissionsController {
             @RequestParam(required = false, value = "mms") ManureManagementSystem mms) {
         List<ManureManagementEmissions> emissions = agricultureEmissionsService.getAllManureManagementEmissions(year, species, mms);
         return ResponseEntity.ok(new ApiResponse(true, "Manure management emissions fetched successfully", emissions));
+    }
+    
+    // ============= MINI DASHBOARDS =============
+    
+    @Operation(summary = "Get Agriculture dashboard summary", description = "Retrieves agriculture emissions summary from all 7 modules.")
+    @GetMapping("/dashboard/summary")
+    public ResponseEntity<ApiResponse> getAgricultureDashboardSummary(
+            @RequestParam(required = false, value = "startingYear") Integer startingYear,
+            @RequestParam(required = false, value = "endingYear") Integer endingYear) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ApiResponse(true, "Agriculture dashboard summary fetched successfully", 
+                        agricultureEmissionsService.getAgricultureDashboardSummary(startingYear, endingYear)));
+    }
+    
+    @Operation(summary = "Get Agriculture dashboard graph", description = "Retrieves agriculture emissions graph data by year.")
+    @GetMapping("/dashboard/graph")
+    public ResponseEntity<ApiResponse> getAgricultureDashboardGraph(
+            @RequestParam(required = false, value = "startingYear") Integer startingYear,
+            @RequestParam(required = false, value = "endingYear") Integer endingYear) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ApiResponse(true, "Agriculture dashboard graph fetched successfully", 
+                        agricultureEmissionsService.getAgricultureDashboardGraph(startingYear, endingYear)));
     }
 }

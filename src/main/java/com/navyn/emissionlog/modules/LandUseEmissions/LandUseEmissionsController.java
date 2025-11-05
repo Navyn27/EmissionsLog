@@ -3,9 +3,12 @@ package com.navyn.emissionlog.modules.LandUseEmissions;
 import com.navyn.emissionlog.Enums.LandUse.LandCategory;
 import com.navyn.emissionlog.modules.LandUseEmissions.Dtos.*;
 import com.navyn.emissionlog.modules.LandUseEmissions.models.*;
+import com.navyn.emissionlog.utils.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -91,5 +94,27 @@ public class LandUseEmissionsController {
             @RequestParam(required = false) Integer year) {
         List<RewettedMineralWetlands> rewettedMineralWetlands = landUseEmissionsService.getAllRewettedMineralWetlands(year);
         return ResponseEntity.ok(rewettedMineralWetlands);
+    }
+    
+    // ============= MINI DASHBOARDS =============
+    
+    @Operation(summary = "Get Land Use dashboard summary", description = "Retrieves land use emissions summary from all 5 modules.")
+    @GetMapping("/dashboard/summary")
+    public ResponseEntity<ApiResponse> getLandUseDashboardSummary(
+            @RequestParam(required = false, value = "startingYear") Integer startingYear,
+            @RequestParam(required = false, value = "endingYear") Integer endingYear) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ApiResponse(true, "Land Use dashboard summary fetched successfully", 
+                        landUseEmissionsService.getLandUseDashboardSummary(startingYear, endingYear)));
+    }
+    
+    @Operation(summary = "Get Land Use dashboard graph", description = "Retrieves land use emissions graph data by year.")
+    @GetMapping("/dashboard/graph")
+    public ResponseEntity<ApiResponse> getLandUseDashboardGraph(
+            @RequestParam(required = false, value = "startingYear") Integer startingYear,
+            @RequestParam(required = false, value = "endingYear") Integer endingYear) {
+        return ResponseEntity.status(HttpStatus.OK).body(
+                new ApiResponse(true, "Land Use dashboard graph fetched successfully", 
+                        landUseEmissionsService.getLandUseDashboardGraph(startingYear, endingYear)));
     }
 }

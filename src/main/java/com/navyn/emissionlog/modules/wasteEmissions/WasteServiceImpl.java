@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.modules.wasteEmissions;
 
 import com.navyn.emissionlog.Enums.ExcelType;
+import com.navyn.emissionlog.Enums.GWP;
 import com.navyn.emissionlog.Enums.Scopes;
 import com.navyn.emissionlog.Enums.Waste.SolidWasteType;
 import com.navyn.emissionlog.Enums.Waste.WasteType;
@@ -10,6 +11,7 @@ import com.navyn.emissionlog.modules.regions.Region;
 import com.navyn.emissionlog.modules.eicvReports.EICVReportRepository;
 import com.navyn.emissionlog.modules.populationRecords.PopulationRecordsRepository;
 import com.navyn.emissionlog.modules.regions.RegionRepository;
+import com.navyn.emissionlog.utils.DashboardData;
 import com.navyn.emissionlog.utils.ExcelReader;
 import com.navyn.emissionlog.modules.wasteEmissions.models.*;
 import com.navyn.emissionlog.modules.wasteEmissions.dtos.*;
@@ -23,10 +25,14 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import static java.util.stream.Collectors.groupingBy;
 
 import static com.navyn.emissionlog.Enums.Waste.WasteType.SOLID_WASTE;
 
@@ -350,6 +356,78 @@ public class WasteServiceImpl implements WasteService {
             }
         }
         return eicvReport.get();
+    }
+    
+    // ============= MINI DASHBOARDS =============
+    
+    @Override
+    public DashboardData getWasteDashboardSummary(Integer startingYear, Integer endingYear) {
+        List<WasteDataAbstract> wasteData = wasteDataRepository.findAll();
+        
+        if (startingYear != null && endingYear != null) {
+            wasteData = wasteData.stream()
+                    .filter(w -> w.getYear() >= startingYear && w.getYear() <= endingYear)
+                    .toList();
+        }
+        
+        return calculateWasteDashboardData(wasteData);
+    }
+    
+    @Override
+    public List<DashboardData> getWasteDashboardGraph(Integer startingYear, Integer endingYear) {
+        List<WasteDataAbstract> wasteData = wasteDataRepository.findAll();
+        
+        // Default to last 5 years if not specified
+        if (startingYear == null || endingYear == null) {
+            int currentYear = LocalDateTime.now().getYear();
+            startingYear = currentYear - 4;
+            endingYear = currentYear;
+        }
+        
+        // Filter by year range
+        final int finalStartYear = startingYear;
+        final int finalEndYear = endingYear;
+        wasteData = wasteData.stream()
+                .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
+                .toList();
+        
+        // Group by year
+        Map<Integer, List<WasteDataAbstract>> groupedByYear = wasteData.stream()
+                .collect(groupingBy(WasteDataAbstract::getYear));
+        
+        // Create dashboard data for each year
+        List<DashboardData> dashboardDataList = new ArrayList<>();
+        for (int year = startingYear; year <= endingYear; year++) {
+            List<WasteDataAbstract> yearWaste = groupedByYear.getOrDefault(year, List.of());
+            DashboardData data = calculateWasteDashboardData(yearWaste);
+            data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
+            data.setEndingDate(LocalDateTime.of(year, 12, 31, 23, 59).toString());
+            data.setYear(Year.of(year));
+            dashboardDataList.add(data);
+        }
+        
+        return dashboardDataList;
+    }
+    
+    private DashboardData calculateWasteDashboardData(List<WasteDataAbstract> wasteData) {
+        DashboardData dashboardData = new DashboardData();
+        
+        for (WasteDataAbstract waste : wasteData) {
+            dashboardData.setTotalCH4Emissions(dashboardData.getTotalCH4Emissions() + waste.getCH4Emissions());
+            dashboardData.setTotalN2OEmissions(dashboardData.getTotalN2OEmissions() + waste.getN2OEmissions());
+            dashboardData.setTotalFossilCO2Emissions(dashboardData.getTotalFossilCO2Emissions() + waste.getFossilCO2Emissions());
+            dashboardData.setTotalBioCO2Emissions(dashboardData.getTotalBioCO2Emissions() + waste.getBioCO2Emissions());
+        }
+        
+        // Calculate CO2 equivalent
+        dashboardData.setTotalCO2EqEmissions(
+            dashboardData.getTotalFossilCO2Emissions() + 
+            dashboardData.getTotalBioCO2Emissions() + 
+            dashboardData.getTotalCH4Emissions() * GWP.CH4.getValue() + 
+            dashboardData.getTotalN2OEmissions() * GWP.N2O.getValue()
+        );
+        
+        return dashboardData;
     }
 
 }
