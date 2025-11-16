@@ -1,0 +1,17 @@
+package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.repositories;
+
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.models.CropRotationMitigation;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface CropRotationMitigationRepository 
+        extends JpaRepository<CropRotationMitigation, UUID>,
+                JpaSpecificationExecutor<CropRotationMitigation> {
+    
+    Optional<CropRotationMitigation> findByYear(Integer year);
+}

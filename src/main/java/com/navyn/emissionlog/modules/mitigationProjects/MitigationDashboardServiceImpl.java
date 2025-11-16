@@ -1,21 +1,29 @@
 package com.navyn.emissionlog.modules.mitigationProjects;
 
-import com.navyn.emissionlog.modules.mitigationProjects.cropRotation.models.CropRotationMitigation;
-import com.navyn.emissionlog.modules.mitigationProjects.cropRotation.repositories.CropRotationMitigationRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.greenFences.models.GreenFencesMitigation;
-import com.navyn.emissionlog.modules.mitigationProjects.greenFences.repositories.GreenFencesMitigationRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.improvedMMS.models.ImprovedMMSMitigation;
-import com.navyn.emissionlog.modules.mitigationProjects.improvedMMS.repositories.ImprovedMMSMitigationRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.protectiveForest.models.ProtectiveForestMitigation;
-import com.navyn.emissionlog.modules.mitigationProjects.protectiveForest.repositories.ProtectiveForestMitigationRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.settlementTrees.models.SettlementTreesMitigation;
-import com.navyn.emissionlog.modules.mitigationProjects.settlementTrees.repositories.SettlementTreesMitigationRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.streetTrees.models.StreetTreesMitigation;
-import com.navyn.emissionlog.modules.mitigationProjects.streetTrees.repositories.StreetTreesMitigationRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.wetlandParks.models.WetlandParksMitigation;
-import com.navyn.emissionlog.modules.mitigationProjects.wetlandParks.repositories.WetlandParksMitigationRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.zeroTillage.models.ZeroTillageMitigation;
-import com.navyn.emissionlog.modules.mitigationProjects.zeroTillage.repositories.ZeroTillageMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.models.CropRotationMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.repositories.CropRotationMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.models.GreenFencesMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.repositories.GreenFencesMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.models.ImprovedMMSMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.repositories.ImprovedMMSMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.models.ProtectiveForestMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.repositories.ProtectiveForestMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.models.SettlementTreesMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.repositories.SettlementTreesMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.models.StreetTreesMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.repositories.StreetTreesMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandParks.models.WetlandParksMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandParks.repositories.WetlandParksMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.models.ZeroTillageMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.repositories.ZeroTillageMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.models.WasteToEnergyMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.repository.WasteToEnergyMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.models.LandfillGasUtilizationMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.repository.LandfillGasUtilizationMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.models.MBTCompostingMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.repository.MBTCompostingMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.models.EPRPlasticWasteMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.repository.EPRPlasticWasteMitigationRepository;
 import com.navyn.emissionlog.utils.DashboardData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,10 +48,14 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
     private final ZeroTillageMitigationRepository zeroTillageRepository;
     private final ProtectiveForestMitigationRepository protectiveForestRepository;
     private final ImprovedMMSMitigationRepository improvedMMSRepository;
+    private final WasteToEnergyMitigationRepository wasteToEnergyRepository;
+    private final LandfillGasUtilizationMitigationRepository landfillGasUtilizationRepository;
+    private final MBTCompostingMitigationRepository mbtCompostingRepository;
+    private final EPRPlasticWasteMitigationRepository eprPlasticWasteRepository;
     
     @Override
     public DashboardData getMitigationDashboardSummary(Integer startingYear, Integer endingYear) {
-        // Fetch all 8 mitigation projects
+        // Fetch all 12 mitigation projects (8 AFOLU + 4 Waste)
         List<WetlandParksMitigation> wetlandParks = wetlandParksRepository.findAll();
         List<SettlementTreesMitigation> settlementTrees = settlementTreesRepository.findAll();
         List<StreetTreesMitigation> streetTrees = streetTreesRepository.findAll();
@@ -52,6 +64,10 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<ZeroTillageMitigation> zeroTillage = zeroTillageRepository.findAll();
         List<ProtectiveForestMitigation> protectiveForest = protectiveForestRepository.findAll();
         List<ImprovedMMSMitigation> improvedMMS = improvedMMSRepository.findAll();
+        List<WasteToEnergyMitigation> wasteToEnergy = wasteToEnergyRepository.findAll();
+        List<LandfillGasUtilizationMitigation> landfillGasUtilization = landfillGasUtilizationRepository.findAll();
+        List<MBTCompostingMitigation> mbtComposting = mbtCompostingRepository.findAll();
+        List<EPRPlasticWasteMitigation> eprPlasticWaste = eprPlasticWasteRepository.findAll();
         
         // Filter by year if specified
         if (startingYear != null && endingYear != null) {
@@ -79,10 +95,22 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             improvedMMS = improvedMMS.stream()
                 .filter(i -> i.getYear() >= startingYear && i.getYear() <= endingYear)
                 .toList();
+            wasteToEnergy = wasteToEnergy.stream()
+                .filter(w -> w.getYear() >= startingYear && w.getYear() <= endingYear)
+                .toList();
+            landfillGasUtilization = landfillGasUtilization.stream()
+                .filter(l -> l.getYear() >= startingYear && l.getYear() <= endingYear)
+                .toList();
+            mbtComposting = mbtComposting.stream()
+                .filter(m -> m.getYear() >= startingYear && m.getYear() <= endingYear)
+                .toList();
+            eprPlasticWaste = eprPlasticWaste.stream()
+                .filter(e -> e.getYear() >= startingYear && e.getYear() <= endingYear)
+                .toList();
         }
         
         return calculateMitigationDashboardData(wetlandParks, settlementTrees, streetTrees, 
-                greenFences, cropRotation, zeroTillage, protectiveForest, improvedMMS);
+                greenFences, cropRotation, zeroTillage, protectiveForest, improvedMMS, wasteToEnergy, landfillGasUtilization, mbtComposting, eprPlasticWaste);
     }
     
     @Override
@@ -103,6 +131,10 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<ZeroTillageMitigation> zeroTillage = zeroTillageRepository.findAll();
         List<ProtectiveForestMitigation> protectiveForest = protectiveForestRepository.findAll();
         List<ImprovedMMSMitigation> improvedMMS = improvedMMSRepository.findAll();
+        List<WasteToEnergyMitigation> wasteToEnergy = wasteToEnergyRepository.findAll();
+        List<LandfillGasUtilizationMitigation> landfillGasUtilization = landfillGasUtilizationRepository.findAll();
+        List<MBTCompostingMitigation> mbtComposting = mbtCompostingRepository.findAll();
+        List<EPRPlasticWasteMitigation> eprPlasticWaste = eprPlasticWasteRepository.findAll();
         
         // Filter by year range
         final int finalStartYear = startingYear;
@@ -132,6 +164,18 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         improvedMMS = improvedMMS.stream()
             .filter(i -> i.getYear() >= finalStartYear && i.getYear() <= finalEndYear)
             .toList();
+        wasteToEnergy = wasteToEnergy.stream()
+            .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
+            .toList();
+        landfillGasUtilization = landfillGasUtilization.stream()
+            .filter(l -> l.getYear() >= finalStartYear && l.getYear() <= finalEndYear)
+            .toList();
+        mbtComposting = mbtComposting.stream()
+            .filter(m -> m.getYear() >= finalStartYear && m.getYear() <= finalEndYear)
+            .toList();
+        eprPlasticWaste = eprPlasticWaste.stream()
+            .filter(e -> e.getYear() >= finalStartYear && e.getYear() <= finalEndYear)
+            .toList();
         
         // Group by year
         Map<Integer, List<WetlandParksMitigation>> wetlandParksByYear = wetlandParks.stream().collect(groupingBy(WetlandParksMitigation::getYear));
@@ -142,6 +186,10 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         Map<Integer, List<ZeroTillageMitigation>> zeroTillageByYear = zeroTillage.stream().collect(groupingBy(ZeroTillageMitigation::getYear));
         Map<Integer, List<ProtectiveForestMitigation>> protectiveForestByYear = protectiveForest.stream().collect(groupingBy(ProtectiveForestMitigation::getYear));
         Map<Integer, List<ImprovedMMSMitigation>> improvedMMSByYear = improvedMMS.stream().collect(groupingBy(ImprovedMMSMitigation::getYear));
+        Map<Integer, List<WasteToEnergyMitigation>> wasteToEnergyByYear = wasteToEnergy.stream().collect(groupingBy(WasteToEnergyMitigation::getYear));
+        Map<Integer, List<LandfillGasUtilizationMitigation>> landfillGasUtilizationByYear = landfillGasUtilization.stream().collect(groupingBy(LandfillGasUtilizationMitigation::getYear));
+        Map<Integer, List<MBTCompostingMitigation>> mbtCompostingByYear = mbtComposting.stream().collect(groupingBy(MBTCompostingMitigation::getYear));
+        Map<Integer, List<EPRPlasticWasteMitigation>> eprPlasticWasteByYear = eprPlasticWaste.stream().collect(groupingBy(EPRPlasticWasteMitigation::getYear));
         
         // Create dashboard data for each year
         List<DashboardData> dashboardDataList = new ArrayList<>();
@@ -154,7 +202,11 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
                 cropRotationByYear.getOrDefault(year, List.of()),
                 zeroTillageByYear.getOrDefault(year, List.of()),
                 protectiveForestByYear.getOrDefault(year, List.of()),
-                improvedMMSByYear.getOrDefault(year, List.of())
+                improvedMMSByYear.getOrDefault(year, List.of()),
+                wasteToEnergyByYear.getOrDefault(year, List.of()),
+                landfillGasUtilizationByYear.getOrDefault(year, List.of()),
+                mbtCompostingByYear.getOrDefault(year, List.of()),
+                eprPlasticWasteByYear.getOrDefault(year, List.of())
             );
             data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
             data.setEndingDate(LocalDateTime.of(year, 12, 31, 23, 59).toString());
@@ -173,7 +225,11 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             List<CropRotationMitigation> cropRotation,
             List<ZeroTillageMitigation> zeroTillage,
             List<ProtectiveForestMitigation> protectiveForest,
-            List<ImprovedMMSMitigation> improvedMMS) {
+            List<ImprovedMMSMitigation> improvedMMS,
+            List<WasteToEnergyMitigation> wasteToEnergy,
+            List<LandfillGasUtilizationMitigation> landfillGasUtilization,
+            List<MBTCompostingMitigation> mbtComposting,
+            List<EPRPlasticWasteMitigation> eprPlasticWaste) {
         
         DashboardData data = new DashboardData();
         Double totalMitigation = 0.0;
@@ -226,6 +282,34 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         for (ImprovedMMSMitigation m : improvedMMS) {
             if (m.getTotalMitigation() != null) {
                 totalMitigation += m.getTotalMitigation();
+            }
+        }
+        
+        // Waste-to-Energy uses ghgReductionKilotonnes
+        for (WasteToEnergyMitigation m : wasteToEnergy) {
+            if (m.getGhgReductionKilotonnes() != null) {
+                totalMitigation += m.getGhgReductionKilotonnes();
+            }
+        }
+        
+        // Landfill Gas Utilization uses projectReductionEmissions
+        for (LandfillGasUtilizationMitigation m : landfillGasUtilization) {
+            if (m.getProjectReductionEmissions() != null) {
+                totalMitigation += m.getProjectReductionEmissions();
+            }
+        }
+        
+        // MBT Composting uses estimatedGhgReductionKilotonnesPerYear
+        for (MBTCompostingMitigation m : mbtComposting) {
+            if (m.getEstimatedGhgReductionKilotonnesPerYear() != null) {
+                totalMitigation += m.getEstimatedGhgReductionKilotonnesPerYear();
+            }
+        }
+        
+        // EPR Plastic Waste uses ghgReductionKilotonnes
+        for (EPRPlasticWasteMitigation e : eprPlasticWaste) {
+            if (e.getGhgReductionKilotonnes() != null) {
+                totalMitigation += e.getGhgReductionKilotonnes();
             }
         }
         
