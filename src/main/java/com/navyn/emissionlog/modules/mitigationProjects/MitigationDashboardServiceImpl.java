@@ -24,6 +24,12 @@ import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.mode
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.repository.MBTCompostingMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.models.EPRPlasticWasteMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.repository.EPRPlasticWasteMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.models.KigaliFSTPMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.repository.KigaliFSTPMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.models.KigaliWWTPMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.repository.KigaliWWTPMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.models.ISWMMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.repository.ISWMMitigationRepository;
 import com.navyn.emissionlog.utils.DashboardData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -52,10 +58,13 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
     private final LandfillGasUtilizationMitigationRepository landfillGasUtilizationRepository;
     private final MBTCompostingMitigationRepository mbtCompostingRepository;
     private final EPRPlasticWasteMitigationRepository eprPlasticWasteRepository;
+    private final KigaliFSTPMitigationRepository kigaliFSTPRepository;
+    private final KigaliWWTPMitigationRepository kigaliWWTPRepository;
+    private final ISWMMitigationRepository iswmRepository;
     
     @Override
     public DashboardData getMitigationDashboardSummary(Integer startingYear, Integer endingYear) {
-        // Fetch all 12 mitigation projects (8 AFOLU + 4 Waste)
+        // Fetch all 15 mitigation projects (8 AFOLU + 7 Waste)
         List<WetlandParksMitigation> wetlandParks = wetlandParksRepository.findAll();
         List<SettlementTreesMitigation> settlementTrees = settlementTreesRepository.findAll();
         List<StreetTreesMitigation> streetTrees = streetTreesRepository.findAll();
@@ -68,6 +77,9 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<LandfillGasUtilizationMitigation> landfillGasUtilization = landfillGasUtilizationRepository.findAll();
         List<MBTCompostingMitigation> mbtComposting = mbtCompostingRepository.findAll();
         List<EPRPlasticWasteMitigation> eprPlasticWaste = eprPlasticWasteRepository.findAll();
+        List<KigaliFSTPMitigation> kigaliFSTP = kigaliFSTPRepository.findAll();
+        List<KigaliWWTPMitigation> kigaliWWTP = kigaliWWTPRepository.findAll();
+        List<ISWMMitigation> iswm = iswmRepository.findAll();
         
         // Filter by year if specified
         if (startingYear != null && endingYear != null) {
@@ -107,10 +119,19 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             eprPlasticWaste = eprPlasticWaste.stream()
                 .filter(e -> e.getYear() >= startingYear && e.getYear() <= endingYear)
                 .toList();
+            kigaliFSTP = kigaliFSTP.stream()
+                .filter(k -> k.getYear() >= startingYear && k.getYear() <= endingYear)
+                .toList();
+            kigaliWWTP = kigaliWWTP.stream()
+                .filter(w -> w.getYear() >= startingYear && w.getYear() <= endingYear)
+                .toList();
+            iswm = iswm.stream()
+                .filter(i -> i.getYear() >= startingYear && i.getYear() <= endingYear)
+                .toList();
         }
         
         return calculateMitigationDashboardData(wetlandParks, settlementTrees, streetTrees, 
-                greenFences, cropRotation, zeroTillage, protectiveForest, improvedMMS, wasteToEnergy, landfillGasUtilization, mbtComposting, eprPlasticWaste);
+                greenFences, cropRotation, zeroTillage, protectiveForest, improvedMMS, wasteToEnergy, landfillGasUtilization, mbtComposting, eprPlasticWaste, kigaliFSTP, kigaliWWTP, iswm);
     }
     
     @Override
@@ -135,6 +156,9 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<LandfillGasUtilizationMitigation> landfillGasUtilization = landfillGasUtilizationRepository.findAll();
         List<MBTCompostingMitigation> mbtComposting = mbtCompostingRepository.findAll();
         List<EPRPlasticWasteMitigation> eprPlasticWaste = eprPlasticWasteRepository.findAll();
+        List<KigaliFSTPMitigation> kigaliFSTP = kigaliFSTPRepository.findAll();
+        List<KigaliWWTPMitigation> kigaliWWTP = kigaliWWTPRepository.findAll();
+        List<ISWMMitigation> iswm = iswmRepository.findAll();
         
         // Filter by year range
         final int finalStartYear = startingYear;
@@ -176,6 +200,15 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         eprPlasticWaste = eprPlasticWaste.stream()
             .filter(e -> e.getYear() >= finalStartYear && e.getYear() <= finalEndYear)
             .toList();
+        kigaliFSTP = kigaliFSTP.stream()
+            .filter(k -> k.getYear() >= finalStartYear && k.getYear() <= finalEndYear)
+            .toList();
+        kigaliWWTP = kigaliWWTP.stream()
+            .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
+            .toList();
+        iswm = iswm.stream()
+            .filter(i -> i.getYear() >= finalStartYear && i.getYear() <= finalEndYear)
+            .toList();
         
         // Group by year
         Map<Integer, List<WetlandParksMitigation>> wetlandParksByYear = wetlandParks.stream().collect(groupingBy(WetlandParksMitigation::getYear));
@@ -190,6 +223,9 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         Map<Integer, List<LandfillGasUtilizationMitigation>> landfillGasUtilizationByYear = landfillGasUtilization.stream().collect(groupingBy(LandfillGasUtilizationMitigation::getYear));
         Map<Integer, List<MBTCompostingMitigation>> mbtCompostingByYear = mbtComposting.stream().collect(groupingBy(MBTCompostingMitigation::getYear));
         Map<Integer, List<EPRPlasticWasteMitigation>> eprPlasticWasteByYear = eprPlasticWaste.stream().collect(groupingBy(EPRPlasticWasteMitigation::getYear));
+        Map<Integer, List<KigaliFSTPMitigation>> kigaliFSTPByYear = kigaliFSTP.stream().collect(groupingBy(KigaliFSTPMitigation::getYear));
+        Map<Integer, List<KigaliWWTPMitigation>> kigaliWWTPByYear = kigaliWWTP.stream().collect(groupingBy(KigaliWWTPMitigation::getYear));
+        Map<Integer, List<ISWMMitigation>> iswmByYear = iswm.stream().collect(groupingBy(ISWMMitigation::getYear));
         
         // Create dashboard data for each year
         List<DashboardData> dashboardDataList = new ArrayList<>();
@@ -206,7 +242,10 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
                 wasteToEnergyByYear.getOrDefault(year, List.of()),
                 landfillGasUtilizationByYear.getOrDefault(year, List.of()),
                 mbtCompostingByYear.getOrDefault(year, List.of()),
-                eprPlasticWasteByYear.getOrDefault(year, List.of())
+                eprPlasticWasteByYear.getOrDefault(year, List.of()),
+                kigaliFSTPByYear.getOrDefault(year, List.of()),
+                kigaliWWTPByYear.getOrDefault(year, List.of()),
+                iswmByYear.getOrDefault(year, List.of())
             );
             data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
             data.setEndingDate(LocalDateTime.of(year, 12, 31, 23, 59).toString());
@@ -229,7 +268,10 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             List<WasteToEnergyMitigation> wasteToEnergy,
             List<LandfillGasUtilizationMitigation> landfillGasUtilization,
             List<MBTCompostingMitigation> mbtComposting,
-            List<EPRPlasticWasteMitigation> eprPlasticWaste) {
+            List<EPRPlasticWasteMitigation> eprPlasticWaste,
+            List<KigaliFSTPMitigation> kigaliFSTP,
+            List<KigaliWWTPMitigation> kigaliWWTP,
+            List<ISWMMitigation> iswm) {
         
         DashboardData data = new DashboardData();
         Double totalMitigation = 0.0;
@@ -310,6 +352,27 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         for (EPRPlasticWasteMitigation e : eprPlasticWaste) {
             if (e.getGhgReductionKilotonnes() != null) {
                 totalMitigation += e.getGhgReductionKilotonnes();
+            }
+        }
+        
+        // Kigali FSTP uses annualEmissionsReductionKilotonnes
+        for (KigaliFSTPMitigation k : kigaliFSTP) {
+            if (k.getAnnualEmissionsReductionKilotonnes() != null) {
+                totalMitigation += k.getAnnualEmissionsReductionKilotonnes();
+            }
+        }
+        
+        // Kigali WWTP uses annualEmissionsReductionKilotonnes
+        for (KigaliWWTPMitigation w : kigaliWWTP) {
+            if (w.getAnnualEmissionsReductionKilotonnes() != null) {
+                totalMitigation += w.getAnnualEmissionsReductionKilotonnes();
+            }
+        }
+        
+        // ISWM uses annualReduction
+        for (ISWMMitigation i : iswm) {
+            if (i.getAnnualReduction() != null) {
+                totalMitigation += i.getAnnualReduction();
             }
         }
         
