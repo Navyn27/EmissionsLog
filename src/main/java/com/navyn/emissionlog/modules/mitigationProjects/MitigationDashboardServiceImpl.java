@@ -4,8 +4,12 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.model
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.repositories.CropRotationMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.models.GreenFencesMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.repositories.GreenFencesMitigationRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.models.ImprovedMMSMitigation;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.repositories.ImprovedMMSMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.models.ManureCoveringMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.repository.ManureCoveringMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.addingStraw.models.AddingStrawMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.addingStraw.repository.AddingStrawMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.models.DailySpreadMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.repository.DailySpreadMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.models.ProtectiveForestMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.repositories.ProtectiveForestMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.models.SettlementTreesMitigation;
@@ -53,7 +57,9 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
     private final CropRotationMitigationRepository cropRotationRepository;
     private final ZeroTillageMitigationRepository zeroTillageRepository;
     private final ProtectiveForestMitigationRepository protectiveForestRepository;
-    private final ImprovedMMSMitigationRepository improvedMMSRepository;
+    private final ManureCoveringMitigationRepository manureCoveringRepository;
+    private final AddingStrawMitigationRepository addingStrawRepository;
+    private final DailySpreadMitigationRepository dailySpreadRepository;
     private final WasteToEnergyMitigationRepository wasteToEnergyRepository;
     private final LandfillGasUtilizationMitigationRepository landfillGasUtilizationRepository;
     private final MBTCompostingMitigationRepository mbtCompostingRepository;
@@ -64,7 +70,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
     
     @Override
     public DashboardData getMitigationDashboardSummary(Integer startingYear, Integer endingYear) {
-        // Fetch all 15 mitigation projects (8 AFOLU + 7 Waste)
+        // Fetch all 17 mitigation projects (10 AFOLU + 7 Waste)
         List<WetlandParksMitigation> wetlandParks = wetlandParksRepository.findAll();
         List<SettlementTreesMitigation> settlementTrees = settlementTreesRepository.findAll();
         List<StreetTreesMitigation> streetTrees = streetTreesRepository.findAll();
@@ -72,7 +78,9 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<CropRotationMitigation> cropRotation = cropRotationRepository.findAll();
         List<ZeroTillageMitigation> zeroTillage = zeroTillageRepository.findAll();
         List<ProtectiveForestMitigation> protectiveForest = protectiveForestRepository.findAll();
-        List<ImprovedMMSMitigation> improvedMMS = improvedMMSRepository.findAll();
+        List<ManureCoveringMitigation> manureCovering = manureCoveringRepository.findAll();
+        List<AddingStrawMitigation> addingStraw = addingStrawRepository.findAll();
+        List<DailySpreadMitigation> dailySpread = dailySpreadRepository.findAll();
         List<WasteToEnergyMitigation> wasteToEnergy = wasteToEnergyRepository.findAll();
         List<LandfillGasUtilizationMitigation> landfillGasUtilization = landfillGasUtilizationRepository.findAll();
         List<MBTCompostingMitigation> mbtComposting = mbtCompostingRepository.findAll();
@@ -104,8 +112,14 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             protectiveForest = protectiveForest.stream()
                 .filter(p -> p.getYear() >= startingYear && p.getYear() <= endingYear)
                 .toList();
-            improvedMMS = improvedMMS.stream()
-                .filter(i -> i.getYear() >= startingYear && i.getYear() <= endingYear)
+            manureCovering = manureCovering.stream()
+                .filter(m -> m.getYear() >= startingYear && m.getYear() <= endingYear)
+                .toList();
+            addingStraw = addingStraw.stream()
+                .filter(a -> a.getYear() >= startingYear && a.getYear() <= endingYear)
+                .toList();
+            dailySpread = dailySpread.stream()
+                .filter(d -> d.getYear() >= startingYear && d.getYear() <= endingYear)
                 .toList();
             wasteToEnergy = wasteToEnergy.stream()
                 .filter(w -> w.getYear() >= startingYear && w.getYear() <= endingYear)
@@ -131,7 +145,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         }
         
         return calculateMitigationDashboardData(wetlandParks, settlementTrees, streetTrees, 
-                greenFences, cropRotation, zeroTillage, protectiveForest, improvedMMS, wasteToEnergy, landfillGasUtilization, mbtComposting, eprPlasticWaste, kigaliFSTP, kigaliWWTP, iswm);
+                greenFences, cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread, wasteToEnergy, landfillGasUtilization, mbtComposting, eprPlasticWaste, kigaliFSTP, kigaliWWTP, iswm);
     }
     
     @Override
@@ -151,7 +165,9 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<CropRotationMitigation> cropRotation = cropRotationRepository.findAll();
         List<ZeroTillageMitigation> zeroTillage = zeroTillageRepository.findAll();
         List<ProtectiveForestMitigation> protectiveForest = protectiveForestRepository.findAll();
-        List<ImprovedMMSMitigation> improvedMMS = improvedMMSRepository.findAll();
+        List<ManureCoveringMitigation> manureCovering = manureCoveringRepository.findAll();
+        List<AddingStrawMitigation> addingStraw = addingStrawRepository.findAll();
+        List<DailySpreadMitigation> dailySpread = dailySpreadRepository.findAll();
         List<WasteToEnergyMitigation> wasteToEnergy = wasteToEnergyRepository.findAll();
         List<LandfillGasUtilizationMitigation> landfillGasUtilization = landfillGasUtilizationRepository.findAll();
         List<MBTCompostingMitigation> mbtComposting = mbtCompostingRepository.findAll();
@@ -185,8 +201,14 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         protectiveForest = protectiveForest.stream()
             .filter(p -> p.getYear() >= finalStartYear && p.getYear() <= finalEndYear)
             .toList();
-        improvedMMS = improvedMMS.stream()
-            .filter(i -> i.getYear() >= finalStartYear && i.getYear() <= finalEndYear)
+        manureCovering = manureCovering.stream()
+            .filter(m -> m.getYear() >= finalStartYear && m.getYear() <= finalEndYear)
+            .toList();
+        addingStraw = addingStraw.stream()
+            .filter(a -> a.getYear() >= finalStartYear && a.getYear() <= finalEndYear)
+            .toList();
+        dailySpread = dailySpread.stream()
+            .filter(d -> d.getYear() >= finalStartYear && d.getYear() <= finalEndYear)
             .toList();
         wasteToEnergy = wasteToEnergy.stream()
             .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
@@ -218,7 +240,9 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         Map<Integer, List<CropRotationMitigation>> cropRotationByYear = cropRotation.stream().collect(groupingBy(CropRotationMitigation::getYear));
         Map<Integer, List<ZeroTillageMitigation>> zeroTillageByYear = zeroTillage.stream().collect(groupingBy(ZeroTillageMitigation::getYear));
         Map<Integer, List<ProtectiveForestMitigation>> protectiveForestByYear = protectiveForest.stream().collect(groupingBy(ProtectiveForestMitigation::getYear));
-        Map<Integer, List<ImprovedMMSMitigation>> improvedMMSByYear = improvedMMS.stream().collect(groupingBy(ImprovedMMSMitigation::getYear));
+        Map<Integer, List<ManureCoveringMitigation>> manureCoveringByYear = manureCovering.stream().collect(groupingBy(ManureCoveringMitigation::getYear));
+        Map<Integer, List<AddingStrawMitigation>> addingStrawByYear = addingStraw.stream().collect(groupingBy(AddingStrawMitigation::getYear));
+        Map<Integer, List<DailySpreadMitigation>> dailySpreadByYear = dailySpread.stream().collect(groupingBy(DailySpreadMitigation::getYear));
         Map<Integer, List<WasteToEnergyMitigation>> wasteToEnergyByYear = wasteToEnergy.stream().collect(groupingBy(WasteToEnergyMitigation::getYear));
         Map<Integer, List<LandfillGasUtilizationMitigation>> landfillGasUtilizationByYear = landfillGasUtilization.stream().collect(groupingBy(LandfillGasUtilizationMitigation::getYear));
         Map<Integer, List<MBTCompostingMitigation>> mbtCompostingByYear = mbtComposting.stream().collect(groupingBy(MBTCompostingMitigation::getYear));
@@ -238,7 +262,9 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
                 cropRotationByYear.getOrDefault(year, List.of()),
                 zeroTillageByYear.getOrDefault(year, List.of()),
                 protectiveForestByYear.getOrDefault(year, List.of()),
-                improvedMMSByYear.getOrDefault(year, List.of()),
+                manureCoveringByYear.getOrDefault(year, List.of()),
+                addingStrawByYear.getOrDefault(year, List.of()),
+                dailySpreadByYear.getOrDefault(year, List.of()),
                 wasteToEnergyByYear.getOrDefault(year, List.of()),
                 landfillGasUtilizationByYear.getOrDefault(year, List.of()),
                 mbtCompostingByYear.getOrDefault(year, List.of()),
@@ -264,7 +290,9 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             List<CropRotationMitigation> cropRotation,
             List<ZeroTillageMitigation> zeroTillage,
             List<ProtectiveForestMitigation> protectiveForest,
-            List<ImprovedMMSMitigation> improvedMMS,
+            List<ManureCoveringMitigation> manureCovering,
+            List<AddingStrawMitigation> addingStraw,
+            List<DailySpreadMitigation> dailySpread,
             List<WasteToEnergyMitigation> wasteToEnergy,
             List<LandfillGasUtilizationMitigation> landfillGasUtilization,
             List<MBTCompostingMitigation> mbtComposting,
@@ -320,10 +348,24 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             }
         }
         
-        // Improved MMS uses totalMitigation field
-        for (ImprovedMMSMitigation m : improvedMMS) {
-            if (m.getTotalMitigation() != null) {
-                totalMitigation += m.getTotalMitigation();
+        // Manure Covering uses mitigatedN2oEmissionsKilotonnes
+        for (ManureCoveringMitigation m : manureCovering) {
+            if (m.getMitigatedN2oEmissionsKilotonnes() != null) {
+                totalMitigation += m.getMitigatedN2oEmissionsKilotonnes();
+            }
+        }
+        
+        // Adding Straw uses mitigatedCh4EmissionsKilotonnes
+        for (AddingStrawMitigation a : addingStraw) {
+            if (a.getMitigatedCh4EmissionsKilotonnes() != null) {
+                totalMitigation += a.getMitigatedCh4EmissionsKilotonnes();
+            }
+        }
+        
+        // Daily Spread uses mitigatedCh4EmissionsKilotonnes
+        for (DailySpreadMitigation d : dailySpread) {
+            if (d.getMitigatedCh4EmissionsKilotonnes() != null) {
+                totalMitigation += d.getMitigatedCh4EmissionsKilotonnes();
             }
         }
         
