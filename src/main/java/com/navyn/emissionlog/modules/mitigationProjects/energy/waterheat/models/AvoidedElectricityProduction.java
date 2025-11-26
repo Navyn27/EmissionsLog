@@ -40,8 +40,6 @@ public class AvoidedElectricityProduction {
         this.year = year;
         this.unitsInstalledThisYear = unitsInstalledThisYear;
         this.cumulativeUnitsInstalled = cumulativeUnitsInstalled;
-
-        // Calculations of WaterHeatParameter logic
         this.annualAvoidedElectricity =
                 unitsInstalledThisYear * param.getAvoidedElectricityPerHousehold();
 

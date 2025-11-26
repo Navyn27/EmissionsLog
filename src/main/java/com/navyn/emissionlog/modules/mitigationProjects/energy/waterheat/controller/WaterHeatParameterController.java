@@ -18,25 +18,21 @@ public class WaterHeatParameterController {
         this.service = service;
     }
 
-    // CREATE
     @PostMapping
     public ResponseEntity<WaterHeatParameter> create(@RequestBody WaterHeatParameter param) {
         return ResponseEntity.ok(service.create(param));
     }
 
-    // GET ALL
     @GetMapping
     public ResponseEntity<List<WaterHeatParameter>> getAll() {
         return ResponseEntity.ok(service.getAll());
     }
 
-    // GET ONE
     @GetMapping("/{id}")
     public ResponseEntity<WaterHeatParameter> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(service.getById(id));
     }
 
-    // UPDATE
     @PutMapping("/{id}")
     public ResponseEntity<WaterHeatParameter> update(
             @PathVariable UUID id,
@@ -44,7 +40,7 @@ public class WaterHeatParameterController {
         return ResponseEntity.ok(service.update(id, param));
     }
 
-    // DELETE
+
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable UUID id) {
         service.delete(id);
