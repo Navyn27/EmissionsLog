@@ -23,14 +23,17 @@ public class WetlandParksMitigationServiceImpl implements WetlandParksMitigation
     @Override
     public WetlandParksMitigation createWetlandParksMitigation(WetlandParksMitigationDto dto) {
         WetlandParksMitigation mitigation = new WetlandParksMitigation();
-        
+
+        Optional<WetlandParksMitigation> lastYearRecord = repository.findByYearAndTreeCategory(dto.getYear()-1,dto.getTreeCategory());
+        Double cumulativeArea = lastYearRecord.map(wetlandParksMitigation -> wetlandParksMitigation.getAreaPlanted() + wetlandParksMitigation.getCumulativeArea()).orElse(0.0);
+
         // Map input fields
         mitigation.setYear(dto.getYear());
         mitigation.setTreeCategory(dto.getTreeCategory());
-        mitigation.setCumulativeArea(dto.getCumulativeArea());
+        mitigation.setCumulativeArea(cumulativeArea);
         mitigation.setAreaPlanted(dto.getAreaPlanted());
         mitigation.setAbovegroundBiomassAGB(dto.getAbovegroundBiomassAGB());
-        
+
         // 1. Get previous year's AGB for SAME category
         Double previousAGB = getPreviousYearAGB(dto.getYear(), dto.getTreeCategory());
         mitigation.setPreviousYearAGB(previousAGB);
@@ -48,7 +51,7 @@ public class WetlandParksMitigationServiceImpl implements WetlandParksMitigation
         
         // 4. Calculate Total Biomass (tonnes DM/year)
         // Total biomass = Cumulative area × Aboveground Biomass Growth
-        double totalBiomass = dto.getCumulativeArea() * abovegroundBiomassGrowth;
+        double totalBiomass = cumulativeArea * abovegroundBiomassGrowth;
         mitigation.setTotalBiomass(totalBiomass);
         
         // 5. Calculate Biomass Carbon Increase (tonnes C/year)
@@ -80,7 +83,7 @@ public class WetlandParksMitigationServiceImpl implements WetlandParksMitigation
             Integer year, WetlandTreeCategory category) {
         return repository.findByYearAndTreeCategory(year, category);
     }
-    
+
     // Helper method to get previous year's AGB for same category
     private Double getPreviousYearAGB(Integer currentYear, WetlandTreeCategory category) {
         Optional<WetlandParksMitigation> previous = repository

@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,10 +23,13 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
     @Override
     public GreenFencesMitigation createGreenFencesMitigation(GreenFencesMitigationDto dto) {
         GreenFencesMitigation mitigation = new GreenFencesMitigation();
-        
+
+        Optional<GreenFencesMitigation> lastYear = repository.findByYear(dto.getYear()-1);
+        Double cumulativeHouseholds = lastYear.map(greenFencesMitigation -> greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()).orElse(0.0);
+
         // Map input fields
         mitigation.setYear(dto.getYear());
-        mitigation.setCumulativeNumberOfHouseholds(dto.getCumulativeNumberOfHouseholds());
+        mitigation.setCumulativeNumberOfHouseholds(cumulativeHouseholds);
         mitigation.setNumberOfHouseholdsWith10m2Fence(dto.getNumberOfHouseholdsWith10m2Fence());
         mitigation.setAgbOf10m2LiveFence(dto.getAgbOf10m2LiveFence());
         
@@ -33,7 +37,7 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
         // AGB fence biomass = AGB of 10m2 fence × Carbon content × Cumulative households
         double agbFenceBiomass = dto.getAgbOf10m2LiveFence() * 
             GreenFencesConstants.CARBON_CONTENT_DRY_AGB.getValue() * 
-            dto.getCumulativeNumberOfHouseholds();
+            cumulativeHouseholds;
         mitigation.setAgbFenceBiomassCumulativeHouseholds(agbFenceBiomass);
         
         // 2. Calculate AGB+BGB from cumulative households (Tonnes C)

@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.service;
 
 import com.navyn.emissionlog.Enums.Mitigation.StreetTreesConstants;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.models.SettlementTreesMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.dtos.StreetTreesMitigationDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.models.StreetTreesMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.repositories.StreetTreesMitigationRepository;
@@ -18,27 +19,35 @@ import java.util.Optional;
 public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationService {
     
     private final StreetTreesMitigationRepository repository;
-    
+
+    private static Double apply(StreetTreesMitigation streetTreesMitigation) {
+        return streetTreesMitigation.getNumberOfTreesPlanted() + streetTreesMitigation.getCumulativeNumberOfTrees();
+    }
+
     @Override
     public StreetTreesMitigation createStreetTreesMitigation(StreetTreesMitigationDto dto) {
         StreetTreesMitigation mitigation = new StreetTreesMitigation();
-        
+
+        Optional<StreetTreesMitigation> lastYearRecord = repository.findByYear(dto.getYear()-1);
+        Double cumulativeNumberOfTrees = lastYearRecord.map(StreetTreesMitigationServiceImpl::apply).orElse(0.0);
+        Double agbSingleTreePrevYear = lastYearRecord.map(StreetTreesMitigation::getAgbSingleTreeCurrentYear).orElse(0.0);
+
         // Map input fields
         mitigation.setYear(dto.getYear());
-        mitigation.setCumulativeNumberOfTrees(dto.getCumulativeNumberOfTrees());
+        mitigation.setCumulativeNumberOfTrees(cumulativeNumberOfTrees);
         mitigation.setNumberOfTreesPlanted(dto.getNumberOfTreesPlanted());
-        mitigation.setAgbSingleTreePreviousYear(dto.getAgbSingleTreePreviousYear());
+        mitigation.setAgbSingleTreePreviousYear(agbSingleTreePrevYear);
         mitigation.setAgbSingleTreeCurrentYear(dto.getAgbSingleTreeCurrentYear());
         
         // 1. Calculate AGB Growth (tonnes m3)
-        double agbGrowth = dto.getAgbSingleTreeCurrentYear() - dto.getAgbSingleTreePreviousYear();
+        double agbGrowth = dto.getAgbSingleTreeCurrentYear() - agbSingleTreePrevYear;
         mitigation.setAgbGrowth(agbGrowth);
         
         // 2. Calculate Aboveground Biomass Growth (tonnes DM)
         double abovegroundBiomassGrowth = 
             StreetTreesConstants.CONVERSION_M3_TO_TONNES_DM.getValue() * 
             agbGrowth * 
-            dto.getCumulativeNumberOfTrees();
+            cumulativeNumberOfTrees;
         mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
         
         // 3. Calculate Total Biomass (tonnes DM/year) - includes belowground

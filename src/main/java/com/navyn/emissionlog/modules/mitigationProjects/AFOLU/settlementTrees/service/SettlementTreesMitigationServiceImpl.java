@@ -22,17 +22,20 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
     @Override
     public SettlementTreesMitigation createSettlementTreesMitigation(SettlementTreesMitigationDto dto) {
         SettlementTreesMitigation mitigation = new SettlementTreesMitigation();
-        
+        Optional<SettlementTreesMitigation> lastYearRecord = repository.findByYear(dto.getYear()-1);
+        Double cumulativeNumberOfTrees = lastYearRecord.map(settlementTreesMitigation -> settlementTreesMitigation.getNumberOfTreesPlanted() + settlementTreesMitigation.getCumulativeNumberOfTrees()).orElse(0.0);
+        Double agbSingleTreePrevYear = lastYearRecord.map(SettlementTreesMitigation::getAgbSingleTreeCurrentYear).orElse(0.0);
+
         // Map input fields
         mitigation.setYear(dto.getYear());
-        mitigation.setCumulativeNumberOfTrees(dto.getCumulativeNumberOfTrees());
+        mitigation.setCumulativeNumberOfTrees(cumulativeNumberOfTrees);
         mitigation.setNumberOfTreesPlanted(dto.getNumberOfTreesPlanted());
-        mitigation.setAgbSingleTreePreviousYear(dto.getAgbSingleTreePreviousYear());
+        mitigation.setAgbSingleTreePreviousYear(agbSingleTreePrevYear);
         mitigation.setAgbSingleTreeCurrentYear(dto.getAgbSingleTreeCurrentYear());
         
         // 1. Calculate AGB Growth (tonnes m3)
         // AGB growth = AGB of single tree in current year - AGB of single tree in previous year
-        double agbGrowth = dto.getAgbSingleTreeCurrentYear() - dto.getAgbSingleTreePreviousYear();
+        double agbGrowth = dto.getAgbSingleTreeCurrentYear() - agbSingleTreePrevYear;
         mitigation.setAgbGrowth(agbGrowth);
         
         // 2. Calculate Aboveground Biomass Growth (tonnes DM)
@@ -40,7 +43,7 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
         double abovegroundBiomassGrowth = 
             SettlementTreesConstants.CONVERSION_M3_TO_TONNES_DM.getValue() * 
             agbGrowth * 
-            dto.getCumulativeNumberOfTrees();
+            cumulativeNumberOfTrees;
         mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
         
         // 3. Calculate Total Biomass (tonnes DM/year) - includes belowground

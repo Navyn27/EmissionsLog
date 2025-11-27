@@ -15,10 +15,6 @@ public class ProtectiveForestMitigationDto {
     @NotNull(message = "Category is required")
     private ProtectiveForestCategory category;
     
-    @NotNull(message = "Cumulative area is required")
-    @DecimalMin(value = "0.0", message = "Cumulative area must be at least 0")
-    private Double cumulativeArea; // ha
-    
     @NotNull(message = "Area planted is required")
     @DecimalMin(value = "0.0", message = "Area planted must be at least 0")
     private Double areaPlanted; // ha

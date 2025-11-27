@@ -23,11 +23,13 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
     @Override
     public ProtectiveForestMitigation createProtectiveForestMitigation(ProtectiveForestMitigationDto dto) {
         ProtectiveForestMitigation mitigation = new ProtectiveForestMitigation();
-        
+
+        Optional<ProtectiveForestMitigation> lastYearRecord = repository.findByYearAndCategory(dto.getYear()-1, dto.getCategory());
+        Double cumulativeArea = lastYearRecord.map(protectiveForestMitigation -> protectiveForestMitigation.getCumulativeArea() + protectiveForestMitigation.getAreaPlanted()).orElse(0.0);
         // Map input fields
         mitigation.setYear(dto.getYear());
         mitigation.setCategory(dto.getCategory());
-        mitigation.setCumulativeArea(dto.getCumulativeArea());
+        mitigation.setCumulativeArea(cumulativeArea);
         mitigation.setAreaPlanted(dto.getAreaPlanted());
         mitigation.setAgbCurrentYear(dto.getAgbCurrentYear());
         
@@ -49,7 +51,7 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
         mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
         
         // 3. Calculate Total Biomass (tonnes DM/year)
-        double totalBiomass = dto.getCumulativeArea() * abovegroundBiomassGrowth;
+        double totalBiomass = cumulativeArea * abovegroundBiomassGrowth;
         mitigation.setTotalBiomass(totalBiomass);
         
         // 4. Calculate Biomass Carbon Increase (tonnes C/year)

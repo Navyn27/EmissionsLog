@@ -14,11 +14,7 @@ public class WetlandParksMitigationDto {
     
     @NotNull(message = "Tree category is required")
     private WetlandTreeCategory treeCategory;
-    
-    @NotNull(message = "Cumulative area is required")
-    @DecimalMin(value = "0.0", inclusive = false, message = "Cumulative area must be greater than 0")
-    private Double cumulativeArea; // ha
-    
+
     @NotNull(message = "Area planted is required")
     @DecimalMin(value = "0.0", message = "Area planted must be at least 0")
     private Double areaPlanted; // ha
