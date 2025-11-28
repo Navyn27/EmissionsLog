@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.dtos;
 
+import com.navyn.emissionlog.Enums.Metrics.VolumeUnits;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -17,5 +18,8 @@ public class StreetTreesMitigationDto {
     
     @NotNull(message = "AGB of single tree in current year is required")
     @DecimalMin(value = "0.0", message = "AGB of single tree in current year must be at least 0")
-    private Double agbSingleTreeCurrentYear; // m3
+    private Double agbSingleTreeCurrentYear;
+    
+    @NotNull(message = "AGB unit is required")
+    private VolumeUnits agbUnit; // Unit for AGB volume (standard: cubic meters)
 }

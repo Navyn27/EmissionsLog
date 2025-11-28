@@ -23,17 +23,22 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
     public CropRotationMitigation createCropRotationMitigation(CropRotationMitigationDto dto) {
         CropRotationMitigation mitigation = new CropRotationMitigation();
         
-        // Map input fields
+        // Convert units to standard values
+        double croplandInHectares = dto.getCroplandAreaUnit().toHectares(dto.getCroplandUnderCropRotation());
+        double abgInTonnesDMPerHA = dto.getAbovegroundBiomassUnit().toTonnesDMPerHA(dto.getAbovegroundBiomass());
+        double increasedBiomassInTonnesDMPerHA = dto.getIncreasedBiomassUnit().toTonnesDMPerHA(dto.getIncreasedBiomass());
+        
+        // Map input fields (store in standard units)
         mitigation.setYear(dto.getYear());
-        mitigation.setCroplandUnderCropRotation(dto.getCroplandUnderCropRotation());
-        mitigation.setAbovegroundBiomass(dto.getAbovegroundBiomass());
-        mitigation.setIncreasedBiomass(dto.getIncreasedBiomass());
+        mitigation.setCroplandUnderCropRotation(croplandInHectares);
+        mitigation.setAbovegroundBiomass(abgInTonnesDMPerHA);
+        mitigation.setIncreasedBiomass(increasedBiomassInTonnesDMPerHA);
         
         // 1. Calculate Total Increased Biomass (tonnes DM/year)
         // Total increased biomass = Cropland × ABG × Increased biomass × (1 + Ratio BGB to AGB)
-        double totalIncreasedBiomass = dto.getCroplandUnderCropRotation() * 
-            dto.getAbovegroundBiomass() * 
-            dto.getIncreasedBiomass() * 
+        double totalIncreasedBiomass = croplandInHectares * 
+            abgInTonnesDMPerHA * 
+            increasedBiomassInTonnesDMPerHA * 
             (1 + CropRotationConstants.RATIO_BGB_TO_AGB.getValue());
         mitigation.setTotalIncreasedBiomass(totalIncreasedBiomass);
         

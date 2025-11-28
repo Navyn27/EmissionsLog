@@ -1,5 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.dtos;
 
+import com.navyn.emissionlog.Enums.Metrics.AreaUnits;
+import com.navyn.emissionlog.Enums.Metrics.VolumePerAreaUnit;
 import com.navyn.emissionlog.Enums.Mitigation.ProtectiveForestCategory;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -17,11 +19,17 @@ public class ProtectiveForestMitigationDto {
     
     @NotNull(message = "Area planted is required")
     @DecimalMin(value = "0.0", message = "Area planted must be at least 0")
-    private Double areaPlanted; // ha
+    private Double areaPlanted;
+    
+    @NotNull(message = "Area planted unit is required")
+    private AreaUnits areaPlantedUnit; // Unit for area planted (standard: ha)
     
     // NO agbPreviousYear - auto-fetched from DB!
     
     @NotNull(message = "AGB in current year is required")
     @DecimalMin(value = "0.0", message = "AGB in current year must be at least 0")
-    private Double agbCurrentYear; // m3/ha
+    private Double agbCurrentYear;
+    
+    @NotNull(message = "AGB unit is required")
+    private VolumePerAreaUnit agbUnit; // Unit for AGB (standard: m³/ha)
 }

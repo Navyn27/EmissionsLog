@@ -24,18 +24,21 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
     public GreenFencesMitigation createGreenFencesMitigation(GreenFencesMitigationDto dto) {
         GreenFencesMitigation mitigation = new GreenFencesMitigation();
 
-        Optional<GreenFencesMitigation> lastYear = repository.findByYear(dto.getYear()-1);
-        Double cumulativeHouseholds = lastYear.map(greenFencesMitigation -> greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()).orElse(0.0);
+        Optional<GreenFencesMitigation> latestYear = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
+        Double cumulativeHouseholds = latestYear.map(greenFencesMitigation -> greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()).orElse(0.0);
 
-        // Map input fields
+        // Convert AGB to tonnes DM (standard unit)
+        double agbInTonnesDM = dto.getAgbUnit().toTonnesDM(dto.getAgbOf10m2LiveFence());
+
+        // Map input fields (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setCumulativeNumberOfHouseholds(cumulativeHouseholds);
         mitigation.setNumberOfHouseholdsWith10m2Fence(dto.getNumberOfHouseholdsWith10m2Fence());
-        mitigation.setAgbOf10m2LiveFence(dto.getAgbOf10m2LiveFence());
+        mitigation.setAgbOf10m2LiveFence(agbInTonnesDM);
         
         // 1. Calculate AGB of 10m3 fence biomass from cumulative households (Tonnes C)
         // AGB fence biomass = AGB of 10m2 fence × Carbon content × Cumulative households
-        double agbFenceBiomass = dto.getAgbOf10m2LiveFence() * 
+        double agbFenceBiomass = agbInTonnesDM * 
             GreenFencesConstants.CARBON_CONTENT_DRY_AGB.getValue() * 
             cumulativeHouseholds;
         mitigation.setAgbFenceBiomassCumulativeHouseholds(agbFenceBiomass);
@@ -62,7 +65,7 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
             Specification.<GreenFencesMitigation>where(MitigationSpecifications.hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
-    
+
     @Override
     public Optional<GreenFencesMitigation> getByYear(Integer year) {
         return repository.findByYear(year);

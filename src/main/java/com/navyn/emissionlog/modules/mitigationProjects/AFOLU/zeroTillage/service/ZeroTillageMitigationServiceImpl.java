@@ -23,13 +23,16 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     public ZeroTillageMitigation createZeroTillageMitigation(ZeroTillageMitigationDto dto) {
         ZeroTillageMitigation mitigation = new ZeroTillageMitigation();
         
-        // Map input fields
+        // Convert area to hectares (standard unit)
+        double areaInHectares = dto.getAreaUnit().toHectares(dto.getAreaUnderZeroTillage());
+        
+        // Map input fields (store in standard units)
         mitigation.setYear(dto.getYear());
-        mitigation.setAreaUnderZeroTillage(dto.getAreaUnderZeroTillage());
+        mitigation.setAreaUnderZeroTillage(areaInHectares);
         
         // 1. Calculate Total Carbon Increase in Soil (Tonnes C)
         // Total carbon = Area × Carbon increase in soil
-        double totalCarbon = dto.getAreaUnderZeroTillage() * 
+        double totalCarbon = areaInHectares * 
             ZeroTillageConstants.CARBON_INCREASE_SOIL.getValue();
         mitigation.setTotalCarbonIncreaseInSoil(totalCarbon);
         
@@ -41,7 +44,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
         
         // 3. Calculate Urea Applied (tonnes)
         // Urea applied = Area × Urea application rate
-        double ureaApplied = dto.getAreaUnderZeroTillage() * 
+        double ureaApplied = areaInHectares * 
             ZeroTillageConstants.UREA_APPLICATION_RATE.getValue();
         mitigation.setUreaApplied(ureaApplied);
         

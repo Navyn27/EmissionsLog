@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.dtos;
 
+import com.navyn.emissionlog.Enums.Metrics.AreaUnits;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -13,5 +14,8 @@ public class ZeroTillageMitigationDto {
     
     @NotNull(message = "Area under zero-tillage is required")
     @DecimalMin(value = "0.0", message = "Area under zero-tillage must be at least 0")
-    private Double areaUnderZeroTillage; // ha
+    private Double areaUnderZeroTillage;
+    
+    @NotNull(message = "Area unit is required")
+    private AreaUnits areaUnit; // Unit for area (standard: ha)
 }

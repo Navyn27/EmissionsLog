@@ -24,25 +24,30 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
     public ProtectiveForestMitigation createProtectiveForestMitigation(ProtectiveForestMitigationDto dto) {
         ProtectiveForestMitigation mitigation = new ProtectiveForestMitigation();
 
-        Optional<ProtectiveForestMitigation> lastYearRecord = repository.findByYearAndCategory(dto.getYear()-1, dto.getCategory());
+        Optional<ProtectiveForestMitigation> lastYearRecord = repository.findTopByYearAndCategoryOrderByCreatedAtDesc(dto.getYear(), dto.getCategory());
         Double cumulativeArea = lastYearRecord.map(protectiveForestMitigation -> protectiveForestMitigation.getCumulativeArea() + protectiveForestMitigation.getAreaPlanted()).orElse(0.0);
-        // Map input fields
+        
+        // Convert units to standard values
+        double areaPlantedInHectares = dto.getAreaPlantedUnit().toHectares(dto.getAreaPlanted());
+        double agbCurrentYearInCubicMeterPerHA = dto.getAgbUnit().toCubicMeterPerHA(dto.getAgbCurrentYear());
+        
+        // Map input fields (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setCategory(dto.getCategory());
         mitigation.setCumulativeArea(cumulativeArea);
-        mitigation.setAreaPlanted(dto.getAreaPlanted());
-        mitigation.setAgbCurrentYear(dto.getAgbCurrentYear());
+        mitigation.setAreaPlanted(areaPlantedInHectares);
+        mitigation.setAgbCurrentYear(agbCurrentYearInCubicMeterPerHA);
         
         // AUTO-FETCH previous year's AGB from DB
         double previousYearAGB = repository
-            .findByYearAndCategory(dto.getYear() - 1, dto.getCategory())
+            .findTopByYearAndCategoryOrderByCreatedAtDesc(dto.getYear(), dto.getCategory())
             .map(ProtectiveForestMitigation::getAgbCurrentYear)
             .orElse(0.0);
         
         mitigation.setAgbPreviousYear(previousYearAGB);
         
         // 1. Calculate AGB Growth (tonnes m3/ha)
-        double agbGrowth = dto.getAgbCurrentYear() - previousYearAGB;
+        double agbGrowth = agbCurrentYearInCubicMeterPerHA - previousYearAGB;
         mitigation.setAgbGrowth(agbGrowth);
         
         // 2. Calculate Aboveground Biomass Growth (tonnes DM/ha)

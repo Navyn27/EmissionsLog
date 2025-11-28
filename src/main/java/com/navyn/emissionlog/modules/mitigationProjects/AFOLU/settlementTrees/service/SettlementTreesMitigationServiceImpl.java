@@ -26,16 +26,19 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
         Double cumulativeNumberOfTrees = lastYearRecord.map(settlementTreesMitigation -> settlementTreesMitigation.getNumberOfTreesPlanted() + settlementTreesMitigation.getCumulativeNumberOfTrees()).orElse(0.0);
         Double agbSingleTreePrevYear = lastYearRecord.map(SettlementTreesMitigation::getAgbSingleTreeCurrentYear).orElse(0.0);
 
-        // Map input fields
+        // Convert AGB to cubic meters (standard unit)
+        double agbCurrentYearInCubicMeters = dto.getAgbUnit().toCubicMeters(dto.getAgbSingleTreeCurrentYear());
+
+        // Map input fields (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setCumulativeNumberOfTrees(cumulativeNumberOfTrees);
         mitigation.setNumberOfTreesPlanted(dto.getNumberOfTreesPlanted());
         mitigation.setAgbSingleTreePreviousYear(agbSingleTreePrevYear);
-        mitigation.setAgbSingleTreeCurrentYear(dto.getAgbSingleTreeCurrentYear());
+        mitigation.setAgbSingleTreeCurrentYear(agbCurrentYearInCubicMeters);
         
         // 1. Calculate AGB Growth (tonnes m3)
         // AGB growth = AGB of single tree in current year - AGB of single tree in previous year
-        double agbGrowth = dto.getAgbSingleTreeCurrentYear() - agbSingleTreePrevYear;
+        double agbGrowth = agbCurrentYearInCubicMeters - agbSingleTreePrevYear;
         mitigation.setAgbGrowth(agbGrowth);
         
         // 2. Calculate Aboveground Biomass Growth (tonnes DM)

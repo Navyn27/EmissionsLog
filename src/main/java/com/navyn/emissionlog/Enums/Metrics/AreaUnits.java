@@ -16,4 +16,14 @@ public enum AreaUnits {
     }
 
     private double factorToSI;
+
+    /**
+     * Converts the given area value to hectares
+     * @param value The area value in this unit
+     * @return The area value in hectares
+     */
+    public double toHectares(double value) {
+        // Convert to square meters first, then to hectares (1 hectare = 10000 square meters)
+        return (value * factorToSI) / 10000.0;
+    }
 }

@@ -1,5 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandParks.dtos;
 
+import com.navyn.emissionlog.Enums.Metrics.AreaUnits;
+import com.navyn.emissionlog.Enums.Metrics.VolumePerAreaUnit;
 import com.navyn.emissionlog.Enums.Mitigation.WetlandTreeCategory;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -17,9 +19,15 @@ public class WetlandParksMitigationDto {
 
     @NotNull(message = "Area planted is required")
     @DecimalMin(value = "0.0", message = "Area planted must be at least 0")
-    private Double areaPlanted; // ha
+    private Double areaPlanted;
+    
+    @NotNull(message = "Area unit is required")
+    private AreaUnits areaUnit; // Unit for area planted (standard: ha)
     
     @NotNull(message = "Aboveground biomass (AGB) is required")
     @DecimalMin(value = "0.0", message = "AGB must be at least 0")
-    private Double abovegroundBiomassAGB; // m3/ha
+    private Double abovegroundBiomassAGB;
+    
+    @NotNull(message = "AGB unit is required")
+    private VolumePerAreaUnit agbUnit; // Unit for AGB (standard: m³/ha)
 }

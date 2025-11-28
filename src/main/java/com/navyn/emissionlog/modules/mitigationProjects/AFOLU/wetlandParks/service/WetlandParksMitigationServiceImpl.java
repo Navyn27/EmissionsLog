@@ -27,12 +27,16 @@ public class WetlandParksMitigationServiceImpl implements WetlandParksMitigation
         Optional<WetlandParksMitigation> lastYearRecord = repository.findByYearAndTreeCategory(dto.getYear()-1,dto.getTreeCategory());
         Double cumulativeArea = lastYearRecord.map(wetlandParksMitigation -> wetlandParksMitigation.getAreaPlanted() + wetlandParksMitigation.getCumulativeArea()).orElse(0.0);
 
-        // Map input fields
+        // Convert units to standard values
+        double areaPlantedInHectares = dto.getAreaUnit().toHectares(dto.getAreaPlanted());
+        double agbInCubicMeterPerHA = dto.getAgbUnit().toCubicMeterPerHA(dto.getAbovegroundBiomassAGB());
+
+        // Map input fields (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setTreeCategory(dto.getTreeCategory());
         mitigation.setCumulativeArea(cumulativeArea);
-        mitigation.setAreaPlanted(dto.getAreaPlanted());
-        mitigation.setAbovegroundBiomassAGB(dto.getAbovegroundBiomassAGB());
+        mitigation.setAreaPlanted(areaPlantedInHectares);
+        mitigation.setAbovegroundBiomassAGB(agbInCubicMeterPerHA);
 
         // 1. Get previous year's AGB for SAME category
         Double previousAGB = getPreviousYearAGB(dto.getYear(), dto.getTreeCategory());
@@ -40,7 +44,7 @@ public class WetlandParksMitigationServiceImpl implements WetlandParksMitigation
         
         // 2. Calculate AGB Growth (m3/ha)
         // AGB growth = AGB in current year - AGB in previous year
-        double agbGrowth = dto.getAbovegroundBiomassAGB() - previousAGB;
+        double agbGrowth = agbInCubicMeterPerHA - previousAGB;
         mitigation.setAgbGrowth(agbGrowth);
         
         // 3. Calculate Aboveground Biomass Growth (tonnes DM/ha)
