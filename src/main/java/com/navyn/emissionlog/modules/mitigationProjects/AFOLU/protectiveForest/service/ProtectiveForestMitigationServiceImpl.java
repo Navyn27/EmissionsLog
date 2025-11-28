@@ -94,6 +94,6 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
     public Optional<ProtectiveForestMitigation> getByYearAndCategory(
             Integer year, 
             ProtectiveForestCategory category) {
-        return repository.findByYearAndCategory(year, category);
+        return repository.findTopByYearAndCategoryOrderByCreatedAtDesc(year, category);
     }
 }
