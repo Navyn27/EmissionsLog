@@ -23,20 +23,22 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
     public KigaliWWTPMitigation createKigaliWWTPMitigation(KigaliWWTPMitigationDto dto) {
         KigaliWWTPMitigation mitigation = new KigaliWWTPMitigation();
         
-        // Set user inputs
+        // Convert phase capacity to standard unit (m³/day)
+        double phaseCapacityInCubicMetersPerDay = dto.getPhaseCapacityUnit().toCubicMetersPerDay(dto.getPhaseCapacityPerDay());
+        
+        // Set user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
-        mitigation.setProjectPhase(dto.getProjectPhase());
+        mitigation.setPhaseCapacityPerDay(phaseCapacityInCubicMetersPerDay);
+        mitigation.setConnectedHouseholds(dto.getConnectedHouseholds());
+        mitigation.setConnectedHouseholdsPercentage(dto.getConnectedHouseholdsPercentage());
         
         // Get constants
         Double plantEfficiency = KigaliWWTPConstants.PLANT_OPERATIONAL_EFFICIENCY.getValue();
         Double co2ePerM3 = KigaliWWTPConstants.CO2E_PER_M3_SLUDGE.getValue();
         
-        // Get year-based connected households percentage
-        Double connectedHouseholdsPercentage = KigaliWWTPConstants.getConnectedHouseholdsPercentage(dto.getYear());
-        mitigation.setConnectedHouseholdsPercentage(connectedHouseholdsPercentage);
-        
-        // Get phase capacity
-        Double phaseCapacity = dto.getProjectPhase().getCapacityPerDay();
+        // Get user input values
+        Double phaseCapacity = phaseCapacityInCubicMetersPerDay;
+        Double connectedHouseholdsPercentage = dto.getConnectedHouseholdsPercentage();
         
         // Calculations
         // 1. Effective Daily Flow (m³/day) = Plant Operational Efficiency × Connected Households (%) × Phase capacity (m³/day)

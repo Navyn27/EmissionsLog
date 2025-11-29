@@ -4,7 +4,6 @@ import lombok.Getter;
 
 @Getter
 public enum KigaliFSTPConstants {
-    PLANT_OPERATIONAL_EFFICIENCY(0.85),
     METHANE_EMISSION_FACTOR(0.25), // kg CH4 per kg COD
     COD_CONCENTRATION(10.0), // kg COD per m³
     METHANE_POTENTIAL(2.50), // kg CH4 per m³

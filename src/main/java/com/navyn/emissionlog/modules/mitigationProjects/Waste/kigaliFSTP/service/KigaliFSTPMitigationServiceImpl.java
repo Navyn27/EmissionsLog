@@ -23,14 +23,19 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
     public KigaliFSTPMitigation createKigaliFSTPMitigation(KigaliFSTPMitigationDto dto) {
         KigaliFSTPMitigation mitigation = new KigaliFSTPMitigation();
         
-        // Set user inputs
+        // Convert phase capacity to standard unit (m³/day)
+        double phaseCapacityInCubicMetersPerDay = dto.getPhaseCapacityUnit().toCubicMetersPerDay(dto.getPhaseCapacityPerDay());
+        
+        // Set user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setProjectPhase(dto.getProjectPhase());
+        mitigation.setPhaseCapacityPerDay(phaseCapacityInCubicMetersPerDay);
+        mitigation.setPlantOperationalEfficiency(dto.getPlantOperationalEfficiency());
         
         // Calculations
         // 1. Effective Daily Treatment (m³/day) = Plant Operational Efficiency × Phase capacity (m³/day)
-        Double plantEfficiency = KigaliFSTPConstants.PLANT_OPERATIONAL_EFFICIENCY.getValue();
-        Double phaseCapacity = dto.getProjectPhase().getCapacityPerDay();
+        Double plantEfficiency = dto.getPlantOperationalEfficiency();
+        Double phaseCapacity = phaseCapacityInCubicMetersPerDay;
         Double effectiveDailyTreatment = plantEfficiency * phaseCapacity;
         mitigation.setEffectiveDailyTreatment(effectiveDailyTreatment);
         

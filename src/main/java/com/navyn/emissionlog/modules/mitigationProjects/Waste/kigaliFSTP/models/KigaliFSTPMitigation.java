@@ -23,6 +23,12 @@ public class KigaliFSTPMitigation {
     @Column(nullable = false)
     private ProjectPhase projectPhase;
     
+    @Column(nullable = false)
+    private Double phaseCapacityPerDay; // m³/day
+    
+    @Column(nullable = false)
+    private Double plantOperationalEfficiency; // Efficiency as decimal (0.0-1.0)
+    
     // Calculated fields
     @Column(nullable = false)
     private Double effectiveDailyTreatment; // m³/day

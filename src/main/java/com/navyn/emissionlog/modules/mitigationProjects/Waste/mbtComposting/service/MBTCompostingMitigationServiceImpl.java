@@ -23,19 +23,23 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
     public MBTCompostingMitigation createMBTCompostingMitigation(MBTCompostingMitigationDto dto) {
         MBTCompostingMitigation mitigation = new MBTCompostingMitigation();
         
-        // Set user inputs
+        // Convert to standard units
+        double organicWasteInTonnesPerDay = dto.getOrganicWasteTreatedUnit().toTonnesPerDay(dto.getOrganicWasteTreatedTonsPerDay());
+        double bauEmissionInKilotonnes = dto.getBauEmissionUnit().toKilotonnesCO2e(dto.getBauEmissionBiologicalTreatment());
+        
+        // Set user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setOperationStatus(dto.getOperationStatus());
-        mitigation.setOrganicWasteTreatedTonsPerDay(dto.getOrganicWasteTreatedTonsPerDay());
-        mitigation.setBauEmissionBiologicalTreatment(dto.getBauEmissionBiologicalTreatment());
+        mitigation.setOrganicWasteTreatedTonsPerDay(organicWasteInTonnesPerDay);
+        mitigation.setBauEmissionBiologicalTreatment(bauEmissionInKilotonnes);
         
         // Calculations
-        // Organic Waste Treated (tons/year) = Organic Waste Treated (tons/day) * days based on operation status
-        // - 365/2 (182.5) if half year
-        // - 365 if full year
-        // - 0 if construction/pre-op
+        // Organic Waste Treated (tons/year) = Organic Waste Treated (tons/day) × days based on operation status
+        // - PRE_OPERATION: 0 days
+        // - HALF_YEAR_OPERATION: 182.5 days (365/2)
+        // - FULL_YEAR_OPERATION: 365 days
         Double daysPerYear = dto.getOperationStatus().getDaysPerYear();
-        Double organicWasteTreatedTonsPerYear = dto.getOrganicWasteTreatedTonsPerDay() * daysPerYear;
+        Double organicWasteTreatedTonsPerYear = organicWasteInTonnesPerDay * daysPerYear;
         mitigation.setOrganicWasteTreatedTonsPerYear(organicWasteTreatedTonsPerYear);
         
         // Estimated GHG Reduction (tCO2eq/year) = Emission Factor * Organic Waste Treated (tons/year)
@@ -47,7 +51,7 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
         mitigation.setEstimatedGhgReductionKilotonnesPerYear(estimatedGhgReductionKilotonnes);
         
         // Adjusted BAU Emission Biological Treatment (ktCO2eq/year) = BAU Emission - GHG Reduction (kt)
-        Double adjustedBauEmission = dto.getBauEmissionBiologicalTreatment() - estimatedGhgReductionKilotonnes;
+        Double adjustedBauEmission = bauEmissionInKilotonnes - estimatedGhgReductionKilotonnes;
         mitigation.setAdjustedBauEmissionBiologicalTreatment(adjustedBauEmission);
         
         return repository.save(mitigation);

@@ -23,14 +23,18 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
     public WasteToEnergyMitigation createWasteToEnergyMitigation(WasteToEnergyMitigationDto dto) {
         WasteToEnergyMitigation mitigation = new WasteToEnergyMitigation();
         
-        // Set user inputs
+        // Convert to standard units
+        double wasteInTonnesPerYear = dto.getWasteToWtEUnit().toTonnesPerYear(dto.getWasteToWtE());
+        double bauEmissionsInKilotonnes = dto.getBauEmissionsUnit().toKilotonnesCO2e(dto.getBauEmissionsSolidWaste());
+        
+        // Set user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
-        mitigation.setWasteToWtE(dto.getWasteToWtE());
-        mitigation.setBauEmissionsSolidWaste(dto.getBauEmissionsSolidWaste());
+        mitigation.setWasteToWtE(wasteInTonnesPerYear);
+        mitigation.setBauEmissionsSolidWaste(bauEmissionsInKilotonnes);
         
         // Calculations
         // GHG Reduction (tCO2eq) = Net Emission Factor (tCO2eq/t) * Waste to WtE (t/year)
-        Double ghgReductionTonnes = WasteToEnergyConstants.NET_EMISSION_FACTOR.getValue() * dto.getWasteToWtE();
+        Double ghgReductionTonnes = WasteToEnergyConstants.NET_EMISSION_FACTOR.getValue() * wasteInTonnesPerYear;
         mitigation.setGhgReductionTonnes(ghgReductionTonnes);
         
         // GHG Reduction (KtCO2eq) = GHG Reduction (tCO2eq) / 1000
@@ -38,7 +42,7 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
         mitigation.setGhgReductionKilotonnes(ghgReductionKilotonnes);
         
         // Adjusted Emissions (with WtE, ktCO₂e) = BAU Emissions (Solid Waste, ktCO₂e) - GHG Reduction (KtCO2eq)
-        Double adjustedEmissions = dto.getBauEmissionsSolidWaste() - ghgReductionKilotonnes;
+        Double adjustedEmissions = bauEmissionsInKilotonnes - ghgReductionKilotonnes;
         mitigation.setAdjustedEmissionsWithWtE(adjustedEmissions);
         
         return repository.save(mitigation);

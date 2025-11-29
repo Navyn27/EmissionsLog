@@ -24,9 +24,12 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
     public EPRPlasticWasteMitigation createEPRPlasticWasteMitigation(EPRPlasticWasteMitigationDto dto) {
         EPRPlasticWasteMitigation mitigation = new EPRPlasticWasteMitigation();
         
-        // Set user inputs
+        // Convert BAU emissions to standard unit (ktCO₂eq)
+        double bauEmissionsInKilotonnes = dto.getBauSolidWasteEmissionsUnit().toKilotonnesCO2e(dto.getBauSolidWasteEmissions());
+        
+        // Set user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
-        mitigation.setBauSolidWasteEmissions(dto.getBauSolidWasteEmissions());
+        mitigation.setBauSolidWasteEmissions(bauEmissionsInKilotonnes);
         mitigation.setPlasticWasteGrowthFactor(dto.getPlasticWasteGrowthFactor());
         mitigation.setRecyclingRateWithEPR(dto.getRecyclingRateWithEPR());
         mitigation.setPlasticWasteBaseTonnesPerYear(dto.getPlasticWasteBaseTonnesPerYear());
