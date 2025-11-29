@@ -13,5 +13,9 @@ public interface SettlementTreesMitigationRepository
         extends JpaRepository<SettlementTreesMitigation, UUID>,
                 JpaSpecificationExecutor<SettlementTreesMitigation> {
     
+    // Find the most recent record BEFORE the given year
+    Optional<SettlementTreesMitigation> findTopByYearLessThanOrderByYearDesc(Integer year);
+    
+    // Find by exact year
     Optional<SettlementTreesMitigation> findByYear(Integer year);
 }

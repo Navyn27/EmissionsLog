@@ -28,7 +28,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
     public StreetTreesMitigation createStreetTreesMitigation(StreetTreesMitigationDto dto) {
         StreetTreesMitigation mitigation = new StreetTreesMitigation();
 
-        Optional<StreetTreesMitigation> lastYearRecord = repository.findByYear(dto.getYear()-1);
+        Optional<StreetTreesMitigation> lastYearRecord = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
         Double cumulativeNumberOfTrees = lastYearRecord.map(StreetTreesMitigationServiceImpl::apply).orElse(0.0);
         Double agbSingleTreePrevYear = lastYearRecord.map(StreetTreesMitigation::getAgbSingleTreeCurrentYear).orElse(0.0);
 

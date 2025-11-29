@@ -22,7 +22,7 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
     @Override
     public SettlementTreesMitigation createSettlementTreesMitigation(SettlementTreesMitigationDto dto) {
         SettlementTreesMitigation mitigation = new SettlementTreesMitigation();
-        Optional<SettlementTreesMitigation> lastYearRecord = repository.findByYear(dto.getYear()-1);
+        Optional<SettlementTreesMitigation> lastYearRecord = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
         Double cumulativeNumberOfTrees = lastYearRecord.map(settlementTreesMitigation -> settlementTreesMitigation.getNumberOfTreesPlanted() + settlementTreesMitigation.getCumulativeNumberOfTrees()).orElse(0.0);
         Double agbSingleTreePrevYear = lastYearRecord.map(SettlementTreesMitigation::getAgbSingleTreeCurrentYear).orElse(0.0);
 

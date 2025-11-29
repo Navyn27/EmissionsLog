@@ -24,7 +24,7 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
     public ProtectiveForestMitigation createProtectiveForestMitigation(ProtectiveForestMitigationDto dto) {
         ProtectiveForestMitigation mitigation = new ProtectiveForestMitigation();
 
-        Optional<ProtectiveForestMitigation> lastYearRecord = repository.findTopByYearAndCategoryOrderByCreatedAtDesc(dto.getYear(), dto.getCategory());
+        Optional<ProtectiveForestMitigation> lastYearRecord = repository.findTopByYearLessThanAndCategoryOrderByYearDesc(dto.getYear(), dto.getCategory());
         Double cumulativeArea = lastYearRecord.map(protectiveForestMitigation -> protectiveForestMitigation.getCumulativeArea() + protectiveForestMitigation.getAreaPlanted()).orElse(0.0);
         
         // Convert units to standard values
@@ -40,7 +40,7 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
         
         // AUTO-FETCH previous year's AGB from DB
         double previousYearAGB = repository
-            .findTopByYearAndCategoryOrderByCreatedAtDesc(dto.getYear(), dto.getCategory())
+            .findTopByYearLessThanAndCategoryOrderByYearDesc(dto.getYear(), dto.getCategory())
             .map(ProtectiveForestMitigation::getAgbCurrentYear)
             .orElse(0.0);
         
@@ -94,6 +94,6 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
     public Optional<ProtectiveForestMitigation> getByYearAndCategory(
             Integer year, 
             ProtectiveForestCategory category) {
-        return repository.findTopByYearAndCategoryOrderByCreatedAtDesc(year, category);
+        return repository.findByYearAndCategory(year, category);
     }
 }

@@ -13,5 +13,9 @@ public interface StreetTreesMitigationRepository
         extends JpaRepository<StreetTreesMitigation, UUID>,
                 JpaSpecificationExecutor<StreetTreesMitigation> {
     
+    // Find the most recent record BEFORE the given year
+    Optional<StreetTreesMitigation> findTopByYearLessThanOrderByYearDesc(Integer year);
+    
+    // Find by exact year
     Optional<StreetTreesMitigation> findByYear(Integer year);
 }

@@ -24,7 +24,7 @@ public class WetlandParksMitigationServiceImpl implements WetlandParksMitigation
     public WetlandParksMitigation createWetlandParksMitigation(WetlandParksMitigationDto dto) {
         WetlandParksMitigation mitigation = new WetlandParksMitigation();
 
-        Optional<WetlandParksMitigation> lastYearRecord = repository.findByYearAndTreeCategory(dto.getYear()-1,dto.getTreeCategory());
+        Optional<WetlandParksMitigation> lastYearRecord = repository.findTopByYearLessThanAndTreeCategoryOrderByYearDesc(dto.getYear(), dto.getTreeCategory());
         Double cumulativeArea = lastYearRecord.map(wetlandParksMitigation -> wetlandParksMitigation.getAreaPlanted() + wetlandParksMitigation.getCumulativeArea()).orElse(0.0);
 
         // Convert units to standard values

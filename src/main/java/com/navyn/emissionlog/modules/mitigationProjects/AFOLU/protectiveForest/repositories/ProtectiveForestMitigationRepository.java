@@ -14,10 +14,15 @@ public interface ProtectiveForestMitigationRepository
         extends JpaRepository<ProtectiveForestMitigation, UUID>,
                 JpaSpecificationExecutor<ProtectiveForestMitigation> {
     
-//    Optional<ProtectiveForestMitigation> findByYearAndCategory(
-//        Integer year,
-//        ProtectiveForestCategory category
-//    );
-
-    Optional<ProtectiveForestMitigation> findTopByYearAndCategoryOrderByCreatedAtDesc(Integer year, ProtectiveForestCategory category);
+    // Find the most recent record BEFORE the given year for a specific category
+    Optional<ProtectiveForestMitigation> findTopByYearLessThanAndCategoryOrderByYearDesc(
+        Integer year,
+        ProtectiveForestCategory category
+    );
+    
+    // Find by exact year and category
+    Optional<ProtectiveForestMitigation> findByYearAndCategory(
+        Integer year,
+        ProtectiveForestCategory category
+    );
 }

@@ -14,6 +14,13 @@ public interface WetlandParksMitigationRepository
         extends JpaRepository<WetlandParksMitigation, UUID>,
                 JpaSpecificationExecutor<WetlandParksMitigation> {
     
+    // Find the most recent record BEFORE the given year for a specific tree category
+    Optional<WetlandParksMitigation> findTopByYearLessThanAndTreeCategoryOrderByYearDesc(
+        Integer year, 
+        WetlandTreeCategory treeCategory
+    );
+    
+    // Find by exact year and tree category
     Optional<WetlandParksMitigation> findByYearAndTreeCategory(
         Integer year, 
         WetlandTreeCategory treeCategory
