@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum OperationStatus {
-    PRE_OPERATION("Pre-Operation / Construction", 0.0),
+    CONSTRUCTION_PRE_OP("Pre-Operation / Construction", 0.0),
     HALF_YEAR_OPERATION("Half Year Operation", 182.5), // 365/2
     FULL_YEAR_OPERATION("Full Year Operation", 365.0);
     

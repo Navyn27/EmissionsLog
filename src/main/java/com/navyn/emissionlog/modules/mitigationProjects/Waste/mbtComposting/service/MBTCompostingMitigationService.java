@@ -9,5 +9,7 @@ public interface MBTCompostingMitigationService {
     
     MBTCompostingMitigation createMBTCompostingMitigation(MBTCompostingMitigationDto dto);
     
+    MBTCompostingMitigation updateMBTCompostingMitigation(Long id, MBTCompostingMitigationDto dto);
+    
     List<MBTCompostingMitigation> getAllMBTCompostingMitigation(Integer year);
 }

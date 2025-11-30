@@ -49,6 +49,33 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
     }
     
     @Override
+    public WasteToEnergyMitigation updateWasteToEnergyMitigation(Long id, WasteToEnergyMitigationDto dto) {
+        WasteToEnergyMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Waste to Energy Mitigation record not found with id: " + id));
+        
+        // Convert to standard units
+        double wasteInTonnesPerYear = dto.getWasteToWtEUnit().toTonnesPerYear(dto.getWasteToWtE());
+        double bauEmissionsInKilotonnes = dto.getBauEmissionsUnit().toKilotonnesCO2e(dto.getBauEmissionsSolidWaste());
+        
+        // Update user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setWasteToWtE(wasteInTonnesPerYear);
+        mitigation.setBauEmissionsSolidWaste(bauEmissionsInKilotonnes);
+        
+        // Recalculate derived fields
+        Double ghgReductionTonnes = WasteToEnergyConstants.NET_EMISSION_FACTOR.getValue() * wasteInTonnesPerYear;
+        mitigation.setGhgReductionTonnes(ghgReductionTonnes);
+        
+        Double ghgReductionKilotonnes = ghgReductionTonnes / 1000;
+        mitigation.setGhgReductionKilotonnes(ghgReductionKilotonnes);
+        
+        Double adjustedEmissions = bauEmissionsInKilotonnes - ghgReductionKilotonnes;
+        mitigation.setAdjustedEmissionsWithWtE(adjustedEmissions);
+        
+        return repository.save(mitigation);
+    }
+    
+    @Override
     public List<WasteToEnergyMitigation> getAllWasteToEnergyMitigation(Integer year) {
         Specification<WasteToEnergyMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));

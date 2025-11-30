@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +70,105 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
         mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
         
         return repository.save(mitigation);
+    }
+    
+    @Override
+    public StreetTreesMitigation updateStreetTreesMitigation(UUID id, StreetTreesMitigationDto dto) {
+        StreetTreesMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Street Trees Mitigation record not found with id: " + id));
+        
+        // Update the current record
+        recalculateAndUpdateRecord(mitigation, dto);
+        StreetTreesMitigation updatedRecord = repository.save(mitigation);
+        
+        // CASCADE: Find and recalculate all subsequent years
+        List<StreetTreesMitigation> subsequentRecords = repository
+            .findByYearGreaterThanOrderByYearAsc(dto.getYear());
+        
+        for (StreetTreesMitigation subsequent : subsequentRecords) {
+            recalculateExistingRecord(subsequent);
+            repository.save(subsequent);
+        }
+        
+        return updatedRecord;
+    }
+    
+    /**
+     * Recalculates an existing record based on its current year and stored input values
+     */
+    private void recalculateExistingRecord(StreetTreesMitigation mitigation) {
+        Optional<StreetTreesMitigation> lastYearRecord = repository
+            .findTopByYearLessThanOrderByYearDesc(mitigation.getYear());
+        Double cumulativeNumberOfTrees = lastYearRecord.map(StreetTreesMitigationServiceImpl::apply).orElse(0.0);
+        Double agbSingleTreePrevYear = lastYearRecord.map(StreetTreesMitigation::getAgbSingleTreeCurrentYear).orElse(0.0);
+
+        mitigation.setCumulativeNumberOfTrees(cumulativeNumberOfTrees);
+        mitigation.setAgbSingleTreePreviousYear(agbSingleTreePrevYear);
+        
+        // Recalculate all derived fields using existing AGB value
+        double agbCurrentYearInCubicMeters = mitigation.getAgbSingleTreeCurrentYear();
+        
+        double agbGrowth = agbCurrentYearInCubicMeters - agbSingleTreePrevYear;
+        mitigation.setAgbGrowth(agbGrowth);
+        
+        double abovegroundBiomassGrowth = 
+            StreetTreesConstants.CONVERSION_M3_TO_TONNES_DM.getValue() * 
+            agbGrowth * 
+            cumulativeNumberOfTrees;
+        mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
+        
+        double totalBiomass = abovegroundBiomassGrowth * 
+            (1 + StreetTreesConstants.RATIO_BGB_TO_AGB.getValue());
+        mitigation.setTotalBiomass(totalBiomass);
+        
+        double biomassCarbonIncrease = totalBiomass * 
+            StreetTreesConstants.CARBON_CONTENT_DRY_WOOD.getValue();
+        mitigation.setBiomassCarbonIncrease(biomassCarbonIncrease);
+        
+        double mitigatedEmissions = (biomassCarbonIncrease * 
+            StreetTreesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
+    }
+    
+    /**
+     * Recalculates a record with new DTO values
+     */
+    private void recalculateAndUpdateRecord(StreetTreesMitigation mitigation, StreetTreesMitigationDto dto) {
+        Optional<StreetTreesMitigation> lastYearRecord = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
+        Double cumulativeNumberOfTrees = lastYearRecord.map(StreetTreesMitigationServiceImpl::apply).orElse(0.0);
+        Double agbSingleTreePrevYear = lastYearRecord.map(StreetTreesMitigation::getAgbSingleTreeCurrentYear).orElse(0.0);
+
+        // Convert AGB to cubic meters (standard unit)
+        double agbCurrentYearInCubicMeters = dto.getAgbUnit().toCubicMeters(dto.getAgbSingleTreeCurrentYear());
+
+        // Update input fields (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setCumulativeNumberOfTrees(cumulativeNumberOfTrees);
+        mitigation.setNumberOfTreesPlanted(dto.getNumberOfTreesPlanted());
+        mitigation.setAgbSingleTreePreviousYear(agbSingleTreePrevYear);
+        mitigation.setAgbSingleTreeCurrentYear(agbCurrentYearInCubicMeters);
+        
+        // Recalculate derived fields
+        double agbGrowth = agbCurrentYearInCubicMeters - agbSingleTreePrevYear;
+        mitigation.setAgbGrowth(agbGrowth);
+        
+        double abovegroundBiomassGrowth = 
+            StreetTreesConstants.CONVERSION_M3_TO_TONNES_DM.getValue() * 
+            agbGrowth * 
+            cumulativeNumberOfTrees;
+        mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
+        
+        double totalBiomass = abovegroundBiomassGrowth * 
+            (1 + StreetTreesConstants.RATIO_BGB_TO_AGB.getValue());
+        mitigation.setTotalBiomass(totalBiomass);
+        
+        double biomassCarbonIncrease = totalBiomass * 
+            StreetTreesConstants.CARBON_CONTENT_DRY_WOOD.getValue();
+        mitigation.setBiomassCarbonIncrease(biomassCarbonIncrease);
+        
+        double mitigatedEmissions = (biomassCarbonIncrease * 
+            StreetTreesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
     }
     
     @Override

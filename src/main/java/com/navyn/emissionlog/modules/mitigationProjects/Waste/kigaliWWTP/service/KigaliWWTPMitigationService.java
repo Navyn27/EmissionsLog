@@ -9,5 +9,7 @@ public interface KigaliWWTPMitigationService {
     
     KigaliWWTPMitigation createKigaliWWTPMitigation(KigaliWWTPMitigationDto dto);
     
+    KigaliWWTPMitigation updateKigaliWWTPMitigation(Long id, KigaliWWTPMitigationDto dto);
+    
     List<KigaliWWTPMitigation> getAllKigaliWWTPMitigation(Integer year);
 }

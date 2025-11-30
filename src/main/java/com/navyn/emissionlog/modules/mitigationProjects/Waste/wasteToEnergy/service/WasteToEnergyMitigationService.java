@@ -9,5 +9,7 @@ public interface WasteToEnergyMitigationService {
     
     WasteToEnergyMitigation createWasteToEnergyMitigation(WasteToEnergyMitigationDto dto);
     
+    WasteToEnergyMitigation updateWasteToEnergyMitigation(Long id, WasteToEnergyMitigationDto dto);
+    
     List<WasteToEnergyMitigation> getAllWasteToEnergyMitigation(Integer year);
 }

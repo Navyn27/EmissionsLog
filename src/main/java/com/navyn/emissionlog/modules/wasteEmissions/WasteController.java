@@ -86,6 +86,62 @@ public class WasteController {
                                                                @RequestParam(required = false, value = "region") UUID regionId) {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Waste data fetched successfully", wasteService.getSolidWasteData(solidWasteType, year, regionId)));
     }
+    
+    // ============= UPDATE ENDPOINTS =============
+    
+    @Operation(summary = "Update Industrial Waste Water Data")
+    @PutMapping("/industrialWasteWater/{id}")
+    public ResponseEntity<ApiResponse> updateIndustrialWasteWaterData(
+            @PathVariable UUID id,
+            @Valid @RequestBody IndustrialWasteDto wasteData) {
+        return ResponseEntity.ok(new ApiResponse(true, "Industrial waste water updated successfully", 
+            wasteService.updateIndustrialWasteWaterData(id, wasteData)));
+    }
+    
+    @Operation(summary = "Update Solid Waste Data")
+    @PutMapping("/solidWaste/{id}")
+    public ResponseEntity<ApiResponse> updateSolidWasteData(
+            @PathVariable UUID id,
+            @Valid @RequestBody SolidWasteDto wasteData) {
+        return ResponseEntity.ok(new ApiResponse(true, "Solid waste updated successfully", 
+            wasteService.updateSolidWasteData(id, wasteData)));
+    }
+    
+    @Operation(summary = "Update Waste Water Data")
+    @PutMapping("/wasteWater/{id}")
+    public ResponseEntity<ApiResponse> updateWasteWaterData(
+            @PathVariable UUID id,
+            @Valid @RequestBody WasteWaterDto wasteData) {
+        return ResponseEntity.ok(new ApiResponse(true, "Waste water updated successfully", 
+            wasteService.updateWasteWaterData(id, wasteData)));
+    }
+    
+    @Operation(summary = "Update Bio Treated Waste Water Data")
+    @PutMapping("/bioTreatedWasteWater/{id}")
+    public ResponseEntity<ApiResponse> updateBioTreatedWasteWaterData(
+            @PathVariable UUID id,
+            @Valid @RequestBody GeneralWasteByPopulationDto wasteData) {
+        return ResponseEntity.ok(new ApiResponse(true, "Bio treated waste water updated successfully", 
+            wasteService.updateBioTreatedWasteWaterData(id, wasteData)));
+    }
+    
+    @Operation(summary = "Update Burnt Waste Data")
+    @PutMapping("/burntWaste/{id}")
+    public ResponseEntity<ApiResponse> updateBurntWasteData(
+            @PathVariable UUID id,
+            @Valid @RequestBody GeneralWasteByPopulationDto wasteData) {
+        return ResponseEntity.ok(new ApiResponse(true, "Burnt waste updated successfully", 
+            wasteService.updateBurntWasteData(id, wasteData)));
+    }
+    
+    @Operation(summary = "Update Incineration Waste Data")
+    @PutMapping("/incinerationWaste/{id}")
+    public ResponseEntity<ApiResponse> updateIncinerationWasteData(
+            @PathVariable UUID id,
+            @Valid @RequestBody GeneralWasteByPopulationDto wasteData) {
+        return ResponseEntity.ok(new ApiResponse(true, "Incineration waste updated successfully", 
+            wasteService.updateIncinerationWasteData(id, wasteData)));
+    }
 
     @Operation(summary = "Populate the DB with population records affiliated wasteData")
     @PostMapping("/populateWasteData/population")

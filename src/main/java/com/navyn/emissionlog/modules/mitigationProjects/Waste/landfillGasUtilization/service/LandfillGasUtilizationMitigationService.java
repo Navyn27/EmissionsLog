@@ -9,5 +9,7 @@ public interface LandfillGasUtilizationMitigationService {
     
     LandfillGasUtilizationMitigation createLandfillGasUtilizationMitigation(LandfillGasUtilizationMitigationDto dto);
     
+    LandfillGasUtilizationMitigation updateLandfillGasUtilizationMitigation(Long id, LandfillGasUtilizationMitigationDto dto);
+    
     List<LandfillGasUtilizationMitigation> getAllLandfillGasUtilizationMitigation(Integer year);
 }

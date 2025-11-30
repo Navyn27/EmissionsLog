@@ -83,6 +83,58 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
     }
     
     @Override
+    public EPRPlasticWasteMitigation updateEPRPlasticWasteMitigation(Long id, EPRPlasticWasteMitigationDto dto) {
+        EPRPlasticWasteMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("EPR Plastic Waste Mitigation record not found with id: " + id));
+        
+        // Convert BAU emissions to standard unit (ktCO₂eq)
+        double bauEmissionsInKilotonnes = dto.getBauSolidWasteEmissionsUnit().toKilotonnesCO2e(dto.getBauSolidWasteEmissions());
+        
+        // Update user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setBauSolidWasteEmissions(bauEmissionsInKilotonnes);
+        mitigation.setPlasticWasteGrowthFactor(dto.getPlasticWasteGrowthFactor());
+        mitigation.setRecyclingRateWithEPR(dto.getRecyclingRateWithEPR());
+        mitigation.setPlasticWasteBaseTonnesPerYear(dto.getPlasticWasteBaseTonnesPerYear());
+        
+        // Recalculate derived fields - Plastic Waste calculation
+        Double plasticWasteTonnesPerYear;
+        
+        if (dto.getPlasticWasteBaseTonnesPerYear() != null) {
+            plasticWasteTonnesPerYear = dto.getPlasticWasteBaseTonnesPerYear();
+        } else {
+            Optional<EPRPlasticWasteMitigation> previousYear = repository.findPreviousYear(dto.getYear());
+            
+            if (previousYear.isPresent()) {
+                plasticWasteTonnesPerYear = previousYear.get().getPlasticWasteTonnesPerYear() * dto.getPlasticWasteGrowthFactor();
+            } else {
+                throw new IllegalArgumentException(
+                    "Plastic Waste Base (t/year) is required for the first year or when no previous year data exists. " +
+                    "Please provide 'plasticWasteBaseTonnesPerYear' in the request."
+                );
+            }
+        }
+        mitigation.setPlasticWasteTonnesPerYear(plasticWasteTonnesPerYear);
+        
+        Double recyclingWithoutEPR = plasticWasteTonnesPerYear * EPRPlasticWasteConstants.RECYCLING_RATE_WITHOUT_EPR.getValue();
+        mitigation.setRecyclingWithoutEPRTonnesPerYear(recyclingWithoutEPR);
+        
+        Double recycledPlasticWithEPR = plasticWasteTonnesPerYear * dto.getRecyclingRateWithEPR();
+        mitigation.setRecycledPlasticWithEPRTonnesPerYear(recycledPlasticWithEPR);
+        
+        Double additionalRecycling = recycledPlasticWithEPR - recyclingWithoutEPR;
+        mitigation.setAdditionalRecyclingVsBAUTonnesPerYear(additionalRecycling);
+        
+        Double ghgReductionTonnes = additionalRecycling * EPRPlasticWasteConstants.EMISSION_FACTOR.getValue();
+        mitigation.setGhgReductionTonnes(ghgReductionTonnes);
+        
+        Double ghgReductionKilotonnes = ghgReductionTonnes / 1000;
+        mitigation.setGhgReductionKilotonnes(ghgReductionKilotonnes);
+        
+        return repository.save(mitigation);
+    }
+    
+    @Override
     public List<EPRPlasticWasteMitigation> getAllEPRPlasticWasteMitigation(Integer year) {
         Specification<EPRPlasticWasteMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));

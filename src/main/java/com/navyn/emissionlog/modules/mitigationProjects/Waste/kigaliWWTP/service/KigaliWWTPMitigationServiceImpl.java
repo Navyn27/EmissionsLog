@@ -61,6 +61,41 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
     }
     
     @Override
+    public KigaliWWTPMitigation updateKigaliWWTPMitigation(Long id, KigaliWWTPMitigationDto dto) {
+        KigaliWWTPMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Kigali WWTP Mitigation record not found with id: " + id));
+        
+        // Convert phase capacity to standard unit (m³/day)
+        double phaseCapacityInCubicMetersPerDay = dto.getPhaseCapacityUnit().toCubicMetersPerDay(dto.getPhaseCapacityPerDay());
+        
+        // Update user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setPhaseCapacityPerDay(phaseCapacityInCubicMetersPerDay);
+        mitigation.setConnectedHouseholds(dto.getConnectedHouseholds());
+        mitigation.setConnectedHouseholdsPercentage(dto.getConnectedHouseholdsPercentage());
+        
+        // Recalculate derived fields
+        Double plantEfficiency = KigaliWWTPConstants.PLANT_OPERATIONAL_EFFICIENCY.getValue();
+        Double co2ePerM3 = KigaliWWTPConstants.CO2E_PER_M3_SLUDGE.getValue();
+        Double phaseCapacity = phaseCapacityInCubicMetersPerDay;
+        Double connectedHouseholdsPercentage = dto.getConnectedHouseholdsPercentage();
+        
+        Double effectiveDailyFlow = plantEfficiency * connectedHouseholdsPercentage * phaseCapacity;
+        mitigation.setEffectiveDailyFlow(effectiveDailyFlow);
+        
+        Double annualSludgeTreated = effectiveDailyFlow * 365;
+        mitigation.setAnnualSludgeTreated(annualSludgeTreated);
+        
+        Double annualEmissionsReductionTonnes = (annualSludgeTreated * co2ePerM3) / 1000;
+        mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
+        
+        Double annualEmissionsReductionKilotonnes = annualEmissionsReductionTonnes / 1000;
+        mitigation.setAnnualEmissionsReductionKilotonnes(annualEmissionsReductionKilotonnes);
+        
+        return repository.save(mitigation);
+    }
+    
+    @Override
     public List<KigaliWWTPMitigation> getAllKigaliWWTPMitigation(Integer year) {
         Specification<KigaliWWTPMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));

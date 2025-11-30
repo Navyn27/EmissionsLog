@@ -9,5 +9,7 @@ public interface EPRPlasticWasteMitigationService {
     
     EPRPlasticWasteMitigation createEPRPlasticWasteMitigation(EPRPlasticWasteMitigationDto dto);
     
+    EPRPlasticWasteMitigation updateEPRPlasticWasteMitigation(Long id, EPRPlasticWasteMitigationDto dto);
+    
     List<EPRPlasticWasteMitigation> getAllEPRPlasticWasteMitigation(Integer year);
 }

@@ -32,6 +32,16 @@ public class KigaliFSTPMitigationController {
                 new ApiResponse(true, "Kigali FSTP mitigation record created successfully", mitigation));
     }
     
+    @Operation(summary = "Update Kigali FSTP mitigation record",
+               description = "Updates an existing Kigali FSTP mitigation record and recalculates all derived fields")
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateKigaliFSTPMitigation(
+            @PathVariable Long id,
+            @Valid @RequestBody KigaliFSTPMitigationDto dto) {
+        KigaliFSTPMitigation mitigation = service.updateKigaliFSTPMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(true, "Kigali FSTP mitigation record updated successfully", mitigation));
+    }
+    
     @Operation(summary = "Get Kigali FSTP mitigation records", 
                description = "Retrieves all Kigali FSTP mitigation records with optional year filter")
     @GetMapping

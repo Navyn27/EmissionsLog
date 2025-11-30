@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mitigation/protectiveForest")
@@ -30,6 +31,19 @@ public class ProtectiveForestMitigationController {
         return ResponseEntity.ok(new ApiResponse(
             true, 
             "Protective forest mitigation created successfully", 
+            mitigation
+        ));
+    }
+    
+    @PutMapping("/{id}")
+    @Operation(summary = "Update protective forest mitigation record")
+    public ResponseEntity<ApiResponse> updateProtectiveForestMitigation(
+            @PathVariable UUID id,
+            @Valid @RequestBody ProtectiveForestMitigationDto dto) {
+        ProtectiveForestMitigation mitigation = service.updateProtectiveForestMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(
+            true, 
+            "Protective forest mitigation updated successfully", 
             mitigation
         ));
     }

@@ -358,6 +358,138 @@ public class WasteServiceImpl implements WasteService {
         return eicvReport.get();
     }
     
+    // ============= UPDATE METHODS =============
+    
+    @Override
+    public WasteDataAbstract updateIndustrialWasteWaterData(UUID id, IndustrialWasteDto wasteData) {
+        IndustrialWasteWaterData industrialWasteWaterData = (IndustrialWasteWaterData) wasteDataRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Industrial waste water data not found with id: " + id));
+        
+        industrialWasteWaterData.setSugarProductionAmount(wasteData.getSugarProductionAmount());
+        industrialWasteWaterData.setBeerProductionAmount(wasteData.getBeerProductionAmount());
+        industrialWasteWaterData.setDairyProductionAmount(wasteData.getDairyProductionAmount());
+        industrialWasteWaterData.setMeatAndPoultryProductionAmount(wasteData.getMeatAndPoultryProductionAmount());
+        industrialWasteWaterData.setPopulationRecords(populationRecordRepository.findById(wasteData.getPopulationRecords())
+                .orElseThrow(() -> new RuntimeException("Population record not found")));
+        industrialWasteWaterData.setScope(wasteData.getScope());
+        industrialWasteWaterData.setRegion(regionRepository.findById(wasteData.getRegion())
+                .orElseThrow(() -> new RuntimeException("Region not found")));
+        industrialWasteWaterData.setActivityYear(wasteData.getActivityYear());
+        
+        // Recalculate emissions
+        industrialWasteWaterData.setFossilCO2Emissions(0.0);
+        industrialWasteWaterData.setBioCO2Emissions(0.0);
+        industrialWasteWaterData.setN2OEmissions(industrialWasteWaterData.calculateN2OEmissions());
+        industrialWasteWaterData.setCH4Emissions(industrialWasteWaterData.calculateCH4Emissions());
+        
+        return wasteDataRepository.save(industrialWasteWaterData);
+    }
+    
+    @Override
+    public WasteDataAbstract updateSolidWasteData(UUID id, SolidWasteDto wasteData) {
+        SolidWasteData solidWasteData = (SolidWasteData) wasteDataRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Solid waste data not found with id: " + id));
+        
+        SolidWasteData latestSolidWasteRecord = (SolidWasteData) wasteDataRepository.findFirstByWasteTypeOrderByCreatedAtDesc(SOLID_WASTE);
+        
+        solidWasteData.setRegion(regionRepository.findById(wasteData.getRegion())
+                .orElseThrow(() -> new RuntimeException("Region not found")));
+        solidWasteData.setSolidWasteType(wasteData.getSolidWasteType());
+        solidWasteData.setActivityYear(wasteData.getActivityYear());
+        solidWasteData.setScope(wasteData.getScope());
+        solidWasteData.setAmountDeposited(wasteData.getAmountDeposited());
+        solidWasteData.setMethaneRecovery(wasteData.getMethaneRecovery());
+        
+        // Recalculate emissions
+        solidWasteData.setCH4Emissions(solidWasteData.calculateCH4Emissions(latestSolidWasteRecord == null ? 0.0 : latestSolidWasteRecord.getDDOCmAccumulated()));
+        
+        return wasteDataRepository.save(solidWasteData);
+    }
+    
+    @Transactional
+    @Override
+    public WasteDataAbstract updateWasteWaterData(UUID id, WasteWaterDto wasteData) {
+        WasteWaterData wasteWaterData = (WasteWaterData) wasteDataRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Waste water data not found with id: " + id));
+        
+        Optional<EICVReport> eicvReport = eicvReportRepository.findById(wasteData.getEicvReport());
+        
+        wasteWaterData.setPopulationRecords(populationRecordRepository.findById(wasteData.getPopulationRecords())
+                .orElseThrow(() -> new RuntimeException("Population record not found")));
+        wasteWaterData.setRegion(regionRepository.findById(wasteData.getRegion())
+                .orElseThrow(() -> new RuntimeException("Region not found")));
+        wasteWaterData.setActivityYear(wasteData.getActivityYear());
+        wasteWaterData.setScope(wasteData.getScope());
+        wasteWaterData.setEICVReport(eicvReport.get());
+        
+        // Recalculate emissions
+        wasteWaterData.setCH4Emissions(wasteWaterData.calculateCH4Emissions());
+        
+        return wasteDataRepository.save(wasteWaterData);
+    }
+    
+    @Transactional
+    @Override
+    public WasteDataAbstract updateBioTreatedWasteWaterData(UUID id, GeneralWasteByPopulationDto wasteData) {
+        BiologicallyTreatedWasteData biologicallyTreatedWasteData = (BiologicallyTreatedWasteData) wasteDataRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Biologically treated waste water data not found with id: " + id));
+        
+        biologicallyTreatedWasteData.setPopulationRecords(populationRecordRepository.findById(wasteData.getPopulationRecords())
+                .orElseThrow(() -> new RuntimeException("Population record not found")));
+        biologicallyTreatedWasteData.setRegion(regionRepository.findById(wasteData.getRegion())
+                .orElseThrow(() -> new RuntimeException("Region not found")));
+        biologicallyTreatedWasteData.setActivityYear(wasteData.getActivityYear());
+        biologicallyTreatedWasteData.setScope(wasteData.getScope());
+        
+        // Recalculate emissions
+        biologicallyTreatedWasteData.setCH4Emissions(biologicallyTreatedWasteData.calculateCH4Emissions());
+        biologicallyTreatedWasteData.setN2OEmissions(biologicallyTreatedWasteData.calculateN2OEmissions());
+        
+        return wasteDataRepository.save(biologicallyTreatedWasteData);
+    }
+    
+    @Transactional
+    @Override
+    public WasteDataAbstract updateBurntWasteData(UUID id, GeneralWasteByPopulationDto wasteData) {
+        BurningWasteData burningWasteData = (BurningWasteData) wasteDataRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Burning waste data not found with id: " + id));
+        
+        burningWasteData.setPopulationRecords(populationRecordRepository.findById(wasteData.getPopulationRecords())
+                .orElseThrow(() -> new RuntimeException("Population record not found")));
+        burningWasteData.setRegion(regionRepository.findById(wasteData.getRegion())
+                .orElseThrow(() -> new RuntimeException("Region not found")));
+        burningWasteData.setActivityYear(wasteData.getActivityYear());
+        burningWasteData.setScope(wasteData.getScope());
+        
+        // Recalculate emissions
+        burningWasteData.setCH4Emissions(burningWasteData.calculateCH4Emissions());
+        burningWasteData.setN2OEmissions(burningWasteData.calculateN2OEmissions());
+        burningWasteData.setFossilCO2Emissions(burningWasteData.calculateCO2Emissions());
+        
+        return wasteDataRepository.save(burningWasteData);
+    }
+    
+    @Transactional
+    @Override
+    public WasteDataAbstract updateIncinerationWasteData(UUID id, GeneralWasteByPopulationDto wasteData) {
+        IncinerationWasteData incinerationWasteData = (IncinerationWasteData) wasteDataRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Incineration waste data not found with id: " + id));
+        
+        incinerationWasteData.setPopulationRecords(populationRecordRepository.findById(wasteData.getPopulationRecords())
+                .orElseThrow(() -> new RuntimeException("Population record not found")));
+        incinerationWasteData.setRegion(regionRepository.findById(wasteData.getRegion())
+                .orElseThrow(() -> new RuntimeException("Region not found")));
+        incinerationWasteData.setActivityYear(wasteData.getActivityYear());
+        incinerationWasteData.setScope(wasteData.getScope());
+        
+        // Recalculate emissions
+        incinerationWasteData.setCH4Emissions(incinerationWasteData.calculateCH4Emissions());
+        incinerationWasteData.setN2OEmissions(incinerationWasteData.calculateN2OEmissions());
+        incinerationWasteData.setFossilCO2Emissions(incinerationWasteData.calculateCO2Emissions());
+        
+        return wasteDataRepository.save(incinerationWasteData);
+    }
+    
     // ============= MINI DASHBOARDS =============
     
     @Override

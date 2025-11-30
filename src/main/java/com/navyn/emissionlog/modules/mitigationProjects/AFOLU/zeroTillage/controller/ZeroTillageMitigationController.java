@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mitigation/zeroTillage")
@@ -29,6 +30,19 @@ public class ZeroTillageMitigationController {
         return ResponseEntity.ok(new ApiResponse(
             true, 
             "Zero tillage mitigation created successfully", 
+            mitigation
+        ));
+    }
+    
+    @PutMapping("/{id}")
+    @Operation(summary = "Update zero tillage mitigation record")
+    public ResponseEntity<ApiResponse> updateZeroTillageMitigation(
+            @PathVariable UUID id,
+            @Valid @RequestBody ZeroTillageMitigationDto dto) {
+        ZeroTillageMitigation mitigation = service.updateZeroTillageMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(
+            true, 
+            "Zero tillage mitigation updated successfully", 
             mitigation
         ));
     }

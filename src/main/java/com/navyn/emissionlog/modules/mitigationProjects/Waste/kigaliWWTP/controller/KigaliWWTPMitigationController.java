@@ -32,6 +32,16 @@ public class KigaliWWTPMitigationController {
                 new ApiResponse(true, "Kigali WWTP mitigation record created successfully", mitigation));
     }
     
+    @Operation(summary = "Update Kigali WWTP mitigation record",
+               description = "Updates an existing Kigali WWTP mitigation record and recalculates all derived fields")
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateKigaliWWTPMitigation(
+            @PathVariable Long id,
+            @Valid @RequestBody KigaliWWTPMitigationDto dto) {
+        KigaliWWTPMitigation mitigation = service.updateKigaliWWTPMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(true, "Kigali WWTP mitigation record updated successfully", mitigation));
+    }
+    
     @Operation(summary = "Get Kigali WWTP mitigation records", 
                description = "Retrieves all Kigali WWTP mitigation records with optional year filter")
     @GetMapping

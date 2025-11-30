@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mitigation/cropRotation")
@@ -29,6 +30,19 @@ public class CropRotationMitigationController {
         return ResponseEntity.ok(new ApiResponse(
             true, 
             "Crop rotation mitigation created successfully", 
+            mitigation
+        ));
+    }
+    
+    @PutMapping("/{id}")
+    @Operation(summary = "Update crop rotation mitigation record")
+    public ResponseEntity<ApiResponse> updateCropRotationMitigation(
+            @PathVariable UUID id,
+            @Valid @RequestBody CropRotationMitigationDto dto) {
+        CropRotationMitigation mitigation = service.updateCropRotationMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(
+            true, 
+            "Crop rotation mitigation updated successfully", 
             mitigation
         ));
     }

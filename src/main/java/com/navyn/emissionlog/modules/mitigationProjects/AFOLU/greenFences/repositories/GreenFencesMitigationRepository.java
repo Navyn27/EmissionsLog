@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,4 +17,5 @@ public interface GreenFencesMitigationRepository
     
     Optional<GreenFencesMitigation> findByYear(Integer year);
     Optional<GreenFencesMitigation> findTopByYearLessThanOrderByYearDesc(Integer year);
+    List<GreenFencesMitigation> findByYearGreaterThanOrderByYearAsc(Integer year);
 }

@@ -58,6 +58,38 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
     }
     
     @Override
+    public MBTCompostingMitigation updateMBTCompostingMitigation(Long id, MBTCompostingMitigationDto dto) {
+        MBTCompostingMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("MBT Composting Mitigation record not found with id: " + id));
+        
+        // Convert to standard units
+        double organicWasteInTonnesPerDay = dto.getOrganicWasteTreatedUnit().toTonnesPerDay(dto.getOrganicWasteTreatedTonsPerDay());
+        double bauEmissionInKilotonnes = dto.getBauEmissionUnit().toKilotonnesCO2e(dto.getBauEmissionBiologicalTreatment());
+        
+        // Update user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setOperationStatus(dto.getOperationStatus());
+        mitigation.setOrganicWasteTreatedTonsPerDay(organicWasteInTonnesPerDay);
+        mitigation.setBauEmissionBiologicalTreatment(bauEmissionInKilotonnes);
+        
+        // Recalculate derived fields
+        Double daysPerYear = dto.getOperationStatus().getDaysPerYear();
+        Double organicWasteTreatedTonsPerYear = organicWasteInTonnesPerDay * daysPerYear;
+        mitigation.setOrganicWasteTreatedTonsPerYear(organicWasteTreatedTonsPerYear);
+        
+        Double estimatedGhgReductionTonnes = MBTCompostingConstants.EMISSION_FACTOR.getValue() * organicWasteTreatedTonsPerYear;
+        mitigation.setEstimatedGhgReductionTonnesPerYear(estimatedGhgReductionTonnes);
+        
+        Double estimatedGhgReductionKilotonnes = estimatedGhgReductionTonnes / 1000;
+        mitigation.setEstimatedGhgReductionKilotonnesPerYear(estimatedGhgReductionKilotonnes);
+        
+        Double adjustedBauEmission = bauEmissionInKilotonnes - estimatedGhgReductionKilotonnes;
+        mitigation.setAdjustedBauEmissionBiologicalTreatment(adjustedBauEmission);
+        
+        return repository.save(mitigation);
+    }
+    
+    @Override
     public List<MBTCompostingMitigation> getAllMBTCompostingMitigation(Integer year) {
         Specification<MBTCompostingMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));

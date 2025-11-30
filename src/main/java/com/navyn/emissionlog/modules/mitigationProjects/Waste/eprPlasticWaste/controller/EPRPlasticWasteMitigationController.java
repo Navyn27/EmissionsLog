@@ -32,6 +32,16 @@ public class EPRPlasticWasteMitigationController {
                 new ApiResponse(true, "EPR Plastic Waste mitigation record created successfully", mitigation));
     }
     
+    @Operation(summary = "Update EPR Plastic Waste mitigation record",
+               description = "Updates an existing EPR Plastic Waste mitigation record and recalculates all derived fields")
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateEPRPlasticWasteMitigation(
+            @PathVariable Long id,
+            @Valid @RequestBody EPRPlasticWasteMitigationDto dto) {
+        EPRPlasticWasteMitigation mitigation = service.updateEPRPlasticWasteMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(true, "EPR Plastic Waste mitigation record updated successfully", mitigation));
+    }
+    
     @Operation(summary = "Get EPR Plastic Waste mitigation records", 
                description = "Retrieves all EPR Plastic Waste mitigation records with optional year filter")
     @GetMapping

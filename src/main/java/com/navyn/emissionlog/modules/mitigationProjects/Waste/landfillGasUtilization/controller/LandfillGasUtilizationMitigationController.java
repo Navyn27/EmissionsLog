@@ -32,6 +32,16 @@ public class LandfillGasUtilizationMitigationController {
                 new ApiResponse(true, "Landfill Gas Utilization mitigation record created successfully", mitigation));
     }
     
+    @Operation(summary = "Update Landfill Gas Utilization mitigation record",
+               description = "Updates an existing Landfill Gas Utilization mitigation record and recalculates all derived fields")
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateLandfillGasUtilizationMitigation(
+            @PathVariable Long id,
+            @Valid @RequestBody LandfillGasUtilizationMitigationDto dto) {
+        LandfillGasUtilizationMitigation mitigation = service.updateLandfillGasUtilizationMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(true, "Landfill Gas Utilization mitigation record updated successfully", mitigation));
+    }
+    
     @Operation(summary = "Get Landfill Gas Utilization mitigation records", 
                description = "Retrieves all Landfill Gas Utilization mitigation records with optional year filter")
     @GetMapping

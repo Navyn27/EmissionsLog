@@ -32,6 +32,16 @@ public class ISWMMitigationController {
                 new ApiResponse(true, "ISWM mitigation record created successfully", mitigation));
     }
     
+    @Operation(summary = "Update ISWM mitigation record",
+               description = "Updates an existing ISWM mitigation record and recalculates all derived fields")
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateISWMMitigation(
+            @PathVariable Long id,
+            @Valid @RequestBody ISWMMitigationDto dto) {
+        ISWMMitigation mitigation = service.updateISWMMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(true, "ISWM mitigation record updated successfully", mitigation));
+    }
+    
     @Operation(summary = "Get ISWM mitigation records", 
                description = "Retrieves all Integrated Solid Waste Management mitigation records with optional year filter")
     @GetMapping

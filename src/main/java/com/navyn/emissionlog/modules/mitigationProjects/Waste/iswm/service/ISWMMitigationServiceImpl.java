@@ -40,6 +40,27 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
     }
     
     @Override
+    public ISWMMitigation updateISWMMitigation(Long id, ISWMMitigationDto dto) {
+        ISWMMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("ISWM Mitigation record not found with id: " + id));
+        
+        // Convert to standard units (tCO₂e)
+        double bauEmissionsInTonnes = dto.getBauEmissionsUnit().toTonnesCO2e(dto.getBauEmissions());
+        double annualReductionInTonnes = dto.getAnnualReductionUnit().toTonnesCO2e(dto.getAnnualReduction());
+        
+        // Update user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setBauEmissions(bauEmissionsInTonnes);
+        mitigation.setAnnualReduction(annualReductionInTonnes);
+        
+        // Recalculate derived field
+        Double adjustedEmissions = bauEmissionsInTonnes - annualReductionInTonnes;
+        mitigation.setAdjustedEmissions(adjustedEmissions);
+        
+        return repository.save(mitigation);
+    }
+    
+    @Override
     public List<ISWMMitigation> getAllISWMMitigation(Integer year) {
         Specification<ISWMMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));

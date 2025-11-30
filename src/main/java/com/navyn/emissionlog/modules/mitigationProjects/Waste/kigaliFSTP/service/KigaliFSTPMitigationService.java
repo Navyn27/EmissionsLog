@@ -9,5 +9,7 @@ public interface KigaliFSTPMitigationService {
     
     KigaliFSTPMitigation createKigaliFSTPMitigation(KigaliFSTPMitigationDto dto);
     
+    KigaliFSTPMitigation updateKigaliFSTPMitigation(Long id, KigaliFSTPMitigationDto dto);
+    
     List<KigaliFSTPMitigation> getAllKigaliFSTPMitigation(Integer year);
 }

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,6 +17,11 @@ public interface ProtectiveForestMitigationRepository
     
     // Find the most recent record BEFORE the given year for a specific category
     Optional<ProtectiveForestMitigation> findTopByYearLessThanAndCategoryOrderByYearDesc(
+        Integer year,
+        ProtectiveForestCategory category
+    );
+    
+    List<ProtectiveForestMitigation> findByYearGreaterThanAndCategoryOrderByYearAsc(
         Integer year,
         ProtectiveForestCategory category
     );

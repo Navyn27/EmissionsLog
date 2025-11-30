@@ -8,10 +8,12 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 
 @Entity
 @Data
 @EqualsAndHashCode(callSuper= true)
+@Getter
 public class LeachingEmissions extends AgricultureAbstractClass {
 
     @Enumerated(EnumType.STRING)

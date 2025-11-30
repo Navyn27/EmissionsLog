@@ -5,10 +5,13 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.mo
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface SettlementTreesMitigationService {
     
     SettlementTreesMitigation createSettlementTreesMitigation(SettlementTreesMitigationDto dto);
+    
+    SettlementTreesMitigation updateSettlementTreesMitigation(UUID id, SettlementTreesMitigationDto dto);
     
     List<SettlementTreesMitigation> getAllSettlementTreesMitigation(Integer year);
     

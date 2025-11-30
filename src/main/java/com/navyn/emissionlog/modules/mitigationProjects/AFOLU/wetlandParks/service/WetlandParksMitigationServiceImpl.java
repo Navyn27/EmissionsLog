@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -71,6 +72,109 @@ public class WetlandParksMitigationServiceImpl implements WetlandParksMitigation
         mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
         
         return repository.save(mitigation);
+    }
+    
+    @Override
+    public WetlandParksMitigation updateWetlandParksMitigation(UUID id, WetlandParksMitigationDto dto) {
+        WetlandParksMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Wetland Parks Mitigation record not found with id: " + id));
+
+        // Update the current record
+        recalculateAndUpdateRecord(mitigation, dto);
+        WetlandParksMitigation updatedRecord = repository.save(mitigation);
+        
+        // CASCADE: Find and recalculate all subsequent years for the same tree category
+        List<WetlandParksMitigation> subsequentRecords = repository
+            .findByYearGreaterThanAndTreeCategoryOrderByYearAsc(dto.getYear(), dto.getTreeCategory());
+        
+        for (WetlandParksMitigation subsequent : subsequentRecords) {
+            recalculateExistingRecord(subsequent);
+            repository.save(subsequent);
+        }
+        
+        return updatedRecord;
+    }
+    
+    /**
+     * Recalculates an existing record based on its current year and stored input values
+     */
+    private void recalculateExistingRecord(WetlandParksMitigation mitigation) {
+        Optional<WetlandParksMitigation> lastYearRecord = repository
+            .findTopByYearLessThanAndTreeCategoryOrderByYearDesc(mitigation.getYear(), mitigation.getTreeCategory());
+        Double cumulativeArea = lastYearRecord.map(wetlandParksMitigation -> 
+            wetlandParksMitigation.getAreaPlanted() + wetlandParksMitigation.getCumulativeArea()
+        ).orElse(0.0);
+
+        mitigation.setCumulativeArea(cumulativeArea);
+        
+        // Fetch previous year's AGB
+        Double previousAGB = getPreviousYearAGB(mitigation.getYear(), mitigation.getTreeCategory());
+        mitigation.setPreviousYearAGB(previousAGB);
+        
+        // Recalculate all derived fields using existing AGB value
+        double agbInCubicMeterPerHA = mitigation.getAbovegroundBiomassAGB();
+        
+        double agbGrowth = agbInCubicMeterPerHA - previousAGB;
+        mitigation.setAgbGrowth(agbGrowth);
+        
+        double abovegroundBiomassGrowth = agbGrowth * 
+            WetlandParksConstants.CONVERSION_M3_TO_TONNES_DM.getValue();
+        mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
+        
+        double totalBiomass = cumulativeArea * abovegroundBiomassGrowth;
+        mitigation.setTotalBiomass(totalBiomass);
+        
+        double biomassCarbonIncrease = totalBiomass * 
+            WetlandParksConstants.CARBON_CONTENT_DRY_WOOD.getValue();
+        mitigation.setBiomassCarbonIncrease(biomassCarbonIncrease);
+        
+        double mitigatedEmissions = (biomassCarbonIncrease * 
+            WetlandParksConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
+    }
+    
+    /**
+     * Recalculates a record with new DTO values
+     */
+    private void recalculateAndUpdateRecord(WetlandParksMitigation mitigation, WetlandParksMitigationDto dto) {
+        Optional<WetlandParksMitigation> lastYearRecord = repository
+            .findTopByYearLessThanAndTreeCategoryOrderByYearDesc(dto.getYear(), dto.getTreeCategory());
+        Double cumulativeArea = lastYearRecord.map(wetlandParksMitigation -> 
+            wetlandParksMitigation.getAreaPlanted() + wetlandParksMitigation.getCumulativeArea()
+        ).orElse(0.0);
+
+        // Convert units to standard values
+        double areaPlantedInHectares = dto.getAreaUnit().toHectares(dto.getAreaPlanted());
+        double agbInCubicMeterPerHA = dto.getAgbUnit().toCubicMeterPerHA(dto.getAbovegroundBiomassAGB());
+
+        // Update input fields (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setTreeCategory(dto.getTreeCategory());
+        mitigation.setCumulativeArea(cumulativeArea);
+        mitigation.setAreaPlanted(areaPlantedInHectares);
+        mitigation.setAbovegroundBiomassAGB(agbInCubicMeterPerHA);
+
+        // Recalculate derived fields
+        Double previousAGB = getPreviousYearAGB(dto.getYear(), dto.getTreeCategory());
+        mitigation.setPreviousYearAGB(previousAGB);
+        
+        double agbGrowth = agbInCubicMeterPerHA - previousAGB;
+        mitigation.setAgbGrowth(agbGrowth);
+        
+        double abovegroundBiomassGrowth = agbGrowth * 
+            WetlandParksConstants.CONVERSION_M3_TO_TONNES_DM.getValue();
+        mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
+        
+        double totalBiomass = cumulativeArea * abovegroundBiomassGrowth;
+        mitigation.setTotalBiomass(totalBiomass);
+        
+        double biomassCarbonIncrease = totalBiomass * 
+            WetlandParksConstants.CARBON_CONTENT_DRY_WOOD.getValue();
+        mitigation.setBiomassCarbonIncrease(biomassCarbonIncrease);
+        
+        double mitigatedEmissions = (biomassCarbonIncrease * 
+            WetlandParksConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
     }
     
     @Override

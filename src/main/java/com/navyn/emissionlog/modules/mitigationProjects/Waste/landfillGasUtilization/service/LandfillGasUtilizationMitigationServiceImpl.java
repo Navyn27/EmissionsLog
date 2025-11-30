@@ -59,6 +59,40 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
     }
     
     @Override
+    public LandfillGasUtilizationMitigation updateLandfillGasUtilizationMitigation(Long id, LandfillGasUtilizationMitigationDto dto) {
+        LandfillGasUtilizationMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Landfill Gas Utilization Mitigation record not found with id: " + id));
+        
+        // Convert to standard units (ktCO₂eq)
+        double bauSolidWasteInKilotonnes = dto.getBauSolidWasteEmissionsUnit().toKilotonnesCO2e(dto.getBauSolidWasteEmissions());
+        double projectReductionInKilotonnes = dto.getProjectReductionUnit().toKilotonnesCO2e(dto.getProjectReduction40PercentEfficiency());
+        double bauGrandTotalInKilotonnes = dto.getBauGrandTotalUnit().toKilotonnesCO2e(dto.getBauGrandTotal());
+        
+        // Update user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setBauSolidWasteEmissions(bauSolidWasteInKilotonnes);
+        mitigation.setProjectReduction40PercentEfficiency(projectReductionInKilotonnes);
+        mitigation.setBauGrandTotal(bauGrandTotalInKilotonnes);
+        
+        // Recalculate derived fields
+        Double projectReductionEmissions;
+        if (dto.getYear() > 2028) {
+            projectReductionEmissions = bauSolidWasteInKilotonnes * projectReductionInKilotonnes;
+        } else {
+            projectReductionEmissions = 0.0;
+        }
+        mitigation.setProjectReductionEmissions(projectReductionEmissions);
+        
+        Double adjustedSolidWasteEmissions = bauSolidWasteInKilotonnes - projectReductionEmissions;
+        mitigation.setAdjustedSolidWasteEmissions(adjustedSolidWasteEmissions);
+        
+        Double adjustedGrandTotal = bauGrandTotalInKilotonnes - projectReductionEmissions;
+        mitigation.setAdjustedGrandTotal(adjustedGrandTotal);
+        
+        return repository.save(mitigation);
+    }
+    
+    @Override
     public List<LandfillGasUtilizationMitigation> getAllLandfillGasUtilizationMitigation(Integer year) {
         Specification<LandfillGasUtilizationMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));

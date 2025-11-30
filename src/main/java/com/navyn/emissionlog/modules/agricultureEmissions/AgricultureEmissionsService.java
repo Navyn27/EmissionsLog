@@ -19,6 +19,7 @@ import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.Manur
 import com.navyn.emissionlog.utils.DashboardData;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface AgricultureEmissionsService {
     List<AquacultureEmissions> getAllAquacultureEmissions(Integer year);
@@ -30,38 +31,57 @@ public interface AgricultureEmissionsService {
     List<UreaEmissions> getAllUreaEmissions(String fertilizer, Integer year);
 
     AquacultureEmissions createAquacultureEmissions(AquacultureEmissionsDto emissions);
+//    AquacultureEmissions updateAquacultureEmissions(UUID id, AquacultureEmissionsDto emissions);
+    
     EntericFermentationEmissions createEntericFermentationEmissions(EntericFermentationEmissionsDto emissionsDto);
+//    EntericFermentationEmissions updateEntericFermentationEmissions(UUID id, EntericFermentationEmissionsDto emissionsDto);
 
     LimingEmissions createLimingEmissions(LimingEmissionsDto emissions);
+//    LimingEmissions updateLimingEmissions(UUID id, LimingEmissionsDto emissions);
+    
     AnimalManureAndCompostEmissions createAnimalManureAndCompostEmissions(AnimalManureAndCompostEmissionsDto emissionsDto);
+//    AnimalManureAndCompostEmissions updateAnimalManureAndCompostEmissions(UUID id, AnimalManureAndCompostEmissionsDto emissionsDto);
 
     RiceCultivationEmissions createRiceCultivationEmissions(RiceCultivationEmissionsDto emissions);
+//    RiceCultivationEmissions updateRiceCultivationEmissions(UUID id, RiceCultivationEmissionsDto emissions);
+    
     SyntheticFertilizerEmissions createSyntheticFertilizerEmissions(SyntheticFertilizerEmissionsDto emissions);
+//    SyntheticFertilizerEmissions updateSyntheticFertilizerEmissions(UUID id, SyntheticFertilizerEmissionsDto emissions);
+    
     UreaEmissions createUreaEmissions(UreaEmissionsDto emissions);
+//    UreaEmissions updateUreaEmissions(UUID id, UreaEmissionsDto emissions);
 
     BurningEmissions createBurningEmissions(BurningEmissionsDto burningEmissionsDto);
+//    BurningEmissions updateBurningEmissions(UUID id, BurningEmissionsDto burningEmissionsDto);
 
     List<BurningEmissions> getAllBurningEmissions(Integer year, BurningAgentType forestType);
 
     CropResiduesEmissions createCropResidueEmissions(CropResiduesEmissionsDto cropResidueEmissionsDto);
+//    CropResiduesEmissions updateCropResidueEmissions(UUID id, CropResiduesEmissionsDto cropResidueEmissionsDto);
 
     List<CropResiduesEmissions> getAllCropResidueEmissions(Integer year, CropResiduesCropType cropType, LandUseCategory landUseCategory);
 
     PastureExcretionEmissions createPastureExcretionEmissions(PastureExcretionsEmissionsDto pastureExcretionEmissionsDto);
+//    PastureExcretionEmissions updatePastureExcretionEmissions(UUID id, PastureExcretionsEmissionsDto pastureExcretionEmissionsDto);
 
     MineralSoilEmissions createMineralSoilEmissions(MineralSoilEmissionsDto mineralSoilEmissionsDto);
+//    MineralSoilEmissions updateMineralSoilEmissions(UUID id, MineralSoilEmissionsDto mineralSoilEmissionsDto);
 
     List<MineralSoilEmissions> getAllMineralSoilEmissions(Integer year, LandUseCategory initialLandUse, LandUseCategory landUseInReportingYear);
 
     List<PastureExcretionEmissions> getAllPastureExcretionEmissions(Integer year, LivestockSpecies species, MMS mms);
 
     VolatilizationEmissions createVolatilizationEmissions(VolatilizationEmissionsDto volatilizationEmissionsDto);
+//    VolatilizationEmissions updateVolatilizationEmissions(UUID id, VolatilizationEmissionsDto volatilizationEmissionsDto);
 
     LeachingEmissions createLeachingEmissions(LeachingEmissionsDto leachingEmissionsDto);
+//    LeachingEmissions updateLeachingEmissions(UUID id, LeachingEmissionsDto leachingEmissionsDto);
 
     AtmosphericDepositionEmissions createAtmosphericNDepositionEmissions(AtmosphericDepositionEmissionsDto atmosphericNDepositionEmissionsDto);
+//    AtmosphericDepositionEmissions updateAtmosphericNDepositionEmissions(UUID id, AtmosphericDepositionEmissionsDto atmosphericNDepositionEmissionsDto);
 
     LeachingAndRunoffEmissions createLeachingAndRunoffEmissions(LeachingAndRunoffEmissionsDto leachingAndRunoffEmissionsDto);
+//    LeachingAndRunoffEmissions updateLeachingAndRunoffEmissions(UUID id, LeachingAndRunoffEmissionsDto leachingAndRunoffEmissionsDto);
 
     List<AtmosphericDepositionEmissions> getAllAtmosphericNDepositionEmissions(Integer year, LandUseCategory landUseCategory);
 
@@ -72,6 +92,7 @@ public interface AgricultureEmissionsService {
     List<VolatilizationEmissions> getAllVolatilizationEmissions(Integer year, MMS mms, LivestockSpecies species);
 
     ManureManagementEmissions createManureManagementEmissions(ManureManagementEmissionsDto dto);
+//    ManureManagementEmissions updateManureManagementEmissions(UUID id, ManureManagementEmissionsDto dto);
 
     List<ManureManagementEmissions> getAllManureManagementEmissions(Integer year, ManureManagementLivestock species, ManureManagementSystem mms);
     

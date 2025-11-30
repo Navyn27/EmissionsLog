@@ -32,6 +32,16 @@ public class WasteToEnergyMitigationController {
                 new ApiResponse(true, "Waste-to-Energy mitigation record created successfully", mitigation));
     }
     
+    @Operation(summary = "Update Waste-to-Energy mitigation record",
+               description = "Updates an existing Waste-to-Energy mitigation record and recalculates all derived fields")
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateWasteToEnergyMitigation(
+            @PathVariable Long id,
+            @Valid @RequestBody WasteToEnergyMitigationDto dto) {
+        WasteToEnergyMitigation mitigation = service.updateWasteToEnergyMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(true, "Waste-to-Energy mitigation record updated successfully", mitigation));
+    }
+    
     @Operation(summary = "Get Waste-to-Energy mitigation records", 
                description = "Retrieves all Waste-to-Energy mitigation records with optional year filter")
     @GetMapping

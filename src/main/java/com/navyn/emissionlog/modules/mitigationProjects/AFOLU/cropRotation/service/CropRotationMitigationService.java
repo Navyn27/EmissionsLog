@@ -5,10 +5,13 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.model
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface CropRotationMitigationService {
     
     CropRotationMitigation createCropRotationMitigation(CropRotationMitigationDto dto);
+    
+    CropRotationMitigation updateCropRotationMitigation(UUID id, CropRotationMitigationDto dto);
     
     List<CropRotationMitigation> getAllCropRotationMitigation(Integer year);
     

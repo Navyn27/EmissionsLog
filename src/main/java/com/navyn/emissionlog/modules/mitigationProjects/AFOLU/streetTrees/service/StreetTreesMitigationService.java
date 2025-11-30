@@ -5,10 +5,13 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.models
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface StreetTreesMitigationService {
     
     StreetTreesMitigation createStreetTreesMitigation(StreetTreesMitigationDto dto);
+    
+    StreetTreesMitigation updateStreetTreesMitigation(UUID id, StreetTreesMitigationDto dto);
     
     List<StreetTreesMitigation> getAllStreetTreesMitigation(Integer year);
     

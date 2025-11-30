@@ -9,5 +9,7 @@ public interface ISWMMitigationService {
     
     ISWMMitigation createISWMMitigation(ISWMMitigationDto dto);
     
+    ISWMMitigation updateISWMMitigation(Long id, ISWMMitigationDto dto);
+    
     List<ISWMMitigation> getAllISWMMitigation(Integer year);
 }

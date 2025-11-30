@@ -56,6 +56,39 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
     }
     
     @Override
+    public KigaliFSTPMitigation updateKigaliFSTPMitigation(Long id, KigaliFSTPMitigationDto dto) {
+        KigaliFSTPMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Kigali FSTP Mitigation record not found with id: " + id));
+        
+        // Convert phase capacity to standard unit (m³/day)
+        double phaseCapacityInCubicMetersPerDay = dto.getPhaseCapacityUnit().toCubicMetersPerDay(dto.getPhaseCapacityPerDay());
+        
+        // Update user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setProjectPhase(dto.getProjectPhase());
+        mitigation.setPhaseCapacityPerDay(phaseCapacityInCubicMetersPerDay);
+        mitigation.setPlantOperationalEfficiency(dto.getPlantOperationalEfficiency());
+        
+        // Recalculate derived fields
+        Double plantEfficiency = dto.getPlantOperationalEfficiency();
+        Double phaseCapacity = phaseCapacityInCubicMetersPerDay;
+        Double effectiveDailyTreatment = plantEfficiency * phaseCapacity;
+        mitigation.setEffectiveDailyTreatment(effectiveDailyTreatment);
+        
+        Double annualSludgeTreated = effectiveDailyTreatment * 365;
+        mitigation.setAnnualSludgeTreated(annualSludgeTreated);
+        
+        Double co2ePerM3 = KigaliFSTPConstants.CO2E_PER_M3_SLUDGE.getValue();
+        Double annualEmissionsReductionTonnes = (annualSludgeTreated * co2ePerM3) / 1000;
+        mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
+        
+        Double annualEmissionsReductionKilotonnes = annualEmissionsReductionTonnes / 1000;
+        mitigation.setAnnualEmissionsReductionKilotonnes(annualEmissionsReductionKilotonnes);
+        
+        return repository.save(mitigation);
+    }
+    
+    @Override
     public List<KigaliFSTPMitigation> getAllKigaliFSTPMitigation(Integer year) {
         Specification<KigaliFSTPMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));

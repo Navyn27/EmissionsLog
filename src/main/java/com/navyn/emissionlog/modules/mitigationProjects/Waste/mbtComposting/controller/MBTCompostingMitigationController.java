@@ -32,6 +32,16 @@ public class MBTCompostingMitigationController {
                 new ApiResponse(true, "MBT/Aerobic Composting mitigation record created successfully", mitigation));
     }
     
+    @Operation(summary = "Update MBT/Aerobic Composting mitigation record",
+               description = "Updates an existing MBT/Aerobic Composting mitigation record and recalculates all derived fields")
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateMBTCompostingMitigation(
+            @PathVariable Long id,
+            @Valid @RequestBody MBTCompostingMitigationDto dto) {
+        MBTCompostingMitigation mitigation = service.updateMBTCompostingMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(true, "MBT/Aerobic Composting mitigation record updated successfully", mitigation));
+    }
+    
     @Operation(summary = "Get MBT/Aerobic Composting mitigation records", 
                description = "Retrieves all MBT/Aerobic Composting mitigation records with optional year filter")
     @GetMapping
