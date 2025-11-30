@@ -36,8 +36,8 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
         // Calculations
         // Organic Waste Treated (tons/year) = Organic Waste Treated (tons/day) × days based on operation status
         // - PRE_OPERATION: 0 days
-        // - HALF_YEAR_OPERATION: 182.5 days (365/2)
-        // - FULL_YEAR_OPERATION: 365 days
+        // - HALF_OPERATION: 182.5 days (365/2)
+        // - FULL_OPERATION: 365 days
         Double daysPerYear = dto.getOperationStatus().getDaysPerYear();
         Double organicWasteTreatedTonsPerYear = organicWasteInTonnesPerDay * daysPerYear;
         mitigation.setOrganicWasteTreatedTonsPerYear(organicWasteTreatedTonsPerYear);
