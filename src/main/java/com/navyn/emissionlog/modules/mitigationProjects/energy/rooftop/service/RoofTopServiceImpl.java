@@ -6,6 +6,7 @@ import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.model.Roo
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.model.RoofTopParameter;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.repository.IRoofTopMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.repository.IRoofTopParameterRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,7 +51,7 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
     @Override
     public RoofTopMitigationResponseDto getById(UUID id) {
         RoofTopMitigation mitigation = mitigationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("RoofTopMitigation not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("RoofTopMitigation not found with id: " + id));
 
         RoofTopParameter parameter = getLatestParameter();
         calculateAllFields(mitigation, parameter);
@@ -74,12 +75,12 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
     @Transactional
     public RoofTopMitigationResponseDto update(UUID id, RoofTopMitigationDto dto) {
         RoofTopMitigation mitigation = mitigationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("RoofTopMitigation not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("RoofTopMitigation not found with id: " + id));
 
         // Check if year is being changed and if new year already exists
         if (mitigation.getYear() != dto.getYear()) {
             if (mitigationRepository.findByYear(dto.getYear()).isPresent()) {
-                throw new RuntimeException("Mitigation record for year " + dto.getYear() + " already exists");
+                throw new EntityNotFoundException("Mitigation record for year " + dto.getYear() + " already exists");
             }
         }
 
@@ -101,7 +102,7 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
     @Transactional
     public void delete(UUID id) {
         RoofTopMitigation mitigation = mitigationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("RoofTopMitigation not found with id: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("RoofTopMitigation not found with id: " + id));
 
         int year = mitigation.getYear();
         mitigationRepository.deleteById(id);
@@ -113,7 +114,7 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
     @Override
     public RoofTopMitigationResponseDto getByYear(int year) {
         RoofTopMitigation mitigation = mitigationRepository.findByYear(year)
-                .orElseThrow(() -> new RuntimeException("RoofTopMitigation not found for year: " + year));
+                .orElseThrow(() -> new EntityNotFoundException("RoofTopMitigation not found for year: " + year));
 
         RoofTopParameter parameter = getLatestParameter();
         calculateAllFields(mitigation, parameter);
@@ -124,11 +125,11 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
     private RoofTopParameter getLatestParameter() {
         List<RoofTopParameter> all = parameterRepository.findAll();
         if (all.isEmpty()) {
-            throw new RuntimeException("No RoofTopParameter found. Please create parameters first.");
+            throw new EntityNotFoundException("No RoofTopParameter found. Please create parameters first.");
         }
         return all.stream()
                 .max((p1, p2) -> p1.getCreatedAt().compareTo(p2.getCreatedAt()))
-                .orElseThrow(() -> new RuntimeException("No RoofTopParameter found"));
+                .orElseThrow(() -> new EntityNotFoundException("No RoofTopParameter found"));
     }
 
     private void calculateAllFields(RoofTopMitigation mitigation, RoofTopParameter parameter) {
