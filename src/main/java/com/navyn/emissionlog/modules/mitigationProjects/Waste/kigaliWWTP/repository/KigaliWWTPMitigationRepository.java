@@ -6,9 +6,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface KigaliWWTPMitigationRepository extends JpaRepository<KigaliWWTPMitigation, Long>, 
+public interface KigaliWWTPMitigationRepository extends JpaRepository<KigaliWWTPMitigation, UUID>, 
         JpaSpecificationExecutor<KigaliWWTPMitigation> {
     
     Optional<KigaliWWTPMitigation> findByYear(Integer year);

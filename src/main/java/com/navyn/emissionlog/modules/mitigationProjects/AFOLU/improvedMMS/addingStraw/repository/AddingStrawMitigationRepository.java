@@ -6,9 +6,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface AddingStrawMitigationRepository extends JpaRepository<AddingStrawMitigation, Long>, 
+public interface AddingStrawMitigationRepository extends JpaRepository<AddingStrawMitigation, UUID>, 
         JpaSpecificationExecutor<AddingStrawMitigation> {
     
     Optional<AddingStrawMitigation> findByYear(Integer year);

@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.dtos;
 
 import com.navyn.emissionlog.Enums.Metrics.VolumePerTimeUnit;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.constants.WWTPProjectPhase;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -11,6 +12,9 @@ public class KigaliWWTPMitigationDto {
     @Min(value = 1900, message = "Year must be 1900 or later")
     @Max(value = 2100, message = "Year must be 2100 or earlier")
     private Integer year;
+    
+    @NotNull(message = "Project phase is required")
+    private WWTPProjectPhase projectPhase;
     
     @NotNull(message = "Phase capacity per day is required")
     @DecimalMin(value = "0.0", message = "Phase capacity must be at least 0")

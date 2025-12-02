@@ -6,9 +6,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface MBTCompostingMitigationRepository extends JpaRepository<MBTCompostingMitigation, Long>, 
+public interface MBTCompostingMitigationRepository extends JpaRepository<MBTCompostingMitigation, UUID>, 
         JpaSpecificationExecutor<MBTCompostingMitigation> {
     
     Optional<MBTCompostingMitigation> findByYear(Integer year);

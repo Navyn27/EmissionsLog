@@ -3,6 +3,8 @@ package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.daily
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "daily_spread_mitigation", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"year"})
@@ -11,8 +13,8 @@ import lombok.Data;
 public class DailySpreadMitigation {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     
     @Column(nullable = false)
     private Integer year;

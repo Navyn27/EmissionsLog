@@ -3,6 +3,8 @@ package com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.models;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "iswm_mitigation", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"year"})
@@ -11,8 +13,8 @@ import lombok.Data;
 public class ISWMMitigation {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     
     @Column(nullable = false)
     private Integer year;

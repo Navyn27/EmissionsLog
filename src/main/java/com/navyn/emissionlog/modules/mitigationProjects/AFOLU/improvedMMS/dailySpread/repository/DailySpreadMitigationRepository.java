@@ -6,9 +6,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface DailySpreadMitigationRepository extends JpaRepository<DailySpreadMitigation, Long>, 
+public interface DailySpreadMitigationRepository extends JpaRepository<DailySpreadMitigation, UUID>, 
         JpaSpecificationExecutor<DailySpreadMitigation> {
     
     Optional<DailySpreadMitigation> findByYear(Integer year);

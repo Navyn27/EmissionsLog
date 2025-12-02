@@ -3,6 +3,8 @@ package com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.mod
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "waste_to_energy_mitigation", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"year"})
@@ -11,8 +13,8 @@ import lombok.Data;
 public class WasteToEnergyMitigation {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     
     @Column(nullable = false)
     private Integer year;

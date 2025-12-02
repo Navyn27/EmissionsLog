@@ -26,4 +26,11 @@ public class MitigationSpecifications {
             return cb.equal(root.get("category"), category);
         };
     }
+    
+    public static <T, E extends Enum<E>> Specification<T> hasProjectPhase(E projectPhase) {
+        return (root, query, cb) -> {
+            if (projectPhase == null) return cb.conjunction();
+            return cb.equal(root.get("projectPhase"), projectPhase);
+        };
+    }
 }

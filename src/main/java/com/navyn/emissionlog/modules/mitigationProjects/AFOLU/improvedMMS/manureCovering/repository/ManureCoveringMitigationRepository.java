@@ -6,9 +6,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface ManureCoveringMitigationRepository extends JpaRepository<ManureCoveringMitigation, Long>, 
+public interface ManureCoveringMitigationRepository extends JpaRepository<ManureCoveringMitigation, UUID>, 
         JpaSpecificationExecutor<ManureCoveringMitigation> {
     
     Optional<ManureCoveringMitigation> findByYear(Integer year);

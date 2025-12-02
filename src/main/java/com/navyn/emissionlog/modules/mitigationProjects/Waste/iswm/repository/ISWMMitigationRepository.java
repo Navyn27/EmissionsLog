@@ -6,9 +6,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface ISWMMitigationRepository extends JpaRepository<ISWMMitigation, Long>, 
+public interface ISWMMitigationRepository extends JpaRepository<ISWMMitigation, UUID>, 
         JpaSpecificationExecutor<ISWMMitigation> {
     
     Optional<ISWMMitigation> findByYear(Integer year);
