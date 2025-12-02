@@ -2,7 +2,10 @@ package com.navyn.emissionlog.modules.mitigationProjects.IPPU.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
@@ -39,4 +42,11 @@ public class IPPUMitigation {
 
     @Column(name = "mitigation_scenario")
     private double mitigationScenario;  // to be calculated
+
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 }
