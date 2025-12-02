@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.controller;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveType;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.service.StoveTypeService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -8,7 +9,8 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/stove-types")
+@RequestMapping("/stove-types")
+@SecurityRequirement(name = "BearerAuth")
 public class StoveTypeController {
 
     private final StoveTypeService service;
