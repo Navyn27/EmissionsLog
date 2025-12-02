@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -56,7 +57,7 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
     }
     
     @Override
-    public KigaliFSTPMitigation updateKigaliFSTPMitigation(Long id, KigaliFSTPMitigationDto dto) {
+    public KigaliFSTPMitigation updateKigaliFSTPMitigation(UUID id, KigaliFSTPMitigationDto dto) {
         KigaliFSTPMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Kigali FSTP Mitigation record not found with id: " + id));
         

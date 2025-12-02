@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mitigation/eprPlasticWaste")
@@ -36,7 +37,7 @@ public class EPRPlasticWasteMitigationController {
                description = "Updates an existing EPR Plastic Waste mitigation record and recalculates all derived fields")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateEPRPlasticWasteMitigation(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody EPRPlasticWasteMitigationDto dto) {
         EPRPlasticWasteMitigation mitigation = service.updateEPRPlasticWasteMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(true, "EPR Plastic Waste mitigation record updated successfully", mitigation));

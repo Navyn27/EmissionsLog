@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -49,7 +50,7 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
     }
     
     @Override
-    public WasteToEnergyMitigation updateWasteToEnergyMitigation(Long id, WasteToEnergyMitigationDto dto) {
+    public WasteToEnergyMitigation updateWasteToEnergyMitigation(UUID id, WasteToEnergyMitigationDto dto) {
         WasteToEnergyMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Waste to Energy Mitigation record not found with id: " + id));
         

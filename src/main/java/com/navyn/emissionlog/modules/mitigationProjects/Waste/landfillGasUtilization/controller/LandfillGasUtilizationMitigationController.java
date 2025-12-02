@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mitigation/landfillGasUtilization")
@@ -36,7 +37,7 @@ public class LandfillGasUtilizationMitigationController {
                description = "Updates an existing Landfill Gas Utilization mitigation record and recalculates all derived fields")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateLandfillGasUtilizationMitigation(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody LandfillGasUtilizationMitigationDto dto) {
         LandfillGasUtilizationMitigation mitigation = service.updateLandfillGasUtilizationMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(true, "Landfill Gas Utilization mitigation record updated successfully", mitigation));

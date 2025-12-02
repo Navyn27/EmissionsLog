@@ -4,12 +4,13 @@ import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtiliza
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.models.LandfillGasUtilizationMitigation;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface LandfillGasUtilizationMitigationService {
     
     LandfillGasUtilizationMitigation createLandfillGasUtilizationMitigation(LandfillGasUtilizationMitigationDto dto);
     
-    LandfillGasUtilizationMitigation updateLandfillGasUtilizationMitigation(Long id, LandfillGasUtilizationMitigationDto dto);
+    LandfillGasUtilizationMitigation updateLandfillGasUtilizationMitigation(UUID id, LandfillGasUtilizationMitigationDto dto);
     
     List<LandfillGasUtilizationMitigation> getAllLandfillGasUtilizationMitigation(Integer year);
 }

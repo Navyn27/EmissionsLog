@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -58,7 +59,7 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
     }
     
     @Override
-    public MBTCompostingMitigation updateMBTCompostingMitigation(Long id, MBTCompostingMitigationDto dto) {
+    public MBTCompostingMitigation updateMBTCompostingMitigation(UUID id, MBTCompostingMitigationDto dto) {
         MBTCompostingMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("MBT Composting Mitigation record not found with id: " + id));
         

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -83,7 +84,7 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
     }
     
     @Override
-    public EPRPlasticWasteMitigation updateEPRPlasticWasteMitigation(Long id, EPRPlasticWasteMitigationDto dto) {
+    public EPRPlasticWasteMitigation updateEPRPlasticWasteMitigation(UUID id, EPRPlasticWasteMitigationDto dto) {
         EPRPlasticWasteMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("EPR Plastic Waste Mitigation record not found with id: " + id));
         

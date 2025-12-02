@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -40,7 +41,7 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
     }
     
     @Override
-    public ISWMMitigation updateISWMMitigation(Long id, ISWMMitigationDto dto) {
+    public ISWMMitigation updateISWMMitigation(UUID id, ISWMMitigationDto dto) {
         ISWMMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("ISWM Mitigation record not found with id: " + id));
         

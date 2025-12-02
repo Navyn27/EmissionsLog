@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -59,7 +60,7 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
     }
     
     @Override
-    public LandfillGasUtilizationMitigation updateLandfillGasUtilizationMitigation(Long id, LandfillGasUtilizationMitigationDto dto) {
+    public LandfillGasUtilizationMitigation updateLandfillGasUtilizationMitigation(UUID id, LandfillGasUtilizationMitigationDto dto) {
         LandfillGasUtilizationMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Landfill Gas Utilization Mitigation record not found with id: " + id));
         

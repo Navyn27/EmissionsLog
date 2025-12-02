@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mitigation/iswm")
@@ -36,7 +37,7 @@ public class ISWMMitigationController {
                description = "Updates an existing ISWM mitigation record and recalculates all derived fields")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateISWMMitigation(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody ISWMMitigationDto dto) {
         ISWMMitigation mitigation = service.updateISWMMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(true, "ISWM mitigation record updated successfully", mitigation));

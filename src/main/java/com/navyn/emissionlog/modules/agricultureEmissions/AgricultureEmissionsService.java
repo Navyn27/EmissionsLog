@@ -31,7 +31,7 @@ public interface AgricultureEmissionsService {
     List<UreaEmissions> getAllUreaEmissions(String fertilizer, Integer year);
 
     AquacultureEmissions createAquacultureEmissions(AquacultureEmissionsDto emissions);
-    AquacultureEmissions updateAquacultureEmissions(UUID id, AquacultureEmissionsDto emissions);
+//    AquacultureEmissions updateAquacultureEmissions(UUID id, AquacultureEmissionsDto emissions);
     
     EntericFermentationEmissions createEntericFermentationEmissions(EntericFermentationEmissionsDto emissionsDto);
 //    EntericFermentationEmissions updateEntericFermentationEmissions(UUID id, EntericFermentationEmissionsDto emissionsDto);
