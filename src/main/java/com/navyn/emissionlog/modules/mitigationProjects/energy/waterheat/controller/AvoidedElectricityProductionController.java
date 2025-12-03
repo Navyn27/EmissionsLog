@@ -3,6 +3,7 @@ package com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.contro
 import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.dto.AvoidedElectricityProductionDTO;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models.AvoidedElectricityProduction;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.service.AvoidedElectricityProductionService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,7 +13,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/avoided-electricity-production")
-@CrossOrigin
+@SecurityRequirement(name = "BearerAuth")
 public class AvoidedElectricityProductionController {
 
     private final AvoidedElectricityProductionService service;
