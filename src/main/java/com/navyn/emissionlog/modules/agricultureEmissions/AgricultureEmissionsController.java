@@ -261,150 +261,262 @@ public class AgricultureEmissionsController {
         return ResponseEntity.ok(new ApiResponse(true, "Manure management emissions fetched successfully", emissions));
     }
 
-//    @PutMapping("/aquacultureEmissions/{id}")
-//    @Operation(summary = "Update aquaculture emissions record")
-//    private ResponseEntity<ApiResponse> updateAquacultureEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody AquacultureEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Aquaculture emissions updated successfully",
-//            agricultureEmissionsService.updateAquacultureEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/entericFermentationEmissions/{id}")
-//    @Operation(summary = "Update enteric fermentation emissions record")
-//    private ResponseEntity<ApiResponse> updateEntericFermentationEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody EntericFermentationEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Enteric Fermentation emissions updated successfully",
-//            agricultureEmissionsService.updateEntericFermentationEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/limingEmissions/{id}")
-//    @Operation(summary = "Update liming emissions record")
-//    private ResponseEntity<ApiResponse> updateLimingEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody LimingEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Liming emissions updated successfully",
-//            agricultureEmissionsService.updateLimingEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/animalManureAndCompostEmissions/{id}")
-//    @Operation(summary = "Update animal manure and compost emissions record")
-//    private ResponseEntity<ApiResponse> updateAnimalManureAndCompostEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody AnimalManureAndCompostEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Animal Manure and Compost emissions updated successfully",
-//            agricultureEmissionsService.updateAnimalManureAndCompostEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/riceCultivationEmissions/{id}")
-//    @Operation(summary = "Update rice cultivation emissions record")
-//    private ResponseEntity<ApiResponse> updateRiceCultivationEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody RiceCultivationEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Rice Cultivation emissions updated successfully",
-//            agricultureEmissionsService.updateRiceCultivationEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/syntheticFertilizerEmissions/{id}")
-//    @Operation(summary = "Update synthetic fertilizer emissions record")
-//    private ResponseEntity<ApiResponse> updateSyntheticFertilizerEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody SyntheticFertilizerEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Synthetic Fertilizer emissions updated successfully",
-//            agricultureEmissionsService.updateSyntheticFertilizerEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/ureaEmissions/{id}")
-//    @Operation(summary = "Update urea emissions record")
-//    private ResponseEntity<ApiResponse> updateUreaEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody UreaEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Urea emissions updated successfully",
-//            agricultureEmissionsService.updateUreaEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/burningEmissions/{id}")
-//    @Operation(summary = "Update burning emissions record")
-//    private ResponseEntity<ApiResponse> updateBurningEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody BurningEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Burning emissions updated successfully",
-//            agricultureEmissionsService.updateBurningEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/cropResidueEmissions/{id}")
-//    @Operation(summary = "Update crop residue emissions record")
-//    private ResponseEntity<ApiResponse> updateCropResidueEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody CropResiduesEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Crop Residue emissions updated successfully",
-//            agricultureEmissionsService.updateCropResidueEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/pastureExcretionEmissions/{id}")
-//    @Operation(summary = "Update pasture excretion emissions record")
-//    private ResponseEntity<ApiResponse> updatePastureExcretionEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody PastureExcretionsEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Pasture Excretion emissions updated successfully",
-//            agricultureEmissionsService.updatePastureExcretionEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/mineralSoilEmissions/{id}")
-//    @Operation(summary = "Update mineral soil emissions record")
-//    private ResponseEntity<ApiResponse> updateMineralSoilEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody MineralSoilEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Mineral Soil emissions updated successfully",
-//            agricultureEmissionsService.updateMineralSoilEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/volatilizationEmissions/{id}")
-//    @Operation(summary = "Update volatilization emissions record")
-//    private ResponseEntity<ApiResponse> updateVolatilizationEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody VolatilizationEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Volatilization emissions updated successfully",
-//            agricultureEmissionsService.updateVolatilizationEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/leachingEmissions/{id}")
-//    @Operation(summary = "Update leaching emissions record")
-//    private ResponseEntity<ApiResponse> updateLeachingEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody LeachingEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Leaching emissions updated successfully",
-//            agricultureEmissionsService.updateLeachingEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/atmosphericNDepositionEmissions/{id}")
-//    @Operation(summary = "Update atmospheric N deposition emissions record")
-//    private ResponseEntity<ApiResponse> updateAtmosphericNDepositionEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody AtmosphericDepositionEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Atmospheric Deposition emissions updated successfully",
-//            agricultureEmissionsService.updateAtmosphericNDepositionEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/leachingAndRunoffEmissions/{id}")
-//    @Operation(summary = "Update leaching and runoff emissions record")
-//    private ResponseEntity<ApiResponse> updateLeachingAndRunoffEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody LeachingAndRunoffEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Leaching and Runoff emissions updated successfully",
-//            agricultureEmissionsService.updateLeachingAndRunoffEmissions(id, dto)));
-//    }
-//
-//    @PutMapping("/manureManagementEmissions/{id}")
-//    @Operation(summary = "Update manure management emissions record")
-//    private ResponseEntity<ApiResponse> updateManureManagementEmissions(
-//            @PathVariable UUID id,
-//            @Valid @RequestBody ManureManagementEmissionsDto dto) {
-//        return ResponseEntity.ok(new ApiResponse(true, "Manure Management emissions updated successfully",
-//            agricultureEmissionsService.updateManureManagementEmissions(id, dto)));
-//    }
-//
+   @PutMapping("/aquacultureEmissions/{id}")
+   @Operation(summary = "Update aquaculture emissions record")
+   private ResponseEntity<ApiResponse> updateAquacultureEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody AquacultureEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Aquaculture emissions updated successfully",
+           agricultureEmissionsService.updateAquacultureEmissions(id, dto)));
+   }
+
+   @PutMapping("/entericFermentationEmissions/{id}")
+   @Operation(summary = "Update enteric fermentation emissions record")
+   private ResponseEntity<ApiResponse> updateEntericFermentationEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody EntericFermentationEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Enteric Fermentation emissions updated successfully",
+           agricultureEmissionsService.updateEntericFermentationEmissions(id, dto)));
+   }
+
+   @PutMapping("/limingEmissions/{id}")
+   @Operation(summary = "Update liming emissions record")
+   private ResponseEntity<ApiResponse> updateLimingEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody LimingEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Liming emissions updated successfully",
+           agricultureEmissionsService.updateLimingEmissions(id, dto)));
+   }
+
+   @PutMapping("/animalManureAndCompostEmissions/{id}")
+   @Operation(summary = "Update animal manure and compost emissions record")
+   private ResponseEntity<ApiResponse> updateAnimalManureAndCompostEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody AnimalManureAndCompostEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Animal Manure and Compost emissions updated successfully",
+           agricultureEmissionsService.updateAnimalManureAndCompostEmissions(id, dto)));
+   }
+
+   @PutMapping("/riceCultivationEmissions/{id}")
+   @Operation(summary = "Update rice cultivation emissions record")
+   private ResponseEntity<ApiResponse> updateRiceCultivationEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody RiceCultivationEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Rice Cultivation emissions updated successfully",
+           agricultureEmissionsService.updateRiceCultivationEmissions(id, dto)));
+   }
+
+   @PutMapping("/syntheticFertilizerEmissions/{id}")
+   @Operation(summary = "Update synthetic fertilizer emissions record")
+   private ResponseEntity<ApiResponse> updateSyntheticFertilizerEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody SyntheticFertilizerEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Synthetic Fertilizer emissions updated successfully",
+           agricultureEmissionsService.updateSyntheticFertilizerEmissions(id, dto)));
+   }
+
+   @PutMapping("/ureaEmissions/{id}")
+   @Operation(summary = "Update urea emissions record")
+   private ResponseEntity<ApiResponse> updateUreaEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody UreaEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Urea emissions updated successfully",
+           agricultureEmissionsService.updateUreaEmissions(id, dto)));
+   }
+
+   @PutMapping("/burningEmissions/{id}")
+   @Operation(summary = "Update burning emissions record")
+   private ResponseEntity<ApiResponse> updateBurningEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody BurningEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Burning emissions updated successfully",
+           agricultureEmissionsService.updateBurningEmissions(id, dto)));
+   }
+
+   @PutMapping("/cropResidueEmissions/{id}")
+   @Operation(summary = "Update crop residue emissions record")
+   private ResponseEntity<ApiResponse> updateCropResidueEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody CropResiduesEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Crop Residue emissions updated successfully",
+           agricultureEmissionsService.updateCropResidueEmissions(id, dto)));
+   }
+
+   @PutMapping("/pastureExcretionEmissions/{id}")
+   @Operation(summary = "Update pasture excretion emissions record")
+   private ResponseEntity<ApiResponse> updatePastureExcretionEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody PastureExcretionsEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Pasture Excretion emissions updated successfully",
+           agricultureEmissionsService.updatePastureExcretionEmissions(id, dto)));
+   }
+
+   @PutMapping("/mineralSoilEmissions/{id}")
+   @Operation(summary = "Update mineral soil emissions record")
+   private ResponseEntity<ApiResponse> updateMineralSoilEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody MineralSoilEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Mineral Soil emissions updated successfully",
+           agricultureEmissionsService.updateMineralSoilEmissions(id, dto)));
+   }
+
+   @PutMapping("/volatilizationEmissions/{id}")
+   @Operation(summary = "Update volatilization emissions record")
+   private ResponseEntity<ApiResponse> updateVolatilizationEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody VolatilizationEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Volatilization emissions updated successfully",
+           agricultureEmissionsService.updateVolatilizationEmissions(id, dto)));
+   }
+
+   @PutMapping("/leachingEmissions/{id}")
+   @Operation(summary = "Update leaching emissions record")
+   private ResponseEntity<ApiResponse> updateLeachingEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody LeachingEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Leaching emissions updated successfully",
+           agricultureEmissionsService.updateLeachingEmissions(id, dto)));
+   }
+
+   @PutMapping("/atmosphericNDepositionEmissions/{id}")
+   @Operation(summary = "Update atmospheric N deposition emissions record")
+   private ResponseEntity<ApiResponse> updateAtmosphericNDepositionEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody AtmosphericDepositionEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Atmospheric Deposition emissions updated successfully",
+           agricultureEmissionsService.updateAtmosphericNDepositionEmissions(id, dto)));
+   }
+
+   @PutMapping("/leachingAndRunoffEmissions/{id}")
+   @Operation(summary = "Update leaching and runoff emissions record")
+   private ResponseEntity<ApiResponse> updateLeachingAndRunoffEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody LeachingAndRunoffEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Leaching and Runoff emissions updated successfully",
+           agricultureEmissionsService.updateLeachingAndRunoffEmissions(id, dto)));
+   }
+
+   @PutMapping("/manureManagementEmissions/{id}")
+   @Operation(summary = "Update manure management emissions record")
+   private ResponseEntity<ApiResponse> updateManureManagementEmissions(
+           @PathVariable UUID id,
+           @Valid @RequestBody ManureManagementEmissionsDto dto) {
+       return ResponseEntity.ok(new ApiResponse(true, "Manure Management emissions updated successfully",
+           agricultureEmissionsService.updateManureManagementEmissions(id, dto)));
+   }
+
+    @DeleteMapping("/aquacultureEmissions/{id}")
+    @Operation(summary = "Delete aquaculture emissions record")
+    private ResponseEntity<ApiResponse> deleteAquacultureEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteAquacultureEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Aquaculture emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/entericFermentationEmissions/{id}")
+    @Operation(summary = "Delete enteric fermentation emissions record")
+    private ResponseEntity<ApiResponse> deleteEntericFermentationEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteEntericFermentationEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Enteric Fermentation emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/limingEmissions/{id}")
+    @Operation(summary = "Delete liming emissions record")
+    private ResponseEntity<ApiResponse> deleteLimingEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteLimingEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Liming emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/animalManureAndCompostEmissions/{id}")
+    @Operation(summary = "Delete animal manure and compost emissions record")
+    private ResponseEntity<ApiResponse> deleteAnimalManureAndCompostEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteAnimalManureAndCompostEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Animal Manure and Compost emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/riceCultivationEmissions/{id}")
+    @Operation(summary = "Delete rice cultivation emissions record")
+    private ResponseEntity<ApiResponse> deleteRiceCultivationEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteRiceCultivationEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Rice Cultivation emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/syntheticFertilizerEmissions/{id}")
+    @Operation(summary = "Delete synthetic fertilizer emissions record")
+    private ResponseEntity<ApiResponse> deleteSyntheticFertilizerEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteSyntheticFertilizerEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Synthetic Fertilizer emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/ureaEmissions/{id}")
+    @Operation(summary = "Delete urea emissions record")
+    private ResponseEntity<ApiResponse> deleteUreaEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteUreaEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Urea emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/burningEmissions/{id}")
+    @Operation(summary = "Delete burning emissions record")
+    private ResponseEntity<ApiResponse> deleteBurningEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteBurningEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Burning emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/cropResidueEmissions/{id}")
+    @Operation(summary = "Delete crop residue emissions record")
+    private ResponseEntity<ApiResponse> deleteCropResidueEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteCropResidueEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Crop Residue emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/pastureExcretionEmissions/{id}")
+    @Operation(summary = "Delete pasture excretion emissions record")
+    private ResponseEntity<ApiResponse> deletePastureExcretionEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deletePastureExcretionEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Pasture Excretion emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/mineralSoilEmissions/{id}")
+    @Operation(summary = "Delete mineral soil emissions record")
+    private ResponseEntity<ApiResponse> deleteMineralSoilEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteMineralSoilEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Mineral Soil emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/volatilizationEmissions/{id}")
+    @Operation(summary = "Delete volatilization emissions record")
+    private ResponseEntity<ApiResponse> deleteVolatilizationEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteVolatilizationEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Volatilization emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/leachingEmissions/{id}")
+    @Operation(summary = "Delete leaching emissions record")
+    private ResponseEntity<ApiResponse> deleteLeachingEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteLeachingEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Leaching emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/atmosphericNDepositionEmissions/{id}")
+    @Operation(summary = "Delete atmospheric N deposition emissions record")
+    private ResponseEntity<ApiResponse> deleteAtmosphericNDepositionEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteAtmosphericNDepositionEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Atmospheric Deposition emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/leachingAndRunoffEmissions/{id}")
+    @Operation(summary = "Delete leaching and runoff emissions record")
+    private ResponseEntity<ApiResponse> deleteLeachingAndRunoffEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteLeachingAndRunoffEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Leaching and Runoff emissions deleted successfully", null));
+    }
+
+    @DeleteMapping("/manureManagementEmissions/{id}")
+    @Operation(summary = "Delete manure management emissions record")
+    private ResponseEntity<ApiResponse> deleteManureManagementEmissions(@PathVariable UUID id) {
+        agricultureEmissionsService.deleteManureManagementEmissions(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Manure Management emissions deleted successfully", null));
+    }
+
     
     @Operation(summary = "Get Agriculture dashboard summary", description = "Retrieves agriculture emissions summary from all 7 modules.")
     @GetMapping("/dashboard/summary")

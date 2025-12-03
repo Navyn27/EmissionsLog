@@ -29,6 +29,7 @@ import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.ManureM
 
 import com.navyn.emissionlog.utils.DashboardData;
 import com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -505,342 +506,469 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         );
     }
     
-//    @Override
-//    public AquacultureEmissions updateAquacultureEmissions(UUID id, AquacultureEmissionsDto dto) {
-//        AquacultureEmissions emissions = aquacultureEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Aquaculture emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setActivityDesc(dto.getActivityDesc());
-//        emissions.setFishProduction(dto.getFishProduction());
-//        emissions.setN2ONEmissions(dto.getFishProduction() * AFOLUConstants.FISH_N20_EF.getValue());
-//        emissions.setN2OEmissions(dto.getFishProduction() * AFOLUConstants.FISH_N20_EF.getValue() * 44/28 * 1000000);
-//        emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
-//
-//        return aquacultureEmissionsRepository.save(emissions);
-//    }
-//
-//    @Override
-//    public EntericFermentationEmissions updateEntericFermentationEmissions(UUID id, EntericFermentationEmissionsDto dto) {
-//        EntericFermentationEmissions emissions = entericFermentationEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Enteric Fermentation emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setAnimalPopulation(dto.getAnimalPopulation());
-//        emissions.setSpecies(dto.getSpecies());
-//        emissions.setCH4Emissions(emissions.getAnimalPopulation() * emissions.getSpecies().getEntericFermentationCH4EF() / 1000);
-//        emissions.setCO2EqEmissions(emissions.getCH4Emissions() * GWP.CH4.getValue());
-//
-//        return entericFermentationEmissionsRepository.save(emissions);
-//    }
-//
-//    @Override
-//    public LimingEmissions updateLimingEmissions(UUID id, LimingEmissionsDto dto) {
-//        LimingEmissions emissions = limingEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Liming emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setMaterial(dto.getMaterial());
-//        emissions.setCaCO3Qty(dto.getCaCO3Qty());
-//        emissions.setCO2Emissions(emissions.getMaterial().getLimingConstant() * AFOLUConstants.CONVERSION_FACTOR.getValue());
-//
-//        return limingEmissionsRepository.save(emissions);
-//    }
-//
-//    @Override
-//    public AnimalManureAndCompostEmissions updateAnimalManureAndCompostEmissions(UUID id, AnimalManureAndCompostEmissionsDto dto) {
-//        AnimalManureAndCompostEmissions emissions = animalManureAndCompostEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Animal Manure and Compost emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setLivestockSpecies(dto.getSpecies());
-//        emissions.setAmendmentType(getAmendmentTypeByLivestockSpecies(dto.getSpecies()));
-//        emissions.setPopulation(dto.getPopulation());
-//        emissions.setTotalN(emissions.getLivestockSpecies().getManureNitrogenEF() * emissions.getPopulation());
-//        emissions.setNAvailable(emissions.getTotalN() * emissions.getLivestockSpecies().getMeanLossesOfNinManureMMS());
-//        emissions.setN2ONEmissions(emissions.getNAvailable() * emissions.getLivestockSpecies().getEFFOrgManureCompostAppliedInFields());
-//        emissions.setN2OEmissions(emissions.getN2ONEmissions() * 44 / 28);
-//        emissions.setCH4Emissions(emissions.getPopulation() * emissions.getLivestockSpecies().getManureManagementCH4EF());
-//        emissions.setCO2EqEmissions((emissions.getN2OEmissions() * GWP.N2O.getValue()) + (emissions.getCH4Emissions() * GWP.CH4.getValue()));
-//
-//        return animalManureAndCompostEmissionsRepository.save(emissions);
-//    }
-//
-//    @Override
-//    public RiceCultivationEmissions updateRiceCultivationEmissions(UUID id, RiceCultivationEmissionsDto dto) {
-//        RiceCultivationEmissions emissions = riceCultivationEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Rice Cultivation emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setRiceEcosystem(dto.getRiceEcosystem());
-//        emissions.setWaterRegime(dto.getWaterRegime());
-//        emissions.setAreaUnderRice(dto.getAreaUnderRice());
-//        emissions.setSeasonalEmissionFactor(dto.getSeasonalEmissionFactor());
-//        emissions.setAnnualCH4Emissions(dto.getAreaUnderRice() * dto.getSeasonalEmissionFactor() * 365 / 1000);
-//        emissions.setCO2EqEmissions(emissions.getAnnualCH4Emissions() * GWP.CH4.getValue());
-//
-//        return riceCultivationEmissionsRepository.save(emissions);
-//    }
+   @Override
+   public AquacultureEmissions updateAquacultureEmissions(UUID id, AquacultureEmissionsDto dto) {
+       AquacultureEmissions emissions = aquacultureEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Aquaculture emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setActivityDesc(dto.getActivityDesc());
+       emissions.setFishProduction(dto.getFishProduction());
+       emissions.setN2ONEmissions(dto.getFishProduction() * AFOLUConstants.FISH_N20_EF.getValue());
+       emissions.setN2OEmissions(dto.getFishProduction() * AFOLUConstants.FISH_N20_EF.getValue() * 44/28 * 1000000);
+       emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
+
+       return aquacultureEmissionsRepository.save(emissions);
+   }
+
+   @Override
+   public EntericFermentationEmissions updateEntericFermentationEmissions(UUID id, EntericFermentationEmissionsDto dto) {
+       EntericFermentationEmissions emissions = entericFermentationEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Enteric Fermentation emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setAnimalPopulation(dto.getAnimalPopulation());
+       emissions.setSpecies(dto.getSpecies());
+       emissions.setCH4Emissions(emissions.getAnimalPopulation() * emissions.getSpecies().getEntericFermentationCH4EF() / 1000);
+       emissions.setCO2EqEmissions(emissions.getCH4Emissions() * GWP.CH4.getValue());
+
+       return entericFermentationEmissionsRepository.save(emissions);
+   }
+
+   @Override
+   public LimingEmissions updateLimingEmissions(UUID id, LimingEmissionsDto dto) {
+       LimingEmissions emissions = limingEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Liming emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setMaterial(dto.getMaterial());
+       emissions.setCaCO3Qty(dto.getCaCO3Qty());
+       emissions.setCO2Emissions(emissions.getMaterial().getLimingConstant() * AFOLUConstants.CONVERSION_FACTOR.getValue());
+
+       return limingEmissionsRepository.save(emissions);
+   }
+
+   @Override
+   public AnimalManureAndCompostEmissions updateAnimalManureAndCompostEmissions(UUID id, AnimalManureAndCompostEmissionsDto dto) {
+       AnimalManureAndCompostEmissions emissions = animalManureAndCompostEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Animal Manure and Compost emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setLivestockSpecies(dto.getSpecies());
+       emissions.setAmendmentType(getAmendmentTypeByLivestockSpecies(dto.getSpecies()));
+       emissions.setPopulation(dto.getPopulation());
+       emissions.setTotalN(emissions.getLivestockSpecies().getManureNitrogenEF() * emissions.getPopulation());
+       emissions.setNAvailable(emissions.getTotalN() * emissions.getLivestockSpecies().getMeanLossesOfNinManureMMS());
+       emissions.setN2ONEmissions(emissions.getNAvailable() * emissions.getLivestockSpecies().getEFFOrgManureCompostAppliedInFields());
+       emissions.setN2OEmissions(emissions.getN2ONEmissions() * 44 / 28);
+       emissions.setCH4Emissions(emissions.getPopulation() * emissions.getLivestockSpecies().getManureManagementCH4EF());
+       emissions.setCO2EqEmissions((emissions.getN2OEmissions() * GWP.N2O.getValue()) + (emissions.getCH4Emissions() * GWP.CH4.getValue()));
+
+       return animalManureAndCompostEmissionsRepository.save(emissions);
+   }
+
+   @Override
+   public RiceCultivationEmissions updateRiceCultivationEmissions(UUID id, RiceCultivationEmissionsDto dto) {
+       RiceCultivationEmissions emissions = riceCultivationEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Rice Cultivation emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setRiceEcosystem(dto.getRiceEcosystem());
+       emissions.setWaterRegime(dto.getWaterRegime());
+       emissions.setHarvestedArea(dto.getHarvestedArea());
+       emissions.setCultivationPeriod(dto.getCultivationPeriod());
+       emissions.setAdjDailyEFEmissions(AFOLUConstants.EFC.getValue() * dto.getWaterRegime().getValue()* AFOLUConstants.SFP.getValue() * AFOLUConstants.SFOA.getValue() * AFOLUConstants.SFSR.getValue());
+       emissions.setAnnualCH4Emissions(dto.getHarvestedArea()* dto.getCultivationPeriod()*emissions.getAdjDailyEFEmissions()/1000000);
+       emissions.setCO2EqEmissions(emissions.getAnnualCH4Emissions() * GWP.CH4.getValue());
+
+       return riceCultivationEmissionsRepository.save(emissions);
+   }
     
-//    @Override
-//    public SyntheticFertilizerEmissions updateSyntheticFertilizerEmissions(UUID id, SyntheticFertilizerEmissionsDto dto) {
-//        SyntheticFertilizerEmissions emissions = syntheticFertilizerEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Synthetic Fertilizer emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setCropType(dto.getCropType());
-//        emissions.setFertilizerType(dto.getFertilizerType());
-//        emissions.setFertilizerConsumption(dto.getFertilizerConsumption());
-//        emissions.setN2ONEmissions(emissions.getFertilizerConsumption() * emissions.getFertilizerType().getNitrogenContentPercentage() * AFOLUConstants.SYNTHETIC_FERTILIZER_EF.getValue());
-//        emissions.setN2OEmissions(emissions.getN2ONEmissions() * 44 / 28);
-//        emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
-//
-//        return syntheticFertilizerEmissionsRepository.save(emissions);
-//    }
+   @Override
+   public SyntheticFertilizerEmissions updateSyntheticFertilizerEmissions(UUID id, SyntheticFertilizerEmissionsDto dto) {
+       SyntheticFertilizerEmissions emissions = syntheticFertilizerEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Synthetic Fertilizer emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setCropType(dto.getCropType());
+       emissions.setFertType(dto.getFertType());
+       emissions.setQtyApplied(dto.getQtyApplied());
+       emissions.setNAmount(emissions.getQtyApplied() * emissions.getFertType().getNContent());
+       emissions.setN2ONEmissions(emissions.getNAmount()*emissions.getFertType().getNContent());
+       emissions.setN2OEmissions(emissions.getN2ONEmissions() * 44/28);
+       emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
+
+       return syntheticFertilizerEmissionsRepository.save(emissions);
+   }
     
-//    @Override
-//    public UreaEmissions updateUreaEmissions(UUID id, UreaEmissionsDto dto) {
-//        UreaEmissions emissions = ureaEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Urea emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setFertilizerName(dto.getFertilizerName());
-//        emissions.setUreaApplied(dto.getUreaApplied());
-//        emissions.setCO2Emissions(emissions.getUreaApplied() * AFOLUConstants.UREA_EF.getValue() * AFOLUConstants.CONVERSION_FACTOR.getValue());
-//
-//        return ureaEmissionsRepository.save(emissions);
-//    }
+   @Override
+   public UreaEmissions updateUreaEmissions(UUID id, UreaEmissionsDto dto) {
+       UreaEmissions emissions = ureaEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Urea emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setFertilizerName(dto.getFertilizerName());
+       emissions.setQty(dto.getQty());
+       emissions.setCO2Emissions(emissions.getQty() * AFOLUConstants.UREA_EMISSION_FACTOR.getValue() * AFOLUConstants.CONVERSION_FACTOR.getValue());
+
+       return ureaEmissionsRepository.save(emissions);
+   }
     
-//    @Override
-//    public BurningEmissions updateBurningEmissions(UUID id, BurningEmissionsDto dto) {
-//        BurningEmissions emissions = burningEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Burning emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setForestType(dto.getForestType());
-//        emissions.setAreaBurned(dto.getAreaBurned());
-//        emissions.setMassFuelAvailableForCombustion(dto.getAreaBurned() * dto.getForestType().getMassFuelAvailableForCombustion());
-//        emissions.setCombustionFactor(dto.getForestType().getCombustionFactor());
-//        emissions.setMassFuelActuallyCombust(emissions.getMassFuelAvailableForCombustion() * emissions.getCombustionFactor());
-//        emissions.setEmissionFactorCO2(dto.getForestType().getCO2EmissionFactor());
-//        emissions.setEmissionFactorCH4(dto.getForestType().getCH4EmissionFactor());
-//        emissions.setEmissionFactorN2O(dto.getForestType().getN2OEmissionFactor());
-//        emissions.setCO2Emissions(emissions.getMassFuelActuallyCombust() * emissions.getEmissionFactorCO2());
-//        emissions.setCH4Emissions(emissions.getMassFuelActuallyCombust() * emissions.getEmissionFactorCH4() / 1000);
-//        emissions.setN2OEmissions(emissions.getMassFuelActuallyCombust() * emissions.getEmissionFactorN2O() / 1000);
-//        emissions.setCO2EqEmissions((emissions.getCH4Emissions() * GWP.CH4.getValue()) + (emissions.getN2OEmissions() * GWP.N2O.getValue()));
-//
-//        return burningEmissionsRepository.save(emissions);
-//    }
+   @Override
+   public BurningEmissions updateBurningEmissions(UUID id, BurningEmissionsDto dto) {
+       BurningEmissions emissions = burningEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Burning emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setBurningAgentType(dto.getBurningAgentType());
+       emissions.setBurntArea(dto.getBurntArea());
+       emissions.setFuelMassAvailable(dto.getFuelMassUnit().toKilograms(dto.getFuelMassAvailable()));
+       emissions.setFireType(dto.getFireType());
+
+       Double combustionFactor = dto.getIsEucalyptusForest() ? AFOLUConstants.EUCALYPTUS_FOREST_CF.getValue(): OTHER_FOREST_CF.getValue() ;
+       emissions.setFuelMassConsumed(emissions.getFuelMassAvailable() * combustionFactor);
+
+       //Emissions Calculations
+       emissions.setCO2Emissions(emissions.getFuelMassAvailable() * emissions.getBurningAgentType().getCO2EF());
+       emissions.setCH4Emissions(emissions.getFuelMassAvailable() * emissions.getBurningAgentType().getCH4EF());
+       emissions.setN2OEmissions(emissions.getFuelMassAvailable() * emissions.getBurningAgentType().getN2OEF());
+
+       emissions.setCO2EqEmissions(emissions.getCO2Emissions() + (emissions.getCH4Emissions() * GWP.CH4.getValue()) + (emissions.getN2OEmissions() * GWP.N2O.getValue()));
+
+       return burningEmissionsRepository.save(emissions);
+   }
     
-//    @Override
-//    public CropResiduesEmissions updateCropResidueEmissions(UUID id, CropResiduesEmissionsDto dto) {
-//        CropResiduesEmissions emissions = cropResiduesEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Crop Residues emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setCropType(dto.getCropType());
-//        emissions.setLandUseCategory(dto.getLandUseCategory());
-//        emissions.setAreaUnderCrop(dto.getAreaUnderCrop());
-//        emissions.setCropYield(dto.getCropYield());
-//        emissions.setResidueNitrogenContent(dto.getCropType().getResidueNitrogenContent());
-//        emissions.setResidueToProductRatio(dto.getCropType().getResidueToProductRatio());
-//        emissions.setSlopeOfLinearRelationship(dto.getCropType().getSlopeOfLinearRelationship());
-//        emissions.setInterceptOfLinearRelationship(dto.getCropType().getInterceptOfLinearRelationship());
-//        emissions.setDryMatterFraction(dto.getCropType().getDryMatterFraction());
-//        emissions.setFractionOfResidueRemoved(dto.getCropType().getFractionOfResidueRemoved());
-//        emissions.setFractionOfResidueBurned(dto.getCropType().getFractionOfResidueBurned());
-//        emissions.setCombustionFactor(AFOLUConstants.COMBUSTION_FACTOR.getValue());
-//        emissions.setResidueNContent((dto.getCropType().getSlopeOfLinearRelationship() * dto.getCropYield()) + dto.getCropType().getInterceptOfLinearRelationship());
-//        emissions.setTotalResidueProduced(dto.getAreaUnderCrop() * dto.getCropYield() * dto.getCropType().getResidueToProductRatio() * dto.getCropType().getDryMatterFraction());
-//        emissions.setNinResiduesReturnedToSoil(emissions.getResidueNContent() * (1 - dto.getCropType().getFractionOfResidueRemoved() - dto.getCropType().getFractionOfResidueBurned()));
-//        emissions.setN2ONEmissions(emissions.getNinResiduesReturnedToSoil() * AFOLUConstants.CROP_RESIDUE_EF.getValue());
-//        emissions.setN2OEmissions(emissions.getN2ONEmissions() * 44 / 28);
-//        emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
-//
-//        return cropResiduesEmissionsRepository.save(emissions);
-//    }
+   @Override
+   public CropResiduesEmissions updateCropResidueEmissions(UUID id, CropResiduesEmissionsDto dto) {
+       CropResiduesEmissions emissions = cropResiduesEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Crop Residues emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setCropType(dto.getCropType());
+       emissions.setLandUseCategory(dto.getLandUseCategory());
+       emissions.setTotalAreaHarvested(dto.getTotalAreaHarvested());
+       emissions.setHarvestedFreshCropYield(dto.getHarvestedFreshCropYield());
+       emissions.setHarvestedDMYield(emissions.getTotalAreaHarvested() * emissions.getHarvestedFreshCropYield() * dto.getCropType().getDMFraction());
+       emissions.setAGResiduesDryMatter(dto.getAGResiduesDryMatter());
+       emissions.setRatioOfAGResiduesDMToHarvestedYield(emissions.getAGResiduesDryMatter() * 1000 / emissions.getHarvestedDMYield());
+       emissions.setRatioOfBelowGroundResiduesToHarvestedYield(dto.getCropType().getRatioOfBGRToAGBiomass() * (emissions.getAGResiduesDryMatter()*1000 + emissions.getHarvestedDMYield())/emissions.getHarvestedDMYield());
+       emissions.setNInCropResiduesReturned(dto.getNInCropResiduesReturned());
+       emissions.setN2ONEmissions(emissions.getNInCropResiduesReturned() * AFOLUConstants.N_CROP_RESIDUES_EF.getValue());
+       emissions.setN2OEmissions(emissions.getN2ONEmissions() * 44 / 28);
+       emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
+
+       return cropResiduesEmissionsRepository.save(emissions);
+   }
     
-//    @Override
-//    public PastureExcretionEmissions updatePastureExcretionEmissions(UUID id, PastureExcretionsEmissionsDto dto) {
-//        PastureExcretionEmissions emissions = pastureExcretionEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Pasture Excretion emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setMms(dto.getMms());
-//        emissions.setLivestockSpecies(dto.getSpecies());
-//        emissions.setAnimalPopulation(dto.getAnimalPopulation());
-//        emissions.setN2ONEmissions(emissions.getLivestockSpecies().getPastureExcretionN2ONEF() * emissions.getAnimalPopulation());
-//        emissions.setN2OEmissions(emissions.getN2ONEmissions() * 44 / 28);
-//        emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
-//
-//        return pastureExcretionEmissionsRepository.save(emissions);
-//    }
+   @Override
+   public PastureExcretionEmissions updatePastureExcretionEmissions(UUID id, PastureExcretionsEmissionsDto dto) {
+       PastureExcretionEmissions emissions = pastureExcretionEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Pasture Excretion emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setMMS(dto.getMms());
+       emissions.setLivestockSpecies(dto.getLivestockSpecies());
+       emissions.setAnimalPopulation(dto.getAnimalPopulation());
+       emissions.setTotalNExcretionDeposited(emissions.getAnimalPopulation() * emissions.getLivestockSpecies().getAnnualNExcretion() * emissions.getLivestockSpecies().getFractionOfManureDepositedOnPasture());
+       emissions.setN20NEmissions(emissions.getTotalNExcretionDeposited() * emissions.getLivestockSpecies().getNEFManureDepositedOnPasture());
+       emissions.setN2OEmissions(emissions.getN20NEmissions() * 44 / 28);
+       emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
+
+       return pastureExcretionEmissionsRepository.save(emissions);
+   }
     
-//    @Override
-//    public MineralSoilEmissions updateMineralSoilEmissions(UUID id, MineralSoilEmissionsDto dto) {
-//        MineralSoilEmissions emissions = mineralSoilEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Mineral Soil emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setInitialLandUse(dto.getInitialLandUse());
-//        emissions.setLandUseInReportingYear(dto.getLandUseInReportingYear());
-//        emissions.setAreaUndergoingLandUseConversion(dto.getAreaUndergoingLandUseConversion());
-//        emissions.setSoilOrganicCarbonStockInitialLandUse(dto.getSoilOrganicCarbonStockInitialLandUse());
-//        emissions.setSoilOrganicCarbonStockConvertedLand(dto.getSoilOrganicCarbonStockConvertedLand());
-//        emissions.setTimeToTransition(dto.getTimeToTransition());
-//        emissions.setAnnualChangeInCarbonStocks((emissions.getSoilOrganicCarbonStockConvertedLand() - emissions.getSoilOrganicCarbonStockInitialLandUse()) / emissions.getTimeToTransition());
-//        emissions.setAnnualEmissions(emissions.getAnnualChangeInCarbonStocks() * emissions.getAreaUndergoingLandUseConversion() * AFOLUConstants.CONVERSION_FACTOR.getValue());
-//
-//        return mineralSoilEmissionsRepository.save(emissions);
-//    }
+   @Override
+   public MineralSoilEmissions updateMineralSoilEmissions(UUID id, MineralSoilEmissionsDto dto) {
+       MineralSoilEmissions emissions = mineralSoilEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Mineral Soil emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setInitialLandUse(dto.getInitialLandUse());
+       emissions.setLandUseInReportingYear(dto.getLandUseInReportingYear());
+       emissions.setAvLossOfSoilC(dto.getAvLossOfSoilC());
+       emissions.setNMineralisedInMineralSoil(emissions.getAvLossOfSoilC() * 1/emissions.getLandUseInReportingYear().getCNRatioOfSoilOrganicMatter()* 1000);
+       emissions.setN20NEmissions(emissions.getNMineralisedInMineralSoil() * emissions.getLandUseInReportingYear().getEFNMineralised());
+       emissions.setN2OEmissions(emissions.getN20NEmissions() * 44 / 28);
+       emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
+
+       return mineralSoilEmissionsRepository.save(emissions);
+   }
     
-//    @Override
-//    public VolatilizationEmissions updateVolatilizationEmissions(UUID id, VolatilizationEmissionsDto dto) {
-//        VolatilizationEmissions emissions = volatilizationEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Volatilization emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setMms(dto.getMms());
-//        emissions.setLivestockSpecies(dto.getSpecies());
-//        emissions.setAnimalPopulation(dto.getAnimalPopulation());
-//        emissions.setNitrogenExcretedPerAnimal(emissions.getLivestockSpecies().getManureNitrogenEF());
-//        emissions.setTotalNitrogenExcreted(emissions.getNitrogenExcretedPerAnimal() * emissions.getAnimalPopulation());
-//        emissions.setFractionVolatilized(emissions.getMms().getVolatilizationFraction());
-//        emissions.setVolatilizedNitrogen(emissions.getTotalNitrogenExcreted() * emissions.getFractionVolatilized());
-//        emissions.setN2ONEmissions(emissions.getVolatilizedNitrogen() * AFOLUConstants.VOLATILIZATION_EF.getValue());
-//        emissions.setN2OEmissions(emissions.getN2ONEmissions() * 44 / 28);
-//        emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
-//
-//        return volatilizationEmissionsRepository.save(emissions);
-//    }
-//
-//    @Override
-//    public LeachingEmissions updateLeachingEmissions(UUID id, LeachingEmissionsDto dto) {
-//        LeachingEmissions emissions = leachingEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Leaching emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setMms(dto.getMms());
-//        emissions.setLivestockSpecies(dto.getSpecies());
-//        emissions.setAnimalPopulation(dto.getAnimalPopulation());
-//        emissions.setNitrogenExcretedPerAnimal(emissions.getLivestockSpecies().getManureNitrogenEF());
-//        emissions.setTotalNitrogenExcreted(emissions.getNitrogenExcretedPerAnimal() * emissions.getAnimalPopulation());
-//        emissions.setFractionLeached(emissions.getMms().getLeachingFraction());
-//        emissions.setLeachedNitrogen(emissions.getTotalNitrogenExcreted() * emissions.getFractionLeached());
-//        emissions.setN2ONEmissions(emissions.getLeachedNitrogen() * AFOLUConstants.LEACHING_EF.getValue());
-//        emissions.setN2OEmissions(emissions.getN2ONEmissions() * 44 / 28);
-//        emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
-//
-//        return leachingEmissionsRepository.save(emissions);
-//    }
-//
-//    @Override
-//    public AtmosphericDepositionEmissions updateAtmosphericNDepositionEmissions(UUID id, AtmosphericDepositionEmissionsDto dto) {
-//        AtmosphericDepositionEmissions emissions = atmosphericDepositionEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Atmospheric Deposition emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setLandCategory(dto.getLandCategory());
-//        emissions.setNitrogenDeposited(dto.getNitrogenDeposited());
-//        emissions.setN2ONEmissions(emissions.getNitrogenDeposited() * AFOLUConstants.ATMOSPHERIC_DEPOSITION_EF.getValue());
-//        emissions.setN2OEmissions(emissions.getN2ONEmissions() * 44 / 28);
-//        emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
-//
-//        return atmosphericDepositionEmissionsRepository.save(emissions);
-//    }
-//
-//    @Override
-//    public LeachingAndRunoffEmissions updateLeachingAndRunoffEmissions(UUID id, LeachingAndRunoffEmissionsDto dto) {
-//        LeachingAndRunoffEmissions emissions = leachingAndRunoffEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Leaching and Runoff emissions not found with id: " + id));
-//
-//        emissions.setYear(dto.getYear());
-//        emissions.setLandCategory(dto.getLandCategory());
-//        emissions.setNitrogenLeached(dto.getNitrogenLeached());
-//        emissions.setN2ONEmissions(emissions.getNitrogenLeached() * AFOLUConstants.LEACHING_AND_RUNOFF_EF.getValue());
-//        emissions.setN2OEmissions(emissions.getN2ONEmissions() * 44 / 28);
-//        emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
-//
-//        return leachingAndRunoffEmissionsRepository.save(emissions);
-//    }
+   @Override
+   public VolatilizationEmissions updateVolatilizationEmissions(UUID id, VolatilizationEmissionsDto dto) {
+       VolatilizationEmissions emissions = volatilizationEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Volatilization emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setMMS(dto.getMms());
+       emissions.setLivestockSpecies(dto.getLivestockSpecies());
+       emissions.setAnimalPopulation(dto.getAnimalPopulation());
+       emissions.setTotalNExcretionForMMS(emissions.getAnimalPopulation() * emissions.getLivestockSpecies().getExcretionRate());
+       emissions.setManureVolatilizationNLoss(emissions.getTotalNExcretionForMMS() * emissions.getMMS().getFractionOfManureNThatVolatilizes());
+       emissions.setIndirectVolatilizationN2OEmissionsFromVolatilization(emissions.getManureVolatilizationNLoss()* AFOLUConstants.EF_N2O_AtmoNDeposition.getValue()* 44/28);
+       emissions.setCO2EqEmissions(emissions.getIndirectVolatilizationN2OEmissionsFromVolatilization()* GWP.N2O.getValue());
+
+       return volatilizationEmissionsRepository.save(emissions);
+   }
+
+   @Override
+   public LeachingEmissions updateLeachingEmissions(UUID id, LeachingEmissionsDto dto) {
+       LeachingEmissions emissions = leachingEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Leaching emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setMMS(dto.getMms());
+       emissions.setLivestockSpecies(dto.getLivestockSpecies());
+       emissions.setTotalNExcretionForMMS(dto.getMMSExcretionAmount());
+       emissions.setManureNLossDueToLeachingAndRunoff(emissions.getTotalNExcretionForMMS() *  emissions.getMMS().getFractionOfManureNThatLeaches());
+
+       return leachingEmissionsRepository.save(emissions);
+   }
+
+   @Override
+   public AtmosphericDepositionEmissions updateAtmosphericNDepositionEmissions(UUID id, AtmosphericDepositionEmissionsDto dto) {
+       AtmosphericDepositionEmissions emissions = atmosphericDepositionEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Atmospheric Deposition emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setLandUseCategory(dto.getLandUseCategory());
+       emissions.setSyntheticNVolatilized(dto.getSyntheticNThatVolatilizes());
+       emissions.setOrganicNAdditions(dto.getOrganicNSoilAdditions());
+       emissions.setExcretionsDepositedByGrazingAnimals(dto.getExcretionsDepositedByGrazingAnimals());
+       emissions.setAnnualN2ONFromAtmosphericDeposition((emissions.getSyntheticNVolatilized() + (emissions.getOrganicNAdditions() + emissions.getExcretionsDepositedByGrazingAnimals()) * AFOLUConstants.FRACTION_OF_APPLIED_ORGANIC_N_EXCRETIONS_THAT_VOLATILIZES.getValue()) * AFOLUConstants.EF_N2O_AtmoNDeposition.getValue());
+       emissions.setN2OEmissions(emissions.getAnnualN2ONFromAtmosphericDeposition() * 44 / 28);
+       emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
+
+       return atmosphericDepositionEmissionsRepository.save(emissions);
+   }
+
+   @Override
+   public LeachingAndRunoffEmissions updateLeachingAndRunoffEmissions(UUID id, LeachingAndRunoffEmissionsDto dto) {
+       LeachingAndRunoffEmissions emissions = leachingAndRunoffEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Leaching and Runoff emissions not found with id: " + id));
+
+       emissions.setYear(dto.getYear());
+       emissions.setLandUseCategory(dto.getLandUseCategory());
+       emissions.setSyntheticNAppliedToSoil(dto.getSyntheticNApplied());
+       emissions.setOrganicAdditionsAppliedToSoil(dto.getOrganicSoilAdditions());
+       emissions.setExcretionsDepositedByGrazingAnimals(dto.getExcretionsDepositedByGrazingAnimals());
+       emissions.setNInCropResidues(dto.getNInCropResidues());
+       emissions.setNMineralizedInMineralSoils(dto.getNMineralizedInMineralSoils());
+       emissions.setN2ONProducedFromLeachingAndRunoff((emissions.getSyntheticNAppliedToSoil()
+               + emissions.getOrganicAdditionsAppliedToSoil()
+               + emissions.getExcretionsDepositedByGrazingAnimals()
+               + emissions.getNInCropResidues()
+               + emissions.getNMineralizedInMineralSoils()) * emissions.getLandUseCategory().getNFractionAddedToSoilPostLeaching() * emissions.getLandUseCategory().getEF_N2O_LeachAndRunoffNSoilAdditive());
+       emissions.setN2OEmissions(emissions.getN2ONProducedFromLeachingAndRunoff() * 44 / 28);
+       emissions.setCO2EqEmissions(emissions.getN2OEmissions() * GWP.N2O.getValue());
+
+       return leachingAndRunoffEmissionsRepository.save(emissions);
+   }
     
-//    @Override
-//    public ManureManagementEmissions updateManureManagementEmissions(UUID id, ManureManagementEmissionsDto dto) {
-//        ManureManagementEmissions emission = manureManagementEmissionsRepository.findById(id)
-//            .orElseThrow(() -> new RuntimeException("Manure Management emissions not found with id: " + id));
-//
-//        // Map input fields
-//        emission.setYear(dto.getYear());
-//        emission.setSpecies(dto.getSpecies());
-//        emission.setManureManagementSystem(dto.getManureManagementSystem());
-//        emission.setAnimalPopulation(dto.getAnimalPopulation());
-//        emission.setAverageAnnualTemperature(dto.getAverageAnnualTemperature());
-//        emission.setAverageAnimalWeight(dto.getAverageAnimalWeight() != null ?
-//            dto.getAverageAnimalWeight() : getDefaultWeight(dto.getSpecies()));
-//
-//        // 1. Calculate Volatile Solids
-//        double vsRate = getVolatileSolidsRate(dto.getSpecies());
-//        emission.setVolatileSolidsExcretion(vsRate);
-//        emission.setTotalVolatileSolids(vsRate * dto.getAnimalPopulation() * 365);
-//
-//        // 2. Calculate Methane Emissions
-//        double mcf = getMethaneConversionFactor(dto.getManureManagementSystem(),
-//                                                 dto.getAverageAnnualTemperature());
-//        emission.setMethaneConversionFactor(mcf);
-//
-//        double ch4Emissions = emission.getTotalVolatileSolids() *
-//                              ManureManagementConstants.BO_FACTOR.getValue() *
-//                              mcf *
-//                              ManureManagementConstants.CH4_DENSITY.getValue();
-//        emission.setCH4EmissionsFromManure(ch4Emissions);
-//        emission.setCH4_CO2Eq(ch4Emissions * GWP.CH4.getValue());
-//
-//        // 3. Calculate Nitrogen Excretion
-//        double nExcretion = getNitrogenExcretionRate(dto.getSpecies()) *
-//                            dto.getAnimalPopulation();
-//        emission.setNitrogenExcretion(nExcretion);
-//        emission.setNitrogenInManure(nExcretion);
-//
-//        // 4. Calculate Direct N2O Emissions
-//        double directN2O = emission.getNitrogenInManure() *
-//                           ManureManagementConstants.N2O_DIRECT_EF.getValue() *
-//                           ManureManagementConstants.N2O_CONVERSION_FACTOR.getValue();
-//        emission.setDirectN2OEmissions(directN2O);
-//        emission.setDirectN2O_CO2Eq(directN2O * GWP.N2O.getValue());
-//
-//        // 5. Calculate Indirect N2O - Volatilization
-//        double volatilizedN = emission.getNitrogenInManure() *
-//                              ManureManagementConstants.FRAC_GASMS.getValue();
-//        emission.setVolatilizedNitrogen(volatilizedN);
-//
-//        double indirectN2OVol = volatilizedN *
-//                                ManureManagementConstants.N2O_VOLATILIZATION_EF.getValue() *
-//                                ManureManagementConstants.N2O_CONVERSION_FACTOR.getValue();
-//        emission.setIndirectN2OFromVolatilization(indirectN2OVol);
-//        emission.setVolatilizationN2O_CO2Eq(indirectN2OVol * GWP.N2O.getValue());
-//
-//        // 6. Calculate Indirect N2O - Leaching
-//        double leachedN = emission.getNitrogenInManure() *
-//                          ManureManagementConstants.FRAC_LEACH.getValue();
-//        emission.setLeachedNitrogen(leachedN);
-//
-//        double indirectN2OLeach = leachedN *
-//                                  ManureManagementConstants.N2O_LEACHING_EF.getValue() *
-//                                  ManureManagementConstants.N2O_CONVERSION_FACTOR.getValue();
-//        emission.setIndirectN2OFromLeaching(indirectN2OLeach);
-//        emission.setLeachingN2O_CO2Eq(indirectN2OLeach * GWP.N2O.getValue());
-//
-//        // 7. Calculate Totals
-//        emission.setTotalN2OEmissions(directN2O + indirectN2OVol + indirectN2OLeach);
-//        emission.setTotalN2O_CO2Eq(emission.getDirectN2O_CO2Eq() +
-//                                    emission.getVolatilizationN2O_CO2Eq() +
-//                                    emission.getLeachingN2O_CO2Eq());
-//        emission.setTotalCO2EqEmissions(emission.getCH4_CO2Eq() +
-//                                         emission.getTotalN2O_CO2Eq());
-//
-//        return manureManagementEmissionsRepository.save(emission);
-//    }
+   @Override
+   public ManureManagementEmissions updateManureManagementEmissions(UUID id, ManureManagementEmissionsDto dto) {
+       ManureManagementEmissions emission = manureManagementEmissionsRepository.findById(id)
+           .orElseThrow(() -> new EntityNotFoundException("Manure Management emissions not found with id: " + id));
+
+       // Map input fields
+       emission.setYear(dto.getYear());
+       emission.setSpecies(dto.getSpecies());
+       emission.setManureManagementSystem(dto.getManureManagementSystem());
+       emission.setAnimalPopulation(dto.getAnimalPopulation());
+       emission.setAverageAnnualTemperature(dto.getAverageAnnualTemperature());
+       emission.setAverageAnimalWeight(dto.getAverageAnimalWeight() != null ?
+           dto.getAverageAnimalWeight() : getDefaultWeight(dto.getSpecies()));
+
+       // 1. Calculate Volatile Solids
+       double vsRate = getVolatileSolidsRate(dto.getSpecies());
+       emission.setVolatileSolidsExcretion(vsRate);
+       emission.setTotalVolatileSolids(vsRate * dto.getAnimalPopulation() * 365);
+
+       // 2. Calculate Methane Emissions
+       double mcf = getMethaneConversionFactor(dto.getManureManagementSystem(),
+                                                dto.getAverageAnnualTemperature());
+       emission.setMethaneConversionFactor(mcf);
+
+       double ch4Emissions = emission.getTotalVolatileSolids() *
+                             ManureManagementConstants.BO_FACTOR.getValue() *
+                             mcf *
+                             ManureManagementConstants.CH4_DENSITY.getValue();
+       emission.setCH4EmissionsFromManure(ch4Emissions);
+       emission.setCH4_CO2Eq(ch4Emissions * GWP.CH4.getValue());
+
+       // 3. Calculate Nitrogen Excretion
+       double nExcretion = getNitrogenExcretionRate(dto.getSpecies()) *
+                           dto.getAnimalPopulation();
+       emission.setNitrogenExcretion(nExcretion);
+       emission.setNitrogenInManure(nExcretion);
+
+       // 4. Calculate Direct N2O Emissions
+       double directN2O = emission.getNitrogenInManure() *
+                          ManureManagementConstants.N2O_DIRECT_EF.getValue() *
+                          ManureManagementConstants.N2O_CONVERSION_FACTOR.getValue();
+       emission.setDirectN2OEmissions(directN2O);
+       emission.setDirectN2O_CO2Eq(directN2O * GWP.N2O.getValue());
+
+       // 5. Calculate Indirect N2O - Volatilization
+       double volatilizedN = emission.getNitrogenInManure() *
+                             ManureManagementConstants.FRAC_GASMS.getValue();
+       emission.setVolatilizedNitrogen(volatilizedN);
+
+       double indirectN2OVol = volatilizedN *
+                               ManureManagementConstants.N2O_VOLATILIZATION_EF.getValue() *
+                               ManureManagementConstants.N2O_CONVERSION_FACTOR.getValue();
+       emission.setIndirectN2OFromVolatilization(indirectN2OVol);
+       emission.setVolatilizationN2O_CO2Eq(indirectN2OVol * GWP.N2O.getValue());
+
+       // 6. Calculate Indirect N2O - Leaching
+       double leachedN = emission.getNitrogenInManure() *
+                         ManureManagementConstants.FRAC_LEACH.getValue();
+       emission.setLeachedNitrogen(leachedN);
+
+       double indirectN2OLeach = leachedN *
+                                 ManureManagementConstants.N2O_LEACHING_EF.getValue() *
+                                 ManureManagementConstants.N2O_CONVERSION_FACTOR.getValue();
+       emission.setIndirectN2OFromLeaching(indirectN2OLeach);
+       emission.setLeachingN2O_CO2Eq(indirectN2OLeach * GWP.N2O.getValue());
+
+       // 7. Calculate Totals
+       emission.setTotalN2OEmissions(directN2O + indirectN2OVol + indirectN2OLeach);
+       emission.setTotalN2O_CO2Eq(emission.getDirectN2O_CO2Eq() +
+                                   emission.getVolatilizationN2O_CO2Eq() +
+                                   emission.getLeachingN2O_CO2Eq());
+       emission.setTotalCO2EqEmissions(emission.getCH4_CO2Eq() +
+                                        emission.getTotalN2O_CO2Eq());
+
+       return manureManagementEmissionsRepository.save(emission);
+   }
+
+    @Override
+    public void deleteAquacultureEmissions(UUID id) {
+        if (!aquacultureEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Aquaculture emissions not found with id: " + id);
+        }
+        aquacultureEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteEntericFermentationEmissions(UUID id) {
+        if (!entericFermentationEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Enteric Fermentation emissions not found with id: " + id);
+        }
+        entericFermentationEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteLimingEmissions(UUID id) {
+        if (!limingEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Liming emissions not found with id: " + id);
+        }
+        limingEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteAnimalManureAndCompostEmissions(UUID id) {
+        if (!animalManureAndCompostEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Animal Manure and Compost emissions not found with id: " + id);
+        }
+        animalManureAndCompostEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteRiceCultivationEmissions(UUID id) {
+        if (!riceCultivationEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Rice Cultivation emissions not found with id: " + id);
+        }
+        riceCultivationEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteSyntheticFertilizerEmissions(UUID id) {
+        if (!syntheticFertilizerEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Synthetic Fertilizer emissions not found with id: " + id);
+        }
+        syntheticFertilizerEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteUreaEmissions(UUID id) {
+        if (!ureaEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Urea emissions not found with id: " + id);
+        }
+        ureaEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteBurningEmissions(UUID id) {
+        if (!burningEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Burning emissions not found with id: " + id);
+        }
+        burningEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteCropResidueEmissions(UUID id) {
+        if (!cropResiduesEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Crop Residues emissions not found with id: " + id);
+        }
+        cropResiduesEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deletePastureExcretionEmissions(UUID id) {
+        if (!pastureExcretionEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Pasture Excretion emissions not found with id: " + id);
+        }
+        pastureExcretionEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteMineralSoilEmissions(UUID id) {
+        if (!mineralSoilEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Mineral Soil emissions not found with id: " + id);
+        }
+        mineralSoilEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteVolatilizationEmissions(UUID id) {
+        if (!volatilizationEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Volatilization emissions not found with id: " + id);
+        }
+        volatilizationEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteLeachingEmissions(UUID id) {
+        if (!leachingEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Leaching emissions not found with id: " + id);
+        }
+        leachingEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteAtmosphericNDepositionEmissions(UUID id) {
+        if (!atmosphericDepositionEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Atmospheric Deposition emissions not found with id: " + id);
+        }
+        atmosphericDepositionEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteLeachingAndRunoffEmissions(UUID id) {
+        if (!leachingAndRunoffEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Leaching and Runoff emissions not found with id: " + id);
+        }
+        leachingAndRunoffEmissionsRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteManureManagementEmissions(UUID id) {
+        if (!manureManagementEmissionsRepository.existsById(id)) {
+            throw new EntityNotFoundException("Manure Management emissions not found with id: " + id);
+        }
+        manureManagementEmissionsRepository.deleteById(id);
+    }
     
     // Helper methods for Manure Management
     private double getVolatileSolidsRate(ManureManagementLivestock species) {
