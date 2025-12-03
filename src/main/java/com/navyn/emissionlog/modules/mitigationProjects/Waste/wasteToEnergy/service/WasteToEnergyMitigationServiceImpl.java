@@ -77,6 +77,14 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
     }
     
     @Override
+    public void deleteWasteToEnergyMitigation(UUID id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Waste to Energy Mitigation record not found with id: " + id);
+        }
+        repository.deleteById(id);
+    }
+    
+    @Override
     public List<WasteToEnergyMitigation> getAllWasteToEnergyMitigation(Integer year) {
         Specification<WasteToEnergyMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));

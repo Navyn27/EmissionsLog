@@ -95,4 +95,12 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
         Specification<MBTCompostingMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
+    
+    @Override
+    public void deleteMBTCompostingMitigation(UUID id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("MBT Composting Mitigation record not found with id: " + id);
+        }
+        repository.deleteById(id);
+    }
 }

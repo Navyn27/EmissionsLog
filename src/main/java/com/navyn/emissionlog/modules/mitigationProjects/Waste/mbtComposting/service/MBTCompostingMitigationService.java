@@ -12,5 +12,7 @@ public interface MBTCompostingMitigationService {
     
     MBTCompostingMitigation updateMBTCompostingMitigation(UUID id, MBTCompostingMitigationDto dto);
     
+    void deleteMBTCompostingMitigation(UUID id);
+    
     List<MBTCompostingMitigation> getAllMBTCompostingMitigation(Integer year);
 }

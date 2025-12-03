@@ -12,5 +12,7 @@ public interface EPRPlasticWasteMitigationService {
     
     EPRPlasticWasteMitigation updateEPRPlasticWasteMitigation(UUID id, EPRPlasticWasteMitigationDto dto);
     
+    void deleteEPRPlasticWasteMitigation(UUID id);
+    
     List<EPRPlasticWasteMitigation> getAllEPRPlasticWasteMitigation(Integer year);
 }

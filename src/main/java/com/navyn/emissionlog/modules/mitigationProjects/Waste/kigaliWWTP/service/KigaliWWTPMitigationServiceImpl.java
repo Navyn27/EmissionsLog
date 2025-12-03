@@ -101,4 +101,12 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
                 .and(hasProjectPhase(projectPhase));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
+    
+    @Override
+    public void deleteKigaliWWTPMitigation(UUID id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Kigali WWTP Mitigation record not found with id: " + id);
+        }
+        repository.deleteById(id);
+    }
 }

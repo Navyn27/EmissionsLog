@@ -140,4 +140,12 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
         Specification<EPRPlasticWasteMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
+    
+    @Override
+    public void deleteEPRPlasticWasteMitigation(UUID id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("EPR Plastic Waste Mitigation record not found with id: " + id);
+        }
+        repository.deleteById(id);
+    }
 }

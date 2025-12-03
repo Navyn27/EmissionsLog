@@ -58,4 +58,15 @@ public class StreetTreesMitigationController {
             mitigations
         ));
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete street trees mitigation record")
+    public ResponseEntity<ApiResponse> deleteStreetTreesMitigation(@PathVariable UUID id) {
+        service.deleteStreetTreesMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(
+            true,
+            "Street trees mitigation deleted successfully",
+            null
+        ));
+    }
 }

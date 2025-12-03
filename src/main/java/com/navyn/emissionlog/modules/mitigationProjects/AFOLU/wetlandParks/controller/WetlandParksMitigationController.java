@@ -60,4 +60,15 @@ public class WetlandParksMitigationController {
             mitigations
         ));
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete wetland parks mitigation record")
+    public ResponseEntity<ApiResponse> deleteWetlandParksMitigation(@PathVariable UUID id) {
+        service.deleteWetlandParksMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(
+            true,
+            "Wetland parks mitigation deleted successfully",
+            null
+        ));
+    }
 }

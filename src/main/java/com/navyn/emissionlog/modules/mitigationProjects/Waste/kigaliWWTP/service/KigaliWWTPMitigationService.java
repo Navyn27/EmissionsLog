@@ -13,5 +13,7 @@ public interface KigaliWWTPMitigationService {
     
     KigaliWWTPMitigation updateKigaliWWTPMitigation(UUID id, KigaliWWTPMitigationDto dto);
     
+    void deleteKigaliWWTPMitigation(UUID id);
+    
     List<KigaliWWTPMitigation> getAllKigaliWWTPMitigation(Integer year, WWTPProjectPhase projectPhase);
 }

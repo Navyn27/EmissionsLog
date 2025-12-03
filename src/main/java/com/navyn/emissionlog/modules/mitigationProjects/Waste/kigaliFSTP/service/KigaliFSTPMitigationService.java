@@ -12,5 +12,7 @@ public interface KigaliFSTPMitigationService {
     
     KigaliFSTPMitigation updateKigaliFSTPMitigation(UUID id, KigaliFSTPMitigationDto dto);
     
+    void deleteKigaliFSTPMitigation(UUID id);
+    
     List<KigaliFSTPMitigation> getAllKigaliFSTPMitigation(Integer year);
 }

@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mitigation/adding-straw")
@@ -31,6 +32,18 @@ public class AddingStrawMitigationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Adding straw mitigation record created successfully", mitigation));
     }
+
+    @Operation(summary = "Update adding straw mitigation record",
+               description = "Updates an existing Adding Straw mitigation record")
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateAddingStrawMitigation(
+            @PathVariable UUID id,
+            @Valid @RequestBody AddingStrawMitigationDto dto) {
+        AddingStrawMitigation mitigation = service.updateAddingStrawMitigation(id, dto);
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Adding straw mitigation record updated successfully", mitigation)
+        );
+    }
     
     @Operation(summary = "Get adding straw mitigation records", 
                description = "Retrieves all Adding Straw mitigation records with optional year filter")
@@ -39,5 +52,15 @@ public class AddingStrawMitigationController {
             @RequestParam(required = false) Integer year) {
         List<AddingStrawMitigation> mitigations = service.getAllAddingStrawMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Adding straw mitigation records fetched successfully", mitigations));
+    }
+
+    @Operation(summary = "Delete adding straw mitigation record",
+               description = "Deletes an Adding Straw mitigation record by id")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> deleteAddingStrawMitigation(@PathVariable UUID id) {
+        service.deleteAddingStrawMitigation(id);
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Adding straw mitigation record deleted successfully", null)
+        );
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -41,6 +42,35 @@ public class AddingStrawMitigationServiceImpl implements AddingStrawMitigationSe
         mitigation.setMitigatedCh4EmissionsKilotonnes(mitigatedCh4Kilotonnes);
         
         return repository.save(mitigation);
+    }
+
+    @Override
+    public AddingStrawMitigation updateAddingStrawMitigation(UUID id, AddingStrawMitigationDto dto) {
+        AddingStrawMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Adding Straw Mitigation record not found with id: " + id));
+
+        mitigation.setYear(dto.getYear());
+        mitigation.setNumberOfCows(dto.getNumberOfCows());
+
+        Double ch4EmissionsStraw = AddingStrawConstants.CH4_EMISSIONS_PER_COW_ADDING_STRAW.getValue()
+            * dto.getNumberOfCows();
+        mitigation.setCh4EmissionsAddingStraw(ch4EmissionsStraw);
+
+        Double ch4ReductionStraw = ch4EmissionsStraw
+            * AddingStrawConstants.CH4_REDUCTION_RATE_STRAW.getValue();
+        mitigation.setCh4ReductionAddingStraw(ch4ReductionStraw);
+
+        Double mitigatedCh4Kilotonnes = ch4ReductionStraw / 1000.0;
+        mitigation.setMitigatedCh4EmissionsKilotonnes(mitigatedCh4Kilotonnes);
+
+        return repository.save(mitigation);
+    }
+
+    @Override
+    public void deleteAddingStrawMitigation(UUID id) {
+        AddingStrawMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Adding Straw Mitigation record not found with id: " + id));
+        repository.delete(mitigation);
     }
     
     @Override

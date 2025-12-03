@@ -12,5 +12,7 @@ public interface WasteToEnergyMitigationService {
     
     WasteToEnergyMitigation updateWasteToEnergyMitigation(UUID id, WasteToEnergyMitigationDto dto);
     
+    void deleteWasteToEnergyMitigation(UUID id);
+    
     List<WasteToEnergyMitigation> getAllWasteToEnergyMitigation(Integer year);
 }

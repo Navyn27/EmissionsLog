@@ -94,6 +94,24 @@ public class WetlandParksMitigationServiceImpl implements WetlandParksMitigation
         
         return updatedRecord;
     }
+
+    @Override
+    public void deleteWetlandParksMitigation(UUID id) {
+        WetlandParksMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Wetland Parks Mitigation record not found with id: " + id));
+
+        Integer year = mitigation.getYear();
+        WetlandTreeCategory category = mitigation.getTreeCategory();
+        repository.delete(mitigation);
+
+        // Recalculate all subsequent years for this tree category because cumulative fields depend on previous records
+        List<WetlandParksMitigation> subsequentRecords =
+            repository.findByYearGreaterThanAndTreeCategoryOrderByYearAsc(year, category);
+        for (WetlandParksMitigation subsequent : subsequentRecords) {
+            recalculateExistingRecord(subsequent);
+            repository.save(subsequent);
+        }
+    }
     
     /**
      * Recalculates an existing record based on its current year and stored input values

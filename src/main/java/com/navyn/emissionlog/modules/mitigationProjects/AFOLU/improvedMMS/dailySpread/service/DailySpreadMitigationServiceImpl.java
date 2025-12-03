@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -41,6 +42,35 @@ public class DailySpreadMitigationServiceImpl implements DailySpreadMitigationSe
         mitigation.setMitigatedCh4EmissionsKilotonnes(mitigatedCh4Kilotonnes);
         
         return repository.save(mitigation);
+    }
+
+    @Override
+    public DailySpreadMitigation updateDailySpreadMitigation(UUID id, DailySpreadMitigationDto dto) {
+        DailySpreadMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Daily Spread Mitigation record not found with id: " + id));
+
+        mitigation.setYear(dto.getYear());
+        mitigation.setNumberOfCows(dto.getNumberOfCows());
+
+        Double ch4EmissionsDailySpread = DailySpreadConstants.CH4_EMISSIONS_PER_COW_DAILY_SPREAD.getValue()
+            * dto.getNumberOfCows();
+        mitigation.setCh4EmissionsDailySpread(ch4EmissionsDailySpread);
+
+        Double ch4ReductionDailySpread = ch4EmissionsDailySpread
+            * DailySpreadConstants.CH4_REDUCTION_RATE_DAILY_SPREAD.getValue();
+        mitigation.setCh4ReductionDailySpread(ch4ReductionDailySpread);
+
+        Double mitigatedCh4Kilotonnes = ch4ReductionDailySpread / 1000.0;
+        mitigation.setMitigatedCh4EmissionsKilotonnes(mitigatedCh4Kilotonnes);
+
+        return repository.save(mitigation);
+    }
+
+    @Override
+    public void deleteDailySpreadMitigation(UUID id) {
+        DailySpreadMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Daily Spread Mitigation record not found with id: " + id));
+        repository.delete(mitigation);
     }
     
     @Override

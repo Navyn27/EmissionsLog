@@ -12,5 +12,7 @@ public interface LandfillGasUtilizationMitigationService {
     
     LandfillGasUtilizationMitigation updateLandfillGasUtilizationMitigation(UUID id, LandfillGasUtilizationMitigationDto dto);
     
+    void deleteLandfillGasUtilizationMitigation(UUID id);
+    
     List<LandfillGasUtilizationMitigation> getAllLandfillGasUtilizationMitigation(Integer year);
 }

@@ -93,6 +93,24 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
         
         return updatedRecord;
     }
+
+    @Override
+    public void deleteProtectiveForestMitigation(UUID id) {
+        ProtectiveForestMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Protective Forest Mitigation record not found with id: " + id));
+
+        Integer year = mitigation.getYear();
+        ProtectiveForestCategory category = mitigation.getCategory();
+        repository.delete(mitigation);
+
+        // Recalculate all subsequent years for this category because cumulative fields depend on previous records
+        List<ProtectiveForestMitigation> subsequentRecords =
+            repository.findByYearGreaterThanAndCategoryOrderByYearAsc(year, category);
+        for (ProtectiveForestMitigation subsequent : subsequentRecords) {
+            recalculateExistingRecord(subsequent);
+            repository.save(subsequent);
+        }
+    }
     
     /**
      * Recalculates an existing record based on its current year and stored input values
