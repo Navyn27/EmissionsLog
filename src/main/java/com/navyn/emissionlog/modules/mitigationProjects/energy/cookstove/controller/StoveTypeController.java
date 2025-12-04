@@ -1,6 +1,6 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy.cookstove.controller;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.cookstove.models.StoveType;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.cookstove.service.StoveTypeService;
+package com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.controller;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveType;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.service.StoveTypeService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

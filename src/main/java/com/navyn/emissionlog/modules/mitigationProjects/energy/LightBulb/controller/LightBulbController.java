@@ -1,9 +1,9 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.controller;
+package com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.controller;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.dto.CreateLightBulbDTO;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.dto.UpdateLightBulbDTO;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.model.LightBulb;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.service.ILightBulbService;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.CreateLightBulbDTO;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.UpdateLightBulbDTO;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.model.LightBulb;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.service.ILightBulbService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

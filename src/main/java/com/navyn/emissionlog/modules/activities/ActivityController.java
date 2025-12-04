@@ -7,6 +7,8 @@ import com.navyn.emissionlog.Enums.Transport.TransportType;
 import com.navyn.emissionlog.modules.activities.dtos.CreateTransportActivityByFuelDto;
 import com.navyn.emissionlog.modules.activities.dtos.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.modules.activities.dtos.CreateStationaryActivityDto;
+import com.navyn.emissionlog.modules.activities.dtos.UpdateTransportActivityByFuelDto;
+import com.navyn.emissionlog.modules.activities.dtos.UpdateTransportActivityByVehicleDataDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.validation.Valid;
+import jakarta.persistence.EntityNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -75,6 +78,51 @@ public class ActivityController {
             );
         }
         catch(IllegalArgumentException e){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Update a transport activity by fuel", description = "Updates a transport activity that was created using fuel data.")
+    @PutMapping("/transport/fuel/update/{id}")
+    public ResponseEntity<ApiResponse> updateTransportActivityByFuel(@PathVariable("id") UUID id, @Valid @RequestBody UpdateTransportActivityByFuelDto activityDto) {
+        try {
+            Activity updatedActivity = activityService.updateTransportActivityByFuel(id, activityDto);
+            return ResponseEntity.ok(
+                    new ApiResponse(true, "Transport activity updated successfully", updatedActivity)
+            );
+        } catch (EntityNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Update a transport activity by vehicle data", description = "Updates a transport activity that was created using vehicle data.")
+    @PutMapping("/transport/vehicleData/update/{id}")
+    public ResponseEntity<ApiResponse> updateTransportActivityByVehicleData(@PathVariable("id") UUID id, @Valid @RequestBody UpdateTransportActivityByVehicleDataDto activityDto) {
+        try {
+            Activity updatedActivity = activityService.updateTransportActivityByVehicleData(id, activityDto);
+            return ResponseEntity.ok(
+                    new ApiResponse(true, "Transport activity updated successfully", updatedActivity)
+            );
+        } catch (EntityNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @Operation(summary = "Delete a transport activity", description = "Deletes a transport activity using its unique identifier.")
+    @DeleteMapping("/transport/delete/{id}")
+    public ResponseEntity<ApiResponse> deleteTransportActivity(@PathVariable("id") UUID id) {
+        try {
+            activityService.deleteTransportActivity(id);
+            return ResponseEntity.ok(
+                    new ApiResponse(true, "Transport activity deleted successfully", null)
+            );
+        } catch (EntityNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }

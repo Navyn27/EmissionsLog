@@ -1,6 +1,6 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.repository;
+package com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.repository;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.model.LightBulb;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.model.LightBulb;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

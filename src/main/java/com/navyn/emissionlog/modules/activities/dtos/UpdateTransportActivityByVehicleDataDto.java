@@ -1,0 +1,19 @@
+package com.navyn.emissionlog.modules.activities.dtos;
+
+import com.navyn.emissionlog.Enums.Metrics.DistanceUnits;
+import com.navyn.emissionlog.Enums.Metrics.MassUnits;
+import com.navyn.emissionlog.Enums.Transport.MobileActivityDataType;
+import lombok.Data;
+
+import java.util.UUID;
+
+@Data
+public class UpdateTransportActivityByVehicleDataDto extends TransportActivityDto{
+    private UUID vehicle;
+    private Double distanceTravelled = 0.0;
+    private DistanceUnits distanceUnit;
+    private MobileActivityDataType mobileActivityDataType;
+    public Double freightWeight;
+    public MassUnits freightWeightUnit;
+}
+

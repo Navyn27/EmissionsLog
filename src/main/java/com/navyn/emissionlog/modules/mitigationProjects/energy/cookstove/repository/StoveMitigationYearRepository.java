@@ -1,6 +1,6 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy.cookstove.repository;
+package com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.cookstove.models.StoveMitigationYear;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveMitigationYear;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

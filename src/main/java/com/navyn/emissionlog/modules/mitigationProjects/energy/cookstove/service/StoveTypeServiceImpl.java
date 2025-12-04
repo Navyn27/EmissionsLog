@@ -1,8 +1,8 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy.cookstove.service;
+package com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.service;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.cookstove.models.StoveType;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.cookstove.repository.StoveTypeRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.cookstove.service.StoveTypeService;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveType;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveTypeRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.service.StoveTypeService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

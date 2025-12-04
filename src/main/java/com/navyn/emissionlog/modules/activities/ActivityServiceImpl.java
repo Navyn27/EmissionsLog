@@ -51,17 +51,20 @@ import com.navyn.emissionlog.modules.transportEmissions.serviceImpls.TransportEm
 import com.navyn.emissionlog.modules.transportEmissions.services.TransportFuelEmissionFactorsService;
 import com.navyn.emissionlog.modules.vehicles.Vehicle;
 import com.navyn.emissionlog.utils.Specifications.ActivitySpecifications;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import com.navyn.emissionlog.modules.activities.repositories.ActivityRepository;
 import com.navyn.emissionlog.modules.activities.repositories.ActivityDataRepository;
+import com.navyn.emissionlog.modules.regions.Region;
 import com.navyn.emissionlog.modules.regions.RegionRepository;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
 import com.navyn.emissionlog.modules.wasteEmissions.WasteDataRepository;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelDataRepository;
 import com.navyn.emissionlog.modules.vehicles.VehicleDataRepository;
+
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.YearMonth;
@@ -259,6 +262,208 @@ public class ActivityServiceImpl implements ActivityService {
         }
 
         return activityRepository.save(activity);
+    }
+
+    @Override
+    public Activity updateTransportActivityByFuel(UUID id, UpdateTransportActivityByFuelDto activityDto) {
+        // Find and validate the activity exists
+        Activity activity = activityRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Activity with ID " + id + " not found"));
+
+        // Validate it's a transport activity
+        if (activity.getActivityData() == null || activity.getActivityData().getActivityType() != ActivityTypes.TRANSPORT) {
+            throw new IllegalArgumentException("Activity with ID " + id + " is not a transport activity.");
+        }
+
+        // Validate it's a fuel-based transport activity (no vehicle data)
+        TransportActivityData transportActivityData = (TransportActivityData) activity.getActivityData();
+        if (transportActivityData.getVehicleData() != null) {
+            throw new IllegalArgumentException("Activity with ID " + id + " is a vehicle data transport activity, not a fuel-based one.");
+        }
+
+        // Validate fuel exists
+        Optional<Fuel> fuel = fuelRepository.findById(activityDto.getFuel());
+        if (fuel.isEmpty()) {
+            throw new EntityNotFoundException("Fuel with ID " + activityDto.getFuel() + " not found.");
+        }
+
+        // Validate region exists
+        Optional<Region> region = regionRepository.findById(activityDto.getRegion());
+        if (region.isEmpty()) {
+            throw new EntityNotFoundException("Region with ID " + activityDto.getRegion() + " not found.");
+        }
+
+        // Get existing FuelData
+        FuelData fuelData = transportActivityData.getFuelData();
+        if (fuelData == null) {
+            throw new IllegalStateException("FuelData is missing for activity with ID " + id);
+        }
+
+        // Update FuelData
+        fuelData.setFuel(fuel.get());
+        fuelData.setFuelState(activityDto.getFuelState());
+        fuelData.setMetric(activityDto.getMetric());
+        fuelDataRepository.save(fuelData);
+
+        // Update TransportActivityData
+        transportActivityData.setModeOfTransport(activityDto.getTransportMode());
+        transportActivityData.setTransportType(activityDto.getTransportType());
+        activityDataRepository.save(transportActivityData);
+
+        // Update Activity
+        activity.setSector(activityDto.getSector());
+        activity.setScope(activityDto.getScope());
+        activity.setActivityYear(activityDto.getActivityYear());
+        activity.setRegion(region.get());
+
+        // Find emission factors
+        Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findBestMatchWithWildcardSupport(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
+
+        if (transportEmissionFactorsList.isEmpty()) {
+            throw new IllegalArgumentException("Transport Emission Factors not found for specified fuel, region, transport type, and vehicle type combination");
+        }
+
+        // Recalculate emissions
+        transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData, activityDto.getFuelUnit(), activityDto.getFuelAmount());
+
+        return activityRepository.save(activity);
+    }
+
+    @Override
+    public Activity updateTransportActivityByVehicleData(UUID id, UpdateTransportActivityByVehicleDataDto activityDto) {
+        // Find and validate the activity exists
+        Activity activity = activityRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Activity with ID " + id + " not found"));
+
+        // Validate it's a transport activity
+        if (activity.getActivityData() == null || activity.getActivityData().getActivityType() != ActivityTypes.TRANSPORT) {
+            throw new IllegalArgumentException("Activity with ID " + id + " is not a transport activity.");
+        }
+
+        // Validate it's a vehicle data transport activity
+        TransportActivityData transportActivityData = (TransportActivityData) activity.getActivityData();
+        if (transportActivityData.getVehicleData() == null) {
+            throw new IllegalArgumentException("Activity with ID " + id + " is a fuel-based transport activity, not a vehicle data one.");
+        }
+
+        // Validate fuel exists
+        Optional<Fuel> fuel = fuelRepository.findById(activityDto.getFuel());
+        if (fuel.isEmpty()) {
+            throw new EntityNotFoundException("Fuel with ID " + activityDto.getFuel() + " not found.");
+        }
+
+        // Validate vehicle exists
+        Optional<Vehicle> vehicle = vehicleRepository.findById(activityDto.getVehicle());
+        if (vehicle.isEmpty()) {
+            throw new EntityNotFoundException("Vehicle with ID " + activityDto.getVehicle() + " not found.");
+        }
+
+        // Validate region exists
+        Optional<Region> region = regionRepository.findById(activityDto.getRegion());
+        if (region.isEmpty()) {
+            throw new EntityNotFoundException("Region with ID " + activityDto.getRegion() + " not found.");
+        }
+
+        // Get existing FuelData and VehicleData
+        FuelData fuelData = transportActivityData.getFuelData();
+        VehicleData vehicleData = transportActivityData.getVehicleData();
+        if (fuelData == null) {
+            throw new IllegalStateException("FuelData is missing for activity with ID " + id);
+        }
+        if (vehicleData == null) {
+            throw new IllegalStateException("VehicleData is missing for activity with ID " + id);
+        }
+
+        // Update FuelData
+        fuelData.setFuel(fuel.get());
+        fuelData.setFuelState(activityDto.getFuelState());
+        fuelData.setMetric(activityDto.getMetric());
+        fuelDataRepository.save(fuelData);
+
+        // Update VehicleData
+        vehicleData.setVehicle(vehicle.get());
+        if (activityDto.getDistanceUnit() != null && activityDto.getDistanceTravelled() != null) {
+            vehicleData.setDistanceTravelled_m(activityDto.getDistanceUnit().toMeters(activityDto.getDistanceTravelled()));
+        }
+        if (activityDto.getPassengers() != null) {
+            vehicleData.setPassengers(activityDto.getPassengers());
+        }
+        if (activityDto.getFreightWeightUnit() != null && activityDto.getFreightWeight() != null) {
+            vehicleData.setFreightWeight_Kg(activityDto.getFreightWeightUnit().toKilograms(activityDto.getFreightWeight()));
+        }
+        vehicleDataRepository.save(vehicleData);
+
+        // Update TransportActivityData
+        transportActivityData.setModeOfTransport(activityDto.getTransportMode());
+        transportActivityData.setTransportType(activityDto.getTransportType());
+        activityDataRepository.save(transportActivityData);
+
+        // Update Activity
+        activity.setSector(activityDto.getSector());
+        activity.setScope(activityDto.getScope());
+        activity.setActivityYear(activityDto.getActivityYear());
+        activity.setRegion(region.get());
+
+        // Recalculate emissions based on mobile activity data type
+        if (activityDto.getMobileActivityDataType() == MobileActivityDataType.VEHICLE_DISTANCE) {
+            transportEmissionCalculationService.calculateEmissionsByVehicleData(activity, vehicleData, fuel.get(), activityDto.getRegionGroup(), activityDto.getMobileActivityDataType());
+        } else {
+            // Use flexible wildcard-aware matching to support ANY values
+            Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findBestMatchWithWildcardSupport(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
+
+            if (transportEmissionFactorsList.isEmpty()) {
+                throw new IllegalArgumentException("Transport Emission Factors not found for specified fuel, region, transport type, and vehicle type combination");
+            }
+            transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData, activityDto.getFuelUnit(), activityDto.getFuelAmount());
+            transportEmissionCalculationService.calculateEmissionsByVehicleData(activity, vehicleData, fuel.get(), activityDto.getRegionGroup(), activityDto.getMobileActivityDataType());
+        }
+
+        return activityRepository.save(activity);
+    }
+
+    @Override
+    public void deleteTransportActivity(UUID id) {
+        // Find and validate the activity exists
+        Activity activity = activityRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Activity with ID " + id + " not found"));
+
+        // Validate it's a transport activity
+        if (activity.getActivityData() == null || activity.getActivityData().getActivityType() != ActivityTypes.TRANSPORT) {
+            throw new IllegalArgumentException("Activity with ID " + id + " is not a transport activity.");
+        }
+
+        // Get related entities before detaching
+        TransportActivityData transportActivityData = (TransportActivityData) activity.getActivityData();
+        FuelData fuelData = transportActivityData.getFuelData();
+        VehicleData vehicleData = transportActivityData.getVehicleData();
+
+        // Detach relationships by setting them to null
+        // First, detach FuelData from TransportActivityData
+        if (fuelData != null) {
+            transportActivityData.setFuelData(null);
+            activityDataRepository.save(transportActivityData);
+        }
+
+        // Detach VehicleData from TransportActivityData (if exists)
+        if (vehicleData != null) {
+            transportActivityData.setVehicleData(null);
+            activityDataRepository.save(transportActivityData);
+        }
+
+        // Detach TransportActivityData from Activity
+        activity.setActivityData(null);
+        activityRepository.save(activity);
+
+        // Now safely delete entities in correct order
+        // Delete VehicleData first (if exists, now detached from TransportActivityData)
+        if (vehicleData != null) {
+            vehicleDataRepository.delete(vehicleData);
+        }
+        // Delete FuelData (now detached from TransportActivityData)
+        if (fuelData != null) {
+            fuelDataRepository.delete(fuelData);
+        }
+        // Delete TransportActivityData (now detached from Activity)
+        activityDataRepository.delete(transportActivityData);
+        // Finally, delete the Activity
+        activityRepository.delete(activity);
     }
 
     @Override
