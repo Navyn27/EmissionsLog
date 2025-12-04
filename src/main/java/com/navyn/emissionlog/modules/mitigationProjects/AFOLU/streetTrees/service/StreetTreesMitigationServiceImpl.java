@@ -92,6 +92,23 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
         
         return updatedRecord;
     }
+
+    @Override
+    public void deleteStreetTreesMitigation(UUID id) {
+        StreetTreesMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Street Trees Mitigation record not found with id: " + id));
+
+        Integer year = mitigation.getYear();
+        repository.delete(mitigation);
+
+        // Recalculate all subsequent years as cumulative fields depend on previous records
+        List<StreetTreesMitigation> subsequentRecords =
+            repository.findByYearGreaterThanOrderByYearAsc(year);
+        for (StreetTreesMitigation subsequent : subsequentRecords) {
+            recalculateExistingRecord(subsequent);
+            repository.save(subsequent);
+        }
+    }
     
     /**
      * Recalculates an existing record based on its current year and stored input values

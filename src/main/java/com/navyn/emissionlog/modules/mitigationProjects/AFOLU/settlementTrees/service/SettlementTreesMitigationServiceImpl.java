@@ -91,6 +91,23 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
         
         return updatedRecord;
     }
+
+    @Override
+    public void deleteSettlementTreesMitigation(UUID id) {
+        SettlementTreesMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Settlement Trees Mitigation record not found with id: " + id));
+
+        Integer year = mitigation.getYear();
+        repository.delete(mitigation);
+
+        // Recalculate all subsequent years as cumulative fields depend on previous records
+        List<SettlementTreesMitigation> subsequentRecords =
+            repository.findByYearGreaterThanOrderByYearAsc(year);
+        for (SettlementTreesMitigation subsequent : subsequentRecords) {
+            recalculateExistingRecord(subsequent);
+            repository.save(subsequent);
+        }
+    }
     
     /**
      * Recalculates an existing record based on its current year and stored input values

@@ -51,4 +51,12 @@ public class WasteToEnergyMitigationController {
         List<WasteToEnergyMitigation> mitigations = service.getAllWasteToEnergyMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Waste-to-Energy mitigation records fetched successfully", mitigations));
     }
+    
+    @Operation(summary = "Delete Waste-to-Energy mitigation record",
+               description = "Deletes an existing Waste-to-Energy mitigation record by its ID")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> deleteWasteToEnergyMitigation(@PathVariable UUID id) {
+        service.deleteWasteToEnergyMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Waste-to-Energy mitigation record deleted successfully", null));
+    }
 }

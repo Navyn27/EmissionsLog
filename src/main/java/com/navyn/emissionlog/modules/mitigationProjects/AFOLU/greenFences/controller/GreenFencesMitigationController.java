@@ -58,4 +58,15 @@ public class GreenFencesMitigationController {
             mitigations
         ));
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete green fences mitigation record")
+    public ResponseEntity<ApiResponse> deleteGreenFencesMitigation(@PathVariable UUID id) {
+        service.deleteGreenFencesMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(
+            true,
+            "Green fences mitigation deleted successfully",
+            null
+        ));
+    }
 }

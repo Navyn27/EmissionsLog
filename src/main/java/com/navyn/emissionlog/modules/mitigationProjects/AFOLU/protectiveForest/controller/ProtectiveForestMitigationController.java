@@ -61,4 +61,15 @@ public class ProtectiveForestMitigationController {
             mitigations
         ));
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete protective forest mitigation record")
+    public ResponseEntity<ApiResponse> deleteProtectiveForestMitigation(@PathVariable UUID id) {
+        service.deleteProtectiveForestMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(
+            true,
+            "Protective forest mitigation deleted successfully",
+            null
+        ));
+    }
 }

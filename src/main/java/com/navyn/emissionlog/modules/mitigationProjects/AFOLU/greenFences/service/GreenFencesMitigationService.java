@@ -12,6 +12,8 @@ public interface GreenFencesMitigationService {
     GreenFencesMitigation createGreenFencesMitigation(GreenFencesMitigationDto dto);
     
     GreenFencesMitigation updateGreenFencesMitigation(UUID id, GreenFencesMitigationDto dto);
+
+    void deleteGreenFencesMitigation(UUID id);
     
     List<GreenFencesMitigation> getAllGreenFencesMitigation(Integer year);
     

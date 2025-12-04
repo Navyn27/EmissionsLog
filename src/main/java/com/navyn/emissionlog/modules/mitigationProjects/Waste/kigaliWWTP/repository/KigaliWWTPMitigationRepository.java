@@ -3,6 +3,7 @@ package com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.reposi
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.models.KigaliWWTPMitigation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -13,4 +14,7 @@ public interface KigaliWWTPMitigationRepository extends JpaRepository<KigaliWWTP
         JpaSpecificationExecutor<KigaliWWTPMitigation> {
     
     Optional<KigaliWWTPMitigation> findByYear(Integer year);
+    
+    @Query("SELECT k FROM KigaliWWTPMitigation k ORDER BY k.projectPhase DESC LIMIT 1")
+    Optional<KigaliWWTPMitigation> findTopByOrderByProjectPhaseDesc();
 }

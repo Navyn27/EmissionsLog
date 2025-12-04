@@ -58,4 +58,15 @@ public class CropRotationMitigationController {
             mitigations
         ));
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete crop rotation mitigation record")
+    public ResponseEntity<ApiResponse> deleteCropRotationMitigation(@PathVariable UUID id) {
+        service.deleteCropRotationMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(
+            true,
+            "Crop rotation mitigation deleted successfully",
+            null
+        ));
+    }
 }

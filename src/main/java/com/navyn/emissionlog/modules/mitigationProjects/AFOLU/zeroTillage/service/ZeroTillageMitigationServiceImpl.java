@@ -97,6 +97,13 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
         
         return repository.save(mitigation);
     }
+
+    @Override
+    public void deleteZeroTillageMitigation(UUID id) {
+        ZeroTillageMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Zero Tillage Mitigation record not found with id: " + id));
+        repository.delete(mitigation);
+    }
     
     @Override
     public List<ZeroTillageMitigation> getAllZeroTillageMitigation(Integer year) {

@@ -79,6 +79,22 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
         
         return updatedRecord;
     }
+
+    @Override
+    public void deleteGreenFencesMitigation(UUID id) {
+        GreenFencesMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Green Fences Mitigation record not found with id: " + id));
+
+        Integer year = mitigation.getYear();
+        repository.delete(mitigation);
+
+        // Recalculate all subsequent years as cumulative fields depend on previous records
+        List<GreenFencesMitigation> subsequentRecords = repository.findByYearGreaterThanOrderByYearAsc(year);
+        for (GreenFencesMitigation subsequent : subsequentRecords) {
+            recalculateExistingRecord(subsequent);
+            repository.save(subsequent);
+        }
+    }
     
     /**
      * Recalculates an existing record based on its current year and stored input values

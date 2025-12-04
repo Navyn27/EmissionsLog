@@ -8,12 +8,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ZeroTillageMitigationService {
-    
+
     ZeroTillageMitigation createZeroTillageMitigation(ZeroTillageMitigationDto dto);
-    
+
     ZeroTillageMitigation updateZeroTillageMitigation(UUID id, ZeroTillageMitigationDto dto);
-    
+
+    void deleteZeroTillageMitigation(UUID id);
+
     List<ZeroTillageMitigation> getAllZeroTillageMitigation(Integer year);
-    
+
     Optional<ZeroTillageMitigation> getByYear(Integer year);
 }
