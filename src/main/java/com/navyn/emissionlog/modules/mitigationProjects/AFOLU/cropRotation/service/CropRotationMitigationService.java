@@ -12,6 +12,8 @@ public interface CropRotationMitigationService {
     CropRotationMitigation createCropRotationMitigation(CropRotationMitigationDto dto);
     
     CropRotationMitigation updateCropRotationMitigation(UUID id, CropRotationMitigationDto dto);
+
+    void deleteCropRotationMitigation(UUID id);
     
     List<CropRotationMitigation> getAllCropRotationMitigation(Integer year);
     

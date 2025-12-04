@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -41,6 +42,34 @@ public class ManureCoveringMitigationServiceImpl implements ManureCoveringMitiga
         mitigation.setMitigatedN2oEmissionsKilotonnes(mitigatedN2oKilotonnes);
         
         return repository.save(mitigation);
+    }
+
+    @Override
+    public ManureCoveringMitigation updateManureCoveringMitigation(UUID id, ManureCoveringMitigationDto dto) {
+        ManureCoveringMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Manure Covering Mitigation record not found with id: " + id));
+
+        mitigation.setYear(dto.getYear());
+        mitigation.setNumberOfCows(dto.getNumberOfCows());
+
+        Double n2oEmissions = ManureCoveringConstants.N2O_EMISSIONS_PER_COW.getValue()
+            * dto.getNumberOfCows();
+        mitigation.setN2oEmissions(n2oEmissions);
+
+        Double n2oReduction = n2oEmissions * ManureCoveringConstants.N2O_REDUCTION_RATE.getValue();
+        mitigation.setN2oReduction(n2oReduction);
+
+        Double mitigatedN2oKilotonnes = n2oReduction / 1000.0;
+        mitigation.setMitigatedN2oEmissionsKilotonnes(mitigatedN2oKilotonnes);
+
+        return repository.save(mitigation);
+    }
+
+    @Override
+    public void deleteManureCoveringMitigation(UUID id) {
+        ManureCoveringMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Manure Covering Mitigation record not found with id: " + id));
+        repository.delete(mitigation);
     }
     
     @Override

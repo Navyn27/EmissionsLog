@@ -4,10 +4,15 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailyS
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.models.DailySpreadMitigation;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface DailySpreadMitigationService {
-    
+
     DailySpreadMitigation createDailySpreadMitigation(DailySpreadMitigationDto dto);
-    
+
+    DailySpreadMitigation updateDailySpreadMitigation(UUID id, DailySpreadMitigationDto dto);
+
+    void deleteDailySpreadMitigation(UUID id);
+
     List<DailySpreadMitigation> getAllDailySpreadMitigation(Integer year);
 }

@@ -58,4 +58,15 @@ public class SettlementTreesMitigationController {
             mitigations
         ));
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete settlement trees mitigation record")
+    public ResponseEntity<ApiResponse> deleteSettlementTreesMitigation(@PathVariable UUID id) {
+        service.deleteSettlementTreesMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(
+            true,
+            "Settlement trees mitigation deleted successfully",
+            null
+        ));
+    }
 }

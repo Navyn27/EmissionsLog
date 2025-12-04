@@ -51,4 +51,12 @@ public class KigaliFSTPMitigationController {
         List<KigaliFSTPMitigation> mitigations = service.getAllKigaliFSTPMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Kigali FSTP mitigation records fetched successfully", mitigations));
     }
+    
+    @Operation(summary = "Delete Kigali FSTP mitigation record",
+               description = "Deletes an existing Kigali FSTP mitigation record by its ID")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> deleteKigaliFSTPMitigation(@PathVariable UUID id) {
+        service.deleteKigaliFSTPMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Kigali FSTP mitigation record deleted successfully", null));
+    }
 }

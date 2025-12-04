@@ -9,18 +9,20 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface ProtectiveForestMitigationService {
-    
+
     ProtectiveForestMitigation createProtectiveForestMitigation(ProtectiveForestMitigationDto dto);
-    
+
     ProtectiveForestMitigation updateProtectiveForestMitigation(UUID id, ProtectiveForestMitigationDto dto);
-    
+
+    void deleteProtectiveForestMitigation(UUID id);
+
     List<ProtectiveForestMitigation> getAllProtectiveForestMitigation(
-        Integer year, 
+        Integer year,
         ProtectiveForestCategory category
     );
-    
+
     Optional<ProtectiveForestMitigation> getByYearAndCategory(
-        Integer year, 
+        Integer year,
         ProtectiveForestCategory category
     );
 }

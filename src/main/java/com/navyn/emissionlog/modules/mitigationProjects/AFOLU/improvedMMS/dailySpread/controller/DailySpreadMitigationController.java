@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mitigation/daily-spread")
@@ -31,6 +32,18 @@ public class DailySpreadMitigationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Daily spread mitigation record created successfully", mitigation));
     }
+
+    @Operation(summary = "Update daily spread MMS mitigation record",
+               description = "Updates an existing Daily Spread MMS mitigation record for CH4 reduction")
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateDailySpreadMitigation(
+            @PathVariable UUID id,
+            @Valid @RequestBody DailySpreadMitigationDto dto) {
+        DailySpreadMitigation mitigation = service.updateDailySpreadMitigation(id, dto);
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Daily spread mitigation record updated successfully", mitigation)
+        );
+    }
     
     @Operation(summary = "Get daily spread MMS mitigation records", 
                description = "Retrieves all Daily Spread MMS mitigation records with optional year filter")
@@ -39,5 +52,15 @@ public class DailySpreadMitigationController {
             @RequestParam(required = false) Integer year) {
         List<DailySpreadMitigation> mitigations = service.getAllDailySpreadMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Daily spread mitigation records fetched successfully", mitigations));
+    }
+
+    @Operation(summary = "Delete daily spread MMS mitigation record",
+               description = "Deletes a Daily Spread MMS mitigation record by id")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> deleteDailySpreadMitigation(@PathVariable UUID id) {
+        service.deleteDailySpreadMitigation(id);
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Daily spread mitigation record deleted successfully", null)
+        );
     }
 }

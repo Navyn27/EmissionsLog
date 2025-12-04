@@ -58,4 +58,15 @@ public class ZeroTillageMitigationController {
             mitigations
         ));
     }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete zero tillage mitigation record")
+    public ResponseEntity<ApiResponse> deleteZeroTillageMitigation(@PathVariable UUID id) {
+        service.deleteZeroTillageMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(
+            true,
+            "Zero tillage mitigation deleted successfully",
+            null
+        ));
+    }
 }

@@ -8,12 +8,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface SettlementTreesMitigationService {
-    
+
     SettlementTreesMitigation createSettlementTreesMitigation(SettlementTreesMitigationDto dto);
-    
+
     SettlementTreesMitigation updateSettlementTreesMitigation(UUID id, SettlementTreesMitigationDto dto);
-    
+
+    void deleteSettlementTreesMitigation(UUID id);
+
     List<SettlementTreesMitigation> getAllSettlementTreesMitigation(Integer year);
-    
+
     Optional<SettlementTreesMitigation> getByYear(Integer year);
 }

@@ -51,4 +51,12 @@ public class LandfillGasUtilizationMitigationController {
         List<LandfillGasUtilizationMitigation> mitigations = service.getAllLandfillGasUtilizationMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Landfill Gas Utilization mitigation records fetched successfully", mitigations));
     }
+    
+    @Operation(summary = "Delete Landfill Gas Utilization mitigation record",
+               description = "Deletes an existing Landfill Gas Utilization mitigation record by its ID")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> deleteLandfillGasUtilizationMitigation(@PathVariable UUID id) {
+        service.deleteLandfillGasUtilizationMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Landfill Gas Utilization mitigation record deleted successfully", null));
+    }
 }

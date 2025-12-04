@@ -53,4 +53,12 @@ public class KigaliWWTPMitigationController {
         List<KigaliWWTPMitigation> mitigations = service.getAllKigaliWWTPMitigation(year, projectPhase);
         return ResponseEntity.ok(new ApiResponse(true, "Kigali WWTP mitigation records fetched successfully", mitigations));
     }
+    
+    @Operation(summary = "Delete Kigali WWTP mitigation record",
+               description = "Deletes an existing Kigali WWTP mitigation record by its ID")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> deleteKigaliWWTPMitigation(@PathVariable UUID id) {
+        service.deleteKigaliWWTPMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Kigali WWTP mitigation record deleted successfully", null));
+    }
 }

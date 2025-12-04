@@ -51,4 +51,12 @@ public class EPRPlasticWasteMitigationController {
         List<EPRPlasticWasteMitigation> mitigations = service.getAllEPRPlasticWasteMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "EPR Plastic Waste mitigation records fetched successfully", mitigations));
     }
+    
+    @Operation(summary = "Delete EPR Plastic Waste mitigation record",
+               description = "Deletes an existing EPR Plastic Waste mitigation record by its ID")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> deleteEPRPlasticWasteMitigation(@PathVariable UUID id) {
+        service.deleteEPRPlasticWasteMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(true, "EPR Plastic Waste mitigation record deleted successfully", null));
+    }
 }

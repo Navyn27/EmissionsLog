@@ -66,4 +66,12 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
         Specification<ISWMMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
+    
+    @Override
+    public void deleteISWMMitigation(UUID id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("ISWM Mitigation record not found with id: " + id);
+        }
+        repository.deleteById(id);
+    }
 }

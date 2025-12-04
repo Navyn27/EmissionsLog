@@ -51,4 +51,12 @@ public class ISWMMitigationController {
         List<ISWMMitigation> mitigations = service.getAllISWMMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "ISWM mitigation records fetched successfully", mitigations));
     }
+    
+    @Operation(summary = "Delete ISWM mitigation record",
+               description = "Deletes an existing ISWM mitigation record by its ID")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> deleteISWMMitigation(@PathVariable UUID id) {
+        service.deleteISWMMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(true, "ISWM mitigation record deleted successfully", null));
+    }
 }

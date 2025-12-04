@@ -94,4 +94,12 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
         Specification<KigaliFSTPMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
+    
+    @Override
+    public void deleteKigaliFSTPMitigation(UUID id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Kigali FSTP Mitigation record not found with id: " + id);
+        }
+        repository.deleteById(id);
+    }
 }

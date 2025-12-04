@@ -91,6 +91,13 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
         
         return repository.save(mitigation);
     }
+
+    @Override
+    public void deleteCropRotationMitigation(UUID id) {
+        CropRotationMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Crop Rotation Mitigation record not found with id: " + id));
+        repository.delete(mitigation);
+    }
     
     @Override
     public List<CropRotationMitigation> getAllCropRotationMitigation(Integer year) {

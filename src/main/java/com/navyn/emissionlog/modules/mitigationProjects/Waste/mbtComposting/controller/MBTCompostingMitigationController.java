@@ -51,4 +51,12 @@ public class MBTCompostingMitigationController {
         List<MBTCompostingMitigation> mitigations = service.getAllMBTCompostingMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "MBT/Aerobic Composting mitigation records fetched successfully", mitigations));
     }
+    
+    @Operation(summary = "Delete MBT/Aerobic Composting mitigation record",
+               description = "Deletes an existing MBT/Aerobic Composting mitigation record by its ID")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> deleteMBTCompostingMitigation(@PathVariable UUID id) {
+        service.deleteMBTCompostingMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(true, "MBT/Aerobic Composting mitigation record deleted successfully", null));
+    }
 }
