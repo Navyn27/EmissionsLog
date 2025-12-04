@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy.rooftop.model;
+package com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

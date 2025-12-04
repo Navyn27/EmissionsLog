@@ -1,10 +1,10 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.service;
+package com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.service;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.dto.AvoidedElectricityProductionDTO;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.models.AvoidedElectricityProduction;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.models.WaterHeatParameter;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.repository.AvoidedElectricityProductionRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.repository.WaterHeatParameterRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.dto.AvoidedElectricityProductionDTO;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models.AvoidedElectricityProduction;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models.WaterHeatParameter;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.repository.AvoidedElectricityProductionRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.repository.WaterHeatParameterRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

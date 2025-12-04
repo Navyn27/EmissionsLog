@@ -1,8 +1,8 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.service;
+package com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.service;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.dto.CreateLightBulbDTO;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.dto.UpdateLightBulbDTO;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.model.LightBulb;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.CreateLightBulbDTO;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.UpdateLightBulbDTO;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.model.LightBulb;
 
 import java.util.List;
 import java.util.UUID;

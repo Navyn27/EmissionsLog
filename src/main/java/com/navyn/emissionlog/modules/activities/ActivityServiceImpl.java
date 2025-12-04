@@ -44,6 +44,7 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailyS
 import com.navyn.emissionlog.modules.activities.dtos.*;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.fuel.FuelData;
+import com.navyn.emissionlog.modules.regions.Region;
 import com.navyn.emissionlog.modules.transportEmissions.models.TransportFuelEmissionFactors;
 import com.navyn.emissionlog.utils.DashboardData;
 import com.navyn.emissionlog.modules.stationaryEmissions.serviceImpls.StationaryEmissionCalculationServiceImpl;
@@ -51,6 +52,7 @@ import com.navyn.emissionlog.modules.transportEmissions.serviceImpls.TransportEm
 import com.navyn.emissionlog.modules.transportEmissions.services.TransportFuelEmissionFactorsService;
 import com.navyn.emissionlog.modules.vehicles.Vehicle;
 import com.navyn.emissionlog.utils.Specifications.ActivitySpecifications;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -62,6 +64,7 @@ import com.navyn.emissionlog.modules.fuel.repositories.FuelRepository;
 import com.navyn.emissionlog.modules.wasteEmissions.WasteDataRepository;
 import com.navyn.emissionlog.modules.fuel.repositories.FuelDataRepository;
 import com.navyn.emissionlog.modules.vehicles.VehicleDataRepository;
+
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.YearMonth;
@@ -92,14 +95,14 @@ public class ActivityServiceImpl implements ActivityService {
     private final FuelDataRepository fuelDataRepository;
     private final VehicleDataRepository vehicleDataRepository;
     private final AnimalManureAndCompostEmissionsRepository animalManureAndCompostEmissionsRepository;
-    
+
     // Land Use Emissions Repositories
     private final BiomassGainRepository biomassGainRepository;
     private final DisturbanceBiomassLossRepository disturbanceBiomassLossRepository;
     private final FirewoodRemovalBiomassLossRepository firewoodRemovalBiomassLossRepository;
     private final HarvestedBiomassLossRepository harvestedBiomassLossRepository;
     private final RewettedMineralWetlandsRepository rewettedMineralWetlandsRepository;
-    
+
     // Mitigation Projects Repositories
     private final WetlandParksMitigationRepository wetlandParksMitigationRepository;
     private final SettlementTreesMitigationRepository settlementTreesMitigationRepository;
@@ -115,14 +118,14 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public Activity createStationaryActivity(CreateStationaryActivityDto activity) {
         try {
-            Optional<Fuel> fuel = fuelRepository.findById(activity.getFuel());
+            Fuel fuel = fuelRepository.findById(activity.getFuel())
+                    .orElseThrow(() -> new EntityNotFoundException("Fuel with ID " + activity.getFuel() + " not found."));
 
-            if (fuel.isEmpty()) {
-                throw new IllegalArgumentException("Fuel is not recorded");
-            }
+            Region region = regionRepository.findById(activity.getRegion())
+                    .orElseThrow(() -> new EntityNotFoundException("Region with ID " + activity.getRegion() + " not found."));
 
             //Create FuelData
-            FuelData fuelData = createFuelData(activity, fuel.get());
+            FuelData fuelData = createFuelData(activity, fuel);
 
             //Create ActivityData
             ActivityData stationaryActivityData = new StationaryActivityData();
@@ -134,20 +137,86 @@ public class ActivityServiceImpl implements ActivityService {
             Activity activity1 = new Activity();
             activity1.setSector(activity.getSector());
             activity1.setScope(Scopes.SCOPE_1);
-            activity1.setRegion(regionRepository.findById(activity.getRegion()).get());
+            activity1.setRegion(region);
             activity1.setActivityData(stationaryActivityData);
             activity1.setActivityYear(activity.getActivityYear());
-            activity1.setActivityData(stationaryActivityData);
 
             //calculate emissions
-            stationaryEmissionCalculationService.calculateEmissions(fuel.get(), activity1, fuelData, activity.getFuelUnit(), activity.getFuelAmount());
+            stationaryEmissionCalculationService.calculateEmissions(fuel, activity1, fuelData, activity.getFuelUnit(), activity.getFuelAmount());
 
             return activityRepository.save(activity1);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException("Error creating stationary activity");
+            throw new RuntimeException("Error creating stationary activity: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public Activity updateStationaryActivity(UUID id, UpdateStationaryActivityDto activityDto) {
+        Activity activity = activityRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Activity with ID " + id + " not found"));
+
+        if (activity.getActivityData() == null || activity.getActivityData().getActivityType() != ActivityTypes.STATIONARY) {
+            throw new IllegalArgumentException("Activity with ID " + id + " is not a stationary activity.");
+        }
+
+        Fuel fuel = fuelRepository.findById(activityDto.getFuel())
+                .orElseThrow(() -> new EntityNotFoundException("Fuel with ID " + activityDto.getFuel() + " not found."));
+
+        Region region = regionRepository.findById(activityDto.getRegion())
+                .orElseThrow(() -> new EntityNotFoundException("Region with ID " + activityDto.getRegion() + " not found."));
+
+        FuelData fuelData = activity.getActivityData().getFuelData();
+        if (fuelData == null) {
+            throw new IllegalStateException("FuelData is missing for activity with ID " + id);
+        }
+
+        updateFuelData(fuelData, activityDto, fuel);
+
+        activity.setSector(activityDto.getSector());
+        activity.setActivityYear(activityDto.getActivityYear());
+        activity.setRegion(region);
+
+        stationaryEmissionCalculationService.calculateEmissions(fuel, activity, fuelData, activityDto.getFuelUnit(), activityDto.getFuelAmount());
+
+        return activityRepository.save(activity);
+    }
+
+    @Override
+    public void deleteStationaryActivity(UUID id) {
+        // Find and validate the activity exists
+        Activity activity = activityRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Activity with ID " + id + " not found"));
+
+        // Validate it's a stationary activity
+        if (activity.getActivityData() == null || activity.getActivityData().getActivityType() != ActivityTypes.STATIONARY) {
+            throw new IllegalArgumentException("Activity with ID " + id + " is not a stationary activity.");
+        }
+
+        // Get related entities before detaching
+        ActivityData activityData = activity.getActivityData();
+        FuelData fuelData = activityData.getFuelData();
+
+        // Detach relationships by setting them to null
+        // First, detach FuelData from ActivityData
+        if (fuelData != null) {
+            activityData.setFuelData(null);
+            activityDataRepository.save(activityData);
+        }
+
+        // Detach ActivityData from Activity
+        activity.setActivityData(null);
+        activityRepository.save(activity);
+
+        // Now safely delete entities in correct order
+        // Delete FuelData first (now detached from ActivityData)
+        if (fuelData != null) {
+            fuelDataRepository.delete(fuelData);
+        }
+        // Delete ActivityData (now detached from Activity)
+        activityDataRepository.delete(activityData);
+        // Finally, delete the Activity
+        activityRepository.delete(activity);
     }
 
     @Override
@@ -169,7 +238,7 @@ public class ActivityServiceImpl implements ActivityService {
     public Activity createTransportActivityByFuel(CreateTransportActivityByFuelDto activityDto) {
         // Validate fuel exists
         Optional<Fuel> fuel = fuelRepository.findById(activityDto.getFuel());
-        if(fuel.isEmpty()){
+        if (fuel.isEmpty()) {
             throw new IllegalArgumentException("Fuel is not recorded");
         }
 
@@ -195,13 +264,13 @@ public class ActivityServiceImpl implements ActivityService {
         //find the emissions factors with wildcard support for ANY values
         Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findBestMatchWithWildcardSupport(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
 
-        if(transportEmissionFactorsList.isEmpty()){
+        if (transportEmissionFactorsList.isEmpty()) {
             throw new IllegalArgumentException("Transport Emission Factors not found for specified fuel, region, transport type, and vehicle type combination");
         }
 
         // Calculate emissions
         transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData,
-             activityDto.getFuelUnit(), activityDto.getFuelAmount());
+                activityDto.getFuelUnit(), activityDto.getFuelAmount());
 
         return activityRepository.save(activity);
     }
@@ -210,17 +279,17 @@ public class ActivityServiceImpl implements ActivityService {
     public Activity createTransportActivityByVehicleData(CreateTransportActivityByVehicleDataDto activityDto) {
         // Validate fuel exists
         Optional<Fuel> fuel = fuelRepository.findById(activityDto.getFuel());
-        if(fuel.isEmpty()){
+        if (fuel.isEmpty()) {
             throw new IllegalArgumentException("Fuel is not recorded");
         }
 
         Optional<Vehicle> vehicle = vehicleRepository.findById(activityDto.getVehicle());
-        if(vehicle.isEmpty()){
+        if (vehicle.isEmpty()) {
             throw new IllegalArgumentException("Vehicle is not recorded");
         }
 
         // Create Vehicle Data
-        VehicleData vehicleData = createTransportVehicleData(activityDto,vehicle.get());
+        VehicleData vehicleData = createTransportVehicleData(activityDto, vehicle.get());
 
         //Create Fuel Data
         FuelData fuelData = createFuelData(activityDto, fuel.get());
@@ -243,14 +312,13 @@ public class ActivityServiceImpl implements ActivityService {
         activity.setActivityYear(activityDto.getActivityYear());
 
         // Calculate emissions
-        if(activityDto.getMobileActivityDataType() == MobileActivityDataType.VEHICLE_DISTANCE) {
+        if (activityDto.getMobileActivityDataType() == MobileActivityDataType.VEHICLE_DISTANCE) {
             transportEmissionCalculationService.calculateEmissionsByVehicleData(activity, vehicleData, fuel.get(), activityDto.getRegionGroup(), activityDto.getMobileActivityDataType());
-        }
-        else{
+        } else {
             // Use flexible wildcard-aware matching to support ANY values
             Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findBestMatchWithWildcardSupport(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
 
-            if(transportEmissionFactorsList.isEmpty()){
+            if (transportEmissionFactorsList.isEmpty()) {
                 throw new IllegalArgumentException("Transport Emission Factors not found for specified fuel, region, transport type, and vehicle type combination");
             }
             transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData,
@@ -304,14 +372,14 @@ public class ActivityServiceImpl implements ActivityService {
             List<RiceCultivationEmissions> riceCultivationEmissions = riceCultivationEmissionsRepository.findAll();
             List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions = syntheticFertilizerEmissionsRepository.findAll();
             List<UreaEmissions> ureaEmissions = ureaEmissionsRepository.findAll();
-            
+
             // Land Use Emissions
             List<BiomassGain> biomassGains = biomassGainRepository.findAll();
             List<DisturbanceBiomassLoss> disturbanceLosses = disturbanceBiomassLossRepository.findAll();
             List<FirewoodRemovalBiomassLoss> firewoodLosses = firewoodRemovalBiomassLossRepository.findAll();
             List<HarvestedBiomassLoss> harvestedLosses = harvestedBiomassLossRepository.findAll();
             List<RewettedMineralWetlands> rewettedWetlands = rewettedMineralWetlandsRepository.findAll();
-            
+
             // Mitigation Projects
             List<WetlandParksMitigation> wetlandParks = wetlandParksMitigationRepository.findAll();
             List<SettlementTreesMitigation> settlementTrees = settlementTreesMitigationRepository.findAll();
@@ -323,14 +391,13 @@ public class ActivityServiceImpl implements ActivityService {
             List<ManureCoveringMitigation> manureCovering = manureCoveringMitigationRepository.findAll();
             List<AddingStrawMitigation> addingStraw = addingStrawMitigationRepository.findAll();
             List<DailySpreadMitigation> dailySpread = dailySpreadMitigationRepository.findAll();
-            
+
             return calculateDashboardData(activities, wasteActivities,
                     aquacultureEmissions, entericFermentationEmissions, limingEmissions,
                     animalManureAndCompostEmissions, riceCultivationEmissions, syntheticFertilizerEmissions, ureaEmissions,
                     biomassGains, disturbanceLosses, firewoodLosses, harvestedLosses, rewettedWetlands,
                     wetlandParks, settlementTrees, streetTrees, greenFences, cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -348,14 +415,14 @@ public class ActivityServiceImpl implements ActivityService {
             List<RiceCultivationEmissions> riceCultivationEmissions = riceCultivationEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions = syntheticFertilizerEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<UreaEmissions> ureaEmissions = ureaEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
-            
+
             // Land Use Emissions - TODO: Add findByYearRange methods to repositories for optimization
             List<BiomassGain> biomassGains = biomassGainRepository.findAll();
             List<DisturbanceBiomassLoss> disturbanceLosses = disturbanceBiomassLossRepository.findAll();
             List<FirewoodRemovalBiomassLoss> firewoodLosses = firewoodRemovalBiomassLossRepository.findAll();
             List<HarvestedBiomassLoss> harvestedLosses = harvestedBiomassLossRepository.findAll();
             List<RewettedMineralWetlands> rewettedWetlands = rewettedMineralWetlandsRepository.findAll();
-            
+
             // Mitigation Projects - TODO: Add findByYearRange methods to repositories for optimization
             List<WetlandParksMitigation> wetlandParks = wetlandParksMitigationRepository.findAll();
             List<SettlementTreesMitigation> settlementTrees = settlementTreesMitigationRepository.findAll();
@@ -367,7 +434,7 @@ public class ActivityServiceImpl implements ActivityService {
             List<ManureCoveringMitigation> manureCovering = manureCoveringMitigationRepository.findAll();
             List<AddingStrawMitigation> addingStraw = addingStrawMitigationRepository.findAll();
             List<DailySpreadMitigation> dailySpread = dailySpreadMitigationRepository.findAll();
-            
+
             DashboardData dashboardData = calculateDashboardData(activities, wasteActivities,
                     aquacultureEmissions, entericFermentationEmissions, limingEmissions,
                     animalManureAndCompostEmissions, riceCultivationEmissions, syntheticFertilizerEmissions, ureaEmissions,
@@ -376,8 +443,7 @@ public class ActivityServiceImpl implements ActivityService {
             dashboardData.setStartingDate(startDate.toString());
             dashboardData.setEndingDate(endDate.toString());
             return dashboardData;
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -515,9 +581,9 @@ public class ActivityServiceImpl implements ActivityService {
                     groupedAddingStraw.getOrDefault(year, List.of()),
                     groupedDailySpread.getOrDefault(year, List.of())
             );
-            
+
             data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
-            data.setEndingDate(LocalDateTime.of(year, 12, 31 , 23, 59).toString());
+            data.setEndingDate(LocalDateTime.of(year, 12, 31, 23, 59).toString());
             data.setYear(Year.of(year));
             dashboardDataList.add(data);
         }
@@ -578,7 +644,7 @@ public class ActivityServiceImpl implements ActivityService {
                 .filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
         Map<Integer, List<UreaEmissions>> ureaByMonth = ureaEmissions.stream()
                 .filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        
+
         // Land use and mitigation only have year field, so we'll include them in month 1 of each year
         Map<Integer, List<BiomassGain>> biomassGainsByMonth = biomassGains.stream()
                 .filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
@@ -643,9 +709,9 @@ public class ActivityServiceImpl implements ActivityService {
                     month == 1 ? addingStrawByMonth.getOrDefault(1, List.of()) : List.of(),
                     month == 1 ? dailySpreadByMonth.getOrDefault(1, List.of()) : List.of()
             );
-            
+
             data.setStartingDate(LocalDateTime.of(year, month, 1, 0, 0).toString());
-            data.setEndingDate(LocalDateTime.of(year, month, ym.lengthOfMonth() , 23, 59).toString());
+            data.setEndingDate(LocalDateTime.of(year, month, ym.lengthOfMonth(), 23, 59).toString());
             data.setMonth(ym.getMonth());
             dashboardDataList.add(data);
         }
@@ -656,7 +722,7 @@ public class ActivityServiceImpl implements ActivityService {
 
     private DashboardData generateDashboardGraphTime_DataPoint(List<Activity> activities, List<WasteDataAbstract> wasteData) {
         DashboardData activityDashboardData = calculateDashboardActivityData(activities);
-        DashboardData wasteDashboardData  = calculateWasteDashboardData(wasteData);
+        DashboardData wasteDashboardData = calculateWasteDashboardData(wasteData);
 
         activityDashboardData.setTotalCH4Emissions(activityDashboardData.getTotalCH4Emissions() + wasteDashboardData.getTotalCH4Emissions());
         activityDashboardData.setTotalN2OEmissions(activityDashboardData.getTotalN2OEmissions() + wasteDashboardData.getTotalN2OEmissions());
@@ -667,14 +733,14 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     private DashboardData calculateDashboardData(
-            List<Activity> activities, 
-            List<WasteDataAbstract> wasteData, 
-            List<AquacultureEmissions> aquacultureEmissions, 
-            List<EntericFermentationEmissions> entericFermentationEmissions, 
-            List<LimingEmissions> limingEmissions, 
-            List<AnimalManureAndCompostEmissions> animalManureAndCompostEmissions, 
-            List<RiceCultivationEmissions> riceCultivationEmissions, 
-            List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions, 
+            List<Activity> activities,
+            List<WasteDataAbstract> wasteData,
+            List<AquacultureEmissions> aquacultureEmissions,
+            List<EntericFermentationEmissions> entericFermentationEmissions,
+            List<LimingEmissions> limingEmissions,
+            List<AnimalManureAndCompostEmissions> animalManureAndCompostEmissions,
+            List<RiceCultivationEmissions> riceCultivationEmissions,
+            List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions,
             List<UreaEmissions> ureaEmissions,
             List<BiomassGain> biomassGains,
             List<DisturbanceBiomassLoss> disturbanceLosses,
@@ -691,18 +757,18 @@ public class ActivityServiceImpl implements ActivityService {
             List<ManureCoveringMitigation> manureCovering,
             List<AddingStrawMitigation> addingStraw,
             List<DailySpreadMitigation> dailySpread) {
-        
+
         DashboardData dashboardData = new DashboardData();
-        
+
         // === ACTIVITIES ===
-        for(Activity activity : activities){
+        for (Activity activity : activities) {
             dashboardData.setTotalCH4Emissions(dashboardData.getTotalCH4Emissions() + activity.getCH4Emissions());
             dashboardData.setTotalN2OEmissions(dashboardData.getTotalN2OEmissions() + activity.getN2OEmissions());
             dashboardData.setTotalFossilCO2Emissions(dashboardData.getTotalFossilCO2Emissions() + activity.getFossilCO2Emissions());
             dashboardData.setTotalBioCO2Emissions(dashboardData.getTotalBioCO2Emissions() + activity.getBioCO2Emissions());
             dashboardData.setTotalCO2EqEmissions(dashboardData.getTotalCO2EqEmissions() + activity.getCO2EqEmissions());
         }
-        
+
         // === WASTE ===
         for (WasteDataAbstract waste : wasteData) {
             dashboardData.setTotalCH4Emissions(dashboardData.getTotalCH4Emissions() + waste.getCH4Emissions());
@@ -710,7 +776,7 @@ public class ActivityServiceImpl implements ActivityService {
             dashboardData.setTotalFossilCO2Emissions(dashboardData.getTotalFossilCO2Emissions() + waste.getFossilCO2Emissions());
             dashboardData.setTotalBioCO2Emissions(dashboardData.getTotalBioCO2Emissions() + waste.getBioCO2Emissions());
         }
-        
+
         // === AGRICULTURE EMISSIONS ===
         for (AquacultureEmissions aquacultureEmission : aquacultureEmissions) {
             dashboardData.setTotalN2OEmissions(dashboardData.getTotalN2OEmissions() + aquacultureEmission.getN2OEmissions());
@@ -735,15 +801,15 @@ public class ActivityServiceImpl implements ActivityService {
         for (UreaEmissions ureaEmission : ureaEmissions) {
             dashboardData.setTotalBioCO2Emissions(dashboardData.getTotalBioCO2Emissions() + ureaEmission.getCO2Emissions());
         }
-        
+
         // === LAND USE EMISSIONS ===
         Double landUseTotal = 0.0;
-        
+
         // BiomassGain (carbon removal - negative emissions)
         for (BiomassGain gain : biomassGains) {
             landUseTotal -= gain.getCO2EqOfBiomassCarbonGained(); // Subtract because it's removal
         }
-        
+
         // Biomass Losses (positive emissions)
         for (DisturbanceBiomassLoss loss : disturbanceLosses) {
             landUseTotal += loss.getCO2EqOfBiomassCarbonLoss();
@@ -754,18 +820,18 @@ public class ActivityServiceImpl implements ActivityService {
         for (HarvestedBiomassLoss loss : harvestedLosses) {
             landUseTotal += loss.getCO2EqOfBiomassCarbonLoss();
         }
-        
+
         // Rewetted Wetlands (positive emissions)
         for (RewettedMineralWetlands wetland : rewettedWetlands) {
             landUseTotal += wetland.getCO2EqEmissions();
             dashboardData.setTotalCH4Emissions(dashboardData.getTotalCH4Emissions() + wetland.getCH4Emissions());
         }
-        
+
         dashboardData.setTotalLandUseEmissions(landUseTotal);
-        
+
         // === MITIGATION PROJECTS (Carbon Sequestration) ===
         Double totalMitigation = 0.0;
-        
+
         for (WetlandParksMitigation mitigation : wetlandParks) {
             if (mitigation.getMitigatedEmissionsKtCO2e() != null) {
                 totalMitigation += mitigation.getMitigatedEmissionsKtCO2e();
@@ -816,57 +882,57 @@ public class ActivityServiceImpl implements ActivityService {
                 totalMitigation += mitigation.getMitigatedCh4EmissionsKilotonnes();
             }
         }
-        
+
         dashboardData.setTotalMitigationKtCO2e(totalMitigation);
-        
+
         // === CALCULATE TOTALS ===
         dashboardData.setTotalCO2EqEmissions(
-            dashboardData.getTotalFossilCO2Emissions() + 
-            dashboardData.getTotalBioCO2Emissions() + 
-            dashboardData.getTotalCH4Emissions() * GWP.CH4.getValue() + 
-            dashboardData.getTotalN2OEmissions() * GWP.N2O.getValue() +
-            dashboardData.getTotalLandUseEmissions()
+                dashboardData.getTotalFossilCO2Emissions() +
+                        dashboardData.getTotalBioCO2Emissions() +
+                        dashboardData.getTotalCH4Emissions() * GWP.CH4.getValue() +
+                        dashboardData.getTotalN2OEmissions() * GWP.N2O.getValue() +
+                        dashboardData.getTotalLandUseEmissions()
         );
-        
+
         // Calculate Net Emissions (Gross - Mitigation)
         // Convert totalCO2EqEmissions to Kt first (divide by 1000)
         Double grossEmissionsKt = dashboardData.getTotalCO2EqEmissions() / 1000.0;
         dashboardData.setNetEmissionsKtCO2e(grossEmissionsKt - totalMitigation);
-        
+
         return dashboardData;
     }
 
     private DashboardData calculateDashboardActivityData(List<Activity> activities) {
         DashboardData dashboardData = new DashboardData();
 
-        if(activities == null) {
+        if (activities == null) {
             return dashboardData;
         }
 
-        for(Activity activity : activities){
+        for (Activity activity : activities) {
             dashboardData.setTotalCH4Emissions(dashboardData.getTotalCH4Emissions() + activity.getCH4Emissions());
             dashboardData.setTotalN2OEmissions(dashboardData.getTotalN2OEmissions() + activity.getN2OEmissions());
             dashboardData.setTotalFossilCO2Emissions(dashboardData.getTotalFossilCO2Emissions() + activity.getFossilCO2Emissions());
             dashboardData.setTotalBioCO2Emissions(dashboardData.getTotalBioCO2Emissions() + activity.getBioCO2Emissions());
         }
-        dashboardData.setTotalCO2EqEmissions(dashboardData.getTotalFossilCO2Emissions() + dashboardData.getTotalBioCO2Emissions() + dashboardData.getTotalCH4Emissions()*GWP.CH4.getValue() + dashboardData.getTotalN2OEmissions()*GWP.N2O.getValue());
+        dashboardData.setTotalCO2EqEmissions(dashboardData.getTotalFossilCO2Emissions() + dashboardData.getTotalBioCO2Emissions() + dashboardData.getTotalCH4Emissions() * GWP.CH4.getValue() + dashboardData.getTotalN2OEmissions() * GWP.N2O.getValue());
         return dashboardData;
     }
 
-    private DashboardData calculateWasteDashboardData(List<WasteDataAbstract> wasteActivities){
+    private DashboardData calculateWasteDashboardData(List<WasteDataAbstract> wasteActivities) {
         DashboardData dashboardData = new DashboardData();
 
-        if(wasteActivities == null || wasteActivities.isEmpty()) {
+        if (wasteActivities == null || wasteActivities.isEmpty()) {
             return dashboardData;
         }
 
-        for(WasteDataAbstract waste : wasteActivities) {
+        for (WasteDataAbstract waste : wasteActivities) {
             dashboardData.setTotalCH4Emissions(dashboardData.getTotalCH4Emissions() + waste.getCH4Emissions());
             dashboardData.setTotalN2OEmissions(dashboardData.getTotalN2OEmissions() + waste.getN2OEmissions());
             dashboardData.setTotalFossilCO2Emissions(dashboardData.getTotalFossilCO2Emissions() + waste.getFossilCO2Emissions());
             dashboardData.setTotalBioCO2Emissions(dashboardData.getTotalBioCO2Emissions() + waste.getBioCO2Emissions());
         }
-        dashboardData.setTotalCO2EqEmissions(dashboardData.getTotalFossilCO2Emissions() + dashboardData.getTotalBioCO2Emissions() + dashboardData.getTotalCH4Emissions()*GWP.CH4.getValue() + dashboardData.getTotalN2OEmissions()*GWP.N2O.getValue());
+        dashboardData.setTotalCO2EqEmissions(dashboardData.getTotalFossilCO2Emissions() + dashboardData.getTotalBioCO2Emissions() + dashboardData.getTotalCH4Emissions() * GWP.CH4.getValue() + dashboardData.getTotalN2OEmissions() * GWP.N2O.getValue());
         return dashboardData;
     }
 
@@ -880,6 +946,13 @@ public class ActivityServiceImpl implements ActivityService {
         return fuelDataRepository.save(fuelData);
     }
 
+    private void updateFuelData(FuelData fuelData, UpdateStationaryActivityDto dto, Fuel fuel) {
+        fuelData.setFuel(fuel);
+        fuelData.setFuelState(dto.getFuelState());
+        fuelData.setMetric(dto.getMetric());
+        fuelDataRepository.save(fuelData);
+    }
+
     //Create VehicleData
     private VehicleData createTransportVehicleData(CreateTransportActivityByVehicleDataDto dto, Vehicle vehicle) {
         VehicleData vehicleData = new VehicleData();
@@ -889,44 +962,44 @@ public class ActivityServiceImpl implements ActivityService {
         vehicleData.setFreightWeight_Kg(dto.getFreightWeightUnit().toKilograms(dto.getFreightWeight()));
         return vehicleDataRepository.save(vehicleData);
     }
-    
+
     // ============= MINI DASHBOARDS =============
-    
+
     @Override
     public DashboardData getTransportDashboardSummary(Integer startingYear, Integer endingYear) {
         List<Activity> transportActivities = activityRepository.findByActivityData_ActivityTypeOrderByActivityYearDesc(ActivityTypes.TRANSPORT);
-        
+
         if (startingYear != null && endingYear != null) {
             transportActivities = transportActivities.stream()
                     .filter(a -> a.getYear() >= startingYear && a.getYear() <= endingYear)
                     .toList();
         }
-        
+
         return calculateDashboardActivityData(transportActivities);
     }
-    
+
     @Override
     public List<DashboardData> getTransportDashboardGraph(Integer startingYear, Integer endingYear) {
         List<Activity> transportActivities = activityRepository.findByActivityData_ActivityTypeOrderByActivityYearDesc(ActivityTypes.TRANSPORT);
-        
+
         // Default to last 5 years if not specified
         if (startingYear == null || endingYear == null) {
             int currentYear = LocalDateTime.now().getYear();
             startingYear = currentYear - 4;
             endingYear = currentYear;
         }
-        
+
         // Filter by year range
         final int finalStartYear = startingYear;
         final int finalEndYear = endingYear;
         transportActivities = transportActivities.stream()
                 .filter(a -> a.getYear() >= finalStartYear && a.getYear() <= finalEndYear)
                 .toList();
-        
+
         // Group by year
         Map<Integer, List<Activity>> groupedByYear = transportActivities.stream()
                 .collect(groupingBy(Activity::getYear));
-        
+
         // Create dashboard data for each year
         List<DashboardData> dashboardDataList = new ArrayList<>();
         for (int year = startingYear; year <= endingYear; year++) {
@@ -937,45 +1010,45 @@ public class ActivityServiceImpl implements ActivityService {
             data.setYear(Year.of(year));
             dashboardDataList.add(data);
         }
-        
+
         return dashboardDataList;
     }
-    
+
     @Override
     public DashboardData getStationaryDashboardSummary(Integer startingYear, Integer endingYear) {
         List<Activity> stationaryActivities = activityRepository.findByActivityData_ActivityTypeOrderByActivityYearDesc(ActivityTypes.STATIONARY);
-        
+
         if (startingYear != null && endingYear != null) {
             stationaryActivities = stationaryActivities.stream()
                     .filter(a -> a.getYear() >= startingYear && a.getYear() <= endingYear)
                     .toList();
         }
-        
+
         return calculateDashboardActivityData(stationaryActivities);
     }
-    
+
     @Override
     public List<DashboardData> getStationaryDashboardGraph(Integer startingYear, Integer endingYear) {
         List<Activity> stationaryActivities = activityRepository.findByActivityData_ActivityTypeOrderByActivityYearDesc(ActivityTypes.STATIONARY);
-        
+
         // Default to last 5 years if not specified
         if (startingYear == null || endingYear == null) {
             int currentYear = LocalDateTime.now().getYear();
             startingYear = currentYear - 4;
             endingYear = currentYear;
         }
-        
+
         // Filter by year range
         final int finalStartYear = startingYear;
         final int finalEndYear = endingYear;
         stationaryActivities = stationaryActivities.stream()
                 .filter(a -> a.getYear() >= finalStartYear && a.getYear() <= finalEndYear)
                 .toList();
-        
+
         // Group by year
         Map<Integer, List<Activity>> groupedByYear = stationaryActivities.stream()
                 .collect(groupingBy(Activity::getYear));
-        
+
         // Create dashboard data for each year
         List<DashboardData> dashboardDataList = new ArrayList<>();
         for (int year = startingYear; year <= endingYear; year++) {
@@ -986,7 +1059,7 @@ public class ActivityServiceImpl implements ActivityService {
             data.setYear(Year.of(year));
             dashboardDataList.add(data);
         }
-        
+
         return dashboardDataList;
     }
 }

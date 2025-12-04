@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.service;
+package com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.service;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;

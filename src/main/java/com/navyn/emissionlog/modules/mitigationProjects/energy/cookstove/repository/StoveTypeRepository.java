@@ -1,7 +1,7 @@
 
-package com.navyn.emissionlog.modules.mitigationProjects.Energy.cookstove.repository;
+package com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.cookstove.models.StoveType;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
