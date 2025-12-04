@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.service;
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.constants.KigaliFSTPConstants;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.constants.ProjectPhase;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.KigaliFSTPMitigationDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.models.KigaliFSTPMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.repository.KigaliFSTPMitigationRepository;
@@ -22,6 +23,9 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
     
     @Override
     public KigaliFSTPMitigation createKigaliFSTPMitigation(KigaliFSTPMitigationDto dto) {
+        // Validate phase precedence
+        validatePhasePrecedence(dto.getProjectPhase(), null);
+
         KigaliFSTPMitigation mitigation = new KigaliFSTPMitigation();
         
         // Convert phase capacity to standard unit (m³/day)
@@ -61,6 +65,9 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
         KigaliFSTPMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Kigali FSTP Mitigation record not found with id: " + id));
         
+        // Validate phase precedence (exclude current record from validation)
+        validatePhasePrecedence(dto.getProjectPhase(), id);
+
         // Convert phase capacity to standard unit (m³/day)
         double phaseCapacityInCubicMetersPerDay = dto.getPhaseCapacityUnit().toCubicMetersPerDay(dto.getPhaseCapacityPerDay());
         
@@ -94,12 +101,42 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
         Specification<KigaliFSTPMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
-    
+
     @Override
     public void deleteKigaliFSTPMitigation(UUID id) {
         if (!repository.existsById(id)) {
             throw new RuntimeException("Kigali FSTP Mitigation record not found with id: " + id);
         }
         repository.deleteById(id);
+    }
+
+    /**
+     * Validates that the new phase is not smaller than the maximum existing phase.
+     * Phases must progress in ascending order: NONE < PHASE_I < PHASE_II < PHASE_III
+     *
+     * @param newPhase The phase to validate
+     * @param excludeId ID to exclude from validation (for updates)
+     * @throws RuntimeException if phase precedence is violated
+     */
+    private void validatePhasePrecedence(ProjectPhase newPhase, UUID excludeId) {
+        // Get the maximum phase from existing records
+        repository.findTopByOrderByProjectPhaseDesc()
+            .ifPresent(maxRecord -> {
+                // Exclude the current record being updated
+                if (excludeId != null && maxRecord.getId().equals(excludeId)) {
+                    return;
+                }
+
+                ProjectPhase maxPhase = maxRecord.getProjectPhase();
+
+                // Check if new phase is smaller than max phase
+                if (newPhase.ordinal() < maxPhase.ordinal()) {
+                    throw new RuntimeException(
+                        String.format("Cannot set phase to %s. The project has already reached %s. " +
+                                     "Phases cannot go backward.",
+                                     newPhase.getDisplayName(), maxPhase.getDisplayName())
+                    );
+                }
+            });
     }
 }

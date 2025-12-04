@@ -24,8 +24,8 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
         ISWMMitigation mitigation = new ISWMMitigation();
         
         // Convert to standard units (tCO₂e)
-        double bauEmissionsInTonnes = dto.getBauEmissionsUnit().toTonnesCO2e(dto.getBauEmissions());
-        double annualReductionInTonnes = dto.getAnnualReductionUnit().toTonnesCO2e(dto.getAnnualReduction());
+        double bauEmissionsInTonnes = dto.getBauEmissionsUnit().toKiloTonnesCO2e(dto.getBauEmissions());
+        double annualReductionInTonnes = dto.getAnnualReductionUnit().toKiloTonnesCO2e(dto.getAnnualReduction());
         
         // Set user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
@@ -46,8 +46,8 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
             .orElseThrow(() -> new RuntimeException("ISWM Mitigation record not found with id: " + id));
         
         // Convert to standard units (tCO₂e)
-        double bauEmissionsInTonnes = dto.getBauEmissionsUnit().toTonnesCO2e(dto.getBauEmissions());
-        double annualReductionInTonnes = dto.getAnnualReductionUnit().toTonnesCO2e(dto.getAnnualReduction());
+        double bauEmissionsInTonnes = dto.getBauEmissionsUnit().toKiloTonnesCO2e(dto.getBauEmissions());
+        double annualReductionInTonnes = dto.getAnnualReductionUnit().toKiloTonnesCO2e(dto.getAnnualReduction());
         
         // Update user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
