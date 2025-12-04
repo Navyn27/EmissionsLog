@@ -1,6 +1,6 @@
-package com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.repository;
+package com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.repository;
 
-import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models.AvoidedElectricityProduction;
+import com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.models.AvoidedElectricityProduction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

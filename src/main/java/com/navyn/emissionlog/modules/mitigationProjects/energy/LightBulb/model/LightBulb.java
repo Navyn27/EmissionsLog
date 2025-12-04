@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.model;
+package com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.model;
 
 import jakarta.persistence.*;
 import lombok.Data;

@@ -1,6 +1,6 @@
-package com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.repository;
+package com.navyn.emissionlog.modules.mitigationProjects.Energy.rooftop.repository;
 
-import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.model.RoofTopMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Energy.rooftop.model.RoofTopMitigation;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

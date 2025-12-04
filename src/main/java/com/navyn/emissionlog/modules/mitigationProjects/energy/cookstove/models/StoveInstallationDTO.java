@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models;
+package com.navyn.emissionlog.modules.mitigationProjects.Energy.cookstove.models;
 
 import lombok.Getter;
 import lombok.Setter;

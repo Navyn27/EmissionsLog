@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models;
+package com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.models;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

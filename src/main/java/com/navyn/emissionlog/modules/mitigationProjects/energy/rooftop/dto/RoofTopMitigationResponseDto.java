@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.dto;
+package com.navyn.emissionlog.modules.mitigationProjects.Energy.rooftop.dto;
 
 import lombok.Data;
 

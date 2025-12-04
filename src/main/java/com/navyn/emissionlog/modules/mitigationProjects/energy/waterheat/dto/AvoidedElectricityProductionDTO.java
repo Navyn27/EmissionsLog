@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.dto;
+package com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

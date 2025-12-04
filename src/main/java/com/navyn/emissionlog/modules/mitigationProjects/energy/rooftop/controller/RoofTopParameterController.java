@@ -1,8 +1,8 @@
-package com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.controller;
+package com.navyn.emissionlog.modules.mitigationProjects.Energy.rooftop.controller;
 
-import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.dto.RoofTopParameterDto;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.dto.RoofTopParameterResponseDto;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.service.IRoofTopParameterService;
+import com.navyn.emissionlog.modules.mitigationProjects.Energy.rooftop.dto.RoofTopParameterDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Energy.rooftop.dto.RoofTopParameterResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Energy.rooftop.service.IRoofTopParameterService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto;
+package com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;

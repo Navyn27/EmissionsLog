@@ -1,6 +1,6 @@
-package com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.controller;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models.WaterHeatParameter;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.service.WaterHeatParameterService;
+package com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.controller;
+import com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.models.WaterHeatParameter;
+import com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.service.WaterHeatParameterService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,9 +1,9 @@
-package com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.service;
+package com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.service;
 
-import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.CreateLightBulbDTO;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.UpdateLightBulbDTO;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.model.LightBulb;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.repository.ILightBulbRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.dto.CreateLightBulbDTO;
+import com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.dto.UpdateLightBulbDTO;
+import com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.model.LightBulb;
+import com.navyn.emissionlog.modules.mitigationProjects.Energy.LightBulb.repository.ILightBulbRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
