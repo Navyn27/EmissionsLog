@@ -24,9 +24,13 @@ import com.navyn.emissionlog.modules.transportEmissions.services.TransportFuelEm
 import com.navyn.emissionlog.modules.transportEmissions.services.TransportVehicleEmissionFactorsService;
 import com.navyn.emissionlog.utils.ExcelReader;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,8 +50,8 @@ public class TransportEmissionFactorsController {
     private final VehicleService vehicleService;
 
     @Operation(summary = "Upload transport emission factors by fuel", description = "This endpoint upload transport emission factors in bulk basing on provided fuel data in an Excel File. The Excel file should contain the following columns: Fuel, Region Group, Fossil CO2 Emission Factor, Biogenic CO2 Emission Factor, Transport Type, Vehicle Engine Type, CH4 Emission Factor, N2O Emission Factor.  The uploaded data is processed and saved to the database.")
-    @PostMapping("/uploadByFuelExcel")
-    public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByFuel(@RequestParam("file") MultipartFile file) {
+    @PostMapping(value = "/uploadByFuelExcel", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByFuel(@Parameter(description = "Excel file containing transport emission factors by fuel", required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(type = "string", format = "binary"))) @RequestParam("file") MultipartFile file) {
         try {
             List<TransportFuelEmissionFactorsDto> transportFuelEmissionFactorsDtos = ExcelReader.readExcel(file.getInputStream(), TransportFuelEmissionFactorsDto.class, ExcelType.FUEL_TRANSPORT_EMISSIONS);
             for (TransportFuelEmissionFactorsDto dto : transportFuelEmissionFactorsDtos) {
@@ -95,8 +99,8 @@ public class TransportEmissionFactorsController {
     }
 
     @Operation(summary = "Upload transport emission factors by vehicle data", description = "This endpoint uploads transport emission factors in bulk basing on provided vehicle data in an Excel File. The Excel file should contain the following columns: Vehicle, Vehicle Year, Size, Weight Laden, Fuel, Region Group, CO2 Emission Factor, CH4 Emission Factor, N2O Emission Factor.  The uploaded data is processed and saved to the database.")
-    @PostMapping("/uploadByVehicleData")
-    public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByVehicleData(@RequestParam("file") MultipartFile file) {
+    @PostMapping(value = "/uploadByVehicleData", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByVehicleData(@Parameter(description = "Excel file containing transport emission factors by vehicle data", required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(type = "string", format = "binary"))) @RequestParam("file") MultipartFile file) {
         try {
             List<TransportVehicleDataEmissionFactorsDto> vehicleDataEmissionFactorsDtos = ExcelReader.readExcel(file.getInputStream(), TransportVehicleDataEmissionFactorsDto.class, ExcelType.VEHICLE_DATA_TRANSPORT_EMISSIONS);
             for (TransportVehicleDataEmissionFactorsDto dto : vehicleDataEmissionFactorsDtos) {
