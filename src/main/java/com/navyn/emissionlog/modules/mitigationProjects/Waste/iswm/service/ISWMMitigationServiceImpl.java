@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -22,14 +23,39 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
     public ISWMMitigation createISWMMitigation(ISWMMitigationDto dto) {
         ISWMMitigation mitigation = new ISWMMitigation();
         
-        // Set user inputs
+        // Convert to standard units (tCO₂e)
+        double bauEmissionsInTonnes = dto.getBauEmissionsUnit().toTonnesCO2e(dto.getBauEmissions());
+        double annualReductionInTonnes = dto.getAnnualReductionUnit().toTonnesCO2e(dto.getAnnualReduction());
+        
+        // Set user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
-        mitigation.setBauEmissions(dto.getBauEmissions());
-        mitigation.setAnnualReduction(dto.getAnnualReduction());
+        mitigation.setBauEmissions(bauEmissionsInTonnes);
+        mitigation.setAnnualReduction(annualReductionInTonnes);
         
         // Calculation
-        // Adjusted Emissions (ktCO2e) = BAU Emissions (ktCO2e) - Annual Reduction (ktCO2e)
-        Double adjustedEmissions = dto.getBauEmissions() - dto.getAnnualReduction();
+        // Adjusted Emissions (tCO₂e) = BAU Emissions (tCO₂e) - Annual Reduction (tCO₂e)
+        Double adjustedEmissions = bauEmissionsInTonnes - annualReductionInTonnes;
+        mitigation.setAdjustedEmissions(adjustedEmissions);
+        
+        return repository.save(mitigation);
+    }
+    
+    @Override
+    public ISWMMitigation updateISWMMitigation(UUID id, ISWMMitigationDto dto) {
+        ISWMMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("ISWM Mitigation record not found with id: " + id));
+        
+        // Convert to standard units (tCO₂e)
+        double bauEmissionsInTonnes = dto.getBauEmissionsUnit().toTonnesCO2e(dto.getBauEmissions());
+        double annualReductionInTonnes = dto.getAnnualReductionUnit().toTonnesCO2e(dto.getAnnualReduction());
+        
+        // Update user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setBauEmissions(bauEmissionsInTonnes);
+        mitigation.setAnnualReduction(annualReductionInTonnes);
+        
+        // Recalculate derived field
+        Double adjustedEmissions = bauEmissionsInTonnes - annualReductionInTonnes;
         mitigation.setAdjustedEmissions(adjustedEmissions);
         
         return repository.save(mitigation);

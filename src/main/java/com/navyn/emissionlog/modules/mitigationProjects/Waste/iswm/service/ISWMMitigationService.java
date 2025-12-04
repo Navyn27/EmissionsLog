@@ -4,10 +4,13 @@ import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.dtos.ISWMMiti
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.models.ISWMMitigation;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface ISWMMitigationService {
     
     ISWMMitigation createISWMMitigation(ISWMMitigationDto dto);
+    
+    ISWMMitigation updateISWMMitigation(UUID id, ISWMMitigationDto dto);
     
     List<ISWMMitigation> getAllISWMMitigation(Integer year);
 }

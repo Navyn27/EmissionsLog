@@ -1,0 +1,43 @@
+package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.controller;
+
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.dtos.DailySpreadMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.models.DailySpreadMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.service.DailySpreadMitigationService;
+import com.navyn.emissionlog.utils.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/mitigation/daily-spread")
+@SecurityRequirement(name = "BearerAuth")
+@RequiredArgsConstructor
+public class DailySpreadMitigationController {
+    
+    private final DailySpreadMitigationService service;
+    
+    @Operation(summary = "Create daily spread MMS mitigation record", 
+               description = "Creates a new Daily Spread MMS mitigation record for CH4 reduction")
+    @PostMapping
+    public ResponseEntity<ApiResponse> createDailySpreadMitigation(
+            @Valid @RequestBody DailySpreadMitigationDto dto) {
+        DailySpreadMitigation mitigation = service.createDailySpreadMitigation(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                new ApiResponse(true, "Daily spread mitigation record created successfully", mitigation));
+    }
+    
+    @Operation(summary = "Get daily spread MMS mitigation records", 
+               description = "Retrieves all Daily Spread MMS mitigation records with optional year filter")
+    @GetMapping
+    public ResponseEntity<ApiResponse> getAllDailySpreadMitigation(
+            @RequestParam(required = false) Integer year) {
+        List<DailySpreadMitigation> mitigations = service.getAllDailySpreadMitigation(year);
+        return ResponseEntity.ok(new ApiResponse(true, "Daily spread mitigation records fetched successfully", mitigations));
+    }
+}

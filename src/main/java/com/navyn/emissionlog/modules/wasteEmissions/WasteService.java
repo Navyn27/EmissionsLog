@@ -17,16 +17,22 @@ import java.util.UUID;
 
 public interface WasteService {
     WasteDataAbstract createIndustrialWasteWaterData(IndustrialWasteDto wasteData);
+    WasteDataAbstract updateIndustrialWasteWaterData(UUID id, IndustrialWasteDto wasteData);
 
     WasteDataAbstract createSolidWasteData(SolidWasteDto wasteData);
+    WasteDataAbstract updateSolidWasteData(UUID id, SolidWasteDto wasteData);
 
     WasteDataAbstract createWasteWaterData(WasteWaterDto wasteData);
+    WasteDataAbstract updateWasteWaterData(UUID id, WasteWaterDto wasteData);
 
     WasteDataAbstract createBioTreatedWasteWaterData(GeneralWasteByPopulationDto wasteData);
+    WasteDataAbstract updateBioTreatedWasteWaterData(UUID id, GeneralWasteByPopulationDto wasteData);
 
     WasteDataAbstract createBurntWasteData(GeneralWasteByPopulationDto wasteData);
+    WasteDataAbstract updateBurntWasteData(UUID id, GeneralWasteByPopulationDto wasteData);
 
     WasteDataAbstract createIncinerationWasteData(GeneralWasteByPopulationDto wasteData);
+    WasteDataAbstract updateIncinerationWasteData(UUID id, GeneralWasteByPopulationDto wasteData);
 
     List<WasteDataAbstract> getAllWasteData();
 

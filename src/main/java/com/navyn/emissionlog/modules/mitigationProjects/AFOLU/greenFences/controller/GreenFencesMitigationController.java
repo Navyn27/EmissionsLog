@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mitigation/greenFences")
@@ -29,6 +30,19 @@ public class GreenFencesMitigationController {
         return ResponseEntity.ok(new ApiResponse(
             true, 
             "Green fences mitigation created successfully", 
+            mitigation
+        ));
+    }
+    
+    @PutMapping("/{id}")
+    @Operation(summary = "Update green fences mitigation record")
+    public ResponseEntity<ApiResponse> updateGreenFencesMitigation(
+            @PathVariable UUID id,
+            @Valid @RequestBody GreenFencesMitigationDto dto) {
+        GreenFencesMitigation mitigation = service.updateGreenFencesMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(
+            true, 
+            "Green fences mitigation updated successfully", 
             mitigation
         ));
     }

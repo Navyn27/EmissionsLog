@@ -10,8 +10,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -22,18 +24,24 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
     @Override
     public GreenFencesMitigation createGreenFencesMitigation(GreenFencesMitigationDto dto) {
         GreenFencesMitigation mitigation = new GreenFencesMitigation();
-        
-        // Map input fields
+
+        Optional<GreenFencesMitigation> latestYear = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
+        Double cumulativeHouseholds = latestYear.map(greenFencesMitigation -> greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()).orElse(0.0);
+
+        // Convert AGB to tonnes DM (standard unit)
+        double agbInTonnesDM = dto.getAgbUnit().toTonnesDM(dto.getAgbOf10m2LiveFence());
+
+        // Map input fields (store in standard units)
         mitigation.setYear(dto.getYear());
-        mitigation.setCumulativeNumberOfHouseholds(dto.getCumulativeNumberOfHouseholds());
+        mitigation.setCumulativeNumberOfHouseholds(cumulativeHouseholds);
         mitigation.setNumberOfHouseholdsWith10m2Fence(dto.getNumberOfHouseholdsWith10m2Fence());
-        mitigation.setAgbOf10m2LiveFence(dto.getAgbOf10m2LiveFence());
+        mitigation.setAgbOf10m2LiveFence(agbInTonnesDM);
         
         // 1. Calculate AGB of 10m3 fence biomass from cumulative households (Tonnes C)
         // AGB fence biomass = AGB of 10m2 fence × Carbon content × Cumulative households
-        double agbFenceBiomass = dto.getAgbOf10m2LiveFence() * 
+        double agbFenceBiomass = agbInTonnesDM * 
             GreenFencesConstants.CARBON_CONTENT_DRY_AGB.getValue() * 
-            dto.getCumulativeNumberOfHouseholds();
+            cumulativeHouseholds;
         mitigation.setAgbFenceBiomassCumulativeHouseholds(agbFenceBiomass);
         
         // 2. Calculate AGB+BGB from cumulative households (Tonnes C)
@@ -53,12 +61,95 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
     }
     
     @Override
+    public GreenFencesMitigation updateGreenFencesMitigation(UUID id, GreenFencesMitigationDto dto) {
+        GreenFencesMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Green Fences Mitigation record not found with id: " + id));
+
+        // Update the current record
+        recalculateAndUpdateRecord(mitigation, dto);
+        GreenFencesMitigation updatedRecord = repository.save(mitigation);
+        
+        // CASCADE: Find and recalculate all subsequent years that depend on this record
+        List<GreenFencesMitigation> subsequentRecords = repository.findByYearGreaterThanOrderByYearAsc(dto.getYear());
+        
+        for (GreenFencesMitigation subsequent : subsequentRecords) {
+            recalculateExistingRecord(subsequent);
+            repository.save(subsequent);
+        }
+        
+        return updatedRecord;
+    }
+    
+    /**
+     * Recalculates an existing record based on its current year and stored input values
+     */
+    private void recalculateExistingRecord(GreenFencesMitigation mitigation) {
+        // Fetch previous year's data for cumulative calculation
+        Optional<GreenFencesMitigation> latestYear = repository.findTopByYearLessThanOrderByYearDesc(mitigation.getYear());
+        Double cumulativeHouseholds = latestYear.map(greenFencesMitigation -> 
+            greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()
+        ).orElse(0.0);
+
+        // Update cumulative field
+        mitigation.setCumulativeNumberOfHouseholds(cumulativeHouseholds);
+        
+        // Recalculate derived fields using existing AGB value
+        double agbInTonnesDM = mitigation.getAgbOf10m2LiveFence();
+        
+        double agbFenceBiomass = agbInTonnesDM * 
+            GreenFencesConstants.CARBON_CONTENT_DRY_AGB.getValue() * 
+            cumulativeHouseholds;
+        mitigation.setAgbFenceBiomassCumulativeHouseholds(agbFenceBiomass);
+        
+        double totalBiomass = agbFenceBiomass * 
+            (1 + GreenFencesConstants.RATIO_BGB_TO_AGB.getValue());
+        mitigation.setAgbPlusBgbCumulativeHouseholds(totalBiomass);
+        
+        double mitigatedEmissions = (agbFenceBiomass * 
+            GreenFencesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
+    }
+    
+    /**
+     * Recalculates a record with new DTO values
+     */
+    private void recalculateAndUpdateRecord(GreenFencesMitigation mitigation, GreenFencesMitigationDto dto) {
+        Optional<GreenFencesMitigation> latestYear = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
+        Double cumulativeHouseholds = latestYear.map(greenFencesMitigation -> 
+            greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()
+        ).orElse(0.0);
+
+        // Convert AGB to tonnes DM (standard unit)
+        double agbInTonnesDM = dto.getAgbUnit().toTonnesDM(dto.getAgbOf10m2LiveFence());
+
+        // Update input fields (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setCumulativeNumberOfHouseholds(cumulativeHouseholds);
+        mitigation.setNumberOfHouseholdsWith10m2Fence(dto.getNumberOfHouseholdsWith10m2Fence());
+        mitigation.setAgbOf10m2LiveFence(agbInTonnesDM);
+        
+        // Recalculate derived fields
+        double agbFenceBiomass = agbInTonnesDM * 
+            GreenFencesConstants.CARBON_CONTENT_DRY_AGB.getValue() * 
+            cumulativeHouseholds;
+        mitigation.setAgbFenceBiomassCumulativeHouseholds(agbFenceBiomass);
+        
+        double totalBiomass = agbFenceBiomass * 
+            (1 + GreenFencesConstants.RATIO_BGB_TO_AGB.getValue());
+        mitigation.setAgbPlusBgbCumulativeHouseholds(totalBiomass);
+        
+        double mitigatedEmissions = (agbFenceBiomass * 
+            GreenFencesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
+    }
+    
+    @Override
     public List<GreenFencesMitigation> getAllGreenFencesMitigation(Integer year) {
         Specification<GreenFencesMitigation> spec = 
             Specification.<GreenFencesMitigation>where(MitigationSpecifications.hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
     }
-    
+
     @Override
     public Optional<GreenFencesMitigation> getByYear(Integer year) {
         return repository.findByYear(year);

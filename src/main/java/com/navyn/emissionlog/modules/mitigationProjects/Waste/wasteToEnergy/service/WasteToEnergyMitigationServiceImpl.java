@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -23,14 +24,18 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
     public WasteToEnergyMitigation createWasteToEnergyMitigation(WasteToEnergyMitigationDto dto) {
         WasteToEnergyMitigation mitigation = new WasteToEnergyMitigation();
         
-        // Set user inputs
+        // Convert to standard units
+        double wasteInTonnesPerYear = dto.getWasteToWtEUnit().toTonnesPerYear(dto.getWasteToWtE());
+        double bauEmissionsInKilotonnes = dto.getBauEmissionsUnit().toKilotonnesCO2e(dto.getBauEmissionsSolidWaste());
+        
+        // Set user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
-        mitigation.setWasteToWtE(dto.getWasteToWtE());
-        mitigation.setBauEmissionsSolidWaste(dto.getBauEmissionsSolidWaste());
+        mitigation.setWasteToWtE(wasteInTonnesPerYear);
+        mitigation.setBauEmissionsSolidWaste(bauEmissionsInKilotonnes);
         
         // Calculations
         // GHG Reduction (tCO2eq) = Net Emission Factor (tCO2eq/t) * Waste to WtE (t/year)
-        Double ghgReductionTonnes = WasteToEnergyConstants.NET_EMISSION_FACTOR.getValue() * dto.getWasteToWtE();
+        Double ghgReductionTonnes = WasteToEnergyConstants.NET_EMISSION_FACTOR.getValue() * wasteInTonnesPerYear;
         mitigation.setGhgReductionTonnes(ghgReductionTonnes);
         
         // GHG Reduction (KtCO2eq) = GHG Reduction (tCO2eq) / 1000
@@ -38,7 +43,34 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
         mitigation.setGhgReductionKilotonnes(ghgReductionKilotonnes);
         
         // Adjusted Emissions (with WtE, ktCO₂e) = BAU Emissions (Solid Waste, ktCO₂e) - GHG Reduction (KtCO2eq)
-        Double adjustedEmissions = dto.getBauEmissionsSolidWaste() - ghgReductionKilotonnes;
+        Double adjustedEmissions = bauEmissionsInKilotonnes - ghgReductionKilotonnes;
+        mitigation.setAdjustedEmissionsWithWtE(adjustedEmissions);
+        
+        return repository.save(mitigation);
+    }
+    
+    @Override
+    public WasteToEnergyMitigation updateWasteToEnergyMitigation(UUID id, WasteToEnergyMitigationDto dto) {
+        WasteToEnergyMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Waste to Energy Mitigation record not found with id: " + id));
+        
+        // Convert to standard units
+        double wasteInTonnesPerYear = dto.getWasteToWtEUnit().toTonnesPerYear(dto.getWasteToWtE());
+        double bauEmissionsInKilotonnes = dto.getBauEmissionsUnit().toKilotonnesCO2e(dto.getBauEmissionsSolidWaste());
+        
+        // Update user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setWasteToWtE(wasteInTonnesPerYear);
+        mitigation.setBauEmissionsSolidWaste(bauEmissionsInKilotonnes);
+        
+        // Recalculate derived fields
+        Double ghgReductionTonnes = WasteToEnergyConstants.NET_EMISSION_FACTOR.getValue() * wasteInTonnesPerYear;
+        mitigation.setGhgReductionTonnes(ghgReductionTonnes);
+        
+        Double ghgReductionKilotonnes = ghgReductionTonnes / 1000;
+        mitigation.setGhgReductionKilotonnes(ghgReductionKilotonnes);
+        
+        Double adjustedEmissions = bauEmissionsInKilotonnes - ghgReductionKilotonnes;
         mitigation.setAdjustedEmissionsWithWtE(adjustedEmissions);
         
         return repository.save(mitigation);

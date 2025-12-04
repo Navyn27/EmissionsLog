@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,13 +24,16 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     public ZeroTillageMitigation createZeroTillageMitigation(ZeroTillageMitigationDto dto) {
         ZeroTillageMitigation mitigation = new ZeroTillageMitigation();
         
-        // Map input fields
+        // Convert area to hectares (standard unit)
+        double areaInHectares = dto.getAreaUnit().toHectares(dto.getAreaUnderZeroTillage());
+        
+        // Map input fields (store in standard units)
         mitigation.setYear(dto.getYear());
-        mitigation.setAreaUnderZeroTillage(dto.getAreaUnderZeroTillage());
+        mitigation.setAreaUnderZeroTillage(areaInHectares);
         
         // 1. Calculate Total Carbon Increase in Soil (Tonnes C)
         // Total carbon = Area × Carbon increase in soil
-        double totalCarbon = dto.getAreaUnderZeroTillage() * 
+        double totalCarbon = areaInHectares * 
             ZeroTillageConstants.CARBON_INCREASE_SOIL.getValue();
         mitigation.setTotalCarbonIncreaseInSoil(totalCarbon);
         
@@ -41,7 +45,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
         
         // 3. Calculate Urea Applied (tonnes)
         // Urea applied = Area × Urea application rate
-        double ureaApplied = dto.getAreaUnderZeroTillage() * 
+        double ureaApplied = areaInHectares * 
             ZeroTillageConstants.UREA_APPLICATION_RATE.getValue();
         mitigation.setUreaApplied(ureaApplied);
         
@@ -53,6 +57,41 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
         
         // 5. Calculate GHG Emissions Savings (Kilotonnes CO2e) - NET
         // GHG savings = Emissions savings - (Emissions from urea / 1000)
+        double ghgSavings = emissionsSavings - (emissionsFromUrea / 1000.0);
+        mitigation.setGhgEmissionsSavings(ghgSavings);
+        
+        return repository.save(mitigation);
+    }
+    
+    @Override
+    public ZeroTillageMitigation updateZeroTillageMitigation(UUID id, ZeroTillageMitigationDto dto) {
+        ZeroTillageMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Zero Tillage Mitigation record not found with id: " + id));
+        
+        // Convert area to hectares (standard unit)
+        double areaInHectares = dto.getAreaUnit().toHectares(dto.getAreaUnderZeroTillage());
+        
+        // Update input fields (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setAreaUnderZeroTillage(areaInHectares);
+        
+        // Recalculate all derived fields
+        double totalCarbon = areaInHectares * 
+            ZeroTillageConstants.CARBON_INCREASE_SOIL.getValue();
+        mitigation.setTotalCarbonIncreaseInSoil(totalCarbon);
+        
+        double emissionsSavings = (totalCarbon * 
+            ZeroTillageConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        mitigation.setEmissionsSavings(emissionsSavings);
+        
+        double ureaApplied = areaInHectares * 
+            ZeroTillageConstants.UREA_APPLICATION_RATE.getValue();
+        mitigation.setUreaApplied(ureaApplied);
+        
+        double emissionsFromUrea = ureaApplied * 
+            ZeroTillageConstants.EMISSION_FACTOR_UREA.getValue();
+        mitigation.setEmissionsFromUrea(emissionsFromUrea);
+        
         double ghgSavings = emissionsSavings - (emissionsFromUrea / 1000.0);
         mitigation.setGhgEmissionsSavings(ghgSavings);
         

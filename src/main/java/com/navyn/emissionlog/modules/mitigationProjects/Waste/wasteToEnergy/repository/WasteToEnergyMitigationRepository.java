@@ -6,9 +6,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface WasteToEnergyMitigationRepository extends JpaRepository<WasteToEnergyMitigation, Long>, 
+public interface WasteToEnergyMitigationRepository extends JpaRepository<WasteToEnergyMitigation, UUID>, 
         JpaSpecificationExecutor<WasteToEnergyMitigation> {
     
     Optional<WasteToEnergyMitigation> findByYear(Integer year);

@@ -5,10 +5,13 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.models
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface ZeroTillageMitigationService {
     
     ZeroTillageMitigation createZeroTillageMitigation(ZeroTillageMitigationDto dto);
+    
+    ZeroTillageMitigation updateZeroTillageMitigation(UUID id, ZeroTillageMitigationDto dto);
     
     List<ZeroTillageMitigation> getAllZeroTillageMitigation(Integer year);
     

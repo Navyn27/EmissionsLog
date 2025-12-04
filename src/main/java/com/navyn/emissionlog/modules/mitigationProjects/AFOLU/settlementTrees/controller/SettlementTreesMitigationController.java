@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mitigation/settlementTrees")
@@ -29,6 +30,19 @@ public class SettlementTreesMitigationController {
         return ResponseEntity.ok(new ApiResponse(
             true, 
             "Settlement trees mitigation created successfully", 
+            mitigation
+        ));
+    }
+    
+    @PutMapping("/{id}")
+    @Operation(summary = "Update settlement trees mitigation record")
+    public ResponseEntity<ApiResponse> updateSettlementTreesMitigation(
+            @PathVariable UUID id,
+            @Valid @RequestBody SettlementTreesMitigationDto dto) {
+        SettlementTreesMitigation mitigation = service.updateSettlementTreesMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(
+            true, 
+            "Settlement trees mitigation updated successfully", 
             mitigation
         ));
     }

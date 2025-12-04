@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.dtos;
 
+import com.navyn.emissionlog.Enums.Metrics.EmissionsKilotonneUnit;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
@@ -14,11 +15,20 @@ public class LandfillGasUtilizationMitigationDto {
     @Positive(message = "BAU Solid Waste Emissions must be positive")
     private Double bauSolidWasteEmissions; // ktCO2eq
     
+    @NotNull(message = "BAU solid waste emissions unit is required")
+    private EmissionsKilotonneUnit bauSolidWasteEmissionsUnit;
+    
     @NotNull(message = "Project Reduction (40% Efficiency) is required")
     @Positive(message = "Project Reduction must be positive")
     private Double projectReduction40PercentEfficiency; // ktCO2eq
     
+    @NotNull(message = "Project reduction unit is required")
+    private EmissionsKilotonneUnit projectReductionUnit;
+    
     @NotNull(message = "BAU Grand Total is required")
     @Positive(message = "BAU Grand Total must be positive")
     private Double bauGrandTotal; // ktCO2eq
+    
+    @NotNull(message = "BAU grand total unit is required")
+    private EmissionsKilotonneUnit bauGrandTotalUnit;
 }

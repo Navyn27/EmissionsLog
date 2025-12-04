@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -22,11 +23,16 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
     public LandfillGasUtilizationMitigation createLandfillGasUtilizationMitigation(LandfillGasUtilizationMitigationDto dto) {
         LandfillGasUtilizationMitigation mitigation = new LandfillGasUtilizationMitigation();
         
-        // Set user inputs
+        // Convert to standard units (ktCO₂eq)
+        double bauSolidWasteInKilotonnes = dto.getBauSolidWasteEmissionsUnit().toKilotonnesCO2e(dto.getBauSolidWasteEmissions());
+        double projectReductionInKilotonnes = dto.getProjectReductionUnit().toKilotonnesCO2e(dto.getProjectReduction40PercentEfficiency());
+        double bauGrandTotalInKilotonnes = dto.getBauGrandTotalUnit().toKilotonnesCO2e(dto.getBauGrandTotal());
+        
+        // Set user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
-        mitigation.setBauSolidWasteEmissions(dto.getBauSolidWasteEmissions());
-        mitigation.setProjectReduction40PercentEfficiency(dto.getProjectReduction40PercentEfficiency());
-        mitigation.setBauGrandTotal(dto.getBauGrandTotal());
+        mitigation.setBauSolidWasteEmissions(bauSolidWasteInKilotonnes);
+        mitigation.setProjectReduction40PercentEfficiency(projectReductionInKilotonnes);
+        mitigation.setBauGrandTotal(bauGrandTotalInKilotonnes);
         
         // Calculations
         // Project Reduction Emissions (KtCO₂eq)
@@ -34,7 +40,7 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
         // else: 0
         Double projectReductionEmissions;
         if (dto.getYear() > 2028) {
-            projectReductionEmissions = dto.getBauSolidWasteEmissions() * dto.getProjectReduction40PercentEfficiency();
+            projectReductionEmissions = bauSolidWasteInKilotonnes * projectReductionInKilotonnes;
         } else {
             projectReductionEmissions = 0.0;
         }
@@ -42,12 +48,46 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
         
         // Adjusted Solid Waste Emissions (KtCO₂eq)
         // BAU Solid Waste Emissions - Project Reduction Emissions
-        Double adjustedSolidWasteEmissions = dto.getBauSolidWasteEmissions() - projectReductionEmissions;
+        Double adjustedSolidWasteEmissions = bauSolidWasteInKilotonnes - projectReductionEmissions;
         mitigation.setAdjustedSolidWasteEmissions(adjustedSolidWasteEmissions);
         
         // Adjusted Grand Total (KtCO₂eq)
         // BAU Grand Total - Project Reduction Emissions
-        Double adjustedGrandTotal = dto.getBauGrandTotal() - projectReductionEmissions;
+        Double adjustedGrandTotal = bauGrandTotalInKilotonnes - projectReductionEmissions;
+        mitigation.setAdjustedGrandTotal(adjustedGrandTotal);
+        
+        return repository.save(mitigation);
+    }
+    
+    @Override
+    public LandfillGasUtilizationMitigation updateLandfillGasUtilizationMitigation(UUID id, LandfillGasUtilizationMitigationDto dto) {
+        LandfillGasUtilizationMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Landfill Gas Utilization Mitigation record not found with id: " + id));
+        
+        // Convert to standard units (ktCO₂eq)
+        double bauSolidWasteInKilotonnes = dto.getBauSolidWasteEmissionsUnit().toKilotonnesCO2e(dto.getBauSolidWasteEmissions());
+        double projectReductionInKilotonnes = dto.getProjectReductionUnit().toKilotonnesCO2e(dto.getProjectReduction40PercentEfficiency());
+        double bauGrandTotalInKilotonnes = dto.getBauGrandTotalUnit().toKilotonnesCO2e(dto.getBauGrandTotal());
+        
+        // Update user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setBauSolidWasteEmissions(bauSolidWasteInKilotonnes);
+        mitigation.setProjectReduction40PercentEfficiency(projectReductionInKilotonnes);
+        mitigation.setBauGrandTotal(bauGrandTotalInKilotonnes);
+        
+        // Recalculate derived fields
+        Double projectReductionEmissions;
+        if (dto.getYear() > 2028) {
+            projectReductionEmissions = bauSolidWasteInKilotonnes * projectReductionInKilotonnes;
+        } else {
+            projectReductionEmissions = 0.0;
+        }
+        mitigation.setProjectReductionEmissions(projectReductionEmissions);
+        
+        Double adjustedSolidWasteEmissions = bauSolidWasteInKilotonnes - projectReductionEmissions;
+        mitigation.setAdjustedSolidWasteEmissions(adjustedSolidWasteEmissions);
+        
+        Double adjustedGrandTotal = bauGrandTotalInKilotonnes - projectReductionEmissions;
         mitigation.setAdjustedGrandTotal(adjustedGrandTotal);
         
         return repository.save(mitigation);

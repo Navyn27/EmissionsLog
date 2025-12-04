@@ -4,6 +4,8 @@ import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.cons
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "mbt_composting_mitigation", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"year"})
@@ -12,8 +14,8 @@ import lombok.Data;
 public class MBTCompostingMitigation {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     
     @Column(nullable = false)
     private Integer year;

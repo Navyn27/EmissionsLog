@@ -4,16 +4,14 @@ import lombok.Getter;
 
 @Getter
 public enum ProjectPhase {
-    NONE(0.0, "None"),
-    PHASE_I(200.0, "Phase I"),
-    PHASE_II(1000.0, "Phase II"),
-    PHASE_III(1500.0, "Phase III");
+    NONE("None"),
+    PHASE_I("Phase I"),
+    PHASE_II("Phase II"),
+    PHASE_III("Phase III");
     
-    private final double capacityPerDay; // m³/day
     private final String displayName;
     
-    ProjectPhase(double capacityPerDay, String displayName) {
-        this.capacityPerDay = capacityPerDay;
+    ProjectPhase(String displayName) {
         this.displayName = displayName;
     }
 }

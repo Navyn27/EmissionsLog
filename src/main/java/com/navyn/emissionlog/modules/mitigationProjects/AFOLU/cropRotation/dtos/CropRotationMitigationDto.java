@@ -1,5 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.dtos;
 
+import com.navyn.emissionlog.Enums.Metrics.AreaUnits;
+import com.navyn.emissionlog.Enums.Metrics.BiomassDensityUnit;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
@@ -13,13 +15,22 @@ public class CropRotationMitigationDto {
     
     @NotNull(message = "Cropland under crop rotation is required")
     @DecimalMin(value = "0.0", message = "Cropland under crop rotation must be at least 0")
-    private Double croplandUnderCropRotation; // ha
+    private Double croplandUnderCropRotation;
+    
+    @NotNull(message = "Cropland area unit is required")
+    private AreaUnits croplandAreaUnit; // Unit for cropland area (standard: ha)
     
     @NotNull(message = "Aboveground biomass is required")
     @DecimalMin(value = "0.0", message = "Aboveground biomass must be at least 0")
-    private Double abovegroundBiomass; // tonnes DM/ha
+    private Double abovegroundBiomass;
+    
+    @NotNull(message = "Aboveground biomass unit is required")
+    private BiomassDensityUnit abovegroundBiomassUnit; // Unit for AGB (standard: tonnes DM/ha)
     
     @NotNull(message = "Increased biomass is required")
     @DecimalMin(value = "0.0", message = "Increased biomass must be at least 0")
-    private Double increasedBiomass; // tonnes DM/ha
+    private Double increasedBiomass;
+    
+    @NotNull(message = "Increased biomass unit is required")
+    private BiomassDensityUnit increasedBiomassUnit; // Unit for increased biomass (standard: tonnes DM/ha)
 }

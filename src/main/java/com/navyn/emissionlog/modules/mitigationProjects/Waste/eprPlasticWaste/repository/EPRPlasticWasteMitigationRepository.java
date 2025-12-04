@@ -7,9 +7,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface EPRPlasticWasteMitigationRepository extends JpaRepository<EPRPlasticWasteMitigation, Long>, 
+public interface EPRPlasticWasteMitigationRepository extends JpaRepository<EPRPlasticWasteMitigation, UUID>, 
         JpaSpecificationExecutor<EPRPlasticWasteMitigation> {
     
     Optional<EPRPlasticWasteMitigation> findByYear(Integer year);

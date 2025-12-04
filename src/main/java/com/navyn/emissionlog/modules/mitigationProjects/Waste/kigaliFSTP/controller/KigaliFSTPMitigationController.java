@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mitigation/kigaliFSTP")
@@ -30,6 +31,16 @@ public class KigaliFSTPMitigationController {
         KigaliFSTPMitigation mitigation = service.createKigaliFSTPMitigation(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Kigali FSTP mitigation record created successfully", mitigation));
+    }
+    
+    @Operation(summary = "Update Kigali FSTP mitigation record",
+               description = "Updates an existing Kigali FSTP mitigation record and recalculates all derived fields")
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateKigaliFSTPMitigation(
+            @PathVariable UUID id,
+            @Valid @RequestBody KigaliFSTPMitigationDto dto) {
+        KigaliFSTPMitigation mitigation = service.updateKigaliFSTPMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(true, "Kigali FSTP mitigation record updated successfully", mitigation));
     }
     
     @Operation(summary = "Get Kigali FSTP mitigation records", 

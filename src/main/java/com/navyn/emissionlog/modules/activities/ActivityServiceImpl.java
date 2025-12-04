@@ -28,7 +28,6 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.models
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.models.CropRotationMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.models.ZeroTillageMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.models.ProtectiveForestMitigation;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.models.ImprovedMMSMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandParks.repositories.WetlandParksMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.repositories.SettlementTreesMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.repositories.StreetTreesMitigationRepository;
@@ -36,7 +35,12 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.reposi
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.repositories.CropRotationMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.repositories.ZeroTillageMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.repositories.ProtectiveForestMitigationRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.repositories.ImprovedMMSMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.models.ManureCoveringMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.repository.ManureCoveringMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.addingStraw.models.AddingStrawMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.addingStraw.repository.AddingStrawMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.models.DailySpreadMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.repository.DailySpreadMitigationRepository;
 import com.navyn.emissionlog.modules.activities.dtos.*;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.fuel.FuelData;
@@ -104,7 +108,9 @@ public class ActivityServiceImpl implements ActivityService {
     private final CropRotationMitigationRepository cropRotationMitigationRepository;
     private final ZeroTillageMitigationRepository zeroTillageMitigationRepository;
     private final ProtectiveForestMitigationRepository protectiveForestMitigationRepository;
-    private final ImprovedMMSMitigationRepository improvedMMSMitigationRepository;
+    private final ManureCoveringMitigationRepository manureCoveringMitigationRepository;
+    private final AddingStrawMitigationRepository addingStrawMitigationRepository;
+    private final DailySpreadMitigationRepository dailySpreadMitigationRepository;
 
     @Override
     public Activity createStationaryActivity(CreateStationaryActivityDto activity) {
@@ -314,13 +320,15 @@ public class ActivityServiceImpl implements ActivityService {
             List<CropRotationMitigation> cropRotation = cropRotationMitigationRepository.findAll();
             List<ZeroTillageMitigation> zeroTillage = zeroTillageMitigationRepository.findAll();
             List<ProtectiveForestMitigation> protectiveForest = protectiveForestMitigationRepository.findAll();
-            List<ImprovedMMSMitigation> improvedMMS = improvedMMSMitigationRepository.findAll();
+            List<ManureCoveringMitigation> manureCovering = manureCoveringMitigationRepository.findAll();
+            List<AddingStrawMitigation> addingStraw = addingStrawMitigationRepository.findAll();
+            List<DailySpreadMitigation> dailySpread = dailySpreadMitigationRepository.findAll();
             
             return calculateDashboardData(activities, wasteActivities,
                     aquacultureEmissions, entericFermentationEmissions, limingEmissions,
                     animalManureAndCompostEmissions, riceCultivationEmissions, syntheticFertilizerEmissions, ureaEmissions,
                     biomassGains, disturbanceLosses, firewoodLosses, harvestedLosses, rewettedWetlands,
-                    wetlandParks, settlementTrees, streetTrees, greenFences, cropRotation, zeroTillage, protectiveForest, improvedMMS);
+                    wetlandParks, settlementTrees, streetTrees, greenFences, cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -356,13 +364,15 @@ public class ActivityServiceImpl implements ActivityService {
             List<CropRotationMitigation> cropRotation = cropRotationMitigationRepository.findAll();
             List<ZeroTillageMitigation> zeroTillage = zeroTillageMitigationRepository.findAll();
             List<ProtectiveForestMitigation> protectiveForest = protectiveForestMitigationRepository.findAll();
-            List<ImprovedMMSMitigation> improvedMMS = improvedMMSMitigationRepository.findAll();
+            List<ManureCoveringMitigation> manureCovering = manureCoveringMitigationRepository.findAll();
+            List<AddingStrawMitigation> addingStraw = addingStrawMitigationRepository.findAll();
+            List<DailySpreadMitigation> dailySpread = dailySpreadMitigationRepository.findAll();
             
             DashboardData dashboardData = calculateDashboardData(activities, wasteActivities,
                     aquacultureEmissions, entericFermentationEmissions, limingEmissions,
                     animalManureAndCompostEmissions, riceCultivationEmissions, syntheticFertilizerEmissions, ureaEmissions,
                     biomassGains, disturbanceLosses, firewoodLosses, harvestedLosses, rewettedWetlands,
-                    wetlandParks, settlementTrees, streetTrees, greenFences, cropRotation, zeroTillage, protectiveForest, improvedMMS);
+                    wetlandParks, settlementTrees, streetTrees, greenFences, cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread);
             dashboardData.setStartingDate(startDate.toString());
             dashboardData.setEndingDate(endDate.toString());
             return dashboardData;
@@ -397,7 +407,9 @@ public class ActivityServiceImpl implements ActivityService {
         List<CropRotationMitigation> cropRotation = cropRotationMitigationRepository.findAll();
         List<ZeroTillageMitigation> zeroTillage = zeroTillageMitigationRepository.findAll();
         List<ProtectiveForestMitigation> protectiveForest = protectiveForestMitigationRepository.findAll();
-        List<ImprovedMMSMitigation> improvedMMS = improvedMMSMitigationRepository.findAll();
+        List<ManureCoveringMitigation> manureCovering = manureCoveringMitigationRepository.findAll();
+        List<AddingStrawMitigation> addingStraw = addingStrawMitigationRepository.findAll();
+        List<DailySpreadMitigation> dailySpread = dailySpreadMitigationRepository.findAll();
 
         // Group all data by year
         Map<Integer, List<Activity>> groupedActivities = activities.stream()
@@ -463,9 +475,15 @@ public class ActivityServiceImpl implements ActivityService {
         Map<Integer, List<ProtectiveForestMitigation>> groupedForest = protectiveForest.stream()
                 .filter(a -> a.getYear() >= startingYear && a.getYear() <= endingYear)
                 .collect(groupingBy(ProtectiveForestMitigation::getYear));
-        Map<Integer, List<ImprovedMMSMitigation>> groupedMMS = improvedMMS.stream()
+        Map<Integer, List<ManureCoveringMitigation>> groupedManureCovering = manureCovering.stream()
                 .filter(a -> a.getYear() >= startingYear && a.getYear() <= endingYear)
-                .collect(groupingBy(ImprovedMMSMitigation::getYear));
+                .collect(groupingBy(ManureCoveringMitigation::getYear));
+        Map<Integer, List<AddingStrawMitigation>> groupedAddingStraw = addingStraw.stream()
+                .filter(a -> a.getYear() >= startingYear && a.getYear() <= endingYear)
+                .collect(groupingBy(AddingStrawMitigation::getYear));
+        Map<Integer, List<DailySpreadMitigation>> groupedDailySpread = dailySpread.stream()
+                .filter(a -> a.getYear() >= startingYear && a.getYear() <= endingYear)
+                .collect(groupingBy(DailySpreadMitigation::getYear));
 
         // Create aggregated dashboard data for each year
         List<DashboardData> dashboardDataList = new ArrayList<>();
@@ -493,7 +511,9 @@ public class ActivityServiceImpl implements ActivityService {
                     groupedCrop.getOrDefault(year, List.of()),
                     groupedTillage.getOrDefault(year, List.of()),
                     groupedForest.getOrDefault(year, List.of()),
-                    groupedMMS.getOrDefault(year, List.of())
+                    groupedManureCovering.getOrDefault(year, List.of()),
+                    groupedAddingStraw.getOrDefault(year, List.of()),
+                    groupedDailySpread.getOrDefault(year, List.of())
             );
             
             data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
@@ -530,7 +550,9 @@ public class ActivityServiceImpl implements ActivityService {
         List<CropRotationMitigation> cropRotation = cropRotationMitigationRepository.findAll();
         List<ZeroTillageMitigation> zeroTillage = zeroTillageMitigationRepository.findAll();
         List<ProtectiveForestMitigation> protectiveForest = protectiveForestMitigationRepository.findAll();
-        List<ImprovedMMSMitigation> improvedMMS = improvedMMSMitigationRepository.findAll();
+        List<ManureCoveringMitigation> manureCovering = manureCoveringMitigationRepository.findAll();
+        List<AddingStrawMitigation> addingStraw = addingStrawMitigationRepository.findAll();
+        List<DailySpreadMitigation> dailySpread = dailySpreadMitigationRepository.findAll();
 
         // Group all data by year-month
         Map<YearMonth, List<Activity>> activitiesByMonth = activities.stream()
@@ -582,7 +604,11 @@ public class ActivityServiceImpl implements ActivityService {
                 .filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
         Map<Integer, List<ProtectiveForestMitigation>> forestByMonth = protectiveForest.stream()
                 .filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<ImprovedMMSMitigation>> mmsByMonth = improvedMMS.stream()
+        Map<Integer, List<ManureCoveringMitigation>> manureCoveringByMonth = manureCovering.stream()
+                .filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
+        Map<Integer, List<AddingStrawMitigation>> addingStrawByMonth = addingStraw.stream()
+                .filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
+        Map<Integer, List<DailySpreadMitigation>> dailySpreadByMonth = dailySpread.stream()
                 .filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
 
         // Create aggregated dashboard data for each month
@@ -613,7 +639,9 @@ public class ActivityServiceImpl implements ActivityService {
                     month == 1 ? cropByMonth.getOrDefault(1, List.of()) : List.of(),
                     month == 1 ? tillageByMonth.getOrDefault(1, List.of()) : List.of(),
                     month == 1 ? forestByMonth.getOrDefault(1, List.of()) : List.of(),
-                    month == 1 ? mmsByMonth.getOrDefault(1, List.of()) : List.of()
+                    month == 1 ? manureCoveringByMonth.getOrDefault(1, List.of()) : List.of(),
+                    month == 1 ? addingStrawByMonth.getOrDefault(1, List.of()) : List.of(),
+                    month == 1 ? dailySpreadByMonth.getOrDefault(1, List.of()) : List.of()
             );
             
             data.setStartingDate(LocalDateTime.of(year, month, 1, 0, 0).toString());
@@ -660,7 +688,9 @@ public class ActivityServiceImpl implements ActivityService {
             List<CropRotationMitigation> cropRotation,
             List<ZeroTillageMitigation> zeroTillage,
             List<ProtectiveForestMitigation> protectiveForest,
-            List<ImprovedMMSMitigation> improvedMMS) {
+            List<ManureCoveringMitigation> manureCovering,
+            List<AddingStrawMitigation> addingStraw,
+            List<DailySpreadMitigation> dailySpread) {
         
         DashboardData dashboardData = new DashboardData();
         
@@ -771,9 +801,19 @@ public class ActivityServiceImpl implements ActivityService {
                 totalMitigation += mitigation.getMitigatedEmissionsKtCO2e();
             }
         }
-        for (ImprovedMMSMitigation mitigation : improvedMMS) {
-            if (mitigation.getTotalMitigation() != null) {
-                totalMitigation += mitigation.getTotalMitigation();
+        for (ManureCoveringMitigation mitigation : manureCovering) {
+            if (mitigation.getMitigatedN2oEmissionsKilotonnes() != null) {
+                totalMitigation += mitigation.getMitigatedN2oEmissionsKilotonnes();
+            }
+        }
+        for (AddingStrawMitigation mitigation : addingStraw) {
+            if (mitigation.getMitigatedCh4EmissionsKilotonnes() != null) {
+                totalMitigation += mitigation.getMitigatedCh4EmissionsKilotonnes();
+            }
+        }
+        for (DailySpreadMitigation mitigation : dailySpread) {
+            if (mitigation.getMitigatedCh4EmissionsKilotonnes() != null) {
+                totalMitigation += mitigation.getMitigatedCh4EmissionsKilotonnes();
             }
         }
         

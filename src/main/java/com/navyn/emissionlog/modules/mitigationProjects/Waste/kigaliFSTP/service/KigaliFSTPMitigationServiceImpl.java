@@ -10,6 +10,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
@@ -23,14 +24,19 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
     public KigaliFSTPMitigation createKigaliFSTPMitigation(KigaliFSTPMitigationDto dto) {
         KigaliFSTPMitigation mitigation = new KigaliFSTPMitigation();
         
-        // Set user inputs
+        // Convert phase capacity to standard unit (m³/day)
+        double phaseCapacityInCubicMetersPerDay = dto.getPhaseCapacityUnit().toCubicMetersPerDay(dto.getPhaseCapacityPerDay());
+        
+        // Set user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setProjectPhase(dto.getProjectPhase());
+        mitigation.setPhaseCapacityPerDay(phaseCapacityInCubicMetersPerDay);
+        mitigation.setPlantOperationalEfficiency(dto.getPlantOperationalEfficiency());
         
         // Calculations
         // 1. Effective Daily Treatment (m³/day) = Plant Operational Efficiency × Phase capacity (m³/day)
-        Double plantEfficiency = KigaliFSTPConstants.PLANT_OPERATIONAL_EFFICIENCY.getValue();
-        Double phaseCapacity = dto.getProjectPhase().getCapacityPerDay();
+        Double plantEfficiency = dto.getPlantOperationalEfficiency();
+        Double phaseCapacity = phaseCapacityInCubicMetersPerDay;
         Double effectiveDailyTreatment = plantEfficiency * phaseCapacity;
         mitigation.setEffectiveDailyTreatment(effectiveDailyTreatment);
         
@@ -44,6 +50,39 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
         mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
         
         // 4. Annual Emissions Reduction (ktCO₂e) = Annual Emissions Reduction (tCO₂e) / 1000
+        Double annualEmissionsReductionKilotonnes = annualEmissionsReductionTonnes / 1000;
+        mitigation.setAnnualEmissionsReductionKilotonnes(annualEmissionsReductionKilotonnes);
+        
+        return repository.save(mitigation);
+    }
+    
+    @Override
+    public KigaliFSTPMitigation updateKigaliFSTPMitigation(UUID id, KigaliFSTPMitigationDto dto) {
+        KigaliFSTPMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Kigali FSTP Mitigation record not found with id: " + id));
+        
+        // Convert phase capacity to standard unit (m³/day)
+        double phaseCapacityInCubicMetersPerDay = dto.getPhaseCapacityUnit().toCubicMetersPerDay(dto.getPhaseCapacityPerDay());
+        
+        // Update user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setProjectPhase(dto.getProjectPhase());
+        mitigation.setPhaseCapacityPerDay(phaseCapacityInCubicMetersPerDay);
+        mitigation.setPlantOperationalEfficiency(dto.getPlantOperationalEfficiency());
+        
+        // Recalculate derived fields
+        Double plantEfficiency = dto.getPlantOperationalEfficiency();
+        Double phaseCapacity = phaseCapacityInCubicMetersPerDay;
+        Double effectiveDailyTreatment = plantEfficiency * phaseCapacity;
+        mitigation.setEffectiveDailyTreatment(effectiveDailyTreatment);
+        
+        Double annualSludgeTreated = effectiveDailyTreatment * 365;
+        mitigation.setAnnualSludgeTreated(annualSludgeTreated);
+        
+        Double co2ePerM3 = KigaliFSTPConstants.CO2E_PER_M3_SLUDGE.getValue();
+        Double annualEmissionsReductionTonnes = (annualSludgeTreated * co2ePerM3) / 1000;
+        mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
+        
         Double annualEmissionsReductionKilotonnes = annualEmissionsReductionTonnes / 1000;
         mitigation.setAnnualEmissionsReductionKilotonnes(annualEmissionsReductionKilotonnes);
         

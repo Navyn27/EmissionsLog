@@ -6,10 +6,13 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandParks.model
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface WetlandParksMitigationService {
     
     WetlandParksMitigation createWetlandParksMitigation(WetlandParksMitigationDto dto);
+    
+    WetlandParksMitigation updateWetlandParksMitigation(UUID id, WetlandParksMitigationDto dto);
     
     List<WetlandParksMitigation> getAllWetlandParksMitigation(Integer year, WetlandTreeCategory category);
     

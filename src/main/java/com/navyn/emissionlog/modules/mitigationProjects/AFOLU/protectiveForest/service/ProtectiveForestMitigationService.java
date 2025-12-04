@@ -6,10 +6,13 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.m
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface ProtectiveForestMitigationService {
     
     ProtectiveForestMitigation createProtectiveForestMitigation(ProtectiveForestMitigationDto dto);
+    
+    ProtectiveForestMitigation updateProtectiveForestMitigation(UUID id, ProtectiveForestMitigationDto dto);
     
     List<ProtectiveForestMitigation> getAllProtectiveForestMitigation(
         Integer year, 

@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.dtos;
 
+import com.navyn.emissionlog.Enums.Metrics.EmissionsKilotonneUnit;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
@@ -13,6 +14,9 @@ public class EPRPlasticWasteMitigationDto {
     @NotNull(message = "BAU Solid Waste Emissions is required")
     @Positive(message = "BAU Solid Waste Emissions must be positive")
     private Double bauSolidWasteEmissions; // ktCO2eq
+    
+    @NotNull(message = "BAU solid waste emissions unit is required")
+    private EmissionsKilotonneUnit bauSolidWasteEmissionsUnit;
     
     @NotNull(message = "Plastic Waste Growth Factor is required")
     @Positive(message = "Plastic Waste Growth Factor must be positive")

@@ -4,6 +4,8 @@ import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.constan
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "kigali_wwtp_mitigation", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"year"})
@@ -12,8 +14,8 @@ import lombok.Data;
 public class KigaliWWTPMitigation {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     
     @Column(nullable = false)
     private Integer year;
@@ -23,9 +25,16 @@ public class KigaliWWTPMitigation {
     @Column(nullable = false)
     private WWTPProjectPhase projectPhase;
     
-    // Calculated fields
     @Column(nullable = false)
-    private Double connectedHouseholdsPercentage; // %
+    private Double phaseCapacityPerDay; // m³/day (stored in standard unit)
+    
+    @Column(nullable = false)
+    private Double connectedHouseholds; // Total connected households
+    
+    @Column(nullable = false)
+    private Double connectedHouseholdsPercentage; // Percentage as decimal (0.0-1.0)
+    
+    // Calculated fields
     
     @Column(nullable = false)
     private Double effectiveDailyFlow; // m³/day

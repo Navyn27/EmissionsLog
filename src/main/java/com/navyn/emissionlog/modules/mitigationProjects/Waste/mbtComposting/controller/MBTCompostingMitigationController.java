@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/mitigation/mbtComposting")
@@ -30,6 +31,16 @@ public class MBTCompostingMitigationController {
         MBTCompostingMitigation mitigation = service.createMBTCompostingMitigation(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "MBT/Aerobic Composting mitigation record created successfully", mitigation));
+    }
+    
+    @Operation(summary = "Update MBT/Aerobic Composting mitigation record",
+               description = "Updates an existing MBT/Aerobic Composting mitigation record and recalculates all derived fields")
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse> updateMBTCompostingMitigation(
+            @PathVariable UUID id,
+            @Valid @RequestBody MBTCompostingMitigationDto dto) {
+        MBTCompostingMitigation mitigation = service.updateMBTCompostingMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(true, "MBT/Aerobic Composting mitigation record updated successfully", mitigation));
     }
     
     @Operation(summary = "Get MBT/Aerobic Composting mitigation records", 
