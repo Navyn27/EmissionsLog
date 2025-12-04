@@ -13,4 +13,6 @@ public interface ISWMMitigationService {
     ISWMMitigation updateISWMMitigation(UUID id, ISWMMitigationDto dto);
     
     List<ISWMMitigation> getAllISWMMitigation(Integer year);
+    
+    void deleteISWMMitigation(UUID id);
 }

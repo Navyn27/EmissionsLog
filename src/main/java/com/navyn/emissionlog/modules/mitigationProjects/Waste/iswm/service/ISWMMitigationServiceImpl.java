@@ -23,19 +23,37 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
     public ISWMMitigation createISWMMitigation(ISWMMitigationDto dto) {
         ISWMMitigation mitigation = new ISWMMitigation();
         
-        // Convert to standard units (tCO₂e)
-        double bauEmissionsInTonnes = dto.getBauEmissionsUnit().toTonnesCO2e(dto.getBauEmissions());
-        double annualReductionInTonnes = dto.getAnnualReductionUnit().toTonnesCO2e(dto.getAnnualReduction());
+        // Convert BAU Emission to standard units (tCO₂e)
+        double bauEmissionInTonnes = dto.getBauEmissionUnit().toTonnesCO2e(dto.getBauEmission());
         
-        // Set user inputs (store in standard units)
+        // Set user inputs
         mitigation.setYear(dto.getYear());
-        mitigation.setBauEmissions(bauEmissionsInTonnes);
-        mitigation.setAnnualReduction(annualReductionInTonnes);
+        mitigation.setWasteProcessed(dto.getWasteProcessed());
+        mitigation.setDegradableOrganicFraction(dto.getDegradableOrganicFraction());
+        mitigation.setLandfillAvoidance(dto.getLandfillAvoidance());
+        mitigation.setCompostingEF(dto.getCompostingEF());
+        mitigation.setBauEmission(bauEmissionInTonnes);
         
-        // Calculation
-        // Adjusted Emissions (tCO₂e) = BAU Emissions (tCO₂e) - Annual Reduction (tCO₂e)
-        Double adjustedEmissions = bauEmissionsInTonnes - annualReductionInTonnes;
-        mitigation.setAdjustedEmissions(adjustedEmissions);
+        // Calculations
+        // DOFDiverted = wasteProcessed * %DegradableOrganicFraction
+        Double dofDiverted = dto.getWasteProcessed() * (dto.getDegradableOrganicFraction() / 100.0);
+        mitigation.setDofDiverted(dofDiverted);
+        
+        // AvoidedLandfill = wasteProcessed * LandfillAvoidance
+        Double avoidedLandfill = dto.getWasteProcessed() * dto.getLandfillAvoidance();
+        mitigation.setAvoidedLandfill(avoidedLandfill);
+        
+        // CompostingEmissions = DOFDiverted * CompostingEF
+        Double compostingEmissions = dofDiverted * dto.getCompostingEF();
+        mitigation.setCompostingEmissions(compostingEmissions);
+        
+        // NetAnnualReduction = (AvoidedLandfill - CompostingEmissions) / 1000
+        Double netAnnualReduction = (avoidedLandfill - compostingEmissions) / 1000.0;
+        mitigation.setNetAnnualReduction(netAnnualReduction);
+        
+        // MitigationScenarioEmission = BauEmission - NetAnnualReduction
+        Double mitigationScenarioEmission = bauEmissionInTonnes - netAnnualReduction;
+        mitigation.setMitigationScenarioEmission(mitigationScenarioEmission);
         
         return repository.save(mitigation);
     }
@@ -45,18 +63,37 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
         ISWMMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("ISWM Mitigation record not found with id: " + id));
         
-        // Convert to standard units (tCO₂e)
-        double bauEmissionsInTonnes = dto.getBauEmissionsUnit().toTonnesCO2e(dto.getBauEmissions());
-        double annualReductionInTonnes = dto.getAnnualReductionUnit().toTonnesCO2e(dto.getAnnualReduction());
+        // Convert BAU Emission to standard units (tCO₂e)
+        double bauEmissionInTonnes = dto.getBauEmissionUnit().toTonnesCO2e(dto.getBauEmission());
         
-        // Update user inputs (store in standard units)
+        // Update user inputs
         mitigation.setYear(dto.getYear());
-        mitigation.setBauEmissions(bauEmissionsInTonnes);
-        mitigation.setAnnualReduction(annualReductionInTonnes);
+        mitigation.setWasteProcessed(dto.getWasteProcessed());
+        mitigation.setDegradableOrganicFraction(dto.getDegradableOrganicFraction());
+        mitigation.setLandfillAvoidance(dto.getLandfillAvoidance());
+        mitigation.setCompostingEF(dto.getCompostingEF());
+        mitigation.setBauEmission(bauEmissionInTonnes);
         
-        // Recalculate derived field
-        Double adjustedEmissions = bauEmissionsInTonnes - annualReductionInTonnes;
-        mitigation.setAdjustedEmissions(adjustedEmissions);
+        // Recalculate all derived fields
+        // DOFDiverted = wasteProcessed * %DegradableOrganicFraction
+        Double dofDiverted = dto.getWasteProcessed() * (dto.getDegradableOrganicFraction() / 100.0);
+        mitigation.setDofDiverted(dofDiverted);
+        
+        // AvoidedLandfill = wasteProcessed * LandfillAvoidance
+        Double avoidedLandfill = dto.getWasteProcessed() * dto.getLandfillAvoidance();
+        mitigation.setAvoidedLandfill(avoidedLandfill);
+        
+        // CompostingEmissions = DOFDiverted * CompostingEF
+        Double compostingEmissions = dofDiverted * dto.getCompostingEF();
+        mitigation.setCompostingEmissions(compostingEmissions);
+        
+        // NetAnnualReduction = (AvoidedLandfill - CompostingEmissions) / 1000
+        Double netAnnualReduction = (avoidedLandfill - compostingEmissions) / 1000.0;
+        mitigation.setNetAnnualReduction(netAnnualReduction);
+        
+        // MitigationScenarioEmission = BauEmission - NetAnnualReduction
+        Double mitigationScenarioEmission = bauEmissionInTonnes - netAnnualReduction;
+        mitigation.setMitigationScenarioEmission(mitigationScenarioEmission);
         
         return repository.save(mitigation);
     }
@@ -65,5 +102,12 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
     public List<ISWMMitigation> getAllISWMMitigation(Integer year) {
         Specification<ISWMMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+    }
+    
+    @Override
+    public void deleteISWMMitigation(UUID id) {
+        ISWMMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("ISWM Mitigation record not found with id: " + id));
+        repository.delete(mitigation);
     }
 }
