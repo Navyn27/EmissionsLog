@@ -10,15 +10,21 @@ public class ISWMMitigationDto {
     @NotNull(message = "Year is required")
     private Integer year;
     
-    @NotNull(message = "BAU Emissions is required")
-    private Double bauEmissions; // tCO₂e
+    @NotNull(message = "Waste Processed is required")
+    private Double wasteProcessed; // tonnes
     
-    @NotNull(message = "BAU emissions unit is required")
-    private EmissionsUnit bauEmissionsUnit;
+    @NotNull(message = "Degradable Organic Fraction is required")
+    private Double degradableOrganicFraction; // percentage (0-100)
     
-    @NotNull(message = "Annual Reduction is required")
-    private Double annualReduction; // tCO₂e
+    @NotNull(message = "Landfill Avoidance is required")
+    private Double landfillAvoidance; // kgCO₂e/tonne
     
-    @NotNull(message = "Annual reduction unit is required")
-    private EmissionsUnit annualReductionUnit;
+    @NotNull(message = "Composting Emission Factor is required")
+    private Double compostingEF; // kgCO₂e/tonne of DOF
+    
+    @NotNull(message = "BAU Emission is required")
+    private Double bauEmission; // tCO₂e
+    
+    @NotNull(message = "BAU emission unit is required")
+    private EmissionsUnit bauEmissionUnit;
 }

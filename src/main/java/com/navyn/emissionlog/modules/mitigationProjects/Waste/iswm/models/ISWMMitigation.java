@@ -21,12 +21,33 @@ public class ISWMMitigation {
     
     // User inputs
     @Column(nullable = false)
-    private Double bauEmissions; // ktCO2e
+    private Double wasteProcessed; // tonnes
     
     @Column(nullable = false)
-    private Double annualReduction; // ktCO2e
+    private Double degradableOrganicFraction; // percentage (0-100)
+    
+    @Column(nullable = false)
+    private Double landfillAvoidance; // kgCO₂e/tonne
+    
+    @Column(nullable = false)
+    private Double compostingEF; // kgCO₂e/tonne of DOF
+    
+    @Column(nullable = false)
+    private Double bauEmission; // tCO₂e
     
     // Calculated fields
     @Column(nullable = false)
-    private Double adjustedEmissions; // ktCO2e
+    private Double dofDiverted; // tonnes
+    
+    @Column(nullable = false)
+    private Double avoidedLandfill; // kgCO₂e
+    
+    @Column(nullable = false)
+    private Double compostingEmissions; // kgCO₂e
+    
+    @Column(nullable = false)
+    private Double netAnnualReduction; // tCO₂e
+    
+    @Column(nullable = false)
+    private Double mitigationScenarioEmission; // tCO₂e
 }
