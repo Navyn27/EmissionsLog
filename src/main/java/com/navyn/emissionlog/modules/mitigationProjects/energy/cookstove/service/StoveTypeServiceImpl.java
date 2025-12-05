@@ -4,6 +4,8 @@ import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.
 import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveMitigationYearRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveTypeRepository;
 import jakarta.transaction.Transactional;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveTypeRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.service.StoveTypeService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

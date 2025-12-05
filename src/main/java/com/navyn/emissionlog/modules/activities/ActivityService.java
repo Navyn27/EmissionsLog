@@ -10,6 +10,7 @@ import com.navyn.emissionlog.modules.activities.dtos.CreateTransportActivityByVe
 import com.navyn.emissionlog.modules.activities.dtos.CreateStationaryActivityDto;
 import com.navyn.emissionlog.modules.activities.dtos.UpdateTransportActivityByFuelDto;
 import com.navyn.emissionlog.modules.activities.dtos.UpdateTransportActivityByVehicleDataDto;
+import com.navyn.emissionlog.modules.activities.dtos.UpdateStationaryActivityDto;
 import com.navyn.emissionlog.utils.DashboardData;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,10 @@ import java.util.UUID;
 @Service
 public interface ActivityService {
     Activity createStationaryActivity(CreateStationaryActivityDto activity);
+
+    Activity updateStationaryActivity(UUID id, UpdateStationaryActivityDto activity);
+
+    void deleteStationaryActivity(UUID id);
 
     void deleteActivity(UUID id);
 
