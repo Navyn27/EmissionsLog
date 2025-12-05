@@ -4,6 +4,7 @@ import com.navyn.emissionlog.modules.mitigationProjects.IPPU.dto.IPPUMitigationD
 import com.navyn.emissionlog.modules.mitigationProjects.IPPU.dto.IPPUMitigationResponseDTO;
 import com.navyn.emissionlog.modules.mitigationProjects.IPPU.model.IPPUMitigation;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -13,4 +14,5 @@ public interface IIPPUService {
     Optional<IPPUMitigation> findById(UUID id);
     void deleteById(UUID id);
     IPPUMitigation update(UUID id, IPPUMitigationDTO ippuMitigationDTO);
+    IPPUMitigationResponseDTO findByYear(int year);
 }

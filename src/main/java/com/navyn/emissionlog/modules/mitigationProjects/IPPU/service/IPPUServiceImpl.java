@@ -50,6 +50,14 @@ public class IPPUServiceImpl implements IIPPUService {
         return iippuRepository.save(ippuMitigation);
     }
 
+    @Override
+    public IPPUMitigationResponseDTO findByYear(int year) {
+        List<IPPUMitigation> mitigations = iippuRepository.findByYear(year);
+        double totalMitigationScenario = calculateTotal(mitigations, "mitigationScenario");
+        double totalReducedEmissionInKtCO2e = calculateTotal(mitigations, "reducedEmissionInKtCO2e");
+        return new IPPUMitigationResponseDTO(mitigations, totalMitigationScenario, totalReducedEmissionInKtCO2e);
+    }
+
     private void updateIPPUMitigationFromDTO(IPPUMitigation ippuMitigation, IPPUMitigationDTO ippuMitigationDTO) {
         ippuMitigation.setYear(ippuMitigationDTO.getYear());
         ippuMitigation.setBau(ippuMitigationDTO.getBau());
