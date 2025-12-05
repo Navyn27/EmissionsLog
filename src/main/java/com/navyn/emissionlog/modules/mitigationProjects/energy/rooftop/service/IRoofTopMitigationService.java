@@ -12,5 +12,5 @@ public interface IRoofTopMitigationService {
     List<RoofTopMitigationResponseDto> getAll();
     RoofTopMitigationResponseDto update(UUID id, RoofTopMitigationDto dto);
     void delete(UUID id);
-    RoofTopMitigationResponseDto getByYear(int year);
+    List<RoofTopMitigationResponseDto> getByYear(int year);
 }

@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/v1/rooftop/mitigations")
+@RequestMapping("/mitigation/rooftops")
 @CrossOrigin
 @SecurityRequirement(name = "BearerAuth")
 public class RoofTopMitigationController {
@@ -40,9 +40,9 @@ public class RoofTopMitigationController {
     }
 
     @GetMapping("/year/{year}")
-    public ResponseEntity<RoofTopMitigationResponseDto> getByYear(@PathVariable int year) {
-        RoofTopMitigationResponseDto response = roofTopMitigationService.getByYear(year);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<List<RoofTopMitigationResponseDto>> getByYear(@PathVariable int year) {
+        List<RoofTopMitigationResponseDto> responses = roofTopMitigationService.getByYear(year);
+        return ResponseEntity.ok(responses);
     }
 
     @PutMapping("/{id}")

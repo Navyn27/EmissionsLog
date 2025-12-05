@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/stove-types")
+@RequestMapping("mitigation/stove-types")
 @SecurityRequirement(name = "BearerAuth")
 public class StoveTypeController {
 
@@ -19,19 +19,16 @@ public class StoveTypeController {
         this.service = service;
     }
 
-    // Create or update stove type
     @PostMapping
-    public StoveType createOrUpdate(@RequestBody StoveType stoveType) {
+    public StoveType create(@RequestBody StoveType stoveType) {
         return service.save(stoveType);
     }
 
-    // Get all stove types
     @GetMapping
     public List<StoveType> getAll() {
         return service.findAll();
     }
 
-    // Get stove type by ID
     @GetMapping("/{id}")
     public ResponseEntity<StoveType> getById(@PathVariable UUID id) {
         return service.findById(id)
@@ -39,7 +36,11 @@ public class StoveTypeController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Delete stove type by ID
+    @PutMapping("/{id}")
+    public ResponseEntity<StoveType> update(@PathVariable UUID id, @RequestBody StoveType stoveType) {
+        return ResponseEntity.ok(service.update(id, stoveType));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable UUID id) {
         service.deleteById(id);

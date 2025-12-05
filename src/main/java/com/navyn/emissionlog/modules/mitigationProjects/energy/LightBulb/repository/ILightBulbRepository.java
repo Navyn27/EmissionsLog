@@ -4,7 +4,9 @@ import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.model.L
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 @Repository
 public interface ILightBulbRepository extends JpaRepository<LightBulb, UUID> {
+    List<LightBulb> findAllByYear(int year);
 }

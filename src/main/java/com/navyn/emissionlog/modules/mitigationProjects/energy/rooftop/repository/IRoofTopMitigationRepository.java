@@ -9,6 +9,7 @@ import java.util.UUID;
 
 public interface IRoofTopMitigationRepository extends JpaRepository<RoofTopMitigation, UUID> {
     Optional<RoofTopMitigation> findByYear(int year);
+    List<RoofTopMitigation> findAllByYear(int year);
     List<RoofTopMitigation> findAllByOrderByYearAsc();
     Optional<RoofTopMitigation> findFirstByYearLessThanOrderByYearDesc(int year);
 }
