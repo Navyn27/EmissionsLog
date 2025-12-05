@@ -1,8 +1,8 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.controller;
+package com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.controller;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.dto.AvoidedElectricityProductionDTO;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.models.AvoidedElectricityProduction;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.waterheat.service.AvoidedElectricityProductionService;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.dto.AvoidedElectricityProductionDTO;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models.AvoidedElectricityProduction;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.service.AvoidedElectricityProductionService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

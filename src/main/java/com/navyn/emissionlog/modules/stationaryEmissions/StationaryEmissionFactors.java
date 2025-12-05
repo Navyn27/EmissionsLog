@@ -43,12 +43,14 @@ public class StationaryEmissionFactors {
     private Double gasBasis = 0.0; // kg CO₂/m³ (for gaseous fuels)
 
     @Column(nullable = false, unique = true)
-    private String checkSum; // Unique checksum for the emission factor to ensure data integrity and avoid over calculation of emissions
+    private String checkSum; // Unique checksum for the emission factor to ensure data integrity and avoid
+                             // over calculation of emissions
 
     @PrePersist
     @PreUpdate
     private void generateCheckSum() throws NoSuchAlgorithmException {
-        this.checkSum = generateHashValue(this.emmission.toString() + this.fuel + this.energyBasis + this.massBasis + this.liquidBasis + this.gasBasis);
+        this.checkSum = generateHashValue(this.emmission.toString() + this.fuel + this.energyBasis + this.massBasis
+                + this.liquidBasis + this.gasBasis);
     }
 
     private String generateHashValue(String data) throws NoSuchAlgorithmException {

@@ -1,7 +1,7 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy.rooftop.service;
+package com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.service;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.rooftop.dto.RoofTopMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.rooftop.dto.RoofTopMitigationResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.dto.RoofTopMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.dto.RoofTopMitigationResponseDto;
 
 import java.util.List;
 import java.util.UUID;
