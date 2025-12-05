@@ -10,4 +10,5 @@ public interface StoveTypeService {
     List<StoveType> findAll();
     Optional<StoveType> findById(UUID id);
     void deleteById(UUID id);
+    StoveType update(UUID id, StoveType stoveType);
 }

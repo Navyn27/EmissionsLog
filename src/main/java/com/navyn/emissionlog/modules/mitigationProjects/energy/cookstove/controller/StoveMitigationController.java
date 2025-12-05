@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/mitigation")
+@RequestMapping("/mitigation/cookstoves")
 @SecurityRequirement(name = "BearerAuth")
 public class StoveMitigationController {
 
@@ -21,51 +21,36 @@ public class StoveMitigationController {
         this.mitigationService = mitigationService;
     }
 
-    /**
-     * Create a new mitigation record based on user input.
-     *
-     * User provides: year, unitsInstalledThisYear, stoveTypeId, bau.
-     */
     @PostMapping
     public StoveMitigationYear create(@RequestBody StoveInstallationDTO request) {
         return mitigationService.createMitigation(request);
     }
 
-    /**
-     * Get all mitigation records.
-     */
     @GetMapping
     public List<StoveMitigationYear> getAll() {
         return mitigationService.findAll();
     }
 
-    /**
-     * Get a mitigation record by its id.
-     */
     @GetMapping("/{id}")
     public ResponseEntity<StoveMitigationYear> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(mitigationService.findById(id));
     }
 
-    /**
-     * Get mitigation records by stove type.
-     */
+    @PutMapping("/{id}")
+    public ResponseEntity<StoveMitigationYear> updateById(@PathVariable UUID id, @RequestBody StoveInstallationDTO request) {
+        return ResponseEntity.ok(mitigationService.updateById(id, request));
+    }
+
     @GetMapping("/stove-type/{stoveTypeId}")
     public List<StoveMitigationYear> getByStoveType(@PathVariable UUID stoveTypeId) {
         return mitigationService.findByStoveType(stoveTypeId);
     }
 
-    /**
-     * Get mitigation records by year.
-     */
     @GetMapping("/year/{year}")
     public List<StoveMitigationYear> getByYear(@PathVariable int year) {
         return mitigationService.findByYear(year);
     }
 
-    /**
-     * Delete a mitigation record.
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         mitigationService.deleteById(id);

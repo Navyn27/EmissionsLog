@@ -24,9 +24,13 @@ import com.navyn.emissionlog.modules.transportEmissions.services.TransportFuelEm
 import com.navyn.emissionlog.modules.transportEmissions.services.TransportVehicleEmissionFactorsService;
 import com.navyn.emissionlog.utils.ExcelReader;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,8 +50,8 @@ public class TransportEmissionFactorsController {
     private final VehicleService vehicleService;
 
     @Operation(summary = "Upload transport emission factors by fuel", description = "This endpoint upload transport emission factors in bulk basing on provided fuel data in an Excel File. The Excel file should contain the following columns: Fuel, Region Group, Fossil CO2 Emission Factor, Biogenic CO2 Emission Factor, Transport Type, Vehicle Engine Type, CH4 Emission Factor, N2O Emission Factor.  The uploaded data is processed and saved to the database.")
-    @PostMapping("/uploadByFuelExcel")
-    public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByFuel(@RequestParam("file") MultipartFile file){
+    @PostMapping(value = "/uploadByFuelExcel", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByFuel(@Parameter(description = "Excel file containing transport emission factors by fuel", required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(type = "string", format = "binary"))) @RequestParam("file") MultipartFile file) {
         try {
             List<TransportFuelEmissionFactorsDto> transportFuelEmissionFactorsDtos = ExcelReader.readExcel(file.getInputStream(), TransportFuelEmissionFactorsDto.class, ExcelType.FUEL_TRANSPORT_EMISSIONS);
             for (TransportFuelEmissionFactorsDto dto : transportFuelEmissionFactorsDtos) {
@@ -55,18 +59,16 @@ public class TransportEmissionFactorsController {
                 //Find fuel
                 Optional<Fuel> fuel = fuelService.getExistingFuel(dto.getFuel(), FuelTypes.valueOf(dto.getFuelType().toUpperCase().replace(' ', '_')));
                 Fuel fuel1;
-                if(fuel.isEmpty()){
+                if (fuel.isEmpty()) {
                     CreateFuelDto fuelDto = new CreateFuelDto();
                     fuelDto.setFuel(dto.getFuel());
                     fuelDto.setFuelTypes(FuelTypes.valueOf(dto.getFuelType()));
                     fuelDto.setFuelSourceType(FuelSourceType.TRANSPORT);
                     fuel1 = fuelService.saveFuel(fuelDto);
-                }
-                else{
-                    if(fuel.get().getFuelSourceTypes().contains(FuelSourceType.TRANSPORT)){
+                } else {
+                    if (fuel.get().getFuelSourceTypes().contains(FuelSourceType.TRANSPORT)) {
                         fuel1 = fuel.get();
-                    }
-                    else {
+                    } else {
                         fuel.get().getFuelSourceTypes().add(FuelSourceType.TRANSPORT);
                         fuel1 = fuelService.updateFuel(fuel.get());
                     }
@@ -78,8 +80,8 @@ public class TransportEmissionFactorsController {
                 transportFuelEmissionFactor.setRegionGroup(RegionGroup.valueOf(dto.getRegionGroup().toUpperCase()));
                 transportFuelEmissionFactor.setFossilCO2EmissionFactor(dto.getFossilCO2EmissionFactor());
                 transportFuelEmissionFactor.setBiogenicCO2EmissionFactor(dto.getBiogenicCO2EmissionFactor());
-                transportFuelEmissionFactor.setTransportType(dto.getTransportType()==null ? null : TransportType.valueOf(dto.getTransportType().toUpperCase().replace(' ', '_')));
-                transportFuelEmissionFactor.setVehicleEngineType(dto.getVehicleEngineType()==null ? null : VehicleEngineType.valueOf(dto.getVehicleEngineType().toUpperCase().replace(' ', '_')));
+                transportFuelEmissionFactor.setTransportType(dto.getTransportType() == null ? null : TransportType.valueOf(dto.getTransportType().toUpperCase().replace(' ', '_')));
+                transportFuelEmissionFactor.setVehicleEngineType(dto.getVehicleEngineType() == null ? null : VehicleEngineType.valueOf(dto.getVehicleEngineType().toUpperCase().replace(' ', '_')));
                 transportFuelEmissionFactor.setCH4EmissionFactor(dto.getCH4EmissionFactor());
                 transportFuelEmissionFactor.setN2OEmissionFactor(dto.getN2OEmissionFactor());
                 transportFuelEmissionFactor.setBasis(EmissionBasis.valueOf(dto.getBasis().toUpperCase().replace(' ', '_')));
@@ -88,39 +90,35 @@ public class TransportEmissionFactorsController {
             }
             ApiResponse response = new ApiResponse(true, "Fuel data uploaded successfully", null);
             return ResponseEntity.status(HttpStatus.OK).body(response);
-        }catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             ApiResponse response = new ApiResponse(false, "Failed to upload fuel data", null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
     }
 
-    @Operation(summary = "Upload transport emission factors by vehicle data", description = "This endpoint uploads tranport emission factors in bulk basing on provided vehicle data in an Excel File. The Excel file should contain the following columns: Vehicle, Vehicle Year, Size, Weight Laden, Fuel, Region Group, CO2 Emission Factor, CH4 Emission Factor, N2O Emission Factor.  The uploaded data is processed and saved to the database.")
-    @PostMapping("/uploadByVehicleData")
-    public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByVehicleData(@RequestParam("file") MultipartFile file){
+    @Operation(summary = "Upload transport emission factors by vehicle data", description = "This endpoint uploads transport emission factors in bulk basing on provided vehicle data in an Excel File. The Excel file should contain the following columns: Vehicle, Vehicle Year, Size, Weight Laden, Fuel, Region Group, CO2 Emission Factor, CH4 Emission Factor, N2O Emission Factor.  The uploaded data is processed and saved to the database.")
+    @PostMapping(value = "/uploadByVehicleData", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByVehicleData(@Parameter(description = "Excel file containing transport emission factors by vehicle data", required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(type = "string", format = "binary"))) @RequestParam("file") MultipartFile file) {
         try {
             List<TransportVehicleDataEmissionFactorsDto> vehicleDataEmissionFactorsDtos = ExcelReader.readExcel(file.getInputStream(), TransportVehicleDataEmissionFactorsDto.class, ExcelType.VEHICLE_DATA_TRANSPORT_EMISSIONS);
-            for(TransportVehicleDataEmissionFactorsDto dto : vehicleDataEmissionFactorsDtos){
+            for (TransportVehicleDataEmissionFactorsDto dto : vehicleDataEmissionFactorsDtos) {
                 TransportVehicleDataEmissionFactors transportVehicleDataEmissionFactors = new TransportVehicleDataEmissionFactors();
 
                 //Find fuel
                 Optional<Fuel> fuel = fuelService.getExistingFuel(dto.getFuel(), FuelTypes.valueOf(dto.getFuelType().toUpperCase().replace(' ', '_')));
                 Fuel fuel1;
-                if(fuel.isEmpty()){
+                if (fuel.isEmpty()) {
                     CreateFuelDto fuelDto = new CreateFuelDto();
                     fuelDto.setFuel(dto.getFuel());
                     fuelDto.setFuelTypes(FuelTypes.valueOf(dto.getFuelType().toUpperCase().replace(' ', '_')));
                     fuelDto.setFuelSourceType(FuelSourceType.TRANSPORT);
                     fuel1 = fuelService.saveFuel(fuelDto);
-                }
-                else{
-                    if(fuel.get().getFuelSourceTypes().contains(FuelSourceType.TRANSPORT)){
+                } else {
+                    if (fuel.get().getFuelSourceTypes().contains(FuelSourceType.TRANSPORT)) {
                         fuel1 = fuel.get();
-                    }
-                    else {
+                    } else {
                         fuel.get().getFuelSourceTypes().add(FuelSourceType.TRANSPORT);
                         fuel1 = fuelService.updateFuel(fuel.get());
                     }
@@ -129,14 +127,14 @@ public class TransportEmissionFactorsController {
                 //find Vehicle
                 Optional<Vehicle> vehicle = vehicleService.getExistingVehicle(dto.getVehicle(), dto.getVehicleYear(), dto.getSize(), dto.getWeightLaden());
                 Vehicle vehicle1;
-                if(vehicle.isEmpty()){
+                if (vehicle.isEmpty()) {
                     vehicle1 = new Vehicle();
                     vehicle1.setVehicle(dto.getVehicle());
                     vehicle1.setVehicleYear(dto.getVehicleYear());
                     vehicle1.setSize(dto.getSize());
                     vehicle1.setWeightLaden(dto.getWeightLaden());
                     vehicle1 = vehicleService.createVehicle(vehicle1);
-                }else{
+                } else {
                     vehicle1 = vehicle.get();
                 }
 
@@ -149,12 +147,9 @@ public class TransportEmissionFactorsController {
                 transportVehicleDataEmissionFactors.setBasis(EmissionBasis.valueOf(dto.getBasis().toUpperCase().replace(' ', '_')));
                 transportVehicleEmissionService.createTransportVehicleEmissionFactors(transportVehicleDataEmissionFactors);
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             ApiResponse response = new ApiResponse(false, "Failed to upload fuel data", null);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
@@ -172,43 +167,45 @@ public class TransportEmissionFactorsController {
 
     @Operation(summary = "Get supported metrics on a particular fuel-regionGroup combination", description = "This endpoint retrieves the supported metrics for a specific fuel and region group combination. It returns a set of metrics that are applicable to the specified fuel and region group.")
     @GetMapping("/supported/metrics/fuel/{fuelId}/{regionGroup}/{transportType}/{vehicleEngineType}")
-    public ResponseEntity<ApiResponse> supportedMetricsForFuel(@PathVariable("fuelId") UUID fuelId, @PathVariable("regionGroup") RegionGroup regionGroup, @PathVariable("TransportType") TransportType transportType, @PathVariable("vehicleEngineType") VehicleEngineType vehicleEngineType) throws BadRequestException {
+    public ResponseEntity<ApiResponse> supportedMetricsForFuel(@PathVariable("fuelId") UUID fuelId, @PathVariable("regionGroup") RegionGroup regionGroup, @PathVariable("transportType") TransportType transportType, @PathVariable("vehicleEngineType") VehicleEngineType vehicleEngineType) {
         HashSet<Metrics> metrics = new HashSet<>();
         Optional<Fuel> fuel = fuelRepository.findById(fuelId);
 
-        if(fuel.isEmpty()){
+        if (fuel.isEmpty()) {
             throw new IllegalArgumentException("Fuel not found");
         }
 
-        Optional<TransportFuelEmissionFactors> transportFuelEmissionFactor = transportFuelEmissionFactorsService.findByFuelAndRegionGroupAndTransportTypeAndVehicleEngineType(fuel.get(), regionGroup, transportType, vehicleEngineType);
-        if(transportFuelEmissionFactor.isEmpty()){
+        // Find ALL matching emission factors with wildcard support (not just the best one)
+        // This allows us to return all available metrics for the given combination
+        List<TransportFuelEmissionFactors> matchingFactors = transportFuelEmissionFactorsService.findAllMatchingWithWildcardSupport(
+                fuel.get(), regionGroup, transportType, vehicleEngineType);
+
+        if (matchingFactors.isEmpty()) {
             throw new IllegalArgumentException("Transport emission factors for selection not found");
         }
 
-        switch (transportFuelEmissionFactor.get().getBasis()){
-            case MASS:
-//                if(fuel.get().getLiquidDensity() != 0.0 || fuel.get().getGasDensity() != 0.0) {
-//                    metrics.add(Metrics.VOLUME);
-//                }
-                metrics.add(Metrics.MASS);
-                break;
-            case LIQUID, GASEOUS:
-//                if(fuel.get().getLiquidDensity() != 0.0 || fuel.get().getGasDensity() != 0.0) {
-//                    metrics.add(Metrics.MASS);
-//                }
-                metrics.add(Metrics.VOLUME);
-                break;
-            case DISTANCE:
-                metrics.add(Metrics.DISTANCE);
-                break;
-            case ENERGY:
-                metrics.add(Metrics.ENERGY);
-                break;
-            default:
-                break;
+        // Map each EmissionBasis to its corresponding Metric and collect all unique metrics
+        for (TransportFuelEmissionFactors factor : matchingFactors) {
+            EmissionBasis basis = factor.getBasis();
+            switch (basis) {
+                case MASS:
+                    metrics.add(Metrics.MASS);
+                    break;
+                case LIQUID:
+                case GASEOUS:
+                case VOLUME:
+                    metrics.add(Metrics.VOLUME);
+                    break;
+                case DISTANCE:
+                    metrics.add(Metrics.DISTANCE);
+                    break;
+                case ENERGY:
+                    metrics.add(Metrics.ENERGY);
+                    break;
+                default:
+                    break;
+            }
         }
-
-
 
         return ResponseEntity.ok(
                 new ApiResponse(true, "Supported metrics for fuel fetched successfully", metrics)
@@ -217,35 +214,86 @@ public class TransportEmissionFactorsController {
 
 
     //supported fuel states
-    @Operation(summary = "Get supported fuel states for a specific fuel", description = "This endpoint retrieves the supported fuel states for a specific fuel based on its ID. It returns a list of fuel states that are applicable to the specified fuel.")
-    @GetMapping("/supported/fuelStates/fuel/{fuelId}/{metric}")
-    public ResponseEntity<ApiResponse> supportedFuelStatesForFuel(@PathVariable("fuelId") UUID fuelId, @PathVariable("metric") Metrics metric) throws BadRequestException {
+    @Operation(summary = "Get supported fuel states for a specific fuel", description = "This endpoint retrieves the supported fuel states for a specific fuel based on its ID, region group, transport type, vehicle engine type, and metric. It returns a list of fuel states that are applicable based on the emission factors and the specified metric.")
+    @GetMapping("/supported/fuelStates/fuel/{fuelId}/{regionGroup}/{transportType}/{vehicleEngineType}/{metric}")
+    public ResponseEntity<ApiResponse> supportedFuelStatesForFuel(@PathVariable("fuelId") UUID fuelId, @PathVariable("regionGroup") RegionGroup regionGroup, @PathVariable("transportType") TransportType transportType, @PathVariable("vehicleEngineType") VehicleEngineType vehicleEngineType, @PathVariable("metric") Metrics metric) throws BadRequestException {
         Optional<Fuel> fuel = fuelRepository.findById(fuelId);
-        List<FuelStates> supportedFuelStates = new ArrayList<>();
+        HashSet<FuelStates> supportedFuelStates = new HashSet<>();
 
-        if(fuel.isEmpty()){
+        if (fuel.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     new ApiResponse(false, "Fuel not found", null)
             );
         }
 
-        switch (metric){
-            case MASS:
-                supportedFuelStates.add(FuelStates.SOLID);
-                break;
-            case VOLUME:
-                supportedFuelStates.add(FuelStates.LIQUID);
-                supportedFuelStates.add(FuelStates.GASEOUS);
-                break;
-            case ENERGY:
-                supportedFuelStates.add(FuelStates.ENERGY);
-            default:
-                break;
+        // Find ALL matching emission factors with wildcard support
+        List<TransportFuelEmissionFactors> matchingFactors = transportFuelEmissionFactorsService.findAllMatchingWithWildcardSupport(
+                fuel.get(), regionGroup, transportType, vehicleEngineType);
 
+        if (matchingFactors.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse(false, "Transport emission factors for selection not found", null)
+            );
+        }
+
+        // Filter factors to only those whose basis maps to the requested metric
+        // Then determine fuel states based on the matching emission factors' bases
+        for (TransportFuelEmissionFactors factor : matchingFactors) {
+            EmissionBasis basis = factor.getBasis();
+
+            // Check if this basis maps to the requested metric
+            boolean matchesMetric = switch (basis) {
+                case MASS -> (metric == Metrics.MASS);
+                case LIQUID, GASEOUS, VOLUME -> (metric == Metrics.VOLUME);
+                case DISTANCE -> (metric == Metrics.DISTANCE);
+                case ENERGY -> (metric == Metrics.ENERGY);
+            };
+
+            // Only process factors that match the requested metric
+            if (!matchesMetric) {
+                continue;
+            }
+
+            // Determine fuel states based on the emission factor's basis
+            switch (basis) {
+                case MASS:
+                    supportedFuelStates.add(FuelStates.SOLID);
+                    break;
+                case LIQUID:
+                    supportedFuelStates.add(FuelStates.LIQUID);
+                    break;
+                case GASEOUS:
+                    supportedFuelStates.add(FuelStates.GASEOUS);
+                    break;
+                case VOLUME:
+                    // VOLUME basis can support both liquid and gaseous states
+                    supportedFuelStates.add(FuelStates.LIQUID);
+                    supportedFuelStates.add(FuelStates.GASEOUS);
+                    break;
+                case ENERGY:
+                    supportedFuelStates.add(FuelStates.ENERGY);
+                    break;
+                case DISTANCE:
+                    // Distance-based emissions don't have a direct fuel state mapping
+                    // Check fuel properties to determine possible states
+                    if (fuel.get().getLiquidDensity() != null && fuel.get().getLiquidDensity() > 0.0) {
+                        supportedFuelStates.add(FuelStates.LIQUID);
+                    }
+                    if (fuel.get().getGasDensity() != null && fuel.get().getGasDensity() > 0.0) {
+                        supportedFuelStates.add(FuelStates.GASEOUS);
+                    }
+                    if ((fuel.get().getLiquidDensity() == null || fuel.get().getLiquidDensity() == 0.0) &&
+                            (fuel.get().getGasDensity() == null || fuel.get().getGasDensity() == 0.0)) {
+                        supportedFuelStates.add(FuelStates.SOLID);
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
 
         return ResponseEntity.ok(
-                new ApiResponse(true, "Supported fuels states fetched successfully", supportedFuelStates)
+                new ApiResponse(true, "Supported fuel states fetched successfully", new ArrayList<>(supportedFuelStates))
         );
     }
 
@@ -255,15 +303,15 @@ public class TransportEmissionFactorsController {
         Optional<Fuel> fuels = fuelRepository.findById(fuelId);
         List<RegionGroup> supportedRegionGroups = new ArrayList<>();
 
-        if(fuels.isEmpty()){
+        if (fuels.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     new ApiResponse(false, "Fuel not found", null)
             );
         }
 
         List<TransportFuelEmissionFactors> transportFuelEmissionFactors = transportFuelEmissionFactorsService.findByFuel(fuels.get().getId());
-        for(TransportFuelEmissionFactors factor : transportFuelEmissionFactors){
-            if(!supportedRegionGroups.contains(factor.getRegionGroup())){
+        for (TransportFuelEmissionFactors factor : transportFuelEmissionFactors) {
+            if (!supportedRegionGroups.contains(factor.getRegionGroup())) {
                 supportedRegionGroups.add(factor.getRegionGroup());
             }
         }
@@ -279,16 +327,16 @@ public class TransportEmissionFactorsController {
         Optional<Fuel> fuels = fuelRepository.findById(fuelId);
         List<TransportType> supportedTransportTypes = new ArrayList<>();
 
-        if(fuels.isEmpty()){
+        if (fuels.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     new ApiResponse(false, "Fuel not found", null)
             );
         }
 
         List<TransportFuelEmissionFactors> transportFuelEmissionFactors = transportFuelEmissionFactorsService.findByFuel(fuels.get().getId());
-        for(TransportFuelEmissionFactors factor : transportFuelEmissionFactors){
+        for (TransportFuelEmissionFactors factor : transportFuelEmissionFactors) {
             // Include records that match the region (no filtering by transport type yet)
-            if(!supportedTransportTypes.contains(factor.getTransportType()) && factor.getRegionGroup().equals(regionGroup)){
+            if (!supportedTransportTypes.contains(factor.getTransportType()) && factor.getRegionGroup().equals(regionGroup)) {
                 supportedTransportTypes.add(factor.getTransportType());
             }
         }
@@ -301,23 +349,23 @@ public class TransportEmissionFactorsController {
     @Operation(summary = "Get supported vehicle/engine types for a specific fuel", description = "This endpoint retrieves the supported vehicle/engine types for a specific fuel based on its ID. It returns a list of vehicle engine types that are applicable to the specified fuel, including ANY wildcard values.")
     @GetMapping("/supported/vehicleEngineType/{fuelId}/{regionGroup}/{transportType}")
     public ResponseEntity<ApiResponse> supportedFuelsForVehicleEngineType(@PathVariable("fuelId") UUID fuelId, @PathVariable("regionGroup") RegionGroup regionGroup, @PathVariable("transportType") TransportType transportType) throws BadRequestException {
-       Optional<Fuel> fuels = fuelRepository.findById(fuelId);
+        Optional<Fuel> fuels = fuelRepository.findById(fuelId);
         List<VehicleEngineType> supportedVehicleEngineTypes = new ArrayList<>();
 
-        if(fuels.isEmpty()){
+        if (fuels.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     new ApiResponse(false, "Fuel not found", null)
             );
         }
 
         List<TransportFuelEmissionFactors> transportFuelEmissionFactors = transportFuelEmissionFactorsService.findByFuel(fuels.get().getId());
-        for(TransportFuelEmissionFactors factor : transportFuelEmissionFactors){
+        for (TransportFuelEmissionFactors factor : transportFuelEmissionFactors) {
             // Include records where:
             // 1. Region matches exactly
             // 2. TransportType is ANY (wildcard) OR matches exactly
-            if(!supportedVehicleEngineTypes.contains(factor.getVehicleEngineType()) 
-                && factor.getRegionGroup().equals(regionGroup) 
-                && (factor.getTransportType() == TransportType.ANY || factor.getTransportType().equals(transportType))){
+            if (!supportedVehicleEngineTypes.contains(factor.getVehicleEngineType())
+                    && factor.getRegionGroup().equals(regionGroup)
+                    && (factor.getTransportType() == TransportType.ANY || factor.getTransportType().equals(transportType))) {
                 supportedVehicleEngineTypes.add(factor.getVehicleEngineType());
             }
         }
@@ -329,7 +377,7 @@ public class TransportEmissionFactorsController {
 
     @Operation(summary = "Get all mobile activity data types", description = "This endpoint retrieves all mobile activity data types. It returns a list of all supported mobile activity data types.")
     @GetMapping("/mobileActivityDataTypes")
-    public ResponseEntity<ApiResponse> getAllMobileActivityDataTypes(){
+    public ResponseEntity<ApiResponse> getAllMobileActivityDataTypes() {
         return ResponseEntity.ok(
                 new ApiResponse(true, "Mobile activity data types fetched successfully", MobileActivityDataType.values()));
     }

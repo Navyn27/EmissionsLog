@@ -1,6 +1,9 @@
 package com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.service;
 
 import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveType;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveMitigationYearRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveTypeRepository;
+import jakarta.transaction.Transactional;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveTypeRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.service.StoveTypeService;
 import org.springframework.stereotype.Service;
@@ -13,9 +16,12 @@ import java.util.UUID;
 public class StoveTypeServiceImpl implements StoveTypeService {
 
     private final StoveTypeRepository repository;
+    private final StoveMitigationYearRepository mitigationYearRepository;
 
-    public StoveTypeServiceImpl(StoveTypeRepository repository) {
+
+    public StoveTypeServiceImpl(StoveTypeRepository repository, StoveMitigationYearRepository mitigationYearRepository) {
         this.repository = repository;
+        this.mitigationYearRepository = mitigationYearRepository;
     }
 
     @Override
@@ -34,7 +40,18 @@ public class StoveTypeServiceImpl implements StoveTypeService {
     }
 
     @Override
+    @Transactional
     public void deleteById(UUID id) {
+        mitigationYearRepository.deleteAll(mitigationYearRepository.findByStoveTypeId(id));
         repository.deleteById(id);
+    }
+
+    @Override
+    public StoveType update(UUID id, StoveType stoveType) {
+        StoveType existingStoveType = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("StoveType not found with id: " + id));
+        existingStoveType.setName(stoveType.getName());
+        existingStoveType.setBaselinePercentage(stoveType.getBaselinePercentage());
+        return repository.save(existingStoveType);
     }
 }

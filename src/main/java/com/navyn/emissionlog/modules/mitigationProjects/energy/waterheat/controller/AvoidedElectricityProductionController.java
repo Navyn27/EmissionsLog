@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/avoided-electricity-production")
+@RequestMapping("/mitigation/avoided-electricity-production")
 @SecurityRequirement(name = "BearerAuth")
 public class AvoidedElectricityProductionController {
 
@@ -22,11 +22,17 @@ public class AvoidedElectricityProductionController {
         this.service = service;
     }
 
-    // CREATE using DTO
     @PostMapping
     public ResponseEntity<AvoidedElectricityProduction> create(
             @Valid @RequestBody AvoidedElectricityProductionDTO dto) {
         return ResponseEntity.ok(service.createFromDTO(dto));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<AvoidedElectricityProduction> update(
+            @PathVariable UUID id,
+            @Valid @RequestBody AvoidedElectricityProductionDTO dto) {
+        return ResponseEntity.ok(service.updateFromDTO(id, dto));
     }
 
     @GetMapping
@@ -38,6 +44,11 @@ public class AvoidedElectricityProductionController {
     public ResponseEntity<AvoidedElectricityProduction> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(service.getById(id));
     }
+    @GetMapping("/year/{year}")
+    public ResponseEntity<List<AvoidedElectricityProduction>> getByYear(@PathVariable int year) {
+        return ResponseEntity.ok(service.getByYear(year));
+    }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable UUID id) {

@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/ippu-mitigations")
+@RequestMapping("/mitigation/ippu")
 @AllArgsConstructor
 @SecurityRequirement(name = "BearerAuth")
 @Tag(name = "IPPU Mitigation Projects", description = "APIs for managing IPPU (Industrial Processes and Product Use) mitigation projects related to F-gases.")

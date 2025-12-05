@@ -13,4 +13,6 @@ public interface ILightBulbService {
     LightBulb getById(UUID id);
     LightBulb update(UUID id, UpdateLightBulbDTO lightBulbDTO);
     void delete(UUID id);
+
+    List<LightBulb> getByYear(int year);
 }

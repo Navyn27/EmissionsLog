@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.controller;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models.WaterHeatParameter;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.service.WaterHeatParameterService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -8,8 +9,9 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/water-heat-parameters")
+@RequestMapping("/mitigation/water-heat-parameters")
 @CrossOrigin
+@SecurityRequirement(name = "BearerAuth")
 public class WaterHeatParameterController {
 
     private final WaterHeatParameterService service;

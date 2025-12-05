@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -112,14 +113,19 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
     }
 
     @Override
-    public RoofTopMitigationResponseDto getByYear(int year) {
-        RoofTopMitigation mitigation = mitigationRepository.findByYear(year)
-                .orElseThrow(() -> new EntityNotFoundException("RoofTopMitigation not found for year: " + year));
+    public List<RoofTopMitigationResponseDto> getByYear(int year) {
+        List<RoofTopMitigation> mitigations = mitigationRepository.findAllByYear(year);
+        if (mitigations.isEmpty()) {
+            return Collections.emptyList();
+        }
 
         RoofTopParameter parameter = getLatestParameter();
-        calculateAllFields(mitigation, parameter);
-
-        return mapEntityToResponseDto(mitigation);
+        return mitigations.stream()
+                .map(mitigation -> {
+                    calculateAllFields(mitigation, parameter);
+                    return mapEntityToResponseDto(mitigation);
+                })
+                .collect(Collectors.toList());
     }
 
     private RoofTopParameter getLatestParameter() {
@@ -242,8 +248,4 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
         dto.setUpdatedAt(entity.getUpdatedAt());
         return dto;
     }
-
-//    private double roundValue(double value) {
-//        return (double) Math.round(value);
-//    }
 }

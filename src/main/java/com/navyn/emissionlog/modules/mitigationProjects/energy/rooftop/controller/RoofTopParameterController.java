@@ -15,7 +15,7 @@ import java.util.UUID;
 
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/v1/rooftop/parameters")
+@RequestMapping("/mitigation/rooftop/parameters")
 @CrossOrigin
 @SecurityRequirement(name = "BearerAuth")
 public class RoofTopParameterController {

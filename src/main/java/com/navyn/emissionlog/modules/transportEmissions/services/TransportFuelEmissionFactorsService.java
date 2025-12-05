@@ -39,6 +39,19 @@ public interface TransportFuelEmissionFactorsService {
     Optional<TransportFuelEmissionFactors> findBestMatchWithWildcardSupport(
             Fuel fuel, RegionGroup regionGroup, TransportType transportType, VehicleEngineType vehicleEngineType);
 
+    /**
+     * Finds all matching emission factors with wildcard support for "ANY" values.
+     * Returns all factors that match the criteria, including those with ANY wildcards.
+     * 
+     * @param fuel The fuel to match
+     * @param regionGroup The region group to match
+     * @param transportType The transport type to match (supports ANY wildcard)
+     * @param vehicleEngineType The vehicle engine type to match (supports ANY wildcard)
+     * @return List of all matching emission factors, or empty list if no matches found
+     */
+    List<TransportFuelEmissionFactors> findAllMatchingWithWildcardSupport(
+            Fuel fuel, RegionGroup regionGroup, TransportType transportType, VehicleEngineType vehicleEngineType);
+
     // Update
     TransportFuelEmissionFactors updateTransportFuelEmissionFactors(TransportFuelEmissionFactors transportFuelEmissionFactors);
 

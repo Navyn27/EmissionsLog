@@ -75,20 +75,29 @@ public class TransportFuelEmissionFactorsServiceImpl implements TransportFuelEmi
         
         // Sort by specificity: prefer exact matches over ANY wildcards
         // Higher score = more specific = preferred
-        return matches.stream()
-            .sorted(Comparator.comparingInt(this::calculateSpecificity).reversed())
-            .findFirst();
+        return matches.stream().max(Comparator.comparingInt(this::calculateSpecificity));
+    }
+
+    @Override
+    public List<TransportFuelEmissionFactors> findAllMatchingWithWildcardSupport(
+            Fuel fuel, RegionGroup regionGroup, TransportType transportType, VehicleEngineType vehicleEngineType) {
+        
+        // Use specification to find all matching factors (including ANY wildcards)
+        Specification<TransportFuelEmissionFactors> spec = 
+            TransportEmissionFactorSpecifications.matchesFlexibly(fuel, regionGroup, transportType, vehicleEngineType);
+        
+        return transportFuelEmissionFactorsRepository.findAll(spec);
     }
 
     /**
      * Calculates specificity score for an emission factor.
      * Higher score = more specific match = preferred.
-     * 
+     * <p>
      * Scoring:
      * - Exact TransportType match: +2 points
      * - Exact VehicleEngineType match: +1 point
      * - ANY values: 0 points
-     * 
+     * <p>
      * Examples:
      * - (MARINE, FOUR_STROKE) = 3 points (most specific)
      * - (MARINE, ANY) = 2 points
@@ -103,7 +112,7 @@ public class TransportFuelEmissionFactorsServiceImpl implements TransportFuelEmi
             score += 2;
         }
         
-        // VehicleEngineType: exact match gets lower priority than transport type
+        // VehicleEngineType: exact match gets lower priority than a transport type
         if (factor.getVehicleEngineType() != null && factor.getVehicleEngineType() != VehicleEngineType.ANY) {
             score += 1;
         }

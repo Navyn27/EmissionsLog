@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/mitigation/lightBulb")
+@RequestMapping("/mitigation/lightBulb")
 @SecurityRequirement(name = "BearerAuth")
 @AllArgsConstructor
 public class LightBulbController {
@@ -52,6 +52,16 @@ public class LightBulbController {
         LightBulb lightBulb = lightBulbService.getById(id);
         return new ResponseEntity<>(lightBulb, HttpStatus.OK);
     }
+    @GetMapping("year/{year}")
+    @Operation(summary = "Get a LightBulbs entry by year")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Found the LightBulb entry"),
+    })
+    public ResponseEntity<List<LightBulb>> getBYear(@PathVariable int year) {
+        List<LightBulb> lightBulb = lightBulbService.getByYear(year);
+        return new ResponseEntity<>(lightBulb, HttpStatus.OK);
+    }
+
 
     @PutMapping("/{id}")
     @Operation(summary = "Update a LightBulb entry")

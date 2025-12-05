@@ -6,6 +6,7 @@ import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models.
 import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.repository.AvoidedElectricityProductionRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.repository.WaterHeatParameterRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,36 +27,39 @@ public class AvoidedElectricityProductionService {
         this.emissionFactorService = emissionFactorService;
     }
 
-    // CREATE using DTO
+    @Transactional
     public AvoidedElectricityProduction createFromDTO(AvoidedElectricityProductionDTO dto) {
+        return calculateAndSave(new AvoidedElectricityProduction(), dto);
+    }
 
-        // 1️⃣ Fetch WaterHeatParameter
+    @Transactional
+    public AvoidedElectricityProduction updateFromDTO(UUID id, AvoidedElectricityProductionDTO dto) {
+        AvoidedElectricityProduction existing = getById(id);
+        return calculateAndSave(existing, dto);
+    }
+
+    private AvoidedElectricityProduction calculateAndSave(AvoidedElectricityProduction aep, AvoidedElectricityProductionDTO dto) {
         WaterHeatParameter param = paramRepository.findById(dto.getWaterHeatParameterId())
                 .orElseThrow(() -> new RuntimeException("WaterHeatParameter not found with id " + dto.getWaterHeatParameterId()));
 
-        // 2️⃣ Calculate cumulativeUnitsInstalled
         int lastCumulative = repository.findAll().stream()
+                .filter(record -> !record.getId().equals(aep.getId())) // Exclude current record from calculation
                 .mapToInt(AvoidedElectricityProduction::getCumulativeUnitsInstalled)
                 .max()
                 .orElse(0);
 
         int cumulativeUnits = lastCumulative + dto.getUnitsInstalledThisYear();
 
-        // 3️⃣ Create entity (calculates annual & cumulative avoided electricity)
-        AvoidedElectricityProduction aep = new AvoidedElectricityProduction(
-                dto.getYear(),
-                dto.getUnitsInstalledThisYear(),
-                cumulativeUnits,
-                param
-        );
+        aep.setYear(dto.getYear());
+        aep.setUnitsInstalledThisYear(dto.getUnitsInstalledThisYear());
+        aep.setCumulativeUnitsInstalled(cumulativeUnits);
+        aep.setAnnualAvoidedElectricity(dto.getUnitsInstalledThisYear() * param.getAvoidedElectricityPerHousehold());
+        aep.setCumulativeAvoidedElectricity(cumulativeUnits * param.getAvoidedElectricityPerHousehold());
 
-        // 4️⃣ Get grid emission factor
         Double factor = emissionFactorService.getFactor(dto.getYear());
 
         if (factor != null) {
-            double cumAvoided = aep.getCumulativeAvoidedElectricity(); // MWh
-
-            // 5️⃣ APPLY CORRECT FORMULA
+            double cumAvoided = aep.getCumulativeAvoidedElectricity();
             double denominator = (0.9 * 1000) - (0.003 * cumAvoided);
 
             if (denominator <= 0) {
@@ -63,8 +67,9 @@ public class AvoidedElectricityProductionService {
             }
 
             double netGHG = (cumAvoided * factor) / denominator;
-
             aep.setNetGhGMitigation(netGHG);
+        } else {
+            aep.setNetGhGMitigation(null);
         }
 
         return repository.save(aep);
@@ -81,5 +86,9 @@ public class AvoidedElectricityProductionService {
 
     public void delete(UUID id) {
         repository.deleteById(id);
+    }
+
+    public List<AvoidedElectricityProduction> getByYear(int year) {
+        return  repository.findAllByYear(year);
     }
 }
