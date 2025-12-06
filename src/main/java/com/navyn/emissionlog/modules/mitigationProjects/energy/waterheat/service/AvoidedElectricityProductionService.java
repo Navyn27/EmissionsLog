@@ -49,6 +49,7 @@ public class AvoidedElectricityProductionService {
                 cumulativeUnits,
                 param
         );
+        aep.setCumulativeAvoidedElectricity(cumulativeUnits * param.getAvoidedElectricityPerHousehold());
 
         // 4️⃣ Get grid emission factor
         Double factor = emissionFactorService.getFactor(dto.getYear());
