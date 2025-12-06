@@ -71,6 +71,20 @@ public class IPPUController {
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @Operation(summary = "Get all IPPU mitigation entries for a specific year with totals",
+            description = "Retrieves a list of all IPPU mitigation records for a given year, along with the sum of all 'mitigationScenario' and 'reducedEmissionInKtCO2e' values.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved the list and totals",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = IPPUMitigationResponseDTO.class)))
+    })
+    @GetMapping("/year/{year}")
+    public ResponseEntity<IPPUMitigationResponseDTO> getByYear(
+            @Parameter(description = "Year to filter IPPU mitigation entries") @PathVariable int year) {
+        IPPUMitigationResponseDTO response = iippuService.findByYear(year);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
     @Operation(summary = "Update an IPPU mitigation entry",
             description = "Updates an existing IPPU mitigation record and recalculates the emissions values.")
     @ApiResponses(value = {
