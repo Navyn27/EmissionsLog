@@ -23,11 +23,15 @@ public class AvoidedElectricityProduction {
     )
     @Column(updatable = false, nullable = false)
     private UUID id;
-
+    @Column
     private int year;
+    @Column
     private int unitsInstalledThisYear;
+    @Column
     private int cumulativeUnitsInstalled;
+    @Column
     private double annualAvoidedElectricity;      // MWh
+    @Column
     private double cumulativeAvoidedElectricity;  // MWh
 
     private Double netGhGMitigation;              // tCO2, NEW

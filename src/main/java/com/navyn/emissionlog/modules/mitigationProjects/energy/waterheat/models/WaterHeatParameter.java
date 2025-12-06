@@ -36,6 +36,8 @@ public class WaterHeatParameter {
 
     @Column(nullable = false)
     private int specificHeatWater;
+    @Column
+    private  double avoidedElectricityPerHousehold;
 
     @Transient
     public double getAvoidedElectricityPerHousehold() {
