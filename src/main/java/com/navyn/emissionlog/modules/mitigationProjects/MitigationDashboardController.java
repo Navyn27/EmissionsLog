@@ -16,7 +16,8 @@ public class MitigationDashboardController {
     
     private final MitigationDashboardService mitigationDashboardService;
     
-    @Operation(summary = "Get Mitigation dashboard summary", description = "Retrieves mitigation summary from all 17 projects (10 AFOLU + 7 Waste) plus Transport Scenarios.")
+    @Operation(summary = "Get Mitigation dashboard summary", 
+               description = "Returns Total CO2eq Emissions, Total Mitigation (from all 17 projects + Transport Scenarios), Net Emissions, and Percentage Reduction")
     @GetMapping("/dashboard/summary")
     public ResponseEntity<ApiResponse> getMitigationDashboardSummary(
             @RequestParam(required = false, value = "startingYear") Integer startingYear,
@@ -26,7 +27,8 @@ public class MitigationDashboardController {
                         mitigationDashboardService.getMitigationDashboardSummary(startingYear, endingYear)));
     }
     
-    @Operation(summary = "Get Mitigation dashboard graph", description = "Retrieves mitigation projects graph data by year.")
+    @Operation(summary = "Get Mitigation dashboard graph", 
+               description = "Returns yearly breakdown with Total CO2eq Emissions, Total Mitigation, Net Emissions, and Percentage Reduction per year")
     @GetMapping("/dashboard/graph")
     public ResponseEntity<ApiResponse> getMitigationDashboardGraph(
             @RequestParam(required = false, value = "startingYear") Integer startingYear,

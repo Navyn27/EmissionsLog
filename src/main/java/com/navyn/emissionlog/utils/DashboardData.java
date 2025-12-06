@@ -26,6 +26,9 @@ public class DashboardData {
     // Net Emissions
     Double netEmissionsKtCO2e = 0.0;  // Gross emissions - Mitigation
     
+    // Percentage Reduction
+    Double percentageReduction = 0.0;  // (Mitigation / Gross) * 100
+    
     String startingDate;
     String endingDate;
     Month month;

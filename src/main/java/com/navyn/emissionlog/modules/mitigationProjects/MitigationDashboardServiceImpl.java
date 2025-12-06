@@ -39,6 +39,7 @@ import com.navyn.emissionlog.modules.transportScenarios.repositories.TransportSc
 import com.navyn.emissionlog.modules.transportScenarios.services.TransportScenarioService;
 import com.navyn.emissionlog.modules.transportScenarios.dtos.TransportScenarioRunResponseDto;
 import com.navyn.emissionlog.modules.transportScenarios.dtos.TransportScenarioYearResultDto;
+import com.navyn.emissionlog.modules.dashboard.DashboardService;
 import com.navyn.emissionlog.utils.DashboardData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -74,6 +75,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
     private final ISWMMitigationRepository iswmRepository;
     private final TransportScenarioRepository transportScenarioRepository;
     private final TransportScenarioService transportScenarioService;
+    private final DashboardService dashboardService;
     
     @Override
     public DashboardData getMitigationDashboardSummary(Integer startingYear, Integer endingYear) {
@@ -152,8 +154,25 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
                 .toList();
         }
         
-        return calculateMitigationDashboardData(wetlandParks, settlementTrees, streetTrees, 
+        DashboardData mitigationData = calculateMitigationDashboardData(wetlandParks, settlementTrees, streetTrees, 
                 greenFences, cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread, wasteToEnergy, landfillGasUtilization, mbtComposting, eprPlasticWaste, kigaliFSTP, kigaliWWTP, iswm, transportScenarios, startingYear, endingYear);
+        
+        // Get gross emissions from main dashboard
+        DashboardData mainDashboard = dashboardService.getMainDashboard(startingYear, endingYear);
+        if (mainDashboard != null) {
+            mitigationData.setTotalCO2EqEmissions(mainDashboard.getTotalCO2EqEmissions());
+            
+            // Calculate net emissions and percentage reduction
+            double grossEmissions = mainDashboard.getTotalCO2EqEmissions();
+            double totalMitigation = mitigationData.getTotalMitigationKtCO2e() != null ? mitigationData.getTotalMitigationKtCO2e() : 0.0;
+            double netEmissions = grossEmissions - totalMitigation;
+            double percentageReduction = grossEmissions > 0 ? (totalMitigation / grossEmissions) * 100.0 : 0.0;
+            
+            mitigationData.setNetEmissionsKtCO2e(netEmissions);
+            mitigationData.setPercentageReduction(percentageReduction);
+        }
+        
+        return mitigationData;
     }
     
     @Override
@@ -287,6 +306,21 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
                 year,
                 year
             );
+            
+            // Get gross emissions for this year and calculate net emissions and percentage
+            DashboardData yearMainDashboard = dashboardService.getMainDashboard(year, year);
+            if (yearMainDashboard != null) {
+                data.setTotalCO2EqEmissions(yearMainDashboard.getTotalCO2EqEmissions());
+                
+                double grossEmissions = yearMainDashboard.getTotalCO2EqEmissions();
+                double totalMitigation = data.getTotalMitigationKtCO2e() != null ? data.getTotalMitigationKtCO2e() : 0.0;
+                double netEmissions = grossEmissions - totalMitigation;
+                double percentageReduction = grossEmissions > 0 ? (totalMitigation / grossEmissions) * 100.0 : 0.0;
+                
+                data.setNetEmissionsKtCO2e(netEmissions);
+                data.setPercentageReduction(percentageReduction);
+            }
+            
             data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
             data.setEndingDate(LocalDateTime.of(year, 12, 31, 23, 59).toString());
             data.setYear(Year.of(year));
