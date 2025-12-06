@@ -1,6 +1,5 @@
 package com.navyn.emissionlog.modules.transportScenarios.services;
 
-import com.navyn.emissionlog.modules.mitigationProjects.transportScenarios.dtos.*;
 import com.navyn.emissionlog.modules.transportScenarios.dtos.*;
 
 import java.util.List;
