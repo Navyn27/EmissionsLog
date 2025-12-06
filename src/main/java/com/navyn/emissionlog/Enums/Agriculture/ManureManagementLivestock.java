@@ -1,16 +1,12 @@
 package com.navyn.emissionlog.Enums.Agriculture;
 
 public enum ManureManagementLivestock {
-    DAIRY_CATTLE,
-    NON_DAIRY_CATTLE,
-    BUFFALO,
-    SWINE,
+    DAIRY_COWS_LACTATING,
+    DAIRY_COWS_OTHER_MATURE,
+    DAIRY_COWS_GROWING,
     SHEEP,
     GOATS,
-    CAMELS,
-    HORSES,
-    MULES_ASSES,
-    POULTRY_CHICKEN,
-    POULTRY_DUCKS,
-    POULTRY_TURKEYS
+    SWINE,
+    POULTRY,
+    RABBITS
 }
