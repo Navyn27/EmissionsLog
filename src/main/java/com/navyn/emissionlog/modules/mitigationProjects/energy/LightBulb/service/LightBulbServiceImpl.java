@@ -4,12 +4,10 @@ import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.Cre
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.UpdateLightBulbDTO;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.model.LightBulb;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.repository.ILightBulbRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.model.RoofTopMitigation;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -69,11 +67,7 @@ public class LightBulbServiceImpl implements ILightBulbService {
 
     @Override
     public List<LightBulb> getByYear(int year) {
-        List<LightBulb> lightBulbs = lightBulbRepository.findAllByYear(year);
-        if (lightBulbs.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return lightBulbs;
+        return lightBulbRepository.findAllByYear(year);
     }
 
     private void calculateAndSetFields(LightBulb lightBulb) {
