@@ -34,6 +34,11 @@ import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.models.
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.repository.KigaliWWTPMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.models.ISWMMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.repository.ISWMMitigationRepository;
+import com.navyn.emissionlog.modules.transportScenarios.models.TransportScenario;
+import com.navyn.emissionlog.modules.transportScenarios.repositories.TransportScenarioRepository;
+import com.navyn.emissionlog.modules.transportScenarios.services.TransportScenarioService;
+import com.navyn.emissionlog.modules.transportScenarios.dtos.TransportScenarioRunResponseDto;
+import com.navyn.emissionlog.modules.transportScenarios.dtos.TransportScenarioYearResultDto;
 import com.navyn.emissionlog.utils.DashboardData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -67,10 +72,12 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
     private final KigaliFSTPMitigationRepository kigaliFSTPRepository;
     private final KigaliWWTPMitigationRepository kigaliWWTPRepository;
     private final ISWMMitigationRepository iswmRepository;
+    private final TransportScenarioRepository transportScenarioRepository;
+    private final TransportScenarioService transportScenarioService;
     
     @Override
     public DashboardData getMitigationDashboardSummary(Integer startingYear, Integer endingYear) {
-        // Fetch all 17 mitigation projects (10 AFOLU + 7 Waste)
+        // Fetch all 17 mitigation projects (10 AFOLU + 7 Waste) + Transport Scenarios
         List<WetlandParksMitigation> wetlandParks = wetlandParksRepository.findAll();
         List<SettlementTreesMitigation> settlementTrees = settlementTreesRepository.findAll();
         List<StreetTreesMitigation> streetTrees = streetTreesRepository.findAll();
@@ -88,6 +95,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<KigaliFSTPMitigation> kigaliFSTP = kigaliFSTPRepository.findAll();
         List<KigaliWWTPMitigation> kigaliWWTP = kigaliWWTPRepository.findAll();
         List<ISWMMitigation> iswm = iswmRepository.findAll();
+        List<TransportScenario> transportScenarios = transportScenarioRepository.findAll();
         
         // Filter by year if specified
         if (startingYear != null && endingYear != null) {
@@ -145,7 +153,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         }
         
         return calculateMitigationDashboardData(wetlandParks, settlementTrees, streetTrees, 
-                greenFences, cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread, wasteToEnergy, landfillGasUtilization, mbtComposting, eprPlasticWaste, kigaliFSTP, kigaliWWTP, iswm);
+                greenFences, cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread, wasteToEnergy, landfillGasUtilization, mbtComposting, eprPlasticWaste, kigaliFSTP, kigaliWWTP, iswm, transportScenarios, startingYear, endingYear);
     }
     
     @Override
@@ -175,6 +183,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<KigaliFSTPMitigation> kigaliFSTP = kigaliFSTPRepository.findAll();
         List<KigaliWWTPMitigation> kigaliWWTP = kigaliWWTPRepository.findAll();
         List<ISWMMitigation> iswm = iswmRepository.findAll();
+        List<TransportScenario> transportScenarios = transportScenarioRepository.findAll();
         
         // Filter by year range
         final int finalStartYear = startingYear;
@@ -251,6 +260,8 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         Map<Integer, List<KigaliWWTPMitigation>> kigaliWWTPByYear = kigaliWWTP.stream().collect(groupingBy(KigaliWWTPMitigation::getYear));
         Map<Integer, List<ISWMMitigation>> iswmByYear = iswm.stream().collect(groupingBy(ISWMMitigation::getYear));
         
+        // For transport scenarios, we'll calculate mitigation per year from all scenarios
+        
         // Create dashboard data for each year
         List<DashboardData> dashboardDataList = new ArrayList<>();
         for (int year = startingYear; year <= endingYear; year++) {
@@ -271,7 +282,10 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
                 eprPlasticWasteByYear.getOrDefault(year, List.of()),
                 kigaliFSTPByYear.getOrDefault(year, List.of()),
                 kigaliWWTPByYear.getOrDefault(year, List.of()),
-                iswmByYear.getOrDefault(year, List.of())
+                iswmByYear.getOrDefault(year, List.of()),
+                transportScenarios,
+                year,
+                year
             );
             data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
             data.setEndingDate(LocalDateTime.of(year, 12, 31, 23, 59).toString());
@@ -299,7 +313,10 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             List<EPRPlasticWasteMitigation> eprPlasticWaste,
             List<KigaliFSTPMitigation> kigaliFSTP,
             List<KigaliWWTPMitigation> kigaliWWTP,
-            List<ISWMMitigation> iswm) {
+            List<ISWMMitigation> iswm,
+            List<TransportScenario> transportScenarios,
+            Integer startingYear,
+            Integer endingYear) {
         
         DashboardData data = new DashboardData();
         Double totalMitigation = 0.0;
@@ -415,6 +432,33 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         for (ISWMMitigation i : iswm) {
             if (i.getAnnualReduction() != null) {
                 totalMitigation += i.getAnnualReduction();
+            }
+        }
+        
+        // Transport Scenarios - aggregate mitigation from all scenarios for the year range
+        for (TransportScenario scenario : transportScenarios) {
+            try {
+                TransportScenarioRunResponseDto results = transportScenarioService.runScenario(scenario.getId());
+                if (results != null && results.getResults() != null) {
+                    for (TransportScenarioYearResultDto yearResult : results.getResults()) {
+                        // Filter by year range if specified
+                        if (startingYear != null && endingYear != null) {
+                            if (yearResult.getYear() >= startingYear && yearResult.getYear() <= endingYear) {
+                                if (yearResult.getTotalMitigationTco2() != null) {
+                                    totalMitigation += yearResult.getTotalMitigationTco2();
+                                }
+                            }
+                        } else {
+                            // No year filter, include all
+                            if (yearResult.getTotalMitigationTco2() != null) {
+                                totalMitigation += yearResult.getTotalMitigationTco2();
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                // Skip scenarios that fail to run (e.g., missing data)
+                // Log warning but don't fail entire dashboard
             }
         }
         

@@ -16,7 +16,7 @@ public class MitigationDashboardController {
     
     private final MitigationDashboardService mitigationDashboardService;
     
-    @Operation(summary = "Get Mitigation dashboard summary", description = "Retrieves mitigation projects summary from all 8 modules.")
+    @Operation(summary = "Get Mitigation dashboard summary", description = "Retrieves mitigation summary from all 17 projects (10 AFOLU + 7 Waste) plus Transport Scenarios.")
     @GetMapping("/dashboard/summary")
     public ResponseEntity<ApiResponse> getMitigationDashboardSummary(
             @RequestParam(required = false, value = "startingYear") Integer startingYear,
