@@ -1,5 +1,14 @@
 package com.navyn.emissionlog.modules.mitigationProjects;
 
+import com.navyn.emissionlog.modules.LandUseEmissions.models.*;
+import com.navyn.emissionlog.modules.activities.models.Activity;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.AquacultureEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.AnimalManureAndCompostEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.SyntheticFertilizerEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.LimingEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.RiceCultivationEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.UreaEmissions;
+import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.models.CropRotationMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.repositories.CropRotationMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.models.GreenFencesMitigation;
@@ -39,8 +48,10 @@ import com.navyn.emissionlog.modules.transportScenarios.repositories.TransportSc
 import com.navyn.emissionlog.modules.transportScenarios.services.TransportScenarioService;
 import com.navyn.emissionlog.modules.transportScenarios.dtos.TransportScenarioRunResponseDto;
 import com.navyn.emissionlog.modules.transportScenarios.dtos.TransportScenarioYearResultDto;
-import com.navyn.emissionlog.modules.dashboard.DashboardService;
+import com.navyn.emissionlog.modules.wasteEmissions.models.WasteDataAbstract;
 import com.navyn.emissionlog.utils.DashboardData;
+import com.navyn.emissionlog.utils.DashboardHelperMethods;
+import com.navyn.emissionlog.utils.FetchMethods;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -75,7 +86,8 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
     private final ISWMMitigationRepository iswmRepository;
     private final TransportScenarioRepository transportScenarioRepository;
     private final TransportScenarioService transportScenarioService;
-    private final DashboardService dashboardService;
+    private final FetchMethods fetchMethods;
+    private final DashboardHelperMethods dashboardHelperMethods;
     
     @Override
     public DashboardData getMitigationDashboardSummary(Integer startingYear, Integer endingYear) {
@@ -158,7 +170,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
                 greenFences, cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread, wasteToEnergy, landfillGasUtilization, mbtComposting, eprPlasticWaste, kigaliFSTP, kigaliWWTP, iswm, transportScenarios, startingYear, endingYear);
         
         // Get gross emissions from main dashboard
-        DashboardData mainDashboard = dashboardService.getMainDashboard(startingYear, endingYear);
+        DashboardData mainDashboard = getMainDashboard(startingYear, endingYear);
         if (mainDashboard != null) {
             mitigationData.setTotalCO2EqEmissions(mainDashboard.getTotalCO2EqEmissions());
             
@@ -308,7 +320,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             );
             
             // Get gross emissions for this year and calculate net emissions and percentage
-            DashboardData yearMainDashboard = dashboardService.getMainDashboard(year, year);
+            DashboardData yearMainDashboard = getMainDashboard(year, year);
             if (yearMainDashboard != null) {
                 data.setTotalCO2EqEmissions(yearMainDashboard.getTotalCO2EqEmissions());
                 
@@ -498,6 +510,54 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         
         data.setTotalMitigationKtCO2e(totalMitigation);
         
+        return data;
+    }
+    
+    private DashboardData getMainDashboard(Integer startingYear, Integer endingYear) {
+        DashboardData data = new DashboardData();
+
+        // Fetch all data sources
+        List<Activity> activities = fetchMethods.fetchActivities(startingYear, endingYear);
+        List<WasteDataAbstract> wasteData = fetchMethods.fetchWasteData(startingYear, endingYear);
+        List<AquacultureEmissions> aquaculture = fetchMethods.fetchAquaculture(startingYear, endingYear);
+        List<EntericFermentationEmissions> enteric = fetchMethods.fetchEntericFermentation(startingYear, endingYear);
+        List<LimingEmissions> liming = fetchMethods.fetchLiming(startingYear, endingYear);
+        List<AnimalManureAndCompostEmissions> manure = fetchMethods.fetchManure(startingYear, endingYear);
+        List<RiceCultivationEmissions> rice = fetchMethods.fetchRice(startingYear, endingYear);
+        List<SyntheticFertilizerEmissions> fertilizer = fetchMethods.fetchFertilizer(startingYear, endingYear);
+        List<UreaEmissions> urea = fetchMethods.fetchUrea(startingYear, endingYear);
+        List<BiomassGain> biomassGains = fetchMethods.fetchBiomassGains(startingYear, endingYear);
+        List<DisturbanceBiomassLoss> disturbanceLosses = fetchMethods.fetchDisturbanceLosses(startingYear, endingYear);
+        List<FirewoodRemovalBiomassLoss> firewoodLosses = fetchMethods.fetchFirewoodLosses(startingYear, endingYear);
+        List<HarvestedBiomassLoss> harvestedLosses = fetchMethods.fetchHarvestedLosses(startingYear, endingYear);
+        List<RewettedMineralWetlands> rewettedWetlands = fetchMethods.fetchRewettedWetlands(startingYear, endingYear);
+
+        // Aggregate all emissions
+        dashboardHelperMethods.aggregateActivityEmissions(data, activities);
+        dashboardHelperMethods.aggregateWasteEmissions(data, wasteData);
+        dashboardHelperMethods.aggregateAgricultureEmissions(data, aquaculture, enteric, liming, manure, rice, fertilizer, urea);
+        dashboardHelperMethods.aggregateLandUseEmissions(data, biomassGains, disturbanceLosses, firewoodLosses, harvestedLosses, rewettedWetlands);
+
+        // Calculate CO2 equivalent
+        dashboardHelperMethods.calculateCO2Equivalent(data);
+
+        // Get mitigation data
+        DashboardData mitigationData = getMitigationDashboardSummary(startingYear, endingYear);
+        if (mitigationData != null && mitigationData.getTotalMitigationKtCO2e() != null) {
+            data.setTotalMitigationKtCO2e(mitigationData.getTotalMitigationKtCO2e());
+        }
+
+        // Calculate net emissions (Gross - Mitigation)
+        double grossEmissions = data.getTotalCO2EqEmissions(); // in Kt CO2e
+        double mitigation = data.getTotalMitigationKtCO2e() != null ? data.getTotalMitigationKtCO2e() : 0.0;
+        data.setNetEmissionsKtCO2e(grossEmissions - mitigation);
+
+        // Set date range if specified
+        if (startingYear != null && endingYear != null) {
+            data.setStartingDate(LocalDateTime.of(startingYear, 1, 1, 0, 0).toString());
+            data.setEndingDate(LocalDateTime.of(endingYear, 12, 31, 23, 59).toString());
+        }
+
         return data;
     }
 }
