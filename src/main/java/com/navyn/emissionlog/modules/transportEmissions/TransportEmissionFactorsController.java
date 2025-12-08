@@ -165,6 +165,56 @@ public class TransportEmissionFactorsController {
     }
 
 
+    @Operation(summary = "Get supported metrics on a particular fuel-regionGroup combination (simplified)", description = "This endpoint retrieves all supported metrics for a specific fuel and region group combination. This is useful when transport type and vehicle engine type haven't been selected yet.")
+    @GetMapping("/supported/metrics/fuel/{fuelId}/{regionGroup}")
+    public ResponseEntity<ApiResponse> supportedMetricsForFuelSimplified(@PathVariable("fuelId") UUID fuelId, @PathVariable("regionGroup") RegionGroup regionGroup) {
+        HashSet<Metrics> metrics = new HashSet<>();
+        Optional<Fuel> fuel = fuelRepository.findById(fuelId);
+
+        if (fuel.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse(false, "Fuel not found", null)
+            );
+        }
+
+        // Get all emission factors for this fuel and region group (no transportType/vehicleEngineType filter)
+        List<TransportFuelEmissionFactors> matchingFactors = transportFuelEmissionFactorsService.findByFuelAndRegionGroup(
+                fuel.get(), regionGroup);
+
+        if (matchingFactors.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse(false, "Transport emission factors for selection not found", null)
+            );
+        }
+
+        // Map each EmissionBasis to its corresponding Metric and collect all unique metrics
+        for (TransportFuelEmissionFactors factor : matchingFactors) {
+            EmissionBasis basis = factor.getBasis();
+            switch (basis) {
+                case MASS:
+                    metrics.add(Metrics.MASS);
+                    break;
+                case LIQUID:
+                case GASEOUS:
+                case VOLUME:
+                    metrics.add(Metrics.VOLUME);
+                    break;
+                case DISTANCE:
+                    metrics.add(Metrics.DISTANCE);
+                    break;
+                case ENERGY:
+                    metrics.add(Metrics.ENERGY);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Supported metrics for fuel fetched successfully", metrics)
+        );
+    }
+
     @Operation(summary = "Get supported metrics on a particular fuel-regionGroup combination", description = "This endpoint retrieves the supported metrics for a specific fuel and region group combination. It returns a set of metrics that are applicable to the specified fuel and region group.")
     @GetMapping("/supported/metrics/fuel/{fuelId}/{regionGroup}/{transportType}/{vehicleEngineType}")
     public ResponseEntity<ApiResponse> supportedMetricsForFuel(@PathVariable("fuelId") UUID fuelId, @PathVariable("regionGroup") RegionGroup regionGroup, @PathVariable("transportType") TransportType transportType, @PathVariable("vehicleEngineType") VehicleEngineType vehicleEngineType) {
@@ -214,6 +264,75 @@ public class TransportEmissionFactorsController {
 
 
     //supported fuel states
+    @Operation(summary = "Get supported fuel states for a specific fuel (simplified)", description = "This endpoint retrieves all supported fuel states for a specific fuel based on its ID and region group. This is useful when transport type and vehicle engine type haven't been selected yet.")
+    @GetMapping("/supported/fuelStates/fuel/{fuelId}/{regionGroup}")
+    public ResponseEntity<ApiResponse> supportedFuelStatesForFuelSimplified(@PathVariable("fuelId") UUID fuelId, @PathVariable("regionGroup") RegionGroup regionGroup) throws BadRequestException {
+        Optional<Fuel> fuel = fuelRepository.findById(fuelId);
+        HashSet<FuelStates> supportedFuelStates = new HashSet<>();
+
+        if (fuel.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse(false, "Fuel not found", null)
+            );
+        }
+
+        // Get all emission factors for this fuel and region group (no transportType/vehicleEngineType filter)
+        List<TransportFuelEmissionFactors> matchingFactors = transportFuelEmissionFactorsService.findByFuelAndRegionGroup(
+                fuel.get(), regionGroup);
+
+        if (matchingFactors.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    new ApiResponse(false, "Transport emission factors for selection not found", null)
+            );
+        }
+
+        // Collect all fuel states from all matching factors (regardless of metric)
+        for (TransportFuelEmissionFactors factor : matchingFactors) {
+            EmissionBasis basis = factor.getBasis();
+
+            // Determine fuel states based on the emission factor's basis
+            switch (basis) {
+                case MASS:
+                    supportedFuelStates.add(FuelStates.SOLID);
+                    break;
+                case LIQUID:
+                    supportedFuelStates.add(FuelStates.LIQUID);
+                    break;
+                case GASEOUS:
+                    supportedFuelStates.add(FuelStates.GASEOUS);
+                    break;
+                case VOLUME:
+                    // VOLUME basis can support both liquid and gaseous states
+                    supportedFuelStates.add(FuelStates.LIQUID);
+                    supportedFuelStates.add(FuelStates.GASEOUS);
+                    break;
+                case ENERGY:
+                    supportedFuelStates.add(FuelStates.ENERGY);
+                    break;
+                case DISTANCE:
+                    // Distance-based emissions don't have a direct fuel state mapping
+                    // Check fuel properties to determine possible states
+                    if (fuel.get().getLiquidDensity() != null && fuel.get().getLiquidDensity() > 0.0) {
+                        supportedFuelStates.add(FuelStates.LIQUID);
+                    }
+                    if (fuel.get().getGasDensity() != null && fuel.get().getGasDensity() > 0.0) {
+                        supportedFuelStates.add(FuelStates.GASEOUS);
+                    }
+                    if ((fuel.get().getLiquidDensity() == null || fuel.get().getLiquidDensity() == 0.0) &&
+                            (fuel.get().getGasDensity() == null || fuel.get().getGasDensity() == 0.0)) {
+                        supportedFuelStates.add(FuelStates.SOLID);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Supported fuel states fetched successfully", new ArrayList<>(supportedFuelStates))
+        );
+    }
+
     @Operation(summary = "Get supported fuel states for a specific fuel", description = "This endpoint retrieves the supported fuel states for a specific fuel based on its ID, region group, transport type, vehicle engine type, and metric. It returns a list of fuel states that are applicable based on the emission factors and the specified metric.")
     @GetMapping("/supported/fuelStates/fuel/{fuelId}/{regionGroup}/{transportType}/{vehicleEngineType}/{metric}")
     public ResponseEntity<ApiResponse> supportedFuelStatesForFuel(@PathVariable("fuelId") UUID fuelId, @PathVariable("regionGroup") RegionGroup regionGroup, @PathVariable("transportType") TransportType transportType, @PathVariable("vehicleEngineType") VehicleEngineType vehicleEngineType, @PathVariable("metric") Metrics metric) throws BadRequestException {
