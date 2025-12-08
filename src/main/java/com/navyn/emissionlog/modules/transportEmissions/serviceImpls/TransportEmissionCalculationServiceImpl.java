@@ -44,15 +44,14 @@ public class TransportEmissionCalculationServiceImpl {
         TransportVehicleDataEmissionFactors factor = transportVehicleDataEmissionFactorsRepository
                 .findByVehicleAndFuelAndRegionGroup(vehicleData.getVehicle(), fuel, regionGroup);
         
-        // For VEHICLE_DISTANCE mode, factor is required
-        if (factor == null && mobileActivityDataType == MobileActivityDataType.VEHICLE_DISTANCE) {
-            throw new IllegalArgumentException("Vehicle emission factors not found for vehicle, fuel, and region group combination. Vehicle emission factors are required for VEHICLE_DISTANCE mode.");
-        }
-        
-        // For VEHICLE_DISTANCE_AND_FUEL mode, if factor doesn't exist, skip vehicle data calculation
-        if (factor == null && mobileActivityDataType == MobileActivityDataType.VEHICLE_DISTANCE_AND_FUEL) {
-            // Vehicle emission factors not available, skip vehicle data calculation
-            // Emissions will be calculated based on fuel only
+        // If factor doesn't exist, set emissions to zero and continue
+        if (factor == null) {
+            // Vehicle emission factors not available - set emissions to zero
+            activity.setCH4Emissions(0.0);
+            activity.setFossilCO2Emissions(0.0);
+            activity.setN2OEmissions(0.0);
+            activity.setBioCO2Emissions(0.0);
+            System.out.println("WARNING: Vehicle emission factors not found for vehicle, fuel, and region group combination. Activity saved with zero emissions for vehicle data.");
             return;
         }
         

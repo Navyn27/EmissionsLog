@@ -285,11 +285,13 @@ public class ActivityServiceImpl implements ActivityService {
         Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findBestMatchWithWildcardSupport(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
 
         if (transportEmissionFactorsList.isEmpty()) {
-            throw new IllegalArgumentException("Transport Emission Factors not found for specified fuel, region, transport type, and vehicle type combination");
+            // Emission factors not found - set emissions to zero and continue
+            setZeroEmissions(activity);
+            System.out.println("WARNING: Transport Emission Factors not found for specified fuel, region, transport type, and vehicle type combination. Activity saved with zero emissions.");
+        } else {
+            // Calculate emissions BEFORE saving activity
+            transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData, activityDto.getFuelUnit(), activityDto.getFuelAmount());
         }
-
-        // Calculate emissions BEFORE saving activity
-        transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData, activityDto.getFuelUnit(), activityDto.getFuelAmount());
 
         return activityRepository.save(activity);
     }
@@ -356,6 +358,7 @@ public class ActivityServiceImpl implements ActivityService {
 
         // Calculate emissions BEFORE saving activity
         if (activityDto.getMobileActivityDataType() == MobileActivityDataType.VEHICLE_DISTANCE) {
+            // Try to calculate vehicle emissions (will set to zero if factors not found)
             transportEmissionCalculationService.calculateEmissionsByVehicleData(activity, vehicleData, fuel.get(), activityDto.getRegionGroup(), activityDto.getMobileActivityDataType());
         } else {
             // Validate fuel-related fields for non-vehicle-distance calculations
@@ -434,11 +437,13 @@ public class ActivityServiceImpl implements ActivityService {
         Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findBestMatchWithWildcardSupport(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
 
         if (transportEmissionFactorsList.isEmpty()) {
-            throw new IllegalArgumentException("Transport Emission Factors not found for specified fuel, region, transport type, and vehicle type combination");
+            // Emission factors not found - set emissions to zero and continue
+            setZeroEmissions(activity);
+            System.out.println("WARNING: Transport Emission Factors not found for specified fuel, region, transport type, and vehicle type combination. Activity updated with zero emissions.");
+        } else {
+            // Recalculate emissions
+            transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData, activityDto.getFuelUnit(), activityDto.getFuelAmount());
         }
-
-        // Recalculate emissions
-        transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData, activityDto.getFuelUnit(), activityDto.getFuelAmount());
 
         return activityRepository.save(activity);
     }
@@ -519,15 +524,20 @@ public class ActivityServiceImpl implements ActivityService {
 
         // Recalculate emissions based on mobile activity data type
         if (activityDto.getMobileActivityDataType() == MobileActivityDataType.VEHICLE_DISTANCE) {
+            // Try to calculate vehicle emissions (will set to zero if factors not found)
             transportEmissionCalculationService.calculateEmissionsByVehicleData(activity, vehicleData, fuel.get(), activityDto.getRegionGroup(), activityDto.getMobileActivityDataType());
         } else {
             // Use flexible wildcard-aware matching to support ANY values
             Optional<TransportFuelEmissionFactors> transportEmissionFactorsList = transportFuelEmissionFactorsService.findBestMatchWithWildcardSupport(fuel.get(), activityDto.getRegionGroup(), activityDto.getTransportType(), activityDto.getVehicleType());
 
             if (transportEmissionFactorsList.isEmpty()) {
-                throw new IllegalArgumentException("Transport Emission Factors not found for specified fuel, region, transport type, and vehicle type combination");
+                // Emission factors not found - set emissions to zero and continue
+                setZeroEmissions(activity);
+                System.out.println("WARNING: Transport Emission Factors not found for specified fuel, region, transport type, and vehicle type combination. Activity updated with zero emissions.");
+            } else {
+                transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData, activityDto.getFuelUnit(), activityDto.getFuelAmount());
             }
-            transportEmissionCalculationService.calculateEmissionsByFuel(transportEmissionFactorsList.get(), fuel.get(), activity, fuelData, activityDto.getFuelUnit(), activityDto.getFuelAmount());
+            // Try to calculate vehicle emissions (will set to zero if factors not found)
             transportEmissionCalculationService.calculateEmissionsByVehicleData(activity, vehicleData, fuel.get(), activityDto.getRegionGroup(), activityDto.getMobileActivityDataType());
         }
 
@@ -1151,5 +1161,15 @@ public class ActivityServiceImpl implements ActivityService {
         }
 
         return dashboardDataList;
+    }
+
+    /**
+     * Sets all emissions to zero for an activity when emission factors are not found
+     */
+    private void setZeroEmissions(Activity activity) {
+        activity.setCH4Emissions(0.0);
+        activity.setFossilCO2Emissions(0.0);
+        activity.setBioCO2Emissions(0.0);
+        activity.setN2OEmissions(0.0);
     }
 }
