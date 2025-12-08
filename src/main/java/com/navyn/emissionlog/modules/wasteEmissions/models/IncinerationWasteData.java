@@ -21,9 +21,14 @@ public class IncinerationWasteData extends WasteDataAbstract{
     final Double daysInYear = 365.0;
 
     public Double calculateCH4Emissions() {
-        setTotalWaste(populationRecords.getPopulation()* IncinerationConstants.WASTE_PER_CAPITA.getValue()*daysInYear/1000);
-        setTotalIncineratedWaste(totalWaste*IncinerationConstants.INCINERATION_FRACTION.getValue());
-        return totalIncineratedWaste*IncinerationConstants.CH4_EF.getValue()*IncinerationConstants.DRY_MATTER_CONTENT.getValue()/1000000;
+        // Null safety check
+        if (populationRecords == null) {
+            throw new IllegalStateException("Population records cannot be null for incineration waste calculation");
+        }
+
+        setTotalWaste(populationRecords.getPopulation() * IncinerationConstants.WASTE_PER_CAPITA.getValue() * daysInYear / 1000);
+        setTotalIncineratedWaste(totalWaste * IncinerationConstants.INCINERATION_FRACTION.getValue());
+        return totalIncineratedWaste * IncinerationConstants.CH4_EF.getValue() * IncinerationConstants.DRY_MATTER_CONTENT.getValue() / 1000000;
     }
 
     public Double calculateN2OEmissions() {

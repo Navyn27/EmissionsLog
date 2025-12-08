@@ -7,18 +7,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "burnt_waste_data")
 public class BurningWasteData extends WasteDataAbstract {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
 
     @ManyToOne
     private PopulationRecords populationRecords;
@@ -27,20 +21,26 @@ public class BurningWasteData extends WasteDataAbstract {
     private Double totalBurntWaste;
     private Double openBurntWaste;
 
-
     final Double daysInYear = 365.0;
 
-    public Double calculateCH4Emissions(){
-        setTotalWaste(populationRecords.getPopulation()* BurntWasteConstants.WASTE_PER_CAPITA.getValue()*daysInYear);
-        setTotalBurntWaste(totalWaste*BurntWasteConstants.FRACTION_OF_POP_BURNING_WASTE.getValue());
-        setOpenBurntWaste(totalBurntWaste*BurntWasteConstants.FRACTION_OF_WASTE_OPEN_BURNT.getValue());
-        return openBurntWaste*BurntWasteConstants.CH4_EF.getValue()*0.43/1000000;
+    public Double calculateCH4Emissions() {
+        // Null safety check
+        if (populationRecords == null) {
+            throw new IllegalStateException("Population records cannot be null for burnt waste calculation");
+        }
+
+        setTotalWaste(populationRecords.getPopulation() * BurntWasteConstants.WASTE_PER_CAPITA.getValue() * daysInYear);
+        setTotalBurntWaste(totalWaste * BurntWasteConstants.FRACTION_OF_POP_BURNING_WASTE.getValue());
+        setOpenBurntWaste(totalBurntWaste * BurntWasteConstants.FRACTION_OF_WASTE_OPEN_BURNT.getValue());
+        return openBurntWaste * BurntWasteConstants.CH4_EF.getValue() * 0.43 / 1000000;
     }
-    public Double calculateCO2Emissions(){
-        return openBurntWaste*BurntWasteConstants.CO2_EF.getValue();
+
+    public Double calculateCO2Emissions() {
+        return openBurntWaste * BurntWasteConstants.CO2_EF.getValue();
     }
-    public Double calculateN2OEmissions(){
-        return openBurntWaste*BurntWasteConstants.N2O_EF.getValue()*0.57/1000000;
+
+    public Double calculateN2OEmissions() {
+        return openBurntWaste * BurntWasteConstants.N2O_EF.getValue() * 0.57 / 1000000;
     }
 
 }
