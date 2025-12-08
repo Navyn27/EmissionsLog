@@ -23,6 +23,8 @@ public interface TransportFuelEmissionFactorsService {
     // Find by criteria
     List<TransportFuelEmissionFactors> findByFuel(UUID fuel) throws BadRequestException;
 
+    List<TransportFuelEmissionFactors> findByFuelAndRegionGroup(Fuel fuel, RegionGroup regionGroup);
+
     Optional<TransportFuelEmissionFactors> findByFuelAndRegionGroupAndTransportTypeAndVehicleEngineType(
             Fuel fuel, RegionGroup regionGroup, TransportType transportType, VehicleEngineType vehicleEngineType);
 

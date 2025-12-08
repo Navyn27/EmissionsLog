@@ -55,6 +55,11 @@ public class TransportFuelEmissionFactorsServiceImpl implements TransportFuelEmi
     }
 
     @Override
+    public List<TransportFuelEmissionFactors> findByFuelAndRegionGroup(Fuel fuel, RegionGroup regionGroup) {
+        return transportFuelEmissionFactorsRepository.findByFuelAndRegionGroup(fuel, regionGroup);
+    }
+
+    @Override
     public Optional<TransportFuelEmissionFactors> findByFuelAndRegionGroupAndTransportTypeAndVehicleEngineType(Fuel fuel, RegionGroup regionGroup, TransportType transportType, VehicleEngineType vehicleEngineType) {
         return transportFuelEmissionFactorsRepository.findByFuelAndRegionGroupAndTransportTypeAndVehicleEngineType(fuel, regionGroup, transportType, vehicleEngineType);
     }
