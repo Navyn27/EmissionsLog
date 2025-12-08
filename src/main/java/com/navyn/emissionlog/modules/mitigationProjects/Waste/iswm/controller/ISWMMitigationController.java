@@ -24,7 +24,7 @@ public class ISWMMitigationController {
     private final ISWMMitigationService service;
     
     @Operation(summary = "Create ISWM mitigation record", 
-               description = "Creates a new Integrated Solid Waste Management (ISWM) mitigation project record")
+               description = "Creates a new Integrated Solid Waste Management (ISWM) mitigation project record. Calculates DOFDiverted, AvoidedLandfill, CompostingEmissions, NetAnnualReduction, and MitigationScenarioEmission based on input parameters.")
     @PostMapping
     public ResponseEntity<ApiResponse> createISWMMitigation(
             @Valid @RequestBody ISWMMitigationDto dto) {
@@ -34,7 +34,7 @@ public class ISWMMitigationController {
     }
     
     @Operation(summary = "Update ISWM mitigation record",
-               description = "Updates an existing ISWM mitigation record and recalculates all derived fields")
+               description = "Updates an existing ISWM mitigation record and recalculates all derived fields (DOFDiverted, AvoidedLandfill, CompostingEmissions, NetAnnualReduction, MitigationScenarioEmission)")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateISWMMitigation(
             @PathVariable UUID id,
@@ -53,7 +53,7 @@ public class ISWMMitigationController {
     }
     
     @Operation(summary = "Delete ISWM mitigation record",
-               description = "Deletes an existing ISWM mitigation record by its ID")
+               description = "Deletes an existing ISWM mitigation record by ID")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deleteISWMMitigation(@PathVariable UUID id) {
         service.deleteISWMMitigation(id);

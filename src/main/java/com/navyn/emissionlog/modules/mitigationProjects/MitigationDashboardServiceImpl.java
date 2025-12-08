@@ -476,8 +476,8 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         
         // ISWM uses annualReduction
         for (ISWMMitigation i : iswm) {
-            if (i.getAnnualReduction() != null) {
-                totalMitigation += i.getAnnualReduction();
+            if (i.getNetAnnualReduction() != null) {
+                totalMitigation += i.getNetAnnualReduction();
             }
         }
         
