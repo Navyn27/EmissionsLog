@@ -26,6 +26,7 @@ import com.navyn.emissionlog.modules.agricultureEmissions.repositories.Livestock
 import com.navyn.emissionlog.modules.agricultureEmissions.repositories.Livestock.ManureManagementEmissionsRepository;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.ManureManagementEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.dtos.Livestock.ManureManagementEmissionsDto;
+import com.navyn.emissionlog.Enums.Agriculture.ManureManagementEmissionFactors;
 
 import com.navyn.emissionlog.utils.DashboardData;
 import com.navyn.emissionlog.utils.Specifications.AgricultureSpecifications;
@@ -422,62 +423,39 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
     public ManureManagementEmissions createManureManagementEmissions(ManureManagementEmissionsDto dto) {
         ManureManagementEmissions emission = new ManureManagementEmissions();
         
-        // Map input fields
+        // Set input fields
         emission.setYear(dto.getYear());
         emission.setSpecies(dto.getSpecies());
-        emission.setManureManagementSystem(dto.getManureManagementSystem());
         emission.setAnimalPopulation(dto.getAnimalPopulation());
-        emission.setAverageAnnualTemperature(dto.getAverageAnnualTemperature());
-        emission.setAverageAnimalWeight(dto.getAverageAnimalWeight());
         
-        // Get emission factor for the species (kg CH4/animal/year)
-        double emissionFactor = getEmissionFactor(dto.getSpecies());
-        
-        // Calculate CH4 emissions: EF × Population (tonnes CH4/year)
-        double ch4EmissionsTonnes = (emissionFactor * dto.getAnimalPopulation()) / 1000.0;
-        emission.setCH4EmissionsFromManure(ch4EmissionsTonnes);
-        
-        // Convert CH4 to CO2eq using conversion factor of 28
-        double ch4CO2Eq = ch4EmissionsTonnes * ManureManagementConstants.CH4_TO_CO2_CONVERSION_FACTOR.getValue();
-        emission.setCH4_CO2Eq(ch4CO2Eq);
-        
-        // For simplified approach, we can keep some basic fields
-        emission.setMethaneConversionFactor(getMethaneConversionFactor(dto.getManureManagementSystem(), 
-                                                 dto.getAverageAnnualTemperature()));
-        emission.setVolatileSolidsExcretion(0.0); // Not used in new approach
-        emission.setTotalVolatileSolids(0.0); // Not used in new approach
-        
-        // N2O calculations remain similar but simplified
-        // For now, setting basic N2O fields to maintain model structure
-        emission.setNitrogenExcretion(0.0);
-        emission.setNitrogenInManure(0.0);
-        emission.setDirectN2OEmissions(0.0);
-        emission.setDirectN2O_CO2Eq(0.0);
-        emission.setVolatilizedNitrogen(0.0);
-        emission.setIndirectN2OFromVolatilization(0.0);
-        emission.setVolatilizationN2O_CO2Eq(0.0);
-        emission.setLeachedNitrogen(0.0);
-        emission.setIndirectN2OFromLeaching(0.0);
-        emission.setLeachingN2O_CO2Eq(0.0);
-        emission.setTotalN2OEmissions(0.0);
-        emission.setTotalN2O_CO2Eq(0.0);
-        
-        // Total CO2eq is just CH4 converted to CO2eq
-        emission.setTotalCO2EqEmissions(ch4CO2Eq);
+        // Calculate emissions using Excel methodology
+        calculateEmissions(emission);
         
         return manureManagementEmissionsRepository.save(emission);
     }
 
     @Override
     public List<ManureManagementEmissions> getAllManureManagementEmissions(
-            Integer year, ManureManagementLivestock species, ManureManagementSystem mms) {
+            Integer year, ManureManagementLivestock species) {
         Specification<ManureManagementEmissions> spec = 
-            Specification.<ManureManagementEmissions>where(hasYear(year))
-                .and(hasManureManagementLivestock(species))
-                .and(hasManureManagementSystem(mms));
+            Specification.<ManureManagementEmissions>where(null);
+        
+        if (year != null) {
+            spec = spec.and(hasYear(year));
+        }
+        if (species != null) {
+            spec = spec.and(hasManureManagementLivestock(species));
+        }
+        
         return manureManagementEmissionsRepository.findAll(
             spec, Sort.by(Sort.Direction.DESC, "year")
         );
+    }
+    
+    @Override
+    public ManureManagementEmissions getManureManagementEmissionsById(UUID id) {
+        return manureManagementEmissionsRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Manure Management emissions not found with id: " + id));
     }
     
    @Override
@@ -744,48 +722,13 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
        ManureManagementEmissions emission = manureManagementEmissionsRepository.findById(id)
            .orElseThrow(() -> new EntityNotFoundException("Manure Management emissions not found with id: " + id));
 
-       // Map input fields
+       // Update input fields
        emission.setYear(dto.getYear());
        emission.setSpecies(dto.getSpecies());
-       emission.setManureManagementSystem(dto.getManureManagementSystem());
        emission.setAnimalPopulation(dto.getAnimalPopulation());
-       emission.setAverageAnnualTemperature(dto.getAverageAnnualTemperature());
-       emission.setAverageAnimalWeight(dto.getAverageAnimalWeight());
        
-       // Get emission factor for the species (kg CH4/animal/year)
-       double emissionFactor = getEmissionFactor(dto.getSpecies());
-       
-       // Calculate CH4 emissions: EF × Population (tonnes CH4/year)
-       double ch4EmissionsTonnes = (emissionFactor * dto.getAnimalPopulation()) / 1000.0;
-       emission.setCH4EmissionsFromManure(ch4EmissionsTonnes);
-       
-       // Convert CH4 to CO2eq using conversion factor of 28
-       double ch4CO2Eq = ch4EmissionsTonnes * ManureManagementConstants.CH4_TO_CO2_CONVERSION_FACTOR.getValue();
-       emission.setCH4_CO2Eq(ch4CO2Eq);
-       
-       // For simplified approach, we can keep some basic fields
-       emission.setMethaneConversionFactor(getMethaneConversionFactor(dto.getManureManagementSystem(), 
-                                                dto.getAverageAnnualTemperature()));
-       emission.setVolatileSolidsExcretion(0.0); // Not used in new approach
-       emission.setTotalVolatileSolids(0.0); // Not used in new approach
-       
-       // N2O calculations remain similar but simplified
-       // For now, setting basic N2O fields to maintain model structure
-       emission.setNitrogenExcretion(0.0);
-       emission.setNitrogenInManure(0.0);
-       emission.setDirectN2OEmissions(0.0);
-       emission.setDirectN2O_CO2Eq(0.0);
-       emission.setVolatilizedNitrogen(0.0);
-       emission.setIndirectN2OFromVolatilization(0.0);
-       emission.setVolatilizationN2O_CO2Eq(0.0);
-       emission.setLeachedNitrogen(0.0);
-       emission.setIndirectN2OFromLeaching(0.0);
-       emission.setLeachingN2O_CO2Eq(0.0);
-       emission.setTotalN2OEmissions(0.0);
-       emission.setTotalN2O_CO2Eq(0.0);
-       
-       // Total CO2eq is just CH4 converted to CO2eq
-       emission.setTotalCO2EqEmissions(ch4CO2Eq);
+       // Recalculate emissions
+       calculateEmissions(emission);
 
        return manureManagementEmissionsRepository.save(emission);
    }
@@ -918,36 +861,62 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         manureManagementEmissionsRepository.deleteById(id);
     }
     
-    // Helper methods for Manure Management
-    private double getEmissionFactor(ManureManagementLivestock species) {
+    // Calculation helper method - Excel methodology
+    private void calculateEmissions(ManureManagementEmissions emission) {
+        ManureManagementLivestock species = emission.getSpecies();
+        double population = emission.getAnimalPopulation();
+        
+        // Get CH4 emission factor (kg CH4/animal/year)
+        double ch4EF = getCH4EmissionFactor(species);
+        
+        // Calculate CH4 (tonnes/year) = Population × EF × 10^-3
+        double ch4Tonnes = (population * ch4EF) / 1000.0;
+        emission.setCh4Tonnes(ch4Tonnes);
+        
+        // Calculate CH4 CO2eq (tonnes) = CH4 × 28
+        double ch4Co2eq = ch4Tonnes * ManureManagementEmissionFactors.CH4_TO_CO2EQ;
+        emission.setCh4Co2eq(ch4Co2eq);
+        
+        // Get N2O emission factor (kg N2O/animal/year)
+        double n2oEF = getN2OEmissionFactor(species);
+        
+        // Calculate N2O (tonnes/year) = Population × EF × 10^-3
+        double n2oTonnes = (population * n2oEF) / 1000.0;
+        emission.setN2oTonnes(n2oTonnes);
+        
+        // Calculate N2O CO2eq (tonnes) = N2O × 28
+        double n2oCo2eq = n2oTonnes * ManureManagementEmissionFactors.N2O_TO_CO2EQ;
+        emission.setN2oCo2eq(n2oCo2eq);
+        
+        // Total CO2eq = CH4_CO2eq + N2O_CO2eq
+        double totalCo2eq = ch4Co2eq + n2oCo2eq;
+        emission.setTotalCo2eq(totalCo2eq);
+    }
+    
+    // Helper methods for emission factors
+    private double getCH4EmissionFactor(ManureManagementLivestock species) {
         return switch (species) {
-            case DAIRY_COWS_LACTATING -> ManureManagementConstants.EF_DAIRY_COWS_LACTATING.getValue();
-            case DAIRY_COWS_OTHER_MATURE -> ManureManagementConstants.EF_DAIRY_COWS_OTHER_MATURE.getValue();
-            case DAIRY_COWS_GROWING -> ManureManagementConstants.EF_DAIRY_COWS_GROWING.getValue();
-            case SHEEP -> ManureManagementConstants.EF_SHEEP.getValue();
-            case GOATS -> ManureManagementConstants.EF_GOATS.getValue();
-            case SWINE -> ManureManagementConstants.EF_SWINE.getValue();
-            case POULTRY -> ManureManagementConstants.EF_POULTRY.getValue();
-            case RABBITS -> ManureManagementConstants.EF_RABBITS.getValue();
+            case DAIRY_COWS_LACTATING -> ManureManagementEmissionFactors.CH4_DAIRY_COWS_LACTATING.getValue();
+            case DAIRY_COWS_OTHER_MATURE -> ManureManagementEmissionFactors.CH4_DAIRY_COWS_OTHER_MATURE.getValue();
+            case DAIRY_COWS_GROWING -> ManureManagementEmissionFactors.CH4_DAIRY_COWS_GROWING.getValue();
+            case SHEEP -> ManureManagementEmissionFactors.CH4_SHEEP.getValue();
+            case GOATS -> ManureManagementEmissionFactors.CH4_GOATS.getValue();
+            case SWINE -> ManureManagementEmissionFactors.CH4_SWINE.getValue();
+            case POULTRY -> ManureManagementEmissionFactors.CH4_POULTRY.getValue();
+            case RABBITS -> ManureManagementEmissionFactors.CH4_RABBITS.getValue();
         };
     }
     
-    private double getMethaneConversionFactor(ManureManagementSystem mms, double temperature) {
-        // Base MCF values - could add temperature adjustment logic here if needed
-        return switch (mms) {
-            case PASTURE_RANGE_PADDOCK -> ManureManagementConstants.MCF_PASTURE.getValue();
-            case DAILY_SPREAD -> ManureManagementConstants.MCF_DAILY_SPREAD.getValue();
-            case SOLID_STORAGE -> ManureManagementConstants.MCF_SOLID_STORAGE.getValue();
-            case DRY_LOT -> ManureManagementConstants.MCF_DRY_LOT.getValue();
-            case LIQUID_SLURRY -> ManureManagementConstants.MCF_LIQUID_SLURRY.getValue();
-            case ANAEROBIC_LAGOON -> ManureManagementConstants.MCF_ANAEROBIC_LAGOON.getValue();
-            case ANAEROBIC_DIGESTER -> ManureManagementConstants.MCF_ANAEROBIC_DIGESTER.getValue();
-            case COMPOSTING_INTENSIVE -> ManureManagementConstants.MCF_COMPOSTING_INTENSIVE.getValue();
-            case COMPOSTING_STATIC_PILE -> ManureManagementConstants.MCF_COMPOSTING_STATIC_PILE.getValue();
-            case DEEP_BEDDING -> ManureManagementConstants.MCF_DEEP_BEDDING.getValue();
-            case POULTRY_MANURE_WITH_LITTER -> ManureManagementConstants.MCF_POULTRY_WITH_LITTER.getValue();
-            case POULTRY_MANURE_WITHOUT_LITTER -> ManureManagementConstants.MCF_POULTRY_WITHOUT_LITTER.getValue();
-            case BURNED_FOR_FUEL -> ManureManagementConstants.MCF_BURNED.getValue();
+    private double getN2OEmissionFactor(ManureManagementLivestock species) {
+        return switch (species) {
+            case DAIRY_COWS_LACTATING -> ManureManagementEmissionFactors.N2O_DAIRY_COWS_LACTATING.getValue();
+            case DAIRY_COWS_OTHER_MATURE -> ManureManagementEmissionFactors.N2O_DAIRY_COWS_OTHER_MATURE.getValue();
+            case DAIRY_COWS_GROWING -> ManureManagementEmissionFactors.N2O_DAIRY_COWS_GROWING.getValue();
+            case SHEEP -> ManureManagementEmissionFactors.N2O_SHEEP.getValue();
+            case GOATS -> ManureManagementEmissionFactors.N2O_GOATS.getValue();
+            case SWINE -> ManureManagementEmissionFactors.N2O_SWINE.getValue();
+            case POULTRY -> ManureManagementEmissionFactors.N2O_POULTRY.getValue();
+            case RABBITS -> ManureManagementEmissionFactors.N2O_RABBITS.getValue();
         };
     }
     
