@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.UUID;
 
 @Entity
-@Table(name = "iswm_mitigation", uniqueConstraints = {
+@Table(name = "iswm_mitigations", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"year"})
 })
 @Data
