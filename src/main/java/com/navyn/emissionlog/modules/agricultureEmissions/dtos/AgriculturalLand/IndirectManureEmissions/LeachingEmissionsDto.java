@@ -10,6 +10,6 @@ public class LeachingEmissionsDto {
     private Integer year;
     private MMS mms;
     private LivestockSpecies livestockSpecies;
-    private double MMSExcretionAmount;
+    private double numberOfAnimals;
 
 }
