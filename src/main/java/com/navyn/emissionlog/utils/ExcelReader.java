@@ -124,6 +124,19 @@ public class ExcelReader {
         zeroTillageToDtoMap.put("Area Unit", "areaUnit");
     }
 
+    // This hashmap is responsible for reading data from wetland parks mitigation
+    // Excel files
+    // and mapping it to DTOs.
+    private static final Map<String, String> wetlandParksToDtoMap = new HashMap<>();
+    static {
+        wetlandParksToDtoMap.put("Year", "year");
+        wetlandParksToDtoMap.put("Tree Category", "treeCategory");
+        wetlandParksToDtoMap.put("Area Planted", "areaPlanted");
+        wetlandParksToDtoMap.put("Area Unit", "areaUnit");
+        wetlandParksToDtoMap.put("Aboveground Biomass AGB", "abovegroundBiomassAGB");
+        wetlandParksToDtoMap.put("AGB Unit", "agbUnit");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -202,6 +215,9 @@ public class ExcelReader {
                 return 2;
             case ZERO_TILLAGE_MITIGATION:
                 // Zero Tillage template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
+            case WETLAND_PARKS_MITIGATION:
+                // Wetland Parks template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
                 return 2;
             default:
                 // Other templates have headers at row 0
@@ -310,6 +326,8 @@ public class ExcelReader {
                 return "Industrial Waste Starter Data";
             case ZERO_TILLAGE_MITIGATION:
                 return "Zero Tillage Mitigation";
+            case WETLAND_PARKS_MITIGATION:
+                return "Wetland Parks Mitigation";
             default:
                 return "";
         }
@@ -333,6 +351,8 @@ public class ExcelReader {
                 return industrialWasteDtoMap.get(header);
             case ZERO_TILLAGE_MITIGATION:
                 return zeroTillageToDtoMap.get(header);
+            case WETLAND_PARKS_MITIGATION:
+                return wetlandParksToDtoMap.get(header);
             default:
                 return "";
         }
