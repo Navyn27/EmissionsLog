@@ -66,7 +66,7 @@ import static java.util.stream.Collectors.groupingBy;
 @Service
 @RequiredArgsConstructor
 public class MitigationDashboardServiceImpl implements MitigationDashboardService {
-    
+
     private final WetlandParksMitigationRepository wetlandParksRepository;
     private final SettlementTreesMitigationRepository settlementTreesRepository;
     private final StreetTreesMitigationRepository streetTreesRepository;
@@ -88,7 +88,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
     private final TransportScenarioService transportScenarioService;
     private final FetchMethods fetchMethods;
     private final DashboardHelperMethods dashboardHelperMethods;
-    
+
     @Override
     public DashboardData getMitigationDashboardSummary(Integer startingYear, Integer endingYear) {
         // Fetch all 17 mitigation projects (10 AFOLU + 7 Waste) + Transport Scenarios
@@ -110,83 +110,88 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<KigaliWWTPMitigation> kigaliWWTP = kigaliWWTPRepository.findAll();
         List<ISWMMitigation> iswm = iswmRepository.findAll();
         List<TransportScenario> transportScenarios = transportScenarioRepository.findAll();
-        
+
         // Filter by year if specified
         if (startingYear != null && endingYear != null) {
             wetlandParks = wetlandParks.stream()
-                .filter(w -> w.getYear() >= startingYear && w.getYear() <= endingYear)
-                .toList();
+                    .filter(w -> w.getYear() >= startingYear && w.getYear() <= endingYear)
+                    .toList();
             settlementTrees = settlementTrees.stream()
-                .filter(s -> s.getYear() >= startingYear && s.getYear() <= endingYear)
-                .toList();
+                    .filter(s -> s.getYear() >= startingYear && s.getYear() <= endingYear)
+                    .toList();
             streetTrees = streetTrees.stream()
-                .filter(s -> s.getYear() >= startingYear && s.getYear() <= endingYear)
-                .toList();
+                    .filter(s -> s.getYear() >= startingYear && s.getYear() <= endingYear)
+                    .toList();
             greenFences = greenFences.stream()
-                .filter(g -> g.getYear() >= startingYear && g.getYear() <= endingYear)
-                .toList();
+                    .filter(g -> g.getYear() >= startingYear && g.getYear() <= endingYear)
+                    .toList();
             cropRotation = cropRotation.stream()
-                .filter(c -> c.getYear() >= startingYear && c.getYear() <= endingYear)
-                .toList();
+                    .filter(c -> c.getYear() >= startingYear && c.getYear() <= endingYear)
+                    .toList();
             zeroTillage = zeroTillage.stream()
-                .filter(z -> z.getYear() >= startingYear && z.getYear() <= endingYear)
-                .toList();
+                    .filter(z -> z.getYear() >= startingYear && z.getYear() <= endingYear)
+                    .toList();
             protectiveForest = protectiveForest.stream()
-                .filter(p -> p.getYear() >= startingYear && p.getYear() <= endingYear)
-                .toList();
+                    .filter(p -> p.getYear() >= startingYear && p.getYear() <= endingYear)
+                    .toList();
             manureCovering = manureCovering.stream()
-                .filter(m -> m.getYear() >= startingYear && m.getYear() <= endingYear)
-                .toList();
+                    .filter(m -> m.getYear() >= startingYear && m.getYear() <= endingYear)
+                    .toList();
             addingStraw = addingStraw.stream()
-                .filter(a -> a.getYear() >= startingYear && a.getYear() <= endingYear)
-                .toList();
+                    .filter(a -> a.getYear() >= startingYear && a.getYear() <= endingYear)
+                    .toList();
             dailySpread = dailySpread.stream()
-                .filter(d -> d.getYear() >= startingYear && d.getYear() <= endingYear)
-                .toList();
+                    .filter(d -> d.getYear() >= startingYear && d.getYear() <= endingYear)
+                    .toList();
             wasteToEnergy = wasteToEnergy.stream()
-                .filter(w -> w.getYear() >= startingYear && w.getYear() <= endingYear)
-                .toList();
+                    .filter(w -> w.getYear() >= startingYear && w.getYear() <= endingYear)
+                    .toList();
             landfillGasUtilization = landfillGasUtilization.stream()
-                .filter(l -> l.getYear() >= startingYear && l.getYear() <= endingYear)
-                .toList();
+                    .filter(l -> l.getYear() >= startingYear && l.getYear() <= endingYear)
+                    .toList();
             mbtComposting = mbtComposting.stream()
-                .filter(m -> m.getYear() >= startingYear && m.getYear() <= endingYear)
-                .toList();
+                    .filter(m -> m.getYear() >= startingYear && m.getYear() <= endingYear)
+                    .toList();
             eprPlasticWaste = eprPlasticWaste.stream()
-                .filter(e -> e.getYear() >= startingYear && e.getYear() <= endingYear)
-                .toList();
+                    .filter(e -> e.getYear() >= startingYear && e.getYear() <= endingYear)
+                    .toList();
             kigaliFSTP = kigaliFSTP.stream()
-                .filter(k -> k.getYear() >= startingYear && k.getYear() <= endingYear)
-                .toList();
+                    .filter(k -> k.getYear() >= startingYear && k.getYear() <= endingYear)
+                    .toList();
             kigaliWWTP = kigaliWWTP.stream()
-                .filter(w -> w.getYear() >= startingYear && w.getYear() <= endingYear)
-                .toList();
+                    .filter(w -> w.getYear() >= startingYear && w.getYear() <= endingYear)
+                    .toList();
             iswm = iswm.stream()
-                .filter(i -> i.getYear() >= startingYear && i.getYear() <= endingYear)
-                .toList();
+                    .filter(i -> i.getYear() >= startingYear && i.getYear() <= endingYear)
+                    .toList();
         }
-        
-        DashboardData mitigationData = calculateMitigationDashboardData(wetlandParks, settlementTrees, streetTrees, 
-                greenFences, cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread, wasteToEnergy, landfillGasUtilization, mbtComposting, eprPlasticWaste, kigaliFSTP, kigaliWWTP, iswm, transportScenarios, startingYear, endingYear);
-        
-        // Get gross emissions from main dashboard
-        DashboardData mainDashboard = getMainDashboard(startingYear, endingYear);
-        if (mainDashboard != null) {
-            mitigationData.setTotalCO2EqEmissions(mainDashboard.getTotalCO2EqEmissions());
-            
+
+        DashboardData mitigationData = calculateMitigationDashboardData(wetlandParks, settlementTrees, streetTrees,
+                greenFences, cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread,
+                wasteToEnergy, landfillGasUtilization, mbtComposting, eprPlasticWaste, kigaliFSTP, kigaliWWTP, iswm,
+                transportScenarios, startingYear, endingYear);
+
+        // Get gross emissions from main dashboard (using helper method to avoid
+        // circular dependency)
+        DashboardData grossEmissionsData = getMainDashboardGrossEmissionsOnly(startingYear, endingYear);
+        if (grossEmissionsData != null) {
+            mitigationData.setTotalCO2EqEmissions(grossEmissionsData.getTotalCO2EqEmissions());
+
             // Calculate net emissions and percentage reduction
-            double grossEmissions = mainDashboard.getTotalCO2EqEmissions();
-            double totalMitigation = mitigationData.getTotalMitigationKtCO2e() != null ? mitigationData.getTotalMitigationKtCO2e() : 0.0;
+            double grossEmissions = grossEmissionsData.getTotalCO2EqEmissions();
+            double totalMitigation = mitigationData.getTotalMitigationKtCO2e() != null
+                    ? mitigationData.getTotalMitigationKtCO2e()
+                    : 0.0;
             double netEmissions = grossEmissions - totalMitigation;
             double percentageReduction = grossEmissions > 0 ? (totalMitigation / grossEmissions) * 100.0 : 0.0;
-            
+
             mitigationData.setNetEmissionsKtCO2e(netEmissions);
             mitigationData.setPercentageReduction(percentageReduction);
         }
-        
+
         return mitigationData;
     }
-    
+
     @Override
     public List<DashboardData> getMitigationDashboardGraph(Integer startingYear, Integer endingYear) {
         // Default to last 5 years if not specified
@@ -195,7 +200,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             startingYear = currentYear - 4;
             endingYear = currentYear;
         }
-        
+
         // Fetch all data
         List<WetlandParksMitigation> wetlandParks = wetlandParksRepository.findAll();
         List<SettlementTreesMitigation> settlementTrees = settlementTreesRepository.findAll();
@@ -215,133 +220,151 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<KigaliWWTPMitigation> kigaliWWTP = kigaliWWTPRepository.findAll();
         List<ISWMMitigation> iswm = iswmRepository.findAll();
         List<TransportScenario> transportScenarios = transportScenarioRepository.findAll();
-        
+
         // Filter by year range
         final int finalStartYear = startingYear;
         final int finalEndYear = endingYear;
-        
+
         wetlandParks = wetlandParks.stream()
-            .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
-            .toList();
+                .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
+                .toList();
         settlementTrees = settlementTrees.stream()
-            .filter(s -> s.getYear() >= finalStartYear && s.getYear() <= finalEndYear)
-            .toList();
+                .filter(s -> s.getYear() >= finalStartYear && s.getYear() <= finalEndYear)
+                .toList();
         streetTrees = streetTrees.stream()
-            .filter(s -> s.getYear() >= finalStartYear && s.getYear() <= finalEndYear)
-            .toList();
+                .filter(s -> s.getYear() >= finalStartYear && s.getYear() <= finalEndYear)
+                .toList();
         greenFences = greenFences.stream()
-            .filter(g -> g.getYear() >= finalStartYear && g.getYear() <= finalEndYear)
-            .toList();
+                .filter(g -> g.getYear() >= finalStartYear && g.getYear() <= finalEndYear)
+                .toList();
         cropRotation = cropRotation.stream()
-            .filter(c -> c.getYear() >= finalStartYear && c.getYear() <= finalEndYear)
-            .toList();
+                .filter(c -> c.getYear() >= finalStartYear && c.getYear() <= finalEndYear)
+                .toList();
         zeroTillage = zeroTillage.stream()
-            .filter(z -> z.getYear() >= finalStartYear && z.getYear() <= finalEndYear)
-            .toList();
+                .filter(z -> z.getYear() >= finalStartYear && z.getYear() <= finalEndYear)
+                .toList();
         protectiveForest = protectiveForest.stream()
-            .filter(p -> p.getYear() >= finalStartYear && p.getYear() <= finalEndYear)
-            .toList();
+                .filter(p -> p.getYear() >= finalStartYear && p.getYear() <= finalEndYear)
+                .toList();
         manureCovering = manureCovering.stream()
-            .filter(m -> m.getYear() >= finalStartYear && m.getYear() <= finalEndYear)
-            .toList();
+                .filter(m -> m.getYear() >= finalStartYear && m.getYear() <= finalEndYear)
+                .toList();
         addingStraw = addingStraw.stream()
-            .filter(a -> a.getYear() >= finalStartYear && a.getYear() <= finalEndYear)
-            .toList();
+                .filter(a -> a.getYear() >= finalStartYear && a.getYear() <= finalEndYear)
+                .toList();
         dailySpread = dailySpread.stream()
-            .filter(d -> d.getYear() >= finalStartYear && d.getYear() <= finalEndYear)
-            .toList();
+                .filter(d -> d.getYear() >= finalStartYear && d.getYear() <= finalEndYear)
+                .toList();
         wasteToEnergy = wasteToEnergy.stream()
-            .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
-            .toList();
+                .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
+                .toList();
         landfillGasUtilization = landfillGasUtilization.stream()
-            .filter(l -> l.getYear() >= finalStartYear && l.getYear() <= finalEndYear)
-            .toList();
+                .filter(l -> l.getYear() >= finalStartYear && l.getYear() <= finalEndYear)
+                .toList();
         mbtComposting = mbtComposting.stream()
-            .filter(m -> m.getYear() >= finalStartYear && m.getYear() <= finalEndYear)
-            .toList();
+                .filter(m -> m.getYear() >= finalStartYear && m.getYear() <= finalEndYear)
+                .toList();
         eprPlasticWaste = eprPlasticWaste.stream()
-            .filter(e -> e.getYear() >= finalStartYear && e.getYear() <= finalEndYear)
-            .toList();
+                .filter(e -> e.getYear() >= finalStartYear && e.getYear() <= finalEndYear)
+                .toList();
         kigaliFSTP = kigaliFSTP.stream()
-            .filter(k -> k.getYear() >= finalStartYear && k.getYear() <= finalEndYear)
-            .toList();
+                .filter(k -> k.getYear() >= finalStartYear && k.getYear() <= finalEndYear)
+                .toList();
         kigaliWWTP = kigaliWWTP.stream()
-            .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
-            .toList();
+                .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
+                .toList();
         iswm = iswm.stream()
-            .filter(i -> i.getYear() >= finalStartYear && i.getYear() <= finalEndYear)
-            .toList();
-        
+                .filter(i -> i.getYear() >= finalStartYear && i.getYear() <= finalEndYear)
+                .toList();
+
         // Group by year
-        Map<Integer, List<WetlandParksMitigation>> wetlandParksByYear = wetlandParks.stream().collect(groupingBy(WetlandParksMitigation::getYear));
-        Map<Integer, List<SettlementTreesMitigation>> settlementTreesByYear = settlementTrees.stream().collect(groupingBy(SettlementTreesMitigation::getYear));
-        Map<Integer, List<StreetTreesMitigation>> streetTreesByYear = streetTrees.stream().collect(groupingBy(StreetTreesMitigation::getYear));
-        Map<Integer, List<GreenFencesMitigation>> greenFencesByYear = greenFences.stream().collect(groupingBy(GreenFencesMitigation::getYear));
-        Map<Integer, List<CropRotationMitigation>> cropRotationByYear = cropRotation.stream().collect(groupingBy(CropRotationMitigation::getYear));
-        Map<Integer, List<ZeroTillageMitigation>> zeroTillageByYear = zeroTillage.stream().collect(groupingBy(ZeroTillageMitigation::getYear));
-        Map<Integer, List<ProtectiveForestMitigation>> protectiveForestByYear = protectiveForest.stream().collect(groupingBy(ProtectiveForestMitigation::getYear));
-        Map<Integer, List<ManureCoveringMitigation>> manureCoveringByYear = manureCovering.stream().collect(groupingBy(ManureCoveringMitigation::getYear));
-        Map<Integer, List<AddingStrawMitigation>> addingStrawByYear = addingStraw.stream().collect(groupingBy(AddingStrawMitigation::getYear));
-        Map<Integer, List<DailySpreadMitigation>> dailySpreadByYear = dailySpread.stream().collect(groupingBy(DailySpreadMitigation::getYear));
-        Map<Integer, List<WasteToEnergyMitigation>> wasteToEnergyByYear = wasteToEnergy.stream().collect(groupingBy(WasteToEnergyMitigation::getYear));
-        Map<Integer, List<LandfillGasUtilizationMitigation>> landfillGasUtilizationByYear = landfillGasUtilization.stream().collect(groupingBy(LandfillGasUtilizationMitigation::getYear));
-        Map<Integer, List<MBTCompostingMitigation>> mbtCompostingByYear = mbtComposting.stream().collect(groupingBy(MBTCompostingMitigation::getYear));
-        Map<Integer, List<EPRPlasticWasteMitigation>> eprPlasticWasteByYear = eprPlasticWaste.stream().collect(groupingBy(EPRPlasticWasteMitigation::getYear));
-        Map<Integer, List<KigaliFSTPMitigation>> kigaliFSTPByYear = kigaliFSTP.stream().collect(groupingBy(KigaliFSTPMitigation::getYear));
-        Map<Integer, List<KigaliWWTPMitigation>> kigaliWWTPByYear = kigaliWWTP.stream().collect(groupingBy(KigaliWWTPMitigation::getYear));
+        Map<Integer, List<WetlandParksMitigation>> wetlandParksByYear = wetlandParks.stream()
+                .collect(groupingBy(WetlandParksMitigation::getYear));
+        Map<Integer, List<SettlementTreesMitigation>> settlementTreesByYear = settlementTrees.stream()
+                .collect(groupingBy(SettlementTreesMitigation::getYear));
+        Map<Integer, List<StreetTreesMitigation>> streetTreesByYear = streetTrees.stream()
+                .collect(groupingBy(StreetTreesMitigation::getYear));
+        Map<Integer, List<GreenFencesMitigation>> greenFencesByYear = greenFences.stream()
+                .collect(groupingBy(GreenFencesMitigation::getYear));
+        Map<Integer, List<CropRotationMitigation>> cropRotationByYear = cropRotation.stream()
+                .collect(groupingBy(CropRotationMitigation::getYear));
+        Map<Integer, List<ZeroTillageMitigation>> zeroTillageByYear = zeroTillage.stream()
+                .collect(groupingBy(ZeroTillageMitigation::getYear));
+        Map<Integer, List<ProtectiveForestMitigation>> protectiveForestByYear = protectiveForest.stream()
+                .collect(groupingBy(ProtectiveForestMitigation::getYear));
+        Map<Integer, List<ManureCoveringMitigation>> manureCoveringByYear = manureCovering.stream()
+                .collect(groupingBy(ManureCoveringMitigation::getYear));
+        Map<Integer, List<AddingStrawMitigation>> addingStrawByYear = addingStraw.stream()
+                .collect(groupingBy(AddingStrawMitigation::getYear));
+        Map<Integer, List<DailySpreadMitigation>> dailySpreadByYear = dailySpread.stream()
+                .collect(groupingBy(DailySpreadMitigation::getYear));
+        Map<Integer, List<WasteToEnergyMitigation>> wasteToEnergyByYear = wasteToEnergy.stream()
+                .collect(groupingBy(WasteToEnergyMitigation::getYear));
+        Map<Integer, List<LandfillGasUtilizationMitigation>> landfillGasUtilizationByYear = landfillGasUtilization
+                .stream().collect(groupingBy(LandfillGasUtilizationMitigation::getYear));
+        Map<Integer, List<MBTCompostingMitigation>> mbtCompostingByYear = mbtComposting.stream()
+                .collect(groupingBy(MBTCompostingMitigation::getYear));
+        Map<Integer, List<EPRPlasticWasteMitigation>> eprPlasticWasteByYear = eprPlasticWaste.stream()
+                .collect(groupingBy(EPRPlasticWasteMitigation::getYear));
+        Map<Integer, List<KigaliFSTPMitigation>> kigaliFSTPByYear = kigaliFSTP.stream()
+                .collect(groupingBy(KigaliFSTPMitigation::getYear));
+        Map<Integer, List<KigaliWWTPMitigation>> kigaliWWTPByYear = kigaliWWTP.stream()
+                .collect(groupingBy(KigaliWWTPMitigation::getYear));
         Map<Integer, List<ISWMMitigation>> iswmByYear = iswm.stream().collect(groupingBy(ISWMMitigation::getYear));
-        
-        // For transport scenarios, we'll calculate mitigation per year from all scenarios
-        
+
+        // For transport scenarios, we'll calculate mitigation per year from all
+        // scenarios
+
         // Create dashboard data for each year
         List<DashboardData> dashboardDataList = new ArrayList<>();
         for (int year = startingYear; year <= endingYear; year++) {
             DashboardData data = calculateMitigationDashboardData(
-                wetlandParksByYear.getOrDefault(year, List.of()),
-                settlementTreesByYear.getOrDefault(year, List.of()),
-                streetTreesByYear.getOrDefault(year, List.of()),
-                greenFencesByYear.getOrDefault(year, List.of()),
-                cropRotationByYear.getOrDefault(year, List.of()),
-                zeroTillageByYear.getOrDefault(year, List.of()),
-                protectiveForestByYear.getOrDefault(year, List.of()),
-                manureCoveringByYear.getOrDefault(year, List.of()),
-                addingStrawByYear.getOrDefault(year, List.of()),
-                dailySpreadByYear.getOrDefault(year, List.of()),
-                wasteToEnergyByYear.getOrDefault(year, List.of()),
-                landfillGasUtilizationByYear.getOrDefault(year, List.of()),
-                mbtCompostingByYear.getOrDefault(year, List.of()),
-                eprPlasticWasteByYear.getOrDefault(year, List.of()),
-                kigaliFSTPByYear.getOrDefault(year, List.of()),
-                kigaliWWTPByYear.getOrDefault(year, List.of()),
-                iswmByYear.getOrDefault(year, List.of()),
-                transportScenarios,
-                year,
-                year
-            );
-            
+                    wetlandParksByYear.getOrDefault(year, List.of()),
+                    settlementTreesByYear.getOrDefault(year, List.of()),
+                    streetTreesByYear.getOrDefault(year, List.of()),
+                    greenFencesByYear.getOrDefault(year, List.of()),
+                    cropRotationByYear.getOrDefault(year, List.of()),
+                    zeroTillageByYear.getOrDefault(year, List.of()),
+                    protectiveForestByYear.getOrDefault(year, List.of()),
+                    manureCoveringByYear.getOrDefault(year, List.of()),
+                    addingStrawByYear.getOrDefault(year, List.of()),
+                    dailySpreadByYear.getOrDefault(year, List.of()),
+                    wasteToEnergyByYear.getOrDefault(year, List.of()),
+                    landfillGasUtilizationByYear.getOrDefault(year, List.of()),
+                    mbtCompostingByYear.getOrDefault(year, List.of()),
+                    eprPlasticWasteByYear.getOrDefault(year, List.of()),
+                    kigaliFSTPByYear.getOrDefault(year, List.of()),
+                    kigaliWWTPByYear.getOrDefault(year, List.of()),
+                    iswmByYear.getOrDefault(year, List.of()),
+                    transportScenarios,
+                    year,
+                    year);
+
             // Get gross emissions for this year and calculate net emissions and percentage
-            DashboardData yearMainDashboard = getMainDashboard(year, year);
-            if (yearMainDashboard != null) {
-                data.setTotalCO2EqEmissions(yearMainDashboard.getTotalCO2EqEmissions());
-                
-                double grossEmissions = yearMainDashboard.getTotalCO2EqEmissions();
-                double totalMitigation = data.getTotalMitigationKtCO2e() != null ? data.getTotalMitigationKtCO2e() : 0.0;
+            // Use helper method to avoid circular dependency
+            DashboardData yearGrossEmissionsData = getMainDashboardGrossEmissionsOnly(year, year);
+            if (yearGrossEmissionsData != null) {
+                data.setTotalCO2EqEmissions(yearGrossEmissionsData.getTotalCO2EqEmissions());
+
+                double grossEmissions = yearGrossEmissionsData.getTotalCO2EqEmissions();
+                double totalMitigation = data.getTotalMitigationKtCO2e() != null ? data.getTotalMitigationKtCO2e()
+                        : 0.0;
                 double netEmissions = grossEmissions - totalMitigation;
                 double percentageReduction = grossEmissions > 0 ? (totalMitigation / grossEmissions) * 100.0 : 0.0;
-                
+
                 data.setNetEmissionsKtCO2e(netEmissions);
                 data.setPercentageReduction(percentageReduction);
             }
-            
+
             data.setStartingDate(LocalDateTime.of(year, 1, 1, 0, 0).toString());
             data.setEndingDate(LocalDateTime.of(year, 12, 31, 23, 59).toString());
             data.setYear(Year.of(year));
             dashboardDataList.add(data);
         }
-        
+
         return dashboardDataList;
     }
-    
+
     private DashboardData calculateMitigationDashboardData(
             List<WetlandParksMitigation> wetlandParks,
             List<SettlementTreesMitigation> settlementTrees,
@@ -363,125 +386,126 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             List<TransportScenario> transportScenarios,
             Integer startingYear,
             Integer endingYear) {
-        
+
         DashboardData data = new DashboardData();
         Double totalMitigation = 0.0;
-        
+
         // Sum all mitigation projects (all in Kt CO2e)
         for (WetlandParksMitigation m : wetlandParks) {
             if (m.getMitigatedEmissionsKtCO2e() != null) {
                 totalMitigation += m.getMitigatedEmissionsKtCO2e();
             }
         }
-        
+
         for (SettlementTreesMitigation m : settlementTrees) {
             if (m.getMitigatedEmissionsKtCO2e() != null) {
                 totalMitigation += m.getMitigatedEmissionsKtCO2e();
             }
         }
-        
+
         for (StreetTreesMitigation m : streetTrees) {
             if (m.getMitigatedEmissionsKtCO2e() != null) {
                 totalMitigation += m.getMitigatedEmissionsKtCO2e();
             }
         }
-        
+
         for (GreenFencesMitigation m : greenFences) {
             if (m.getMitigatedEmissionsKtCO2e() != null) {
                 totalMitigation += m.getMitigatedEmissionsKtCO2e();
             }
         }
-        
+
         for (CropRotationMitigation m : cropRotation) {
             if (m.getMitigatedEmissionsKtCO2e() != null) {
                 totalMitigation += m.getMitigatedEmissionsKtCO2e();
             }
         }
-        
+
         // Zero Tillage uses ghgEmissionsSavings (net after urea offset)
         for (ZeroTillageMitigation m : zeroTillage) {
             if (m.getGhgEmissionsSavings() != null) {
                 totalMitigation += m.getGhgEmissionsSavings();
             }
         }
-        
+
         for (ProtectiveForestMitigation m : protectiveForest) {
             if (m.getMitigatedEmissionsKtCO2e() != null) {
                 totalMitigation += m.getMitigatedEmissionsKtCO2e();
             }
         }
-        
+
         // Manure Covering uses mitigatedN2oEmissionsKilotonnes
         for (ManureCoveringMitigation m : manureCovering) {
             if (m.getMitigatedN2oEmissionsKilotonnes() != null) {
                 totalMitigation += m.getMitigatedN2oEmissionsKilotonnes();
             }
         }
-        
+
         // Adding Straw uses mitigatedCh4EmissionsKilotonnes
         for (AddingStrawMitigation a : addingStraw) {
             if (a.getMitigatedCh4EmissionsKilotonnes() != null) {
                 totalMitigation += a.getMitigatedCh4EmissionsKilotonnes();
             }
         }
-        
+
         // Daily Spread uses mitigatedCh4EmissionsKilotonnes
         for (DailySpreadMitigation d : dailySpread) {
             if (d.getMitigatedCh4EmissionsKilotonnes() != null) {
                 totalMitigation += d.getMitigatedCh4EmissionsKilotonnes();
             }
         }
-        
+
         // Waste-to-Energy uses ghgReductionKilotonnes
         for (WasteToEnergyMitigation m : wasteToEnergy) {
             if (m.getGhgReductionKilotonnes() != null) {
                 totalMitigation += m.getGhgReductionKilotonnes();
             }
         }
-        
+
         // Landfill Gas Utilization uses projectReductionEmissions
         for (LandfillGasUtilizationMitigation m : landfillGasUtilization) {
             if (m.getProjectReductionEmissions() != null) {
                 totalMitigation += m.getProjectReductionEmissions();
             }
         }
-        
+
         // MBT Composting uses estimatedGhgReductionKilotonnesPerYear
         for (MBTCompostingMitigation m : mbtComposting) {
             if (m.getEstimatedGhgReductionKilotonnesPerYear() != null) {
                 totalMitigation += m.getEstimatedGhgReductionKilotonnesPerYear();
             }
         }
-        
+
         // EPR Plastic Waste uses ghgReductionKilotonnes
         for (EPRPlasticWasteMitigation e : eprPlasticWaste) {
             if (e.getGhgReductionKilotonnes() != null) {
                 totalMitigation += e.getGhgReductionKilotonnes();
             }
         }
-        
+
         // Kigali FSTP uses annualEmissionsReductionKilotonnes
         for (KigaliFSTPMitigation k : kigaliFSTP) {
             if (k.getAnnualEmissionsReductionKilotonnes() != null) {
                 totalMitigation += k.getAnnualEmissionsReductionKilotonnes();
             }
         }
-        
+
         // Kigali WWTP uses annualEmissionsReductionKilotonnes
         for (KigaliWWTPMitigation w : kigaliWWTP) {
             if (w.getAnnualEmissionsReductionKilotonnes() != null) {
                 totalMitigation += w.getAnnualEmissionsReductionKilotonnes();
             }
         }
-        
+
         // ISWM uses annualReduction
         for (ISWMMitigation i : iswm) {
             if (i.getNetAnnualReduction() != null) {
                 totalMitigation += i.getNetAnnualReduction();
             }
         }
-        
-        // Transport Scenarios - aggregate mitigation from all scenarios for the year range
+
+        // Transport Scenarios - aggregate mitigation from all scenarios for the year
+        // range
         for (TransportScenario scenario : transportScenarios) {
             try {
                 TransportScenarioRunResponseDto results = transportScenarioService.runScenario(scenario.getId());
@@ -507,12 +531,50 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
                 // Log warning but don't fail entire dashboard
             }
         }
-        
+
         data.setTotalMitigationKtCO2e(totalMitigation);
-        
+
         return data;
     }
-    
+
+    /**
+     * Helper method to calculate gross emissions only (without mitigation data).
+     * This avoids circular dependency when getMitigationDashboardSummary needs
+     * gross emissions.
+     */
+    private DashboardData getMainDashboardGrossEmissionsOnly(Integer startingYear, Integer endingYear) {
+        DashboardData data = new DashboardData();
+
+        // Fetch all data sources
+        List<Activity> activities = fetchMethods.fetchActivities(startingYear, endingYear);
+        List<WasteDataAbstract> wasteData = fetchMethods.fetchWasteData(startingYear, endingYear);
+        List<AquacultureEmissions> aquaculture = fetchMethods.fetchAquaculture(startingYear, endingYear);
+        List<EntericFermentationEmissions> enteric = fetchMethods.fetchEntericFermentation(startingYear, endingYear);
+        List<LimingEmissions> liming = fetchMethods.fetchLiming(startingYear, endingYear);
+        List<AnimalManureAndCompostEmissions> manure = fetchMethods.fetchManure(startingYear, endingYear);
+        List<RiceCultivationEmissions> rice = fetchMethods.fetchRice(startingYear, endingYear);
+        List<SyntheticFertilizerEmissions> fertilizer = fetchMethods.fetchFertilizer(startingYear, endingYear);
+        List<UreaEmissions> urea = fetchMethods.fetchUrea(startingYear, endingYear);
+        List<BiomassGain> biomassGains = fetchMethods.fetchBiomassGains(startingYear, endingYear);
+        List<DisturbanceBiomassLoss> disturbanceLosses = fetchMethods.fetchDisturbanceLosses(startingYear, endingYear);
+        List<FirewoodRemovalBiomassLoss> firewoodLosses = fetchMethods.fetchFirewoodLosses(startingYear, endingYear);
+        List<HarvestedBiomassLoss> harvestedLosses = fetchMethods.fetchHarvestedLosses(startingYear, endingYear);
+        List<RewettedMineralWetlands> rewettedWetlands = fetchMethods.fetchRewettedWetlands(startingYear, endingYear);
+
+        // Aggregate all emissions
+        dashboardHelperMethods.aggregateActivityEmissions(data, activities);
+        dashboardHelperMethods.aggregateWasteEmissions(data, wasteData);
+        dashboardHelperMethods.aggregateAgricultureEmissions(data, aquaculture, enteric, liming, manure, rice,
+                fertilizer, urea);
+        dashboardHelperMethods.aggregateLandUseEmissions(data, biomassGains, disturbanceLosses, firewoodLosses,
+                harvestedLosses, rewettedWetlands);
+
+        // Calculate CO2 equivalent
+        dashboardHelperMethods.calculateCO2Equivalent(data);
+
+        return data;
+    }
+
     private DashboardData getMainDashboard(Integer startingYear, Integer endingYear) {
         DashboardData data = new DashboardData();
 
@@ -535,8 +597,10 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         // Aggregate all emissions
         dashboardHelperMethods.aggregateActivityEmissions(data, activities);
         dashboardHelperMethods.aggregateWasteEmissions(data, wasteData);
-        dashboardHelperMethods.aggregateAgricultureEmissions(data, aquaculture, enteric, liming, manure, rice, fertilizer, urea);
-        dashboardHelperMethods.aggregateLandUseEmissions(data, biomassGains, disturbanceLosses, firewoodLosses, harvestedLosses, rewettedWetlands);
+        dashboardHelperMethods.aggregateAgricultureEmissions(data, aquaculture, enteric, liming, manure, rice,
+                fertilizer, urea);
+        dashboardHelperMethods.aggregateLandUseEmissions(data, biomassGains, disturbanceLosses, firewoodLosses,
+                harvestedLosses, rewettedWetlands);
 
         // Calculate CO2 equivalent
         dashboardHelperMethods.calculateCO2Equivalent(data);
