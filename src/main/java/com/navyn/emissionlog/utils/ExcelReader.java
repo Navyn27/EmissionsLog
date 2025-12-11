@@ -114,6 +114,19 @@ public class ExcelReader {
         industrialWasteDtoMap.put("Meat And Poultry Production Amount", "meatAndPoultryProductionAmount");
     }
 
+    // This hashmap is responsible for reading data from wetland parks mitigation
+    // Excel files
+    // and mapping it to DTOs.
+    private static final Map<String, String> wetlandParksToDtoMap = new HashMap<>();
+    static {
+        wetlandParksToDtoMap.put("Year", "year");
+        wetlandParksToDtoMap.put("Tree Category", "treeCategory");
+        wetlandParksToDtoMap.put("Area Planted", "areaPlanted");
+        wetlandParksToDtoMap.put("Area Unit", "areaUnit");
+        wetlandParksToDtoMap.put("Aboveground Biomass AGB", "abovegroundBiomassAGB");
+        wetlandParksToDtoMap.put("AGB Unit", "agbUnit");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -190,6 +203,9 @@ public class ExcelReader {
             case EICV_REPORT:
                 // EICV template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
                 return 2;
+            case WETLAND_PARKS_MITIGATION:
+                // Wetland Parks template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
             default:
                 // Other templates have headers at row 0
                 return 0;
@@ -237,7 +253,29 @@ public class ExcelReader {
                     }
                     break;
                 default:
-                    throw new IllegalArgumentException("Unsupported field type: " + field.getType().getSimpleName());
+                    // Handle enum types
+                    if (field.getType().isEnum()) {
+                        if (cell.getCellType() == CellType.STRING) {
+                            String enumValue = cell.getStringCellValue().trim();
+                            try {
+                                @SuppressWarnings("unchecked")
+                                Enum<?> enumVal = Enum.valueOf((Class<Enum>) field.getType(), enumValue);
+                                field.set(dto, enumVal);
+                            } catch (IllegalArgumentException e) {
+                                throw new IllegalArgumentException("Invalid enum value '" + enumValue + "' for field "
+                                        + field.getName() + ". Valid values: "
+                                        + java.util.Arrays.toString(field.getType().getEnumConstants()));
+                            }
+                        } else if (cell.getCellType() == CellType.BLANK) {
+                            break;
+                        } else {
+                            throw new IllegalArgumentException("Cell type is not string for Enum field");
+                        }
+                    } else {
+                        throw new IllegalArgumentException(
+                                "Unsupported field type: " + field.getType().getSimpleName());
+                    }
+                    break;
             }
         } catch (Exception e) {
             System.err.println("Error setting field value for " + field.getName() + " with value: " + cell + "of type:"
@@ -273,6 +311,8 @@ public class ExcelReader {
                 return "Solid Waste Starter Data";
             case INDUSTRIAL_WASTE_STARTER_DATA:
                 return "Industrial Waste Starter Data";
+            case WETLAND_PARKS_MITIGATION:
+                return "Wetland Parks Mitigation";
             default:
                 return "";
         }
@@ -294,6 +334,8 @@ public class ExcelReader {
                 return solidWasteDtoMap.get(header);
             case INDUSTRIAL_WASTE_STARTER_DATA:
                 return industrialWasteDtoMap.get(header);
+            case WETLAND_PARKS_MITIGATION:
+                return wetlandParksToDtoMap.get(header);
             default:
                 return "";
         }
