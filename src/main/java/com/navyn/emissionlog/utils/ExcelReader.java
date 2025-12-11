@@ -151,6 +151,28 @@ public class ExcelReader {
         cropRotationToDtoMap.put("Increased Biomass Unit", "increasedBiomassUnit");
     }
 
+    // This hashmap is responsible for reading data from street trees mitigation
+    // Excel files
+    // and mapping it to DTOs.
+    private static final Map<String, String> streetTreesToDtoMap = new HashMap<>();
+    static {
+        streetTreesToDtoMap.put("Year", "year");
+        streetTreesToDtoMap.put("Number of Trees Planted", "numberOfTreesPlanted");
+        streetTreesToDtoMap.put("AGB Single Tree Current Year", "agbSingleTreeCurrentYear");
+        streetTreesToDtoMap.put("AGB Unit", "agbUnit");
+    }
+
+    // This hashmap is responsible for reading data from settlement trees mitigation
+    // Excel files
+    // and mapping it to DTOs.
+    private static final Map<String, String> settlementTreesToDtoMap = new HashMap<>();
+    static {
+        settlementTreesToDtoMap.put("Year", "year");
+        settlementTreesToDtoMap.put("Number of Trees Planted", "numberOfTreesPlanted");
+        settlementTreesToDtoMap.put("AGB Single Tree Current Year", "agbSingleTreeCurrentYear");
+        settlementTreesToDtoMap.put("AGB Unit", "agbUnit");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -235,6 +257,12 @@ public class ExcelReader {
                 return 2;
             case WETLAND_PARKS_MITIGATION:
                 // Wetland Parks template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
+            case STREET_TREES_MITIGATION:
+                // Street Trees template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
+            case SETTLEMENT_TREES_MITIGATION:
+                // Settlement Trees template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
                 return 2;
             default:
                 // Other templates have headers at row 0
@@ -347,6 +375,10 @@ public class ExcelReader {
                 return "Wetland Parks Mitigation";
             case CROP_ROTATION_MITIGATION:
                 return "Crop Rotation Mitigation";
+            case STREET_TREES_MITIGATION:
+                return "Street Trees Mitigation";
+            case SETTLEMENT_TREES_MITIGATION:
+                return "Settlement Trees Mitigation";
             default:
                 return "";
         }
@@ -374,6 +406,10 @@ public class ExcelReader {
                 return wetlandParksToDtoMap.get(header);
             case CROP_ROTATION_MITIGATION:
                 return cropRotationToDtoMap.get(header);
+            case STREET_TREES_MITIGATION:
+                return streetTreesToDtoMap.get(header);
+            case SETTLEMENT_TREES_MITIGATION:
+                return settlementTreesToDtoMap.get(header);
             default:
                 return "";
         }
