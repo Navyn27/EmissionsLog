@@ -2,8 +2,10 @@ package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.servi
 
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.dtos.ZeroTillageMitigationDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.models.ZeroTillageMitigation;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,4 +20,8 @@ public interface ZeroTillageMitigationService {
     List<ZeroTillageMitigation> getAllZeroTillageMitigation(Integer year);
 
     Optional<ZeroTillageMitigation> getByYear(Integer year);
+
+    byte[] generateExcelTemplate();
+
+    Map<String, Object> createZeroTillageMitigationFromExcel(MultipartFile file);
 }
