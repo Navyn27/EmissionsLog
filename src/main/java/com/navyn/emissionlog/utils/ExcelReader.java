@@ -137,6 +137,20 @@ public class ExcelReader {
         wetlandParksToDtoMap.put("AGB Unit", "agbUnit");
     }
 
+    // This hashmap is responsible for reading data from crop rotation mitigation
+    // Excel files
+    // and mapping it to DTOs.
+    private static final Map<String, String> cropRotationToDtoMap = new HashMap<>();
+    static {
+        cropRotationToDtoMap.put("Year", "year");
+        cropRotationToDtoMap.put("Cropland Under Crop Rotation", "croplandUnderCropRotation");
+        cropRotationToDtoMap.put("Cropland Area Unit", "croplandAreaUnit");
+        cropRotationToDtoMap.put("Aboveground Biomass", "abovegroundBiomass");
+        cropRotationToDtoMap.put("Aboveground Biomass Unit", "abovegroundBiomassUnit");
+        cropRotationToDtoMap.put("Increased Biomass", "increasedBiomass");
+        cropRotationToDtoMap.put("Increased Biomass Unit", "increasedBiomassUnit");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -212,6 +226,9 @@ public class ExcelReader {
         switch (excelType) {
             case EICV_REPORT:
                 // EICV template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
+            case CROP_ROTATION_MITIGATION:
+                // Crop Rotation template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
                 return 2;
             case ZERO_TILLAGE_MITIGATION:
                 // Zero Tillage template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
@@ -328,6 +345,8 @@ public class ExcelReader {
                 return "Zero Tillage Mitigation";
             case WETLAND_PARKS_MITIGATION:
                 return "Wetland Parks Mitigation";
+            case CROP_ROTATION_MITIGATION:
+                return "Crop Rotation Mitigation";
             default:
                 return "";
         }
@@ -353,6 +372,8 @@ public class ExcelReader {
                 return zeroTillageToDtoMap.get(header);
             case WETLAND_PARKS_MITIGATION:
                 return wetlandParksToDtoMap.get(header);
+            case CROP_ROTATION_MITIGATION:
+                return cropRotationToDtoMap.get(header);
             default:
                 return "";
         }
