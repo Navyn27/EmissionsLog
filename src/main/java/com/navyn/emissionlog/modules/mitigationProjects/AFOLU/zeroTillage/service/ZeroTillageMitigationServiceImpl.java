@@ -25,49 +25,49 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationService {
-    
+
     private final ZeroTillageMitigationRepository repository;
-    
+
     @Override
     public ZeroTillageMitigation createZeroTillageMitigation(ZeroTillageMitigationDto dto) {
         ZeroTillageMitigation mitigation = new ZeroTillageMitigation();
-        
+
         // Convert area to hectares (standard unit)
         double areaInHectares = dto.getAreaUnit().toHectares(dto.getAreaUnderZeroTillage());
-        
+
         // Map input fields (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setAreaUnderZeroTillage(areaInHectares);
-        
+
         // 1. Calculate Total Carbon Increase in Soil (Tonnes C)
         // Total carbon = Area × Carbon increase in soil
-        double totalCarbon = areaInHectares * 
-            ZeroTillageConstants.CARBON_INCREASE_SOIL.getValue();
+        double totalCarbon = areaInHectares *
+                ZeroTillageConstants.CARBON_INCREASE_SOIL.getValue();
         mitigation.setTotalCarbonIncreaseInSoil(totalCarbon);
-        
+
         // 2. Calculate Emissions Savings (Kilotonnes CO2e)
         // Emissions savings = Total carbon × C to CO2 conversion / 1000
-        double emissionsSavings = (totalCarbon * 
-            ZeroTillageConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        double emissionsSavings = (totalCarbon *
+                ZeroTillageConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
         mitigation.setEmissionsSavings(emissionsSavings);
-        
+
         // 3. Calculate Urea Applied (tonnes)
         // Urea applied = Area × Urea application rate
-        double ureaApplied = areaInHectares * 
-            ZeroTillageConstants.UREA_APPLICATION_RATE.getValue();
+        double ureaApplied = areaInHectares *
+                ZeroTillageConstants.UREA_APPLICATION_RATE.getValue();
         mitigation.setUreaApplied(ureaApplied);
-        
+
         // 4. Calculate Emissions from Urea (Tonnes CO2)
         // Emissions from urea = Urea applied × Emission factor from urea
-        double emissionsFromUrea = ureaApplied * 
-            ZeroTillageConstants.EMISSION_FACTOR_UREA.getValue();
+        double emissionsFromUrea = ureaApplied *
+                ZeroTillageConstants.EMISSION_FACTOR_UREA.getValue();
         mitigation.setEmissionsFromUrea(emissionsFromUrea);
-        
+
         // 5. Calculate GHG Emissions Savings (Kilotonnes CO2e) - NET
         // GHG savings = Emissions savings - (Emissions from urea / 1000)
         double ghgSavings = emissionsSavings - (emissionsFromUrea / 1000.0);
         mitigation.setGhgEmissionsSavings(ghgSavings);
-        
+
         return repository.save(mitigation);
     }
 
@@ -352,8 +352,28 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                     ZeroTillageMitigationDto.class,
                     ExcelType.ZERO_TILLAGE_MITIGATION);
 
-            for (ZeroTillageMitigationDto dto : dtos) {
+            for (int i = 0; i < dtos.size(); i++) {
+                ZeroTillageMitigationDto dto = dtos.get(i);
                 totalProcessed++;
+                int rowNumber = i + 1; // Excel row number (1-based, accounting for header row)
+
+                // Validate required fields
+                List<String> missingFields = new ArrayList<>();
+                if (dto.getYear() == null) {
+                    missingFields.add("Year");
+                }
+                if (dto.getAreaUnderZeroTillage() == null) {
+                    missingFields.add("Area Under Zero Tillage");
+                }
+                if (dto.getAreaUnit() == null) {
+                    missingFields.add("Area Unit");
+                }
+
+                if (!missingFields.isEmpty()) {
+                    throw new RuntimeException(String.format(
+                            "Missing required fields: %s. Please fill in all required fields in your Excel file.",
+                            String.join(", ", missingFields)));
+                }
 
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
@@ -374,8 +394,25 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
             result.put("totalProcessed", totalProcessed);
 
             return result;
+        } catch (IOException e) {
+            // Re-throw IOException with user-friendly message
+            String message = e.getMessage();
+            if (message != null) {
+                throw new RuntimeException(message, e);
+            } else {
+                throw new RuntimeException("Incorrect template. Please download the correct template and try again.",
+                        e);
+            }
+        } catch (NullPointerException e) {
+            // Handle null pointer exceptions with clear message
+            throw new RuntimeException(
+                    "Missing required fields. Please fill in all required fields in your Excel file.", e);
         } catch (Exception e) {
-            throw new RuntimeException("Error reading Zero Tillage Mitigation from Excel file: " + e.getMessage(), e);
+            String errorMsg = e.getMessage();
+            if (errorMsg != null) {
+                throw new RuntimeException(errorMsg, e);
+            }
+            throw new RuntimeException("Error processing Excel file. Please check your file and try again.", e);
         }
     }
 }

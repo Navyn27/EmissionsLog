@@ -178,10 +178,12 @@ public class ExcelReader {
         List<T> result = new ArrayList<>();
 
         try (Workbook workbook = WorkbookFactory.create(inputStream)) {
-            Sheet sheet = workbook.getSheet(findSheetName(excelType));
+            String expectedSheetName = findSheetName(excelType);
+            Sheet sheet = workbook.getSheet(expectedSheetName);
 
             if (sheet == null) {
-                throw new IOException("Sheet not found");
+                throw new IOException("Template format error: Sheet '" + expectedSheetName
+                        + "' not found. Please download the correct template and use it without modifying the sheet name.");
             }
 
             // Determine header row index based on ExcelType
@@ -191,7 +193,8 @@ public class ExcelReader {
             // Get header row
             Row headerRow = sheet.getRow(headerRowIndex);
             if (headerRow == null) {
-                throw new IOException("Header row not found at index " + headerRowIndex);
+                throw new IOException("Template format error: Header row not found at row " + (headerRowIndex + 1)
+                        + ". Please download the correct template and do not modify the header row.");
             }
 
             List<String> headers = new ArrayList<>();
@@ -232,9 +235,18 @@ public class ExcelReader {
                 }
                 result.add(dto);
             }
-        } catch (ReflectiveOperationException | IllegalArgumentException e) {
-            e.printStackTrace();
-            throw new IOException("Error mapping Excel data to DTO", e);
+        } catch (IllegalArgumentException e) {
+            // This is usually an enum validation error or type mismatch
+            String errorMsg = e.getMessage();
+            if (errorMsg != null && errorMsg.contains("Invalid value")) {
+                throw new IOException(errorMsg, e);
+            } else if (errorMsg != null && errorMsg.contains("Cell type")) {
+                throw new IOException("Incorrect data type. Please check your Excel file.", e);
+            } else {
+                throw new IOException("Invalid data format. Please check your Excel file and try again.", e);
+            }
+        } catch (ReflectiveOperationException e) {
+            throw new IOException("Incorrect template. Please download the correct template and try again.", e);
         }
         return result;
     }
@@ -320,9 +332,8 @@ public class ExcelReader {
                                 Enum<?> enumVal = Enum.valueOf((Class<Enum>) field.getType(), enumValue);
                                 field.set(dto, enumVal);
                             } catch (IllegalArgumentException e) {
-                                throw new IllegalArgumentException("Invalid enum value '" + enumValue + "' for field "
-                                        + field.getName() + ". Valid values: "
-                                        + java.util.Arrays.toString(field.getType().getEnumConstants()));
+                                throw new IllegalArgumentException("Invalid value '" + enumValue
+                                        + "'. Please select a value from the dropdown list.");
                             }
                         } else if (cell.getCellType() == CellType.BLANK) {
                             break;

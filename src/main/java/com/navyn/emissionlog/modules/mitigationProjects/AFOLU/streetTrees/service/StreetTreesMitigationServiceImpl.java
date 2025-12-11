@@ -441,8 +441,31 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                     StreetTreesMitigationDto.class,
                     ExcelType.STREET_TREES_MITIGATION);
 
-            for (StreetTreesMitigationDto dto : dtos) {
+            for (int i = 0; i < dtos.size(); i++) {
+                StreetTreesMitigationDto dto = dtos.get(i);
                 totalProcessed++;
+                int actualRowNumber = i + 1 + 3; // +1 for 1-based, +3 for title(1) + blank(1) + header(1)
+
+                // Validate required fields
+                List<String> missingFields = new ArrayList<>();
+                if (dto.getYear() == null) {
+                    missingFields.add("Year");
+                }
+                if (dto.getNumberOfTreesPlanted() == null) {
+                    missingFields.add("Number of Trees Planted");
+                }
+                if (dto.getAgbSingleTreeCurrentYear() == null) {
+                    missingFields.add("AGB Single Tree Current Year");
+                }
+                if (dto.getAgbUnit() == null) {
+                    missingFields.add("AGB Unit");
+                }
+
+                if (!missingFields.isEmpty()) {
+                    throw new RuntimeException(String.format(
+                            "Missing required fields: %s. Please fill in all required fields in your Excel file.",
+                            String.join(", ", missingFields)));
+                }
 
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
@@ -463,8 +486,36 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
             result.put("totalProcessed", totalProcessed);
 
             return result;
+        } catch (IOException e) {
+            // Re-throw IOException with user-friendly message
+            String message = e.getMessage();
+            if (message != null && message.contains("Template")) {
+                throw new RuntimeException(message, e);
+            } else {
+                throw new RuntimeException("Template format error: " + (message != null ? message
+                        : "The uploaded file does not match the required template format. Please download the template and ensure all columns and data are correct."),
+                        e);
+            }
+        } catch (NullPointerException e) {
+            // Handle null pointer exceptions with clear message
+            String errorMsg = e.getMessage();
+            if (errorMsg != null && errorMsg.contains("getAgbUnit")) {
+                throw new RuntimeException(
+                        "Template validation error: Missing required field 'AGB Unit'. Please ensure the AGB Unit column is filled with a valid value from the dropdown list.",
+                        e);
+            } else {
+                throw new RuntimeException(
+                        "Template validation error: One or more required fields are missing. Please ensure all required fields are filled in the Excel file.",
+                        e);
+            }
         } catch (Exception e) {
-            throw new RuntimeException("Error reading Street Trees Mitigation from Excel file: " + e.getMessage(), e);
+            String errorMsg = e.getMessage();
+            if (errorMsg != null && (errorMsg.contains("Template") || errorMsg.contains("validation")
+                    || errorMsg.contains("format") || errorMsg.contains("missing required field"))) {
+                throw new RuntimeException(errorMsg, e);
+            }
+            throw new RuntimeException("Error processing Excel file: "
+                    + (errorMsg != null ? errorMsg : "Please ensure the file matches the template format exactly."), e);
         }
     }
 }

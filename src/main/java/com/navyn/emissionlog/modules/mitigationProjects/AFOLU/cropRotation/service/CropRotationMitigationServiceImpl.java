@@ -394,8 +394,40 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
                     CropRotationMitigationDto.class,
                     ExcelType.CROP_ROTATION_MITIGATION);
 
-            for (CropRotationMitigationDto dto : dtos) {
+            for (int i = 0; i < dtos.size(); i++) {
+                CropRotationMitigationDto dto = dtos.get(i);
                 totalProcessed++;
+                int actualRowNumber = i + 1 + 3; // +1 for 1-based, +3 for title(1) + blank(1) + header(1)
+
+                // Validate required fields
+                List<String> missingFields = new ArrayList<>();
+                if (dto.getYear() == null) {
+                    missingFields.add("Year");
+                }
+                if (dto.getCroplandUnderCropRotation() == null) {
+                    missingFields.add("Cropland Under Crop Rotation");
+                }
+                if (dto.getCroplandAreaUnit() == null) {
+                    missingFields.add("Cropland Area Unit");
+                }
+                if (dto.getAbovegroundBiomass() == null) {
+                    missingFields.add("Aboveground Biomass");
+                }
+                if (dto.getAbovegroundBiomassUnit() == null) {
+                    missingFields.add("Aboveground Biomass Unit");
+                }
+                if (dto.getIncreasedBiomass() == null) {
+                    missingFields.add("Increased Biomass");
+                }
+                if (dto.getIncreasedBiomassUnit() == null) {
+                    missingFields.add("Increased Biomass Unit");
+                }
+
+                if (!missingFields.isEmpty()) {
+                    throw new RuntimeException(String.format(
+                            "Missing required fields: %s. Please fill in all required fields in your Excel file.",
+                            String.join(", ", missingFields)));
+                }
 
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
@@ -416,8 +448,25 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
             result.put("totalProcessed", totalProcessed);
 
             return result;
+        } catch (IOException e) {
+            // Re-throw IOException with user-friendly message
+            String message = e.getMessage();
+            if (message != null) {
+                throw new RuntimeException(message, e);
+            } else {
+                throw new RuntimeException("Incorrect template. Please download the correct template and try again.",
+                        e);
+            }
+        } catch (NullPointerException e) {
+            // Handle null pointer exceptions with clear message
+            throw new RuntimeException(
+                    "Missing required fields. Please fill in all required fields in your Excel file.", e);
         } catch (Exception e) {
-            throw new RuntimeException("Error reading Crop Rotation Mitigation from Excel file: " + e.getMessage(), e);
+            String errorMsg = e.getMessage();
+            if (errorMsg != null) {
+                throw new RuntimeException(errorMsg, e);
+            }
+            throw new RuntimeException("Error processing Excel file. Please check your file and try again.", e);
         }
     }
 }
