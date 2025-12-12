@@ -197,6 +197,28 @@ public class ExcelReader {
         manureCoveringToDtoMap.put("Number of Cows", "numberOfCows");
     }
 
+    // This hashmap is responsible for reading data from protective forest mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> protectiveForestToDtoMap = new HashMap<>();
+    static {
+        protectiveForestToDtoMap.put("Year", "year");
+        protectiveForestToDtoMap.put("Category", "category");
+        protectiveForestToDtoMap.put("Area Planted", "areaPlanted");
+        protectiveForestToDtoMap.put("Area Planted Unit", "areaPlantedUnit");
+        protectiveForestToDtoMap.put("AGB Current Year", "agbCurrentYear");
+        protectiveForestToDtoMap.put("AGB Unit", "agbUnit");
+    }
+
+    // This hashmap is responsible for reading data from green fences mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> greenFencesToDtoMap = new HashMap<>();
+    static {
+        greenFencesToDtoMap.put("Year", "year");
+        greenFencesToDtoMap.put("Number of Households with 10m2 Fence", "numberOfHouseholdsWith10m2Fence");
+        greenFencesToDtoMap.put("AGB of 10m2 Live Fence", "agbOf10m2LiveFence");
+        greenFencesToDtoMap.put("AGB Unit", "agbUnit");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -308,6 +330,12 @@ public class ExcelReader {
                 return 2;
             case SETTLEMENT_TREES_MITIGATION:
                 // Settlement Trees template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
+            case PROTECTIVE_FOREST_MITIGATION:
+                // Protective Forest template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
+            case GREEN_FENCES_MITIGATION:
+                // Green Fences template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
                 return 2;
             default:
                 // Other templates have headers at row 0
@@ -429,6 +457,10 @@ public class ExcelReader {
                 return "Adding Straw Mitigation";
             case MANURE_COVERING_MITIGATION:
                 return "Manure Covering Mitigation";
+            case PROTECTIVE_FOREST_MITIGATION:
+                return "Protective Forest Mitigation";
+            case GREEN_FENCES_MITIGATION:
+                return "Green Fences Mitigation";
             default:
                 return "";
         }
@@ -466,6 +498,10 @@ public class ExcelReader {
                 return addingStrawToDtoMap.get(header);
             case MANURE_COVERING_MITIGATION:
                 return manureCoveringToDtoMap.get(header);
+            case PROTECTIVE_FOREST_MITIGATION:
+                return protectiveForestToDtoMap.get(header);
+            case GREEN_FENCES_MITIGATION:
+                return greenFencesToDtoMap.get(header);
             default:
                 return "";
         }

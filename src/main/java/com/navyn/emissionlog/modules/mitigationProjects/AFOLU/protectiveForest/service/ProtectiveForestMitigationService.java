@@ -3,8 +3,10 @@ package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.
 import com.navyn.emissionlog.Enums.Mitigation.ProtectiveForestCategory;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.dtos.ProtectiveForestMitigationDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.models.ProtectiveForestMitigation;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,4 +27,8 @@ public interface ProtectiveForestMitigationService {
         Integer year,
         ProtectiveForestCategory category
     );
+
+    byte[] generateExcelTemplate();
+
+    Map<String, Object> createProtectiveForestMitigationFromExcel(MultipartFile file);
 }
