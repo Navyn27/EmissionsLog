@@ -173,6 +173,30 @@ public class ExcelReader {
         settlementTreesToDtoMap.put("AGB Unit", "agbUnit");
     }
 
+    // This hashmap is responsible for reading data from daily spread mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> dailySpreadToDtoMap = new HashMap<>();
+    static {
+        dailySpreadToDtoMap.put("Year", "year");
+        dailySpreadToDtoMap.put("Number of Cows", "numberOfCows");
+    }
+
+    // This hashmap is responsible for reading data from adding straw mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> addingStrawToDtoMap = new HashMap<>();
+    static {
+        addingStrawToDtoMap.put("Year", "year");
+        addingStrawToDtoMap.put("Number of Cows", "numberOfCows");
+    }
+
+    // This hashmap is responsible for reading data from manure covering mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> manureCoveringToDtoMap = new HashMap<>();
+    static {
+        manureCoveringToDtoMap.put("Year", "year");
+        manureCoveringToDtoMap.put("Number of Cows", "numberOfCows");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -263,6 +287,15 @@ public class ExcelReader {
                 return 2;
             case CROP_ROTATION_MITIGATION:
                 // Crop Rotation template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
+            case DAILY_SPREAD_MITIGATION:
+                // Daily Spread template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
+            case ADDING_STRAW_MITIGATION:
+                // Adding Straw template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
+            case MANURE_COVERING_MITIGATION:
+                // Manure Covering template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
                 return 2;
             case ZERO_TILLAGE_MITIGATION:
                 // Zero Tillage template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
@@ -390,6 +423,12 @@ public class ExcelReader {
                 return "Street Trees Mitigation";
             case SETTLEMENT_TREES_MITIGATION:
                 return "Settlement Trees Mitigation";
+            case DAILY_SPREAD_MITIGATION:
+                return "Daily Spread Mitigation";
+            case ADDING_STRAW_MITIGATION:
+                return "Adding Straw Mitigation";
+            case MANURE_COVERING_MITIGATION:
+                return "Manure Covering Mitigation";
             default:
                 return "";
         }
@@ -421,6 +460,12 @@ public class ExcelReader {
                 return streetTreesToDtoMap.get(header);
             case SETTLEMENT_TREES_MITIGATION:
                 return settlementTreesToDtoMap.get(header);
+            case DAILY_SPREAD_MITIGATION:
+                return dailySpreadToDtoMap.get(header);
+            case ADDING_STRAW_MITIGATION:
+                return addingStrawToDtoMap.get(header);
+            case MANURE_COVERING_MITIGATION:
+                return manureCoveringToDtoMap.get(header);
             default:
                 return "";
         }
