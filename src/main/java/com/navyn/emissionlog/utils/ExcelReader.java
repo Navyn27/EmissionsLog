@@ -219,6 +219,90 @@ public class ExcelReader {
         greenFencesToDtoMap.put("AGB Unit", "agbUnit");
     }
 
+    // This hashmap is responsible for reading data from waste to energy mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> wasteToEnergyToDtoMap = new HashMap<>();
+    static {
+        wasteToEnergyToDtoMap.put("Year", "year");
+        wasteToEnergyToDtoMap.put("Waste to WtE", "wasteToWtE");
+        wasteToEnergyToDtoMap.put("Waste to WtE Unit", "wasteToWtEUnit");
+        wasteToEnergyToDtoMap.put("BAU Emissions Solid Waste", "bauEmissionsSolidWaste");
+        wasteToEnergyToDtoMap.put("BAU Emissions Unit", "bauEmissionsUnit");
+    }
+
+    // This hashmap is responsible for reading data from landfill gas utilization mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> landfillGasUtilizationToDtoMap = new HashMap<>();
+    static {
+        landfillGasUtilizationToDtoMap.put("Year", "year");
+        landfillGasUtilizationToDtoMap.put("BAU Solid Waste Emissions", "bauSolidWasteEmissions");
+        landfillGasUtilizationToDtoMap.put("BAU Solid Waste Emissions Unit", "bauSolidWasteEmissionsUnit");
+        landfillGasUtilizationToDtoMap.put("Project Reduction (40% Efficiency)", "projectReduction40PercentEfficiency");
+        landfillGasUtilizationToDtoMap.put("Project Reduction Unit", "projectReductionUnit");
+        landfillGasUtilizationToDtoMap.put("BAU Grand Total", "bauGrandTotal");
+        landfillGasUtilizationToDtoMap.put("BAU Grand Total Unit", "bauGrandTotalUnit");
+    }
+
+    // This hashmap is responsible for reading data from MBT composting mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> mbtCompostingToDtoMap = new HashMap<>();
+    static {
+        mbtCompostingToDtoMap.put("Year", "year");
+        mbtCompostingToDtoMap.put("Operation Status", "operationStatus");
+        mbtCompostingToDtoMap.put("Organic Waste Treated Tons Per Day", "organicWasteTreatedTonsPerDay");
+        mbtCompostingToDtoMap.put("Organic Waste Treated Unit", "organicWasteTreatedUnit");
+        mbtCompostingToDtoMap.put("BAU Emission Biological Treatment", "bauEmissionBiologicalTreatment");
+        mbtCompostingToDtoMap.put("BAU Emission Unit", "bauEmissionUnit");
+    }
+
+    // This hashmap is responsible for reading data from EPR plastic waste mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> eprPlasticWasteToDtoMap = new HashMap<>();
+    static {
+        eprPlasticWasteToDtoMap.put("Year", "year");
+        eprPlasticWasteToDtoMap.put("BAU Solid Waste Emissions", "bauSolidWasteEmissions");
+        eprPlasticWasteToDtoMap.put("BAU Solid Waste Emissions Unit", "bauSolidWasteEmissionsUnit");
+        eprPlasticWasteToDtoMap.put("Plastic Waste Growth Factor", "plasticWasteGrowthFactor");
+        eprPlasticWasteToDtoMap.put("Recycling Rate With EPR", "recyclingRateWithEPR");
+        eprPlasticWasteToDtoMap.put("Plastic Waste Base Tonnes Per Year", "plasticWasteBaseTonnesPerYear");
+    }
+
+    // This hashmap is responsible for reading data from Kigali FSTP mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> kigaliFSTPToDtoMap = new HashMap<>();
+    static {
+        kigaliFSTPToDtoMap.put("Year", "year");
+        kigaliFSTPToDtoMap.put("Project Phase", "projectPhase");
+        kigaliFSTPToDtoMap.put("Phase Capacity Per Day", "phaseCapacityPerDay");
+        kigaliFSTPToDtoMap.put("Phase Capacity Unit", "phaseCapacityUnit");
+        kigaliFSTPToDtoMap.put("Plant Operational Efficiency", "plantOperationalEfficiency");
+    }
+
+    // This hashmap is responsible for reading data from Kigali WWTP mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> kigaliWWTPToDtoMap = new HashMap<>();
+    static {
+        kigaliWWTPToDtoMap.put("Year", "year");
+        kigaliWWTPToDtoMap.put("Project Phase", "projectPhase");
+        kigaliWWTPToDtoMap.put("Phase Capacity Per Day", "phaseCapacityPerDay");
+        kigaliWWTPToDtoMap.put("Phase Capacity Unit", "phaseCapacityUnit");
+        kigaliWWTPToDtoMap.put("Connected Households", "connectedHouseholds");
+        kigaliWWTPToDtoMap.put("Connected Households Percentage", "connectedHouseholdsPercentage");
+    }
+
+    // This hashmap is responsible for reading data from ISWM mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> iswmToDtoMap = new HashMap<>();
+    static {
+        iswmToDtoMap.put("Year", "year");
+        iswmToDtoMap.put("Waste Processed", "wasteProcessed");
+        iswmToDtoMap.put("Degradable Organic Fraction", "degradableOrganicFraction");
+        iswmToDtoMap.put("Landfill Avoidance", "landfillAvoidance");
+        iswmToDtoMap.put("Composting Emission Factor", "compostingEF");
+        iswmToDtoMap.put("BAU Emission", "bauEmission");
+        iswmToDtoMap.put("BAU Emission Unit", "bauEmissionUnit");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -227,9 +311,35 @@ public class ExcelReader {
             String expectedSheetName = findSheetName(excelType);
             Sheet sheet = workbook.getSheet(expectedSheetName);
 
+            // If exact match not found, try to find sheet by partial name match (handles Excel's 31-char truncation)
             if (sheet == null) {
+                // Try to find sheet by partial match (for Excel's 31-character sheet name limit)
+                String sheetNamePrefix = expectedSheetName.length() > 31 
+                    ? expectedSheetName.substring(0, 31) 
+                    : expectedSheetName;
+                
+                for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+                    String actualSheetName = workbook.getSheetName(i);
+                    if (actualSheetName.equals(expectedSheetName) || 
+                        actualSheetName.startsWith(sheetNamePrefix) ||
+                        expectedSheetName.startsWith(actualSheetName) ||
+                        actualSheetName.startsWith(expectedSheetName)) {
+                        sheet = workbook.getSheetAt(i);
+                        break;
+                    }
+                }
+            }
+
+            if (sheet == null) {
+                // List available sheets for better error message
+                StringBuilder availableSheets = new StringBuilder();
+                for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+                    if (i > 0) availableSheets.append(", ");
+                    availableSheets.append("'").append(workbook.getSheetName(i)).append("'");
+                }
                 throw new IOException("Template format error: Sheet '" + expectedSheetName
-                        + "' not found. Please download the correct template and use it without modifying the sheet name.");
+                        + "' not found. Available sheets: " + availableSheets.toString() 
+                        + ". Please download the correct template and use it without modifying the sheet name.");
             }
 
             // Determine header row index based on ExcelType
@@ -337,6 +447,15 @@ public class ExcelReader {
             case GREEN_FENCES_MITIGATION:
                 // Green Fences template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
                 return 2;
+            case WASTE_TO_ENERGY_MITIGATION:
+            case LANDFILL_GAS_UTILIZATION_MITIGATION:
+            case MBT_COMPOSTING_MITIGATION:
+            case EPR_PLASTIC_WASTE_MITIGATION:
+            case KIGALI_FSTP_MITIGATION:
+            case KIGALI_WWTP_MITIGATION:
+            case ISWM_MITIGATION:
+                // All waste mitigation templates have: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
             default:
                 // Other templates have headers at row 0
                 return 0;
@@ -345,73 +464,173 @@ public class ExcelReader {
 
     private static <T> void setFieldValue(T dto, Field field, Cell cell) throws IllegalAccessException {
         try {
+            // Handle formula cells by evaluating them
+            CellType cellType = cell.getCellType();
+            if (cellType == CellType.FORMULA) {
+                cellType = cell.getCachedFormulaResultType();
+            }
+            
             switch (field.getType().getSimpleName()) {
                 case "String":
-                    if (cell.getCellType() == CellType.STRING) {
-                        field.set(dto, cell.getStringCellValue());
-                    } else if (cell.getCellType() == CellType.BLANK) {
+                    if (cellType == CellType.STRING) {
+                        field.set(dto, cell.getStringCellValue().trim());
+                    } else if (cellType == CellType.BLANK) {
                         break;
+                    } else if (cellType == CellType.NUMERIC) {
+                        // Convert numeric to string, handling integers without decimal
+                        double numValue = cell.getNumericCellValue();
+                        if (numValue == (int) numValue) {
+                            field.set(dto, String.valueOf((int) numValue));
+                        } else {
+                            field.set(dto, String.valueOf(numValue));
+                        }
                     } else {
-                        field.set(dto, String.valueOf(cell.getNumericCellValue()));
+                        field.set(dto, String.valueOf(getCellValueAsString(cell)));
                     }
                     break;
                 case "Integer":
-                    if (cell.getCellType() == CellType.NUMERIC) {
+                    if (cellType == CellType.NUMERIC) {
                         field.set(dto, (int) cell.getNumericCellValue());
-                    } else if (cell.getCellType() == CellType.BLANK) {
+                    } else if (cellType == CellType.BLANK) {
                         break;
+                    } else if (cellType == CellType.STRING) {
+                        // Try to parse string as integer
+                        try {
+                            String stringValue = cell.getStringCellValue().trim();
+                            field.set(dto, Integer.parseInt(stringValue));
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("Cannot convert '" + cell.getStringCellValue() + "' to Integer for field " + field.getName());
+                        }
                     } else {
-                        throw new IllegalArgumentException("Cell type is not numeric for Integer field");
+                        throw new IllegalArgumentException("Cell type is not numeric or string for Integer field " + field.getName());
                     }
                     break;
                 case "BigDecimal":
-                    if (cell.getCellType() == CellType.NUMERIC) {
+                    if (cellType == CellType.NUMERIC) {
                         field.set(dto, BigDecimal.valueOf(cell.getNumericCellValue()));
-                    } else if (cell.getCellType() == CellType.BLANK) {
+                    } else if (cellType == CellType.BLANK) {
                         break;
+                    } else if (cellType == CellType.STRING) {
+                        try {
+                            String stringValue = cell.getStringCellValue().trim();
+                            field.set(dto, new BigDecimal(stringValue));
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("Cannot convert '" + cell.getStringCellValue() + "' to BigDecimal for field " + field.getName());
+                        }
                     } else {
-                        throw new IllegalArgumentException("Cell type is not numeric for BigDecimal field");
+                        throw new IllegalArgumentException("Cell type is not numeric or string for BigDecimal field " + field.getName());
                     }
                     break;
                 case "Double":
-                    if (cell.getCellType() == CellType.NUMERIC) {
+                    if (cellType == CellType.NUMERIC) {
                         Double val = cell.getNumericCellValue();
                         field.set(dto, val);
-                    } else if (cell.getCellType() == CellType.BLANK) {
+                    } else if (cellType == CellType.BLANK) {
                         break;
+                    } else if (cellType == CellType.STRING) {
+                        try {
+                            String stringValue = cell.getStringCellValue().trim();
+                            field.set(dto, Double.parseDouble(stringValue));
+                        } catch (NumberFormatException e) {
+                            throw new IllegalArgumentException("Cannot convert '" + cell.getStringCellValue() + "' to Double for field " + field.getName());
+                        }
                     } else {
-                        throw new IllegalArgumentException("Cell type is not numeric for Double field");
+                        throw new IllegalArgumentException("Cell type is not numeric or string for Double field " + field.getName());
                     }
                     break;
                 default:
                     // Handle enum types
                     if (field.getType().isEnum()) {
-                        if (cell.getCellType() == CellType.STRING) {
-                            String enumValue = cell.getStringCellValue().trim();
+                        String enumValue = null;
+                        if (cellType == CellType.STRING) {
+                            enumValue = cell.getStringCellValue().trim();
+                        } else if (cellType == CellType.BLANK) {
+                            break;
+                        } else if (cellType == CellType.NUMERIC) {
+                            // Try to convert numeric to string for enum
+                            double numValue = cell.getNumericCellValue();
+                            if (numValue == (int) numValue) {
+                                enumValue = String.valueOf((int) numValue);
+                            } else {
+                                enumValue = String.valueOf(numValue);
+                            }
+                        } else {
+                            throw new IllegalArgumentException("Cell type is not string, numeric, or blank for Enum field " + field.getName() + ". Cell type: " + cellType);
+                        }
+                        
+                        if (enumValue != null) {
+                            // Try exact match first
                             try {
                                 @SuppressWarnings("unchecked")
                                 Enum<?> enumVal = Enum.valueOf((Class<Enum>) field.getType(), enumValue);
                                 field.set(dto, enumVal);
-                            } catch (IllegalArgumentException e) {
-                                throw new IllegalArgumentException("Invalid value '" + enumValue
-                                        + "'. Please select a value from the dropdown list.");
+                            } catch (IllegalArgumentException e1) {
+                                // Try case-insensitive match
+                                try {
+                                    @SuppressWarnings("unchecked")
+                                    Enum<?>[] enumConstants = ((Class<Enum>) field.getType()).getEnumConstants();
+                                    for (Enum<?> enumConstant : enumConstants) {
+                                        if (enumConstant.name().equalsIgnoreCase(enumValue)) {
+                                            field.set(dto, enumConstant);
+                                            return;
+                                        }
+                                    }
+                                    throw new IllegalArgumentException("Invalid enum value '" + enumValue
+                                            + "' for field " + field.getName() + ". Valid values are: " + 
+                                            Arrays.toString(Arrays.stream(enumConstants).map(Enum::name).toArray()));
+                                } catch (IllegalArgumentException e2) {
+                                    throw new IllegalArgumentException("Invalid enum value '" + enumValue
+                                            + "' for field " + field.getName() + ". Please select a value from the dropdown list.");
+                                }
                             }
-                        } else if (cell.getCellType() == CellType.BLANK) {
-                            break;
-                        } else {
-                            throw new IllegalArgumentException("Cell type is not string for Enum field");
                         }
                     } else {
                         throw new IllegalArgumentException(
-                                "Unsupported field type: " + field.getType().getSimpleName());
+                                "Unsupported field type: " + field.getType().getSimpleName() + " for field " + field.getName());
                     }
                     break;
             }
-        } catch (Exception e) {
-            System.err.println("Error setting field value for " + field.getName() + " with value: " + cell + "of type:"
-                    + cell.getCellType());
-            e.printStackTrace();
+        } catch (IllegalArgumentException e) {
+            // Re-throw IllegalArgumentException as-is (these are our validation errors)
             throw e;
+        } catch (Exception e) {
+            System.err.println("Error setting field value for " + field.getName() + " with value: " + getCellValueAsString(cell) + " of type: " + cell.getCellType());
+            e.printStackTrace();
+            throw new IllegalAccessException("Error processing field " + field.getName() + ": " + e.getMessage());
+        }
+    }
+    
+    private static String getCellValueAsString(Cell cell) {
+        if (cell == null) {
+            return "null";
+        }
+        try {
+            CellType cellType = cell.getCellType();
+            if (cellType == CellType.FORMULA) {
+                cellType = cell.getCachedFormulaResultType();
+            }
+            
+            switch (cellType) {
+                case STRING:
+                    return cell.getStringCellValue();
+                case NUMERIC:
+                    double numValue = cell.getNumericCellValue();
+                    if (numValue == (int) numValue) {
+                        return String.valueOf((int) numValue);
+                    } else {
+                        return String.valueOf(numValue);
+                    }
+                case BOOLEAN:
+                    return String.valueOf(cell.getBooleanCellValue());
+                case BLANK:
+                    return "(blank)";
+                case ERROR:
+                    return "(error)";
+                default:
+                    return "(unknown)";
+            }
+        } catch (Exception e) {
+            return "(error reading cell: " + e.getMessage() + ")";
         }
     }
 
@@ -461,6 +680,20 @@ public class ExcelReader {
                 return "Protective Forest Mitigation";
             case GREEN_FENCES_MITIGATION:
                 return "Green Fences Mitigation";
+            case WASTE_TO_ENERGY_MITIGATION:
+                return "Waste to Energy Mitigation";
+            case LANDFILL_GAS_UTILIZATION_MITIGATION:
+                return "Landfill Gas Utilization";
+            case MBT_COMPOSTING_MITIGATION:
+                return "MBT Composting Mitigation";
+            case EPR_PLASTIC_WASTE_MITIGATION:
+                return "EPR Plastic Waste Mitigation";
+            case KIGALI_FSTP_MITIGATION:
+                return "Kigali FSTP Mitigation";
+            case KIGALI_WWTP_MITIGATION:
+                return "Kigali WWTP Mitigation";
+            case ISWM_MITIGATION:
+                return "ISWM Mitigation";
             default:
                 return "";
         }
@@ -502,6 +735,20 @@ public class ExcelReader {
                 return protectiveForestToDtoMap.get(header);
             case GREEN_FENCES_MITIGATION:
                 return greenFencesToDtoMap.get(header);
+            case WASTE_TO_ENERGY_MITIGATION:
+                return wasteToEnergyToDtoMap.get(header);
+            case LANDFILL_GAS_UTILIZATION_MITIGATION:
+                return landfillGasUtilizationToDtoMap.get(header);
+            case MBT_COMPOSTING_MITIGATION:
+                return mbtCompostingToDtoMap.get(header);
+            case EPR_PLASTIC_WASTE_MITIGATION:
+                return eprPlasticWasteToDtoMap.get(header);
+            case KIGALI_FSTP_MITIGATION:
+                return kigaliFSTPToDtoMap.get(header);
+            case KIGALI_WWTP_MITIGATION:
+                return kigaliWWTPToDtoMap.get(header);
+            case ISWM_MITIGATION:
+                return iswmToDtoMap.get(header);
             default:
                 return "";
         }
