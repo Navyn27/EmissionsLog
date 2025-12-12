@@ -8,10 +8,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -68,5 +72,40 @@ public class GreenFencesMitigationController {
             "Green fences mitigation deleted successfully",
             null
         ));
+    }
+
+    @GetMapping("/template")
+    @Operation(summary = "Download Green Fences Mitigation Excel template", description = "Downloads an Excel template file with the required column headers and data validation for uploading Green Fences Mitigation records")
+    public ResponseEntity<byte[]> downloadExcelTemplate() {
+        byte[] templateBytes = service.generateExcelTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Green_Fences_Mitigation_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(templateBytes);
+    }
+
+    @PostMapping("/excel")
+    @Operation(summary = "Upload Green Fences Mitigation records from Excel file", description = "Uploads multiple Green Fences Mitigation records from an Excel file. Records with duplicate years will be skipped.")
+    public ResponseEntity<ApiResponse> createGreenFencesMitigationFromExcel(
+            @RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = service.createGreenFencesMitigationFromExcel(file);
+
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        @SuppressWarnings("unchecked")
+        List<Integer> skippedYears = (List<Integer>) result.get("skippedYears");
+
+        String message = String.format(
+                "Upload completed. %d record(s) saved successfully. %d record(s) skipped (years already exist: %s)",
+                savedCount,
+                skippedCount,
+                skippedYears.isEmpty() ? "none" : skippedYears.toString());
+
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
 }

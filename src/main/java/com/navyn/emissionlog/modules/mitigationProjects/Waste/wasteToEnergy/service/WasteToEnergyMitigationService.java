@@ -2,8 +2,10 @@ package com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.ser
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.dtos.WasteToEnergyMitigationDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.models.WasteToEnergyMitigation;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface WasteToEnergyMitigationService {
@@ -15,4 +17,8 @@ public interface WasteToEnergyMitigationService {
     void deleteWasteToEnergyMitigation(UUID id);
     
     List<WasteToEnergyMitigation> getAllWasteToEnergyMitigation(Integer year);
+
+    byte[] generateExcelTemplate();
+
+    Map<String, Object> createWasteToEnergyMitigationFromExcel(MultipartFile file);
 }

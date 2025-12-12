@@ -9,10 +9,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -71,5 +75,40 @@ public class ProtectiveForestMitigationController {
             "Protective forest mitigation deleted successfully",
             null
         ));
+    }
+
+    @GetMapping("/template")
+    @Operation(summary = "Download Protective Forest Mitigation Excel template", description = "Downloads an Excel template file with the required column headers and data validation for uploading Protective Forest Mitigation records")
+    public ResponseEntity<byte[]> downloadExcelTemplate() {
+        byte[] templateBytes = service.generateExcelTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Protective_Forest_Mitigation_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(templateBytes);
+    }
+
+    @PostMapping("/excel")
+    @Operation(summary = "Upload Protective Forest Mitigation records from Excel file", description = "Uploads multiple Protective Forest Mitigation records from an Excel file. Records with duplicate year+category combinations will be skipped.")
+    public ResponseEntity<ApiResponse> createProtectiveForestMitigationFromExcel(
+            @RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = service.createProtectiveForestMitigationFromExcel(file);
+
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        @SuppressWarnings("unchecked")
+        List<String> skippedRecords = (List<String>) result.get("skippedRecords");
+
+        String message = String.format(
+                "Upload completed. %d record(s) saved successfully. %d record(s) skipped (year+category combinations already exist: %s)",
+                savedCount,
+                skippedCount,
+                skippedRecords.isEmpty() ? "none" : String.join(", ", skippedRecords));
+
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
 }

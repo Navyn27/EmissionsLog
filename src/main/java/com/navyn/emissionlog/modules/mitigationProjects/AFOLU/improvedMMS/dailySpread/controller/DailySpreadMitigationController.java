@@ -8,11 +8,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -62,5 +66,40 @@ public class DailySpreadMitigationController {
         return ResponseEntity.ok(
                 new ApiResponse(true, "Daily spread mitigation record deleted successfully", null)
         );
+    }
+
+    @GetMapping("/template")
+    @Operation(summary = "Download Daily Spread Mitigation Excel template", description = "Downloads an Excel template file with the required column headers and data validation for uploading Daily Spread Mitigation records")
+    public ResponseEntity<byte[]> downloadExcelTemplate() {
+        byte[] templateBytes = service.generateExcelTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Daily_Spread_Mitigation_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(templateBytes);
+    }
+
+    @PostMapping("/excel")
+    @Operation(summary = "Upload Daily Spread Mitigation records from Excel file", description = "Uploads multiple Daily Spread Mitigation records from an Excel file. Records with duplicate years will be skipped.")
+    public ResponseEntity<ApiResponse> createDailySpreadMitigationFromExcel(
+            @RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = service.createDailySpreadMitigationFromExcel(file);
+
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        @SuppressWarnings("unchecked")
+        List<Integer> skippedYears = (List<Integer>) result.get("skippedYears");
+
+        String message = String.format(
+                "Upload completed. %d record(s) saved successfully. %d record(s) skipped (years already exist: %s)",
+                savedCount,
+                skippedCount,
+                skippedYears.isEmpty() ? "none" : skippedYears.toString());
+
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
 }
