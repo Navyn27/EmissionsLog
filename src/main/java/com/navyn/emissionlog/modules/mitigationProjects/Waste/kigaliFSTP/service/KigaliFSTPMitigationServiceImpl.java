@@ -301,6 +301,7 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
     public Map<String, Object> createKigaliFSTPMitigationFromExcel(MultipartFile file) {
         List<KigaliFSTPMitigation> savedRecords = new ArrayList<>();
         List<Integer> skippedYears = new ArrayList<>();
+        List<Integer> skippedPhaseRows = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -334,15 +335,31 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
                     continue;
                 }
 
-                // Create the record
-                KigaliFSTPMitigation saved = createKigaliFSTPMitigation(dto);
-                savedRecords.add(saved);
+                // Try to create the record - catch phase precedence errors and skip the row
+                try {
+                    KigaliFSTPMitigation saved = createKigaliFSTPMitigation(dto);
+                    savedRecords.add(saved);
+                } catch (RuntimeException e) {
+                    // Check if it's a phase precedence error
+                    String errorMessage = e.getMessage();
+                    if (errorMessage != null && 
+                        (errorMessage.toLowerCase().contains("phases cannot go backward") ||
+                         errorMessage.toLowerCase().contains("cannot set phase"))) {
+                        // Skip this row due to phase precedence violation
+                        skippedPhaseRows.add(dto.getYear());
+                        continue;
+                    }
+                    // Re-throw if it's a different error
+                    throw e;
+                }
             }
 
             Map<String, Object> result = new HashMap<>();
             result.put("savedCount", savedRecords.size());
             result.put("skippedCount", skippedYears.size());
             result.put("skippedYears", skippedYears);
+            result.put("skippedPhaseRows", skippedPhaseRows);
+            result.put("skippedPhaseCount", skippedPhaseRows.size());
             result.put("totalProcessed", totalProcessed);
             return result;
 

@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -91,13 +92,23 @@ public class KigaliWWTPMitigationController {
         int skippedCount = (Integer) result.get("skippedCount");
         @SuppressWarnings("unchecked")
         List<Integer> skippedYears = (List<Integer>) result.get("skippedYears");
+        @SuppressWarnings("unchecked")
+        List<Integer> skippedPhaseRows = (List<Integer>) result.getOrDefault("skippedPhaseRows", new ArrayList<>());
+        int skippedPhaseCount = (Integer) result.getOrDefault("skippedPhaseCount", 0);
 
-        String message = String.format(
-                "Upload completed. %d record(s) saved successfully. %d record(s) skipped (years already exist: %s)",
-                savedCount,
-                skippedCount,
-                skippedYears.isEmpty() ? "none" : skippedYears.toString());
+        StringBuilder messageBuilder = new StringBuilder();
+        messageBuilder.append(String.format("Upload completed. %d record(s) saved successfully.", savedCount));
+        
+        if (skippedCount > 0) {
+            messageBuilder.append(String.format(" %d record(s) skipped (years already exist: %s).",
+                    skippedCount, skippedYears.isEmpty() ? "none" : skippedYears.toString()));
+        }
+        
+        if (skippedPhaseCount > 0) {
+            messageBuilder.append(String.format(" %d record(s) skipped (phase precedence violation: %s).",
+                    skippedPhaseCount, skippedPhaseRows.isEmpty() ? "none" : skippedPhaseRows.toString()));
+        }
 
-        return ResponseEntity.ok(new ApiResponse(true, message, result));
+        return ResponseEntity.ok(new ApiResponse(true, messageBuilder.toString(), result));
     }
 }
