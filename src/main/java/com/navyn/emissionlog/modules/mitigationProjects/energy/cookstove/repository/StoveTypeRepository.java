@@ -4,7 +4,9 @@ package com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.reposi
 import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public interface StoveTypeRepository extends JpaRepository<StoveType, UUID> {
+    Optional<StoveType> findByNameIgnoreCase(String name);
 }

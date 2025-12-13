@@ -19,5 +19,7 @@ public interface StoveMitigationYearRepository extends JpaRepository<StoveMitiga
 
     @Query("select coalesce(sum(s.avoidedEmissions), 0) from StoveMitigationYear s where s.year = :year")
     double sumAvoidedEmissionsByYear(@Param("year") int year);
+
+    Optional<StoveMitigationYear> findByYearAndStoveTypeId(int year, UUID stoveTypeId);
 }
 

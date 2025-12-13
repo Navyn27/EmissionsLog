@@ -317,6 +317,17 @@ public class ExcelReader {
         ippuToDtoMap.put("GWP Factor", "gwpFactor");
     }
 
+    // This hashmap is responsible for reading data from cookstove mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> cookstoveToDtoMap = new HashMap<>();
+    static {
+        cookstoveToDtoMap.put("Year", "year");
+        cookstoveToDtoMap.put("Stove Type Name", "stoveTypeName");
+        cookstoveToDtoMap.put("Baseline Percentage", "baselinePercentage");
+        cookstoveToDtoMap.put("Units Installed This Year", "unitsInstalledThisYear");
+        cookstoveToDtoMap.put("BAU", "bau");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -472,7 +483,9 @@ public class ExcelReader {
             case KIGALI_WWTP_MITIGATION:
             case ISWM_MITIGATION:
             case IPPU_MITIGATION:
-                // All waste mitigation templates and IPPU have: Row 0 = Title, Row 1 = Blank,
+            case COOKSTOVE_MITIGATION:
+                // All waste mitigation templates, IPPU and Cookstove have: Row 0 = Title, Row 1
+                // = Blank,
                 // Row 2 = Headers
                 return 2;
             default:
@@ -731,6 +744,8 @@ public class ExcelReader {
                 return "ISWM Mitigation";
             case IPPU_MITIGATION:
                 return "IPPU Mitigation";
+            case COOKSTOVE_MITIGATION:
+                return "Cookstove Mitigation";
             default:
                 return "";
         }
@@ -788,6 +803,8 @@ public class ExcelReader {
                 return iswmToDtoMap.get(header);
             case IPPU_MITIGATION:
                 return ippuToDtoMap.get(header);
+            case COOKSTOVE_MITIGATION:
+                return cookstoveToDtoMap.get(header);
             default:
                 return "";
         }
