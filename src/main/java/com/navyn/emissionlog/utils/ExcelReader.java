@@ -197,7 +197,8 @@ public class ExcelReader {
         manureCoveringToDtoMap.put("Number of Cows", "numberOfCows");
     }
 
-    // This hashmap is responsible for reading data from protective forest mitigation
+    // This hashmap is responsible for reading data from protective forest
+    // mitigation
     // Excel files and mapping it to DTOs.
     private static final Map<String, String> protectiveForestToDtoMap = new HashMap<>();
     static {
@@ -230,7 +231,8 @@ public class ExcelReader {
         wasteToEnergyToDtoMap.put("BAU Emissions Unit", "bauEmissionsUnit");
     }
 
-    // This hashmap is responsible for reading data from landfill gas utilization mitigation
+    // This hashmap is responsible for reading data from landfill gas utilization
+    // mitigation
     // Excel files and mapping it to DTOs.
     private static final Map<String, String> landfillGasUtilizationToDtoMap = new HashMap<>();
     static {
@@ -255,7 +257,8 @@ public class ExcelReader {
         mbtCompostingToDtoMap.put("BAU Emission Unit", "bauEmissionUnit");
     }
 
-    // This hashmap is responsible for reading data from EPR plastic waste mitigation
+    // This hashmap is responsible for reading data from EPR plastic waste
+    // mitigation
     // Excel files and mapping it to DTOs.
     private static final Map<String, String> eprPlasticWasteToDtoMap = new HashMap<>();
     static {
@@ -303,6 +306,39 @@ public class ExcelReader {
         iswmToDtoMap.put("BAU Emission Unit", "bauEmissionUnit");
     }
 
+    // This hashmap is responsible for reading data from IPPU mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> ippuToDtoMap = new HashMap<>();
+    static {
+        ippuToDtoMap.put("Year", "year");
+        ippuToDtoMap.put("BAU", "bau");
+        ippuToDtoMap.put("F-Gas Name", "fGasName");
+        ippuToDtoMap.put("Amount of Avoided F-Gas", "amountOfAvoidedFGas");
+        ippuToDtoMap.put("GWP Factor", "gwpFactor");
+    }
+
+    // This hashmap is responsible for reading data from cookstove mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> cookstoveToDtoMap = new HashMap<>();
+    static {
+        cookstoveToDtoMap.put("Year", "year");
+        cookstoveToDtoMap.put("Stove Type Name", "stoveTypeName");
+        cookstoveToDtoMap.put("Baseline Percentage", "baselinePercentage");
+        cookstoveToDtoMap.put("Units Installed This Year", "unitsInstalledThisYear");
+        cookstoveToDtoMap.put("BAU", "bau");
+    }
+
+    // This hashmap is responsible for reading data from light bulb mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> lightBulbToDtoMap = new HashMap<>();
+    static {
+        lightBulbToDtoMap.put("Year", "year");
+        lightBulbToDtoMap.put("Total Installed Bulbs Per Year", "totalInstalledBulbsPerYear");
+        lightBulbToDtoMap.put("Reduction Capacity Per Bulb", "reductionCapacityPerBulb");
+        lightBulbToDtoMap.put("Emission Factor", "emissionFactor");
+        lightBulbToDtoMap.put("BAU", "bau");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -311,19 +347,21 @@ public class ExcelReader {
             String expectedSheetName = findSheetName(excelType);
             Sheet sheet = workbook.getSheet(expectedSheetName);
 
-            // If exact match not found, try to find sheet by partial name match (handles Excel's 31-char truncation)
+            // If exact match not found, try to find sheet by partial name match (handles
+            // Excel's 31-char truncation)
             if (sheet == null) {
-                // Try to find sheet by partial match (for Excel's 31-character sheet name limit)
-                String sheetNamePrefix = expectedSheetName.length() > 31 
-                    ? expectedSheetName.substring(0, 31) 
-                    : expectedSheetName;
-                
+                // Try to find sheet by partial match (for Excel's 31-character sheet name
+                // limit)
+                String sheetNamePrefix = expectedSheetName.length() > 31
+                        ? expectedSheetName.substring(0, 31)
+                        : expectedSheetName;
+
                 for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
                     String actualSheetName = workbook.getSheetName(i);
-                    if (actualSheetName.equals(expectedSheetName) || 
-                        actualSheetName.startsWith(sheetNamePrefix) ||
-                        expectedSheetName.startsWith(actualSheetName) ||
-                        actualSheetName.startsWith(expectedSheetName)) {
+                    if (actualSheetName.equals(expectedSheetName) ||
+                            actualSheetName.startsWith(sheetNamePrefix) ||
+                            expectedSheetName.startsWith(actualSheetName) ||
+                            actualSheetName.startsWith(expectedSheetName)) {
                         sheet = workbook.getSheetAt(i);
                         break;
                     }
@@ -334,11 +372,12 @@ public class ExcelReader {
                 // List available sheets for better error message
                 StringBuilder availableSheets = new StringBuilder();
                 for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
-                    if (i > 0) availableSheets.append(", ");
+                    if (i > 0)
+                        availableSheets.append(", ");
                     availableSheets.append("'").append(workbook.getSheetName(i)).append("'");
                 }
                 throw new IOException("Template format error: Sheet '" + expectedSheetName
-                        + "' not found. Available sheets: " + availableSheets.toString() 
+                        + "' not found. Available sheets: " + availableSheets.toString()
                         + ". Please download the correct template and use it without modifying the sheet name.");
             }
 
@@ -454,7 +493,12 @@ public class ExcelReader {
             case KIGALI_FSTP_MITIGATION:
             case KIGALI_WWTP_MITIGATION:
             case ISWM_MITIGATION:
-                // All waste mitigation templates have: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+            case IPPU_MITIGATION:
+            case COOKSTOVE_MITIGATION:
+            case LIGHT_BULB_MITIGATION:
+                // All waste mitigation templates, IPPU, Cookstove and LightBulb have: Row 0 = Title, Row 1
+                // = Blank,
+                // Row 2 = Headers
                 return 2;
             default:
                 // Other templates have headers at row 0
@@ -469,7 +513,7 @@ public class ExcelReader {
             if (cellType == CellType.FORMULA) {
                 cellType = cell.getCachedFormulaResultType();
             }
-            
+
             switch (field.getType().getSimpleName()) {
                 case "String":
                     if (cellType == CellType.STRING) {
@@ -489,20 +533,25 @@ public class ExcelReader {
                     }
                     break;
                 case "Integer":
+                case "int": // Handle both Integer wrapper and primitive int
                     if (cellType == CellType.NUMERIC) {
-                        field.set(dto, (int) cell.getNumericCellValue());
+                        int intValue = (int) cell.getNumericCellValue();
+                        field.set(dto, intValue); // Autoboxing handles both Integer and int
                     } else if (cellType == CellType.BLANK) {
                         break;
                     } else if (cellType == CellType.STRING) {
                         // Try to parse string as integer
                         try {
                             String stringValue = cell.getStringCellValue().trim();
-                            field.set(dto, Integer.parseInt(stringValue));
+                            int intValue = Integer.parseInt(stringValue);
+                            field.set(dto, intValue); // Autoboxing handles both Integer and int
                         } catch (NumberFormatException e) {
-                            throw new IllegalArgumentException("Cannot convert '" + cell.getStringCellValue() + "' to Integer for field " + field.getName());
+                            throw new IllegalArgumentException("Cannot convert '" + cell.getStringCellValue()
+                                    + "' to Integer for field " + field.getName());
                         }
                     } else {
-                        throw new IllegalArgumentException("Cell type is not numeric or string for Integer field " + field.getName());
+                        throw new IllegalArgumentException(
+                                "Cell type is not numeric or string for Integer field " + field.getName());
                     }
                     break;
                 case "BigDecimal":
@@ -515,27 +564,33 @@ public class ExcelReader {
                             String stringValue = cell.getStringCellValue().trim();
                             field.set(dto, new BigDecimal(stringValue));
                         } catch (NumberFormatException e) {
-                            throw new IllegalArgumentException("Cannot convert '" + cell.getStringCellValue() + "' to BigDecimal for field " + field.getName());
+                            throw new IllegalArgumentException("Cannot convert '" + cell.getStringCellValue()
+                                    + "' to BigDecimal for field " + field.getName());
                         }
                     } else {
-                        throw new IllegalArgumentException("Cell type is not numeric or string for BigDecimal field " + field.getName());
+                        throw new IllegalArgumentException(
+                                "Cell type is not numeric or string for BigDecimal field " + field.getName());
                     }
                     break;
                 case "Double":
+                case "double": // Handle both Double wrapper and primitive double
                     if (cellType == CellType.NUMERIC) {
-                        Double val = cell.getNumericCellValue();
-                        field.set(dto, val);
+                        double val = cell.getNumericCellValue();
+                        field.set(dto, val); // Autoboxing handles both Double and double
                     } else if (cellType == CellType.BLANK) {
                         break;
                     } else if (cellType == CellType.STRING) {
                         try {
                             String stringValue = cell.getStringCellValue().trim();
-                            field.set(dto, Double.parseDouble(stringValue));
+                            double doubleValue = Double.parseDouble(stringValue);
+                            field.set(dto, doubleValue); // Autoboxing handles both Double and double
                         } catch (NumberFormatException e) {
-                            throw new IllegalArgumentException("Cannot convert '" + cell.getStringCellValue() + "' to Double for field " + field.getName());
+                            throw new IllegalArgumentException("Cannot convert '" + cell.getStringCellValue()
+                                    + "' to Double for field " + field.getName());
                         }
                     } else {
-                        throw new IllegalArgumentException("Cell type is not numeric or string for Double field " + field.getName());
+                        throw new IllegalArgumentException(
+                                "Cell type is not numeric or string for Double field " + field.getName());
                     }
                     break;
                 default:
@@ -555,9 +610,11 @@ public class ExcelReader {
                                 enumValue = String.valueOf(numValue);
                             }
                         } else {
-                            throw new IllegalArgumentException("Cell type is not string, numeric, or blank for Enum field " + field.getName() + ". Cell type: " + cellType);
+                            throw new IllegalArgumentException(
+                                    "Cell type is not string, numeric, or blank for Enum field " + field.getName()
+                                            + ". Cell type: " + cellType);
                         }
-                        
+
                         if (enumValue != null) {
                             // Try exact match first
                             try {
@@ -576,17 +633,19 @@ public class ExcelReader {
                                         }
                                     }
                                     throw new IllegalArgumentException("Invalid enum value '" + enumValue
-                                            + "' for field " + field.getName() + ". Valid values are: " + 
+                                            + "' for field " + field.getName() + ". Valid values are: " +
                                             Arrays.toString(Arrays.stream(enumConstants).map(Enum::name).toArray()));
                                 } catch (IllegalArgumentException e2) {
                                     throw new IllegalArgumentException("Invalid enum value '" + enumValue
-                                            + "' for field " + field.getName() + ". Please select a value from the dropdown list.");
+                                            + "' for field " + field.getName()
+                                            + ". Please select a value from the dropdown list.");
                                 }
                             }
                         }
                     } else {
                         throw new IllegalArgumentException(
-                                "Unsupported field type: " + field.getType().getSimpleName() + " for field " + field.getName());
+                                "Unsupported field type: " + field.getType().getSimpleName() + " for field "
+                                        + field.getName());
                     }
                     break;
             }
@@ -594,12 +653,13 @@ public class ExcelReader {
             // Re-throw IllegalArgumentException as-is (these are our validation errors)
             throw e;
         } catch (Exception e) {
-            System.err.println("Error setting field value for " + field.getName() + " with value: " + getCellValueAsString(cell) + " of type: " + cell.getCellType());
+            System.err.println("Error setting field value for " + field.getName() + " with value: "
+                    + getCellValueAsString(cell) + " of type: " + cell.getCellType());
             e.printStackTrace();
             throw new IllegalAccessException("Error processing field " + field.getName() + ": " + e.getMessage());
         }
     }
-    
+
     private static String getCellValueAsString(Cell cell) {
         if (cell == null) {
             return "null";
@@ -609,7 +669,7 @@ public class ExcelReader {
             if (cellType == CellType.FORMULA) {
                 cellType = cell.getCachedFormulaResultType();
             }
-            
+
             switch (cellType) {
                 case STRING:
                     return cell.getStringCellValue();
@@ -694,6 +754,12 @@ public class ExcelReader {
                 return "Kigali WWTP Mitigation";
             case ISWM_MITIGATION:
                 return "ISWM Mitigation";
+            case IPPU_MITIGATION:
+                return "IPPU Mitigation";
+            case COOKSTOVE_MITIGATION:
+                return "Cookstove Mitigation";
+            case LIGHT_BULB_MITIGATION:
+                return "Light Bulb Mitigation";
             default:
                 return "";
         }
@@ -749,6 +815,12 @@ public class ExcelReader {
                 return kigaliWWTPToDtoMap.get(header);
             case ISWM_MITIGATION:
                 return iswmToDtoMap.get(header);
+            case IPPU_MITIGATION:
+                return ippuToDtoMap.get(header);
+            case COOKSTOVE_MITIGATION:
+                return cookstoveToDtoMap.get(header);
+            case LIGHT_BULB_MITIGATION:
+                return lightBulbToDtoMap.get(header);
             default:
                 return "";
         }

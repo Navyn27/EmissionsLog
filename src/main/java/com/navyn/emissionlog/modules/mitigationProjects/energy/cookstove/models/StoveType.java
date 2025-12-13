@@ -8,20 +8,16 @@ import org.hibernate.annotations.GenericGenerator;
 import java.util.UUID;
 
 @Entity
-@Table(name = "stove_type")
+@Table(name = "stove_type", uniqueConstraints = @UniqueConstraint(columnNames = { "name" }))
 @Getter
 @Setter
 public class StoveType {
 
     @Id
     @GeneratedValue(generator = "UUID")
-    @GenericGenerator(
-            name = "UUID",
-            strategy = "org.hibernate.id.UUIDGenerator"
-    )
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(name = "id", updatable = false, nullable = false, columnDefinition = "uuid")
     private UUID id;
-
 
     @Column(nullable = false)
     private String name;
