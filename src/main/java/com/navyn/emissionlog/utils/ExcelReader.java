@@ -328,6 +328,17 @@ public class ExcelReader {
         cookstoveToDtoMap.put("BAU", "bau");
     }
 
+    // This hashmap is responsible for reading data from light bulb mitigation
+    // Excel files and mapping it to DTOs.
+    private static final Map<String, String> lightBulbToDtoMap = new HashMap<>();
+    static {
+        lightBulbToDtoMap.put("Year", "year");
+        lightBulbToDtoMap.put("Total Installed Bulbs Per Year", "totalInstalledBulbsPerYear");
+        lightBulbToDtoMap.put("Reduction Capacity Per Bulb", "reductionCapacityPerBulb");
+        lightBulbToDtoMap.put("Emission Factor", "emissionFactor");
+        lightBulbToDtoMap.put("BAU", "bau");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -484,7 +495,8 @@ public class ExcelReader {
             case ISWM_MITIGATION:
             case IPPU_MITIGATION:
             case COOKSTOVE_MITIGATION:
-                // All waste mitigation templates, IPPU and Cookstove have: Row 0 = Title, Row 1
+            case LIGHT_BULB_MITIGATION:
+                // All waste mitigation templates, IPPU, Cookstove and LightBulb have: Row 0 = Title, Row 1
                 // = Blank,
                 // Row 2 = Headers
                 return 2;
@@ -746,6 +758,8 @@ public class ExcelReader {
                 return "IPPU Mitigation";
             case COOKSTOVE_MITIGATION:
                 return "Cookstove Mitigation";
+            case LIGHT_BULB_MITIGATION:
+                return "Light Bulb Mitigation";
             default:
                 return "";
         }
@@ -805,6 +819,8 @@ public class ExcelReader {
                 return ippuToDtoMap.get(header);
             case COOKSTOVE_MITIGATION:
                 return cookstoveToDtoMap.get(header);
+            case LIGHT_BULB_MITIGATION:
+                return lightBulbToDtoMap.get(header);
             default:
                 return "";
         }
