@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.intervention;
+package com.navyn.emissionlog.modules.mitigationProjects.intervention;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

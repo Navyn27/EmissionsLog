@@ -1,7 +1,7 @@
-package com.navyn.emissionlog.modules.intervention.services;
+package com.navyn.emissionlog.modules.mitigationProjects.intervention.services;
 
-import com.navyn.emissionlog.modules.intervention.Intervention;
-import com.navyn.emissionlog.modules.intervention.dtos.InterventionDto;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.dtos.InterventionDto;
 
 import java.util.List;
 import java.util.Optional;

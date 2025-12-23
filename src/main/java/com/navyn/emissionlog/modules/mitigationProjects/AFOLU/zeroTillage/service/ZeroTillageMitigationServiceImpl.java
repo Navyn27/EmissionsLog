@@ -4,8 +4,14 @@ import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.Enums.Metrics.AreaUnits;
 import com.navyn.emissionlog.Enums.Mitigation.ZeroTillageConstants;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.dtos.ZeroTillageMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.dtos.ZeroTillageMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.models.ZeroTillageMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.repositories.ZeroTillageMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.repositories.BAURepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import com.navyn.emissionlog.utils.Specifications.MitigationSpecifications;
 import lombok.RequiredArgsConstructor;
@@ -13,9 +19,11 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.*;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
@@ -27,9 +35,48 @@ import java.util.*;
 public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationService {
 
     private final ZeroTillageMitigationRepository repository;
+    private final InterventionRepository interventionRepository;
+    private final BAURepository bauRepository;
+
+    /**
+     * Maps ZeroTillageMitigation entity to Response DTO
+     * This method loads intervention data within the transaction to avoid lazy loading issues
+     */
+    private ZeroTillageMitigationResponseDto toResponseDto(ZeroTillageMitigation mitigation) {
+        ZeroTillageMitigationResponseDto dto = new ZeroTillageMitigationResponseDto();
+        dto.setId(mitigation.getId());
+        dto.setYear(mitigation.getYear());
+        dto.setAreaUnderZeroTillage(mitigation.getAreaUnderZeroTillage());
+        dto.setTotalCarbonIncreaseInSoil(mitigation.getTotalCarbonIncreaseInSoil());
+        dto.setEmissionsSavings(mitigation.getEmissionsSavings());
+        dto.setUreaApplied(mitigation.getUreaApplied());
+        dto.setEmissionsFromUrea(mitigation.getEmissionsFromUrea());
+        dto.setGhgEmissionsSavings(mitigation.getGhgEmissionsSavings());
+        dto.setAdjustmentMitigation(mitigation.getAdjustmentMitigation());
+        dto.setCreatedAt(mitigation.getCreatedAt());
+        dto.setUpdatedAt(mitigation.getUpdatedAt());
+
+        // Map intervention - FORCE initialization within transaction to avoid lazy loading
+        if (mitigation.getIntervention() != null) {
+            // Force Hibernate to initialize the proxy while session is still open
+            Hibernate.initialize(mitigation.getIntervention());
+            Intervention intervention = mitigation.getIntervention();
+            ZeroTillageMitigationResponseDto.InterventionInfo interventionInfo = 
+                new ZeroTillageMitigationResponseDto.InterventionInfo(
+                    intervention.getId(),
+                    intervention.getName()
+                );
+            dto.setIntervention(interventionInfo);
+        } else {
+            dto.setIntervention(null);
+        }
+
+        return dto;
+    }
 
     @Override
-    public ZeroTillageMitigation createZeroTillageMitigation(ZeroTillageMitigationDto dto) {
+    @Transactional
+    public ZeroTillageMitigationResponseDto createZeroTillageMitigation(ZeroTillageMitigationDto dto) {
         ZeroTillageMitigation mitigation = new ZeroTillageMitigation();
 
         // Convert area to hectares (standard unit)
@@ -68,11 +115,33 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
         double ghgSavings = emissionsSavings - (emissionsFromUrea / 1000.0);
         mitigation.setGhgEmissionsSavings(ghgSavings);
 
-        return repository.save(mitigation);
+        // 6. Calculate Adjustment Mitigation (Kilotonnes CO2)
+        // Adjustment Mitigation = BAU.value - ghgEmissionsSavings
+        // Find BAU record for AFOLU sector and same year
+        BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.", 
+                                mitigation.getYear())
+                ));
+        double adjustmentMitigation = bau.getValue() - ghgSavings;
+        mitigation.setAdjustmentMitigation(adjustmentMitigation);
+
+        // Handle intervention if provided
+        if (dto.getInterventionId() != null) {
+            Intervention intervention = interventionRepository.findById(dto.getInterventionId())
+                    .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getInterventionId()));
+            mitigation.setIntervention(intervention);
+        } else {
+            mitigation.setIntervention(null);
+        }
+
+        ZeroTillageMitigation saved = repository.save(mitigation);
+        return toResponseDto(saved);
     }
 
     @Override
-    public ZeroTillageMitigation updateZeroTillageMitigation(UUID id, ZeroTillageMitigationDto dto) {
+    @Transactional
+    public ZeroTillageMitigationResponseDto updateZeroTillageMitigation(UUID id, ZeroTillageMitigationDto dto) {
         ZeroTillageMitigation mitigation = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Zero Tillage Mitigation record not found with id: " + id));
 
@@ -103,7 +172,28 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
         double ghgSavings = emissionsSavings - (emissionsFromUrea / 1000.0);
         mitigation.setGhgEmissionsSavings(ghgSavings);
 
-        return repository.save(mitigation);
+        // 6. Calculate Adjustment Mitigation (Kilotonnes CO2)
+        // Adjustment Mitigation = BAU.value - ghgEmissionsSavings
+        // Find BAU record for AFOLU sector and same year
+        BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.", 
+                                mitigation.getYear())
+                ));
+        double adjustmentMitigation = bau.getValue() - ghgSavings;
+        mitigation.setAdjustmentMitigation(adjustmentMitigation);
+
+        // Handle intervention if provided
+        if (dto.getInterventionId() != null) {
+            Intervention intervention = interventionRepository.findById(dto.getInterventionId())
+                    .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getInterventionId()));
+            mitigation.setIntervention(intervention);
+        } else {
+            mitigation.setIntervention(null);
+        }
+
+        ZeroTillageMitigation saved = repository.save(mitigation);
+        return toResponseDto(saved);
     }
 
     @Override
@@ -114,10 +204,16 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     }
 
     @Override
-    public List<ZeroTillageMitigation> getAllZeroTillageMitigation(Integer year) {
+    @Transactional(readOnly = true)
+    public List<ZeroTillageMitigationResponseDto> getAllZeroTillageMitigation(Integer year) {
         Specification<ZeroTillageMitigation> spec = Specification
                 .<ZeroTillageMitigation>where(MitigationSpecifications.hasYear(year));
-        return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        // Use EntityGraph (via findAll override) to eagerly fetch interventions to avoid N+1 queries and lazy loading issues
+        List<ZeroTillageMitigation> mitigations = repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        // Map each entity to DTO within transaction to avoid lazy loading issues
+        return mitigations.stream()
+                .map(this::toResponseDto)
+                .toList();
     }
 
     @Override
@@ -342,7 +438,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
 
     @Override
     public Map<String, Object> createZeroTillageMitigationFromExcel(MultipartFile file) {
-        List<ZeroTillageMitigation> savedRecords = new ArrayList<>();
+        List<ZeroTillageMitigationResponseDto> savedRecords = new ArrayList<>();
         List<Integer> skippedYears = new ArrayList<>();
         int totalProcessed = 0;
 
@@ -382,7 +478,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                 }
 
                 // Create the record
-                ZeroTillageMitigation saved = createZeroTillageMitigation(dto);
+                ZeroTillageMitigationResponseDto saved = createZeroTillageMitigation(dto);
                 savedRecords.add(saved);
             }
 

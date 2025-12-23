@@ -1,6 +1,6 @@
-package com.navyn.emissionlog.modules.intervention.repositories;
+package com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories;
 
-import com.navyn.emissionlog.modules.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
