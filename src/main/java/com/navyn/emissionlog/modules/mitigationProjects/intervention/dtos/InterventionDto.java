@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.intervention.dtos;
+package com.navyn.emissionlog.modules.mitigationProjects.intervention.dtos;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.dtos.ZeroTillageMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.models.ZeroTillageMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.dtos.ZeroTillageMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.service.ZeroTillageMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +30,7 @@ public class ZeroTillageMitigationController {
     @Operation(summary = "Create new zero tillage mitigation record")
     public ResponseEntity<ApiResponse> createZeroTillageMitigation(
             @Valid @RequestBody ZeroTillageMitigationDto dto) {
-        ZeroTillageMitigation mitigation = service.createZeroTillageMitigation(dto);
+        ZeroTillageMitigationResponseDto mitigation = service.createZeroTillageMitigation(dto);
         return ResponseEntity.ok(new ApiResponse(
                 true,
                 "Zero tillage mitigation created successfully",
@@ -42,7 +42,7 @@ public class ZeroTillageMitigationController {
     public ResponseEntity<ApiResponse> updateZeroTillageMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody ZeroTillageMitigationDto dto) {
-        ZeroTillageMitigation mitigation = service.updateZeroTillageMitigation(id, dto);
+        ZeroTillageMitigationResponseDto mitigation = service.updateZeroTillageMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(
                 true,
                 "Zero tillage mitigation updated successfully",
@@ -53,7 +53,7 @@ public class ZeroTillageMitigationController {
     @Operation(summary = "Get all zero tillage mitigation records")
     public ResponseEntity<ApiResponse> getAllZeroTillageMitigation(
             @RequestParam(required = false, value = "year") Integer year) {
-        List<ZeroTillageMitigation> mitigations = service.getAllZeroTillageMitigation(year);
+        List<ZeroTillageMitigationResponseDto> mitigations = service.getAllZeroTillageMitigation(year);
         return ResponseEntity.ok(new ApiResponse(
                 true,
                 "Zero tillage mitigation records fetched successfully",

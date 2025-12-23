@@ -1,8 +1,8 @@
-package com.navyn.emissionlog.modules.intervention.services;
+package com.navyn.emissionlog.modules.mitigationProjects.intervention.services;
 
-import com.navyn.emissionlog.modules.intervention.Intervention;
-import com.navyn.emissionlog.modules.intervention.dtos.InterventionDto;
-import com.navyn.emissionlog.modules.intervention.repositories.InterventionRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.dtos.InterventionDto;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

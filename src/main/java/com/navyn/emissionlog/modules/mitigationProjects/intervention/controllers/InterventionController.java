@@ -1,8 +1,8 @@
-package com.navyn.emissionlog.modules.intervention.controllers;
+package com.navyn.emissionlog.modules.mitigationProjects.intervention.controllers;
 
-import com.navyn.emissionlog.modules.intervention.Intervention;
-import com.navyn.emissionlog.modules.intervention.dtos.InterventionDto;
-import com.navyn.emissionlog.modules.intervention.services.InterventionService;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.dtos.InterventionDto;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.services.InterventionService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/interventions")
+@RequestMapping("mitigation/interventions")
 @SecurityRequirement(name = "BearerAuth")
 @RequiredArgsConstructor
 public class InterventionController {

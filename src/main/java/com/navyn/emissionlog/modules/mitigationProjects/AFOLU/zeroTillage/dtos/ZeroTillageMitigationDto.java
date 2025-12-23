@@ -4,6 +4,8 @@ import com.navyn.emissionlog.Enums.Metrics.AreaUnits;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class ZeroTillageMitigationDto {
     
@@ -18,4 +20,7 @@ public class ZeroTillageMitigationDto {
     
     @NotNull(message = "Area unit is required")
     private AreaUnits areaUnit; // Unit for area (standard: ha)
+    
+    // Optional intervention reference
+    private UUID interventionId;
 }
