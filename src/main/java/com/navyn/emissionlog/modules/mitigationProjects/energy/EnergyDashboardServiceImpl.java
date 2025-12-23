@@ -1,7 +1,7 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy;
+package com.navyn.emissionlog.modules.mitigationProjects.energy;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.dto.EnergyDashboardSummaryDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.dto.EnergyDashboardYearDto;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.dto.EnergyDashboardSummaryDto;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.dto.EnergyDashboardYearDto;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveMitigationYear;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveMitigationYearRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.model.RoofTopMitigation;

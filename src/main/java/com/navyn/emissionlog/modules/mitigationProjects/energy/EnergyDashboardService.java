@@ -1,7 +1,7 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy;
+package com.navyn.emissionlog.modules.mitigationProjects.energy;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.dto.EnergyDashboardSummaryDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Energy.dto.EnergyDashboardYearDto;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.dto.EnergyDashboardSummaryDto;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.dto.EnergyDashboardYearDto;
 import java.util.List;
 
 public interface EnergyDashboardService {
