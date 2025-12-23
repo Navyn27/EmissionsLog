@@ -1,4 +1,4 @@
-package com.navyn.emissionlog.modules.mitigationProjects.Energy;
+package com.navyn.emissionlog.modules.mitigationProjects.energy;
 
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
