@@ -2,9 +2,9 @@ package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.servi
 
 import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.Enums.Metrics.AreaUnits;
-import com.navyn.emissionlog.Enums.Mitigation.ZeroTillageConstants;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.dtos.ZeroTillageMitigationDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.dtos.ZeroTillageMitigationResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.dtos.ZeroTillageParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.models.ZeroTillageMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.repositories.ZeroTillageMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
@@ -37,6 +37,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     private final ZeroTillageMitigationRepository repository;
     private final InterventionRepository interventionRepository;
     private final BAURepository bauRepository;
+    private final ZeroTillageParameterService zeroTillageParameterService;
 
     /**
      * Maps ZeroTillageMitigation entity to Response DTO
@@ -61,11 +62,11 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
             // Force Hibernate to initialize the proxy while session is still open
             Hibernate.initialize(mitigation.getIntervention());
             Intervention intervention = mitigation.getIntervention();
-            ZeroTillageMitigationResponseDto.InterventionInfo interventionInfo = 
-                new ZeroTillageMitigationResponseDto.InterventionInfo(
-                    intervention.getId(),
-                    intervention.getName()
-                );
+            ZeroTillageMitigationResponseDto.InterventionInfo interventionInfo =
+                    new ZeroTillageMitigationResponseDto.InterventionInfo(
+                            intervention.getId(),
+                            intervention.getName()
+                    );
             dto.setIntervention(interventionInfo);
         } else {
             dto.setIntervention(null);
@@ -77,8 +78,19 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     @Override
     @Transactional
     public ZeroTillageMitigationResponseDto createZeroTillageMitigation(ZeroTillageMitigationDto dto) {
-        ZeroTillageMitigation mitigation = new ZeroTillageMitigation();
+        // Fetch latest active parameter - throws exception if none exists
+        ZeroTillageParameterResponseDto param;
+        try {
+            param = zeroTillageParameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot create Zero Tillage Mitigation: No active Zero Tillage Parameter found. " +
+                            "Please create an active parameter first before creating mitigation records.",
+                    e
+            );
+        }
 
+        ZeroTillageMitigation mitigation = new ZeroTillageMitigation();
         // Convert area to hectares (standard unit)
         double areaInHectares = dto.getAreaUnit().toHectares(dto.getAreaUnderZeroTillage());
 
@@ -87,27 +99,20 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
         mitigation.setAreaUnderZeroTillage(areaInHectares);
 
         // 1. Calculate Total Carbon Increase in Soil (Tonnes C)
-        // Total carbon = Area × Carbon increase in soil
-        double totalCarbon = areaInHectares *
-                ZeroTillageConstants.CARBON_INCREASE_SOIL.getValue();
+        // Total carbon = Area × Carbon increase in soil (from parameter)
+        double totalCarbon = areaInHectares * param.getCarbonIncreaseInSoil();
         mitigation.setTotalCarbonIncreaseInSoil(totalCarbon);
 
         // 2. Calculate Emissions Savings (Kilotonnes CO2e)
-        // Emissions savings = Total carbon × C to CO2 conversion / 1000
-        double emissionsSavings = (totalCarbon *
-                ZeroTillageConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        // Emissions savings = Total carbon × C to CO2 conversion (from parameter) / 1000
+        double emissionsSavings = (totalCarbon * param.getCarbonToC02()) / 1000.0;
         mitigation.setEmissionsSavings(emissionsSavings);
 
-        // 3. Calculate Urea Applied (tonnes)
-        // Urea applied = Area × Urea application rate
-        double ureaApplied = areaInHectares *
-                ZeroTillageConstants.UREA_APPLICATION_RATE.getValue();
-        mitigation.setUreaApplied(ureaApplied);
+        mitigation.setUreaApplied(dto.getUreaApplied());
 
         // 4. Calculate Emissions from Urea (Tonnes CO2)
-        // Emissions from urea = Urea applied × Emission factor from urea
-        double emissionsFromUrea = ureaApplied *
-                ZeroTillageConstants.EMISSION_FACTOR_UREA.getValue();
+        // Emissions from urea = Urea applied × Emission factor from urea (from parameter)
+        double emissionsFromUrea = dto.getUreaApplied() * param.getEmissionFactorFromUrea();
         mitigation.setEmissionsFromUrea(emissionsFromUrea);
 
         // 5. Calculate GHG Emissions Savings (Kilotonnes CO2e) - NET
@@ -120,7 +125,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
         // Find BAU record for AFOLU sector and same year
         BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
                 .orElseThrow(() -> new RuntimeException(
-                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.", 
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
                                 mitigation.getYear())
                 ));
         double adjustmentMitigation = bau.getValue() - ghgSavings;
@@ -142,6 +147,18 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     @Override
     @Transactional
     public ZeroTillageMitigationResponseDto updateZeroTillageMitigation(UUID id, ZeroTillageMitigationDto dto) {
+        // Fetch latest active parameter - throws exception if none exists
+        ZeroTillageParameterResponseDto param;
+        try {
+            param = zeroTillageParameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot update Zero Tillage Mitigation: No active Zero Tillage Parameter found. " +
+                            "Please create an active parameter first before updating mitigation records.",
+                    e
+            );
+        }
+
         ZeroTillageMitigation mitigation = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Zero Tillage Mitigation record not found with id: " + id));
 
@@ -152,32 +169,35 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
         mitigation.setYear(dto.getYear());
         mitigation.setAreaUnderZeroTillage(areaInHectares);
 
-        // Recalculate all derived fields
-        double totalCarbon = areaInHectares *
-                ZeroTillageConstants.CARBON_INCREASE_SOIL.getValue();
+        // Recalculate all derived fields using parameter values
+        // 1. Calculate Total Carbon Increase in Soil (Tonnes C)
+        // Total carbon = Area × Carbon increase in soil (from parameter)
+        double totalCarbon = areaInHectares * param.getCarbonIncreaseInSoil();
         mitigation.setTotalCarbonIncreaseInSoil(totalCarbon);
 
-        double emissionsSavings = (totalCarbon *
-                ZeroTillageConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        // 2. Calculate Emissions Savings (Kilotonnes CO2e)
+        // Emissions savings = Total carbon × C to CO2 conversion (from parameter) / 1000
+        double emissionsSavings = (totalCarbon * param.getCarbonToC02()) / 1000.0;
         mitigation.setEmissionsSavings(emissionsSavings);
 
-        double ureaApplied = areaInHectares *
-                ZeroTillageConstants.UREA_APPLICATION_RATE.getValue();
-        mitigation.setUreaApplied(ureaApplied);
+        mitigation.setUreaApplied(dto.getUreaApplied());
 
-        double emissionsFromUrea = ureaApplied *
-                ZeroTillageConstants.EMISSION_FACTOR_UREA.getValue();
+        // 4. Calculate Emissions from Urea (Tonnes CO2)
+        // Emissions from urea = Urea applied × Emission factor from urea (from parameter)
+        double emissionsFromUrea = dto.getUreaApplied() * param.getEmissionFactorFromUrea();
         mitigation.setEmissionsFromUrea(emissionsFromUrea);
 
+        // 5. Calculate GHG Emissions Savings (Kilotonnes CO2e) - NET
+        // GHG savings = Emissions savings - (Emissions from urea / 1000)
         double ghgSavings = emissionsSavings - (emissionsFromUrea / 1000.0);
         mitigation.setGhgEmissionsSavings(ghgSavings);
 
-        // 6. Calculate Adjustment Mitigation (Kilotonnes CO2)
+        // 6. Calculate Adjustment Mitigation (Kilotons CO2)
         // Adjustment Mitigation = BAU.value - ghgEmissionsSavings
         // Find BAU record for AFOLU sector and same year
         BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
                 .orElseThrow(() -> new RuntimeException(
-                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.", 
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
                                 mitigation.getYear())
                 ));
         double adjustmentMitigation = bau.getValue() - ghgSavings;
@@ -210,7 +230,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                 .<ZeroTillageMitigation>where(MitigationSpecifications.hasYear(year));
         // Use EntityGraph (via findAll override) to eagerly fetch interventions to avoid N+1 queries and lazy loading issues
         List<ZeroTillageMitigation> mitigations = repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
-        // Map each entity to DTO within transaction to avoid lazy loading issues
+        // Map each entity to DTO within the transaction to avoid lazy loading issues
         return mitigations.stream()
                 .map(this::toResponseDto)
                 .toList();
@@ -224,7 +244,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     @Override
     public byte[] generateExcelTemplate() {
         try (Workbook workbook = new XSSFWorkbook();
-                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             Sheet sheet = workbook.createSheet("Zero Tillage Mitigation");
 
@@ -315,13 +335,20 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
 
             int rowIdx = 0;
 
+            // Get all interventions for dropdown
+            List<Intervention> allInterventions = interventionRepository.findAll();
+            String[] interventionNames = allInterventions.stream()
+                    .map(Intervention::getName)
+                    .sorted()
+                    .toArray(String[]::new);
+
             // Title row
             Row titleRow = sheet.createRow(rowIdx++);
             titleRow.setHeightInPoints(30);
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Zero Tillage Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4)); // Updated to cover 5 columns
 
             rowIdx++; // Blank row
 
@@ -331,7 +358,9 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
             String[] headers = {
                     "Year",
                     "Area Under Zero Tillage",
-                    "Area Unit"
+                    "Area Unit",
+                    "Urea Applied",
+                    "Intervention"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -345,34 +374,61 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                     .map(Enum::name)
                     .toArray(String[]::new);
 
-            // Create data validation for Area Unit column (Column C, index 2)
+            // Create data validation helper
             DataValidationHelper validationHelper = sheet.getDataValidationHelper();
-            CellRangeAddressList addressList = new CellRangeAddressList(
+
+            // Data validation for Area Unit column (Column C, index 2)
+            CellRangeAddressList areaUnitList = new CellRangeAddressList(
                     3, // Start row (first data row after headers)
                     1000, // End row (sufficient for most use cases)
                     2, 2 // Column C (Area Unit column, 0-indexed)
             );
+            DataValidationConstraint areaUnitConstraint = validationHelper.createExplicitListConstraint(areaUnitValues);
+            DataValidation areaUnitValidation = validationHelper.createValidation(areaUnitConstraint, areaUnitList);
+            areaUnitValidation.setShowErrorBox(true);
+            areaUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+            areaUnitValidation.createErrorBox("Invalid Area Unit", "Please select a valid area unit from the dropdown list.");
+            areaUnitValidation.setShowPromptBox(true);
+            areaUnitValidation.createPromptBox("Area Unit", "Select an area unit from the dropdown list.");
+            sheet.addValidationData(areaUnitValidation);
 
-            DataValidationConstraint constraint = validationHelper.createExplicitListConstraint(areaUnitValues);
-            DataValidation validation = validationHelper.createValidation(constraint, addressList);
-            validation.setShowErrorBox(true);
-            validation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            validation.createErrorBox("Invalid Area Unit", "Please select a valid area unit from the dropdown list.");
-            validation.setShowPromptBox(true);
-            validation.createPromptBox("Area Unit", "Select an area unit from the dropdown list.");
-            sheet.addValidationData(validation);
+            // Data validation for Intervention column (Column E, index 4) - optional, can be empty
+            if (interventionNames.length > 0) {
+                // Add empty string option for optional field
+                String[] interventionOptions = new String[interventionNames.length + 1];
+                interventionOptions[0] = ""; // Empty option
+                System.arraycopy(interventionNames, 0, interventionOptions, 1, interventionNames.length);
+
+                CellRangeAddressList interventionList = new CellRangeAddressList(
+                        3, // Start row (first data row after headers)
+                        1000, // End row (sufficient for most use cases)
+                        4, 4 // Column E (Intervention column, 0-indexed)
+                );
+                DataValidationConstraint interventionConstraint = validationHelper.createExplicitListConstraint(interventionOptions);
+                DataValidation interventionValidation = validationHelper.createValidation(interventionConstraint, interventionList);
+                interventionValidation.setShowErrorBox(true);
+                interventionValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionValidation.createErrorBox("Invalid Intervention", "Please select a valid intervention from the dropdown list or leave empty.");
+                interventionValidation.setShowPromptBox(true);
+                interventionValidation.createPromptBox("Intervention", "Select an intervention from the dropdown list (optional).");
+                sheet.addValidationData(interventionValidation);
+            }
 
             // Create example data rows
             Object[] exampleData1 = {
                     2024,
                     100.5,
-                    "HECTARES"
+                    "HECTARES",
+                    50.0,
+                    interventionNames.length > 0 ? interventionNames[0] : ""
             };
 
             Object[] exampleData2 = {
                     2025,
                     150.75,
-                    "ACRES"
+                    "ACRES",
+                    75.5,
+                    "" // Empty intervention for second example
             };
 
             // First example row
@@ -386,7 +442,10 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                 } else if (i == 1) { // Area
                     cell.setCellStyle(numberStyle);
                     cell.setCellValue(((Number) exampleData1[i]).doubleValue());
-                } else { // Area Unit
+                } else if (i == 3) { // Urea Applied
+                    cell.setCellStyle(numberStyle);
+                    cell.setCellValue(((Number) exampleData1[i]).doubleValue());
+                } else { // Area Unit or Intervention (string)
                     cell.setCellStyle(dataStyle);
                     cell.setCellValue((String) exampleData1[i]);
                 }
@@ -410,7 +469,14 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                     altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                     cell.setCellStyle(altNumStyle);
                     cell.setCellValue(((Number) exampleData2[i]).doubleValue());
-                } else { // Area Unit
+                } else if (i == 3) { // Urea Applied
+                    CellStyle altNumStyle = workbook.createCellStyle();
+                    altNumStyle.cloneStyleFrom(numberStyle);
+                    altNumStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+                    altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                    cell.setCellStyle(altNumStyle);
+                    cell.setCellValue(((Number) exampleData2[i]).doubleValue());
+                } else { // Area Unit or Intervention (string)
                     cell.setCellStyle(alternateDataStyle);
                     cell.setCellValue((String) exampleData2[i]);
                 }
@@ -440,6 +506,10 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     public Map<String, Object> createZeroTillageMitigationFromExcel(MultipartFile file) {
         List<ZeroTillageMitigationResponseDto> savedRecords = new ArrayList<>();
         List<Integer> skippedYears = new ArrayList<>();
+        List<Map<String, Object>> skippedBAUNotFound = new ArrayList<>();
+        List<Map<String, Object>> skippedParameterNotFound = new ArrayList<>();
+        List<Map<String, Object>> skippedInterventionNotFound = new ArrayList<>();
+        List<Map<String, Object>> skippedMissingFields = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -452,6 +522,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                 ZeroTillageMitigationDto dto = dtos.get(i);
                 totalProcessed++;
                 int rowNumber = i + 1; // Excel row number (1-based, accounting for header row)
+                int excelRowNumber = rowNumber + 2; // +2 for header row and 0-based index
 
                 // Validate required fields
                 List<String> missingFields = new ArrayList<>();
@@ -466,10 +537,31 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                 }
 
                 if (!missingFields.isEmpty()) {
-                    throw new RuntimeException(String.format(
-                            "Missing required fields: %s. Please fill in all required fields in your Excel file.",
-                            String.join(", ", missingFields)));
+                    Map<String, Object> skipInfo = new HashMap<>();
+                    skipInfo.put("row", excelRowNumber);
+                    skipInfo.put("year", dto.getYear() != null ? dto.getYear() : "N/A");
+                    skipInfo.put("reason", "Missing required fields: " + String.join(", ", missingFields));
+                    skippedMissingFields.add(skipInfo);
+                    continue; // Skip this row
                 }
+
+                // Handle intervention name from Excel - convert to interventionId
+                if (dto.getInterventionName() != null && !dto.getInterventionName().trim().isEmpty()) {
+                    String interventionName = dto.getInterventionName().trim();
+                    Optional<Intervention> intervention = interventionRepository.findByNameIgnoreCase(interventionName);
+                    if (intervention.isPresent()) {
+                        dto.setInterventionId(intervention.get().getId());
+                    } else {
+                        Map<String, Object> skipInfo = new HashMap<>();
+                        skipInfo.put("row", excelRowNumber);
+                        skipInfo.put("year", dto.getYear());
+                        skipInfo.put("reason", String.format("Intervention '%s' not found", interventionName));
+                        skippedInterventionNotFound.add(skipInfo);
+                        continue; // Skip this row
+                    }
+                }
+                // Clear the temporary interventionName field
+                dto.setInterventionName(null);
 
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
@@ -477,16 +569,53 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                     continue; // Skip this row
                 }
 
-                // Create the record
-                ZeroTillageMitigationResponseDto saved = createZeroTillageMitigation(dto);
-                savedRecords.add(saved);
+                // Try to create the record - catch specific errors and skip instead of failing
+                try {
+                    ZeroTillageMitigationResponseDto saved = createZeroTillageMitigation(dto);
+                    savedRecords.add(saved);
+                } catch (RuntimeException e) {
+                    String errorMessage = e.getMessage();
+                    if (errorMessage != null) {
+                        // Check for BAU not found error
+                        if ((errorMessage.contains("BAU record") || errorMessage.contains("BAU")) && errorMessage.contains("not found")) {
+                            Map<String, Object> skipInfo = new HashMap<>();
+                            skipInfo.put("row", excelRowNumber);
+                            skipInfo.put("year", dto.getYear());
+                            skipInfo.put("reason", errorMessage);
+                            skippedBAUNotFound.add(skipInfo);
+                            continue; // Skip this row
+                        }
+                        // Check for Zero Tillage Parameter not found error
+                        if (errorMessage.contains("Zero Tillage Parameter") || 
+                            errorMessage.contains("active parameter") || 
+                            errorMessage.contains("No active Zero Tillage Parameter")) {
+                            Map<String, Object> skipInfo = new HashMap<>();
+                            skipInfo.put("row", excelRowNumber);
+                            skipInfo.put("year", dto.getYear());
+                            skipInfo.put("reason", errorMessage);
+                            skippedParameterNotFound.add(skipInfo);
+                            continue; // Skip this row
+                        }
+                    }
+                    // If it's a different error, re-throw it (e.g., file format issues)
+                    throw e;
+                }
             }
+
+            // Calculate total skipped count
+            int totalSkipped = skippedYears.size() + skippedBAUNotFound.size() + 
+                              skippedParameterNotFound.size() + skippedInterventionNotFound.size() + 
+                              skippedMissingFields.size();
 
             Map<String, Object> result = new HashMap<>();
             result.put("saved", savedRecords);
             result.put("savedCount", savedRecords.size());
-            result.put("skippedCount", skippedYears.size());
+            result.put("skippedCount", totalSkipped);
             result.put("skippedYears", skippedYears);
+            result.put("skippedBAUNotFound", skippedBAUNotFound);
+            result.put("skippedParameterNotFound", skippedParameterNotFound);
+            result.put("skippedInterventionNotFound", skippedInterventionNotFound);
+            result.put("skippedMissingFields", skippedMissingFields);
             result.put("totalProcessed", totalProcessed);
 
             return result;

@@ -215,7 +215,13 @@ public class GlobalExceptionHandler {
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
         if (message != null) {
-            if (message.contains("not found") || message.contains("does not exist")) {
+            // Preserve helpful business logic error messages (BAU, Zero Tillage Parameter, etc.)
+            if (message.contains("BAU") || message.contains("Zero Tillage Parameter") || 
+                message.contains("Zero Tillage Mitigation") || message.contains("Please create")) {
+                // These are user-friendly business logic errors - preserve the full message
+                status = HttpStatus.BAD_REQUEST;
+                // Keep the original message as it contains helpful details for the user
+            } else if (message.contains("not found") || message.contains("does not exist")) {
                 status = HttpStatus.NOT_FOUND;
                 message = "The requested resource was not found.";
             } else if (message.contains("already exists") || message.contains("duplicate")) {
