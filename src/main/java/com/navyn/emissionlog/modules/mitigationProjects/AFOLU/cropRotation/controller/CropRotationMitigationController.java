@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.dtos.CropRotationMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.models.CropRotationMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.dtos.CropRotationMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.service.CropRotationMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +30,7 @@ public class CropRotationMitigationController {
     @Operation(summary = "Create new crop rotation mitigation record")
     public ResponseEntity<ApiResponse> createCropRotationMitigation(
             @Valid @RequestBody CropRotationMitigationDto dto) {
-        CropRotationMitigation mitigation = service.createCropRotationMitigation(dto);
+        CropRotationMitigationResponseDto mitigation = service.createCropRotationMitigation(dto);
         return ResponseEntity.ok(new ApiResponse(
                 true,
                 "Crop rotation mitigation created successfully",
@@ -42,7 +42,7 @@ public class CropRotationMitigationController {
     public ResponseEntity<ApiResponse> updateCropRotationMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody CropRotationMitigationDto dto) {
-        CropRotationMitigation mitigation = service.updateCropRotationMitigation(id, dto);
+        CropRotationMitigationResponseDto mitigation = service.updateCropRotationMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(
                 true,
                 "Crop rotation mitigation updated successfully",
@@ -53,7 +53,7 @@ public class CropRotationMitigationController {
     @Operation(summary = "Get all crop rotation mitigation records")
     public ResponseEntity<ApiResponse> getAllCropRotationMitigation(
             @RequestParam(required = false, value = "year") Integer year) {
-        List<CropRotationMitigation> mitigations = service.getAllCropRotationMitigation(year);
+        List<CropRotationMitigationResponseDto> mitigations = service.getAllCropRotationMitigation(year);
         return ResponseEntity.ok(new ApiResponse(
                 true,
                 "Crop rotation mitigation records fetched successfully",

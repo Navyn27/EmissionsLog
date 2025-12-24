@@ -2,11 +2,16 @@ package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.serv
 
 import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.Enums.Metrics.AreaUnits;
-import com.navyn.emissionlog.Enums.Metrics.BiomassDensityUnit;
-import com.navyn.emissionlog.Enums.Mitigation.CropRotationConstants;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.dtos.CropRotationMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.dtos.CropRotationMitigationResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.dtos.CropRotationParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.models.CropRotationMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.cropRotation.repositories.CropRotationMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.repositories.BAURepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import com.navyn.emissionlog.utils.Specifications.MitigationSpecifications;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +19,11 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.*;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
@@ -28,80 +35,191 @@ import java.util.*;
 public class CropRotationMitigationServiceImpl implements CropRotationMitigationService {
 
     private final CropRotationMitigationRepository repository;
+    private final CropRotationParameterService cropRotationParameterService;
+    private final BAURepository bauRepository;
+    private final InterventionRepository interventionRepository;
+
+    /**
+     * Maps CropRotationMitigation entity to Response DTO
+     * This method loads intervention data within the transaction to avoid lazy loading issues
+     */
+    private CropRotationMitigationResponseDto toResponseDto(CropRotationMitigation mitigation) {
+        CropRotationMitigationResponseDto dto = new CropRotationMitigationResponseDto();
+        dto.setId(mitigation.getId());
+        dto.setYear(mitigation.getYear());
+        dto.setCroplandUnderCropRotation(mitigation.getCroplandUnderCropRotation());
+        dto.setTotalIncreasedBiomass(mitigation.getTotalIncreasedBiomass());
+        dto.setBiomassCarbonIncrease(mitigation.getBiomassCarbonIncrease());
+        dto.setIncreasedBiomass(mitigation.getIncreasedBiomass());
+        dto.setMitigatedEmissionsKtCO2e(mitigation.getMitigatedEmissionsKtCO2e());
+        dto.setAdjustmentMitigation(mitigation.getAdjustmentMitigation());
+        dto.setCreatedAt(mitigation.getCreatedAt());
+        dto.setUpdatedAt(mitigation.getUpdatedAt());
+
+        // Map intervention - FORCE initialization within transaction to avoid lazy loading
+        if (mitigation.getIntervention() != null) {
+            Hibernate.initialize(mitigation.getIntervention());
+            Intervention intervention = mitigation.getIntervention();
+            CropRotationMitigationResponseDto.InterventionInfo interventionInfo =
+                    new CropRotationMitigationResponseDto.InterventionInfo(
+                            intervention.getId(),
+                            intervention.getName()
+                    );
+            dto.setIntervention(interventionInfo);
+        } else {
+            dto.setIntervention(null);
+        }
+
+        return dto;
+    }
 
     @Override
-    public CropRotationMitigation createCropRotationMitigation(CropRotationMitigationDto dto) {
+    @Transactional
+    public CropRotationMitigationResponseDto createCropRotationMitigation(CropRotationMitigationDto dto) {
+        // Fetch the latest active parameter - throws exception if none exists
+        CropRotationParameterResponseDto param;
+        try {
+            param = cropRotationParameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot create Crop Rotation Mitigation: No active Crop Rotation Parameter found. " +
+                            "Please create an active parameter first before creating mitigation records.",
+                    e
+            );
+        }
+
         CropRotationMitigation mitigation = new CropRotationMitigation();
 
-        // Convert units to standard values
+        // Convert cropland to hectares (standard unit)
         double croplandInHectares = dto.getCroplandAreaUnit().toHectares(dto.getCroplandUnderCropRotation());
-        double abgInTonnesDMPerHA = dto.getAbovegroundBiomassUnit().toTonnesDMPerHA(dto.getAbovegroundBiomass());
-        double increasedBiomassInTonnesDMPerHA = dto.getIncreasedBiomassUnit()
-                .toTonnesDMPerHA(dto.getIncreasedBiomass());
 
         // Map input fields (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setCroplandUnderCropRotation(croplandInHectares);
-        mitigation.setAbovegroundBiomass(abgInTonnesDMPerHA);
-        mitigation.setIncreasedBiomass(increasedBiomassInTonnesDMPerHA);
+
+        // Get values from parameter
+        double abgInTonnesDMPerHA = param.getAboveGroundBiomass();
+        double ratioBGBToAGB = param.getRatioOfBelowGroundBiomass();
+        double carbonContent = param.getCarbonContent();
+        double carbonToC02 = param.getCarbonToC02();
+
+        // Set increased biomass to 1.0 (as multiplier - represents the increase factor)
+        // This is stored in the entity but calculated from parameters
+        mitigation.setIncreasedBiomass(dto.getIncreasedBiomass());
 
         // 1. Calculate Total Increased Biomass (tonnes DM/year)
-        // Total increased biomass = Cropland × ABG × Increased biomass × (1 + Ratio BGB
-        // to AGB)
+        // Total increased biomass = Cropland × ABG × Increased biomass × (1 + Ratio BGB to AGB)
         double totalIncreasedBiomass = croplandInHectares *
                 abgInTonnesDMPerHA *
-                increasedBiomassInTonnesDMPerHA *
-                (1 + CropRotationConstants.RATIO_BGB_TO_AGB.getValue());
+                dto.getIncreasedBiomass() *
+                (1 + ratioBGBToAGB);
         mitigation.setTotalIncreasedBiomass(totalIncreasedBiomass);
 
         // 2. Calculate Biomass Carbon (tonnes C/year)
         // Biomass carbon = Total increased biomass × Carbon content in dry biomass
-        double biomassCarbonIncrease = totalIncreasedBiomass *
-                CropRotationConstants.CARBON_CONTENT_DRY_BIOMASS.getValue();
+        double biomassCarbonIncrease = totalIncreasedBiomass * carbonContent;
         mitigation.setBiomassCarbonIncrease(biomassCarbonIncrease);
 
         // 3. Calculate Mitigated Emissions (Kt CO2e)
         // Mitigated emissions = Biomass carbon × Conversion C to CO2 / 1000
-        double mitigatedEmissions = (biomassCarbonIncrease *
-                CropRotationConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        double mitigatedEmissions = (biomassCarbonIncrease * carbonToC02) / 1000.0;
         mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
 
-        return repository.save(mitigation);
+        // 4. Calculate Adjustment Mitigation (Kilotonnes CO2)
+        // Adjustment Mitigation = BAU.value - mitigatedEmissions
+        // Find BAU record for AFOLU sector and same year
+        BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
+                                mitigation.getYear())
+                ));
+        double adjustmentMitigation = bau.getValue() - mitigatedEmissions;
+        mitigation.setAdjustmentMitigation(adjustmentMitigation);
+
+        // Handle intervention if provided
+        if (dto.getInterventionId() != null) {
+            Intervention intervention = interventionRepository.findById(dto.getInterventionId())
+                    .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getInterventionId()));
+            mitigation.setIntervention(intervention);
+        } else {
+            mitigation.setIntervention(null);
+        }
+
+        CropRotationMitigation saved = repository.save(mitigation);
+        return toResponseDto(saved);
     }
 
     @Override
-    public CropRotationMitigation updateCropRotationMitigation(UUID id, CropRotationMitigationDto dto) {
+    @Transactional
+    public CropRotationMitigationResponseDto updateCropRotationMitigation(UUID id, CropRotationMitigationDto dto) {
+        // Fetch latest active parameter - throws exception if none exists
+        CropRotationParameterResponseDto param;
+        try {
+            param = cropRotationParameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot update Crop Rotation Mitigation: No active Crop Rotation Parameter found. " +
+                            "Please create an active parameter first before updating mitigation records.",
+                    e
+            );
+        }
+
         CropRotationMitigation mitigation = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Crop Rotation Mitigation record not found with id: " + id));
 
-        // Convert units to standard values
+        // Convert cropland to hectares (standard unit)
         double croplandInHectares = dto.getCroplandAreaUnit().toHectares(dto.getCroplandUnderCropRotation());
-        double abgInTonnesDMPerHA = dto.getAbovegroundBiomassUnit().toTonnesDMPerHA(dto.getAbovegroundBiomass());
-        double increasedBiomassInTonnesDMPerHA = dto.getIncreasedBiomassUnit()
-                .toTonnesDMPerHA(dto.getIncreasedBiomass());
 
         // Update input fields (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setCroplandUnderCropRotation(croplandInHectares);
-        mitigation.setAbovegroundBiomass(abgInTonnesDMPerHA);
-        mitigation.setIncreasedBiomass(increasedBiomassInTonnesDMPerHA);
 
-        // Recalculate derived fields
+        // Get values from parameter
+        double abgInTonnesDMPerHA = param.getAboveGroundBiomass();
+        double ratioBGBToAGB = param.getRatioOfBelowGroundBiomass();
+        double carbonContent = param.getCarbonContent();
+        double carbonToC02 = param.getCarbonToC02();
+
+        // Set increased biomass to 1.0 (as multiplier)
+        mitigation.setIncreasedBiomass(dto.getIncreasedBiomass());
+
+        // Recalculate all derived fields using parameter values
+        // 1. Calculate Total Increased Biomass (tonnes DM/year)
         double totalIncreasedBiomass = croplandInHectares *
                 abgInTonnesDMPerHA *
-                increasedBiomassInTonnesDMPerHA *
-                (1 + CropRotationConstants.RATIO_BGB_TO_AGB.getValue());
+                dto.getIncreasedBiomass() *
+                (1 + ratioBGBToAGB);
         mitigation.setTotalIncreasedBiomass(totalIncreasedBiomass);
 
-        double biomassCarbonIncrease = totalIncreasedBiomass *
-                CropRotationConstants.CARBON_CONTENT_DRY_BIOMASS.getValue();
+        // 2. Calculate Biomass Carbon (tonnes C/year)
+        double biomassCarbonIncrease = totalIncreasedBiomass * carbonContent;
         mitigation.setBiomassCarbonIncrease(biomassCarbonIncrease);
 
-        double mitigatedEmissions = (biomassCarbonIncrease *
-                CropRotationConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        // 3. Calculate Mitigated Emissions (Kt CO2e)
+        double mitigatedEmissions = (biomassCarbonIncrease * carbonToC02) / 1000.0;
         mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
 
-        return repository.save(mitigation);
+        // 4. Calculate Adjustment Mitigation (Kilotonnes CO2)
+        // Adjustment Mitigation = BAU.value - mitigatedEmissions
+        BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
+                                mitigation.getYear())
+                ));
+        double adjustmentMitigation = bau.getValue() - mitigatedEmissions;
+        mitigation.setAdjustmentMitigation(adjustmentMitigation);
+
+        // Handle intervention if provided
+        if (dto.getInterventionId() != null) {
+            Intervention intervention = interventionRepository.findById(dto.getInterventionId())
+                    .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getInterventionId()));
+            mitigation.setIntervention(intervention);
+        } else {
+            mitigation.setIntervention(null);
+        }
+
+        CropRotationMitigation updated = repository.save(mitigation);
+        return toResponseDto(updated);
     }
 
     @Override
@@ -112,21 +230,28 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
     }
 
     @Override
-    public List<CropRotationMitigation> getAllCropRotationMitigation(Integer year) {
+    @Transactional(readOnly = true)
+    public List<CropRotationMitigationResponseDto> getAllCropRotationMitigation(Integer year) {
         Specification<CropRotationMitigation> spec = Specification
                 .<CropRotationMitigation>where(MitigationSpecifications.hasYear(year));
-        return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        // Use EntityGraph (via findAll override) to eagerly fetch interventions to avoid N+1 queries and lazy loading issues
+        List<CropRotationMitigation> mitigations = repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        return mitigations.stream()
+                .map(this::toResponseDto)
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
-    public Optional<CropRotationMitigation> getByYear(Integer year) {
-        return repository.findByYear(year);
+    @Transactional(readOnly = true)
+    public Optional<CropRotationMitigationResponseDto> getByYear(Integer year) {
+        return repository.findByYear(year)
+                .map(this::toResponseDto);
     }
 
     @Override
     public byte[] generateExcelTemplate() {
         try (Workbook workbook = new XSSFWorkbook();
-                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             Sheet sheet = workbook.createSheet("Crop Rotation Mitigation");
 
@@ -217,13 +342,20 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
 
             int rowIdx = 0;
 
+            // Get all interventions for dropdown
+            List<Intervention> allInterventions = interventionRepository.findAll();
+            String[] interventionNames = allInterventions.stream()
+                    .map(Intervention::getName)
+                    .sorted()
+                    .toArray(String[]::new);
+
             // Title row
             Row titleRow = sheet.createRow(rowIdx++);
             titleRow.setHeightInPoints(30);
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Crop Rotation Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4));
 
             rowIdx++; // Blank row
 
@@ -234,10 +366,8 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
                     "Year",
                     "Cropland Under Crop Rotation",
                     "Cropland Area Unit",
-                    "Aboveground Biomass",
-                    "Aboveground Biomass Unit",
                     "Increased Biomass",
-                    "Increased Biomass Unit"
+                    "Intervention"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -248,9 +378,6 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
 
             // Get enum values for dropdowns
             String[] areaUnitValues = Arrays.stream(AreaUnits.values())
-                    .map(Enum::name)
-                    .toArray(String[]::new);
-            String[] biomassDensityUnitValues = Arrays.stream(BiomassDensityUnit.values())
                     .map(Enum::name)
                     .toArray(String[]::new);
 
@@ -269,53 +396,43 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
             areaUnitValidation.createPromptBox("Area Unit", "Select an area unit from the dropdown list.");
             sheet.addValidationData(areaUnitValidation);
 
-            // Data validation for Aboveground Biomass Unit column (Column E, index 4)
-            CellRangeAddressList abgUnitList = new CellRangeAddressList(3, 1000, 4, 4);
-            DataValidationConstraint abgUnitConstraint = validationHelper
-                    .createExplicitListConstraint(biomassDensityUnitValues);
-            DataValidation abgUnitValidation = validationHelper.createValidation(abgUnitConstraint, abgUnitList);
-            abgUnitValidation.setShowErrorBox(true);
-            abgUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            abgUnitValidation.createErrorBox("Invalid Biomass Unit",
-                    "Please select a valid biomass unit from the dropdown list.");
-            abgUnitValidation.setShowPromptBox(true);
-            abgUnitValidation.createPromptBox("Biomass Unit", "Select a biomass unit from the dropdown list.");
-            sheet.addValidationData(abgUnitValidation);
+            // Data validation for Intervention column (Column E, index 4) - optional, can be empty
+            if (interventionNames.length > 0) {
+                // Add empty string option for optional field
+                String[] interventionOptions = new String[interventionNames.length + 1];
+                interventionOptions[0] = ""; // Empty option
+                System.arraycopy(interventionNames, 0, interventionOptions, 1, interventionNames.length);
 
-            // Data validation for Increased Biomass Unit column (Column G, index 6)
-            CellRangeAddressList increasedBiomassUnitList = new CellRangeAddressList(3, 1000, 6, 6);
-            DataValidationConstraint increasedBiomassUnitConstraint = validationHelper
-                    .createExplicitListConstraint(biomassDensityUnitValues);
-            DataValidation increasedBiomassUnitValidation = validationHelper
-                    .createValidation(increasedBiomassUnitConstraint, increasedBiomassUnitList);
-            increasedBiomassUnitValidation.setShowErrorBox(true);
-            increasedBiomassUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            increasedBiomassUnitValidation.createErrorBox("Invalid Biomass Unit",
-                    "Please select a valid biomass unit from the dropdown list.");
-            increasedBiomassUnitValidation.setShowPromptBox(true);
-            increasedBiomassUnitValidation.createPromptBox("Biomass Unit",
-                    "Select a biomass unit from the dropdown list.");
-            sheet.addValidationData(increasedBiomassUnitValidation);
+                CellRangeAddressList interventionList = new CellRangeAddressList(
+                        3, // Start row (first data row after headers)
+                        1000, // End row (sufficient for most use cases)
+                        4, 4 // Column E (Intervention column, 0-indexed)
+                );
+                DataValidationConstraint interventionConstraint = validationHelper.createExplicitListConstraint(interventionOptions);
+                DataValidation interventionValidation = validationHelper.createValidation(interventionConstraint, interventionList);
+                interventionValidation.setShowErrorBox(true);
+                interventionValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionValidation.createErrorBox("Invalid Intervention", "Please select a valid intervention from the dropdown list or leave empty.");
+                interventionValidation.setShowPromptBox(true);
+                interventionValidation.createPromptBox("Intervention", "Select an intervention from the dropdown list (optional).");
+                sheet.addValidationData(interventionValidation);
+            }
 
             // Create example data rows
             Object[] exampleData1 = {
                     2024,
                     100.5,
                     "HECTARES",
-                    25.3,
-                    "TONNES_DM_PER_HA",
                     5.5,
-                    "TONNES_DM_PER_HA"
+                    interventionNames.length > 0 ? interventionNames[0] : ""
             };
 
             Object[] exampleData2 = {
                     2025,
                     150.75,
                     "ACRES",
-                    30.5,
-                    "TONNES_DM_PER_HA",
                     6.2,
-                    "TONNES_DM_PER_HA"
+                    "" // Empty intervention for second example
             };
 
             // First example row
@@ -326,10 +443,10 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
                 if (i == 0) { // Year
                     cell.setCellStyle(yearStyle);
                     cell.setCellValue(((Number) exampleData1[i]).intValue());
-                } else if (i == 1 || i == 3 || i == 5) { // Numbers
+                } else if (i == 1 || i == 3) { // Numbers (Cropland, Increased Biomass)
                     cell.setCellStyle(numberStyle);
                     cell.setCellValue(((Number) exampleData1[i]).doubleValue());
-                } else { // Units (strings)
+                } else { // Units or Intervention (strings)
                     cell.setCellStyle(dataStyle);
                     cell.setCellValue((String) exampleData1[i]);
                 }
@@ -346,14 +463,14 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
                     altYearStyle.setAlignment(HorizontalAlignment.CENTER);
                     cell.setCellStyle(altYearStyle);
                     cell.setCellValue(((Number) exampleData2[i]).intValue());
-                } else if (i == 1 || i == 3 || i == 5) { // Numbers
+                } else if (i == 1 || i == 3) { // Numbers (Cropland, Increased Biomass)
                     CellStyle altNumStyle = workbook.createCellStyle();
                     altNumStyle.cloneStyleFrom(numberStyle);
                     altNumStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
                     altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                     cell.setCellStyle(altNumStyle);
                     cell.setCellValue(((Number) exampleData2[i]).doubleValue());
-                } else { // Units (strings)
+                } else { // Units or Intervention (strings)
                     cell.setCellStyle(alternateDataStyle);
                     cell.setCellValue((String) exampleData2[i]);
                 }
@@ -384,8 +501,12 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
 
     @Override
     public Map<String, Object> createCropRotationMitigationFromExcel(MultipartFile file) {
-        List<CropRotationMitigation> savedRecords = new ArrayList<>();
+        List<CropRotationMitigationResponseDto> savedRecords = new ArrayList<>();
         List<Integer> skippedYears = new ArrayList<>();
+        List<Map<String, Object>> skippedBAUNotFound = new ArrayList<>();
+        List<Map<String, Object>> skippedParameterNotFound = new ArrayList<>();
+        List<Map<String, Object>> skippedInterventionNotFound = new ArrayList<>();
+        List<Map<String, Object>> skippedMissingFields = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -397,7 +518,8 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
             for (int i = 0; i < dtos.size(); i++) {
                 CropRotationMitigationDto dto = dtos.get(i);
                 totalProcessed++;
-                int actualRowNumber = i + 1 + 3; // +1 for 1-based, +3 for title(1) + blank(1) + header(1)
+                int rowNumber = i + 1; // Excel row number (1-based, accounting for header row)
+                int excelRowNumber = rowNumber + 2; // +2 for header row and 0-based index
 
                 // Validate required fields
                 List<String> missingFields = new ArrayList<>();
@@ -410,24 +532,36 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
                 if (dto.getCroplandAreaUnit() == null) {
                     missingFields.add("Cropland Area Unit");
                 }
-                if (dto.getAbovegroundBiomass() == null) {
-                    missingFields.add("Aboveground Biomass");
-                }
-                if (dto.getAbovegroundBiomassUnit() == null) {
-                    missingFields.add("Aboveground Biomass Unit");
-                }
                 if (dto.getIncreasedBiomass() == null) {
                     missingFields.add("Increased Biomass");
                 }
-                if (dto.getIncreasedBiomassUnit() == null) {
-                    missingFields.add("Increased Biomass Unit");
-                }
 
                 if (!missingFields.isEmpty()) {
-                    throw new RuntimeException(String.format(
-                            "Missing required fields: %s. Please fill in all required fields in your Excel file.",
-                            String.join(", ", missingFields)));
+                    Map<String, Object> skipInfo = new HashMap<>();
+                    skipInfo.put("row", excelRowNumber);
+                    skipInfo.put("year", dto.getYear() != null ? dto.getYear() : "N/A");
+                    skipInfo.put("reason", "Missing required fields: " + String.join(", ", missingFields));
+                    skippedMissingFields.add(skipInfo);
+                    continue; // Skip this row
                 }
+
+                // Handle intervention name from Excel - convert to interventionId
+                if (dto.getInterventionName() != null && !dto.getInterventionName().trim().isEmpty()) {
+                    String interventionName = dto.getInterventionName().trim();
+                    Optional<Intervention> intervention = interventionRepository.findByNameIgnoreCase(interventionName);
+                    if (intervention.isPresent()) {
+                        dto.setInterventionId(intervention.get().getId());
+                    } else {
+                        Map<String, Object> skipInfo = new HashMap<>();
+                        skipInfo.put("row", excelRowNumber);
+                        skipInfo.put("year", dto.getYear());
+                        skipInfo.put("reason", String.format("Intervention '%s' not found", interventionName));
+                        skippedInterventionNotFound.add(skipInfo);
+                        continue; // Skip this row
+                    }
+                }
+                // Clear the temporary interventionName field
+                dto.setInterventionName(null);
 
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
@@ -435,16 +569,53 @@ public class CropRotationMitigationServiceImpl implements CropRotationMitigation
                     continue; // Skip this row
                 }
 
-                // Create the record
-                CropRotationMitigation saved = createCropRotationMitigation(dto);
-                savedRecords.add(saved);
+                // Try to create the record - catch specific errors and skip instead of failing
+                try {
+                    CropRotationMitigationResponseDto saved = createCropRotationMitigation(dto);
+                    savedRecords.add(saved);
+                } catch (RuntimeException e) {
+                    String errorMessage = e.getMessage();
+                    if (errorMessage != null) {
+                        // Check for BAU not found error
+                        if ((errorMessage.contains("BAU record") || errorMessage.contains("BAU")) && errorMessage.contains("not found")) {
+                            Map<String, Object> skipInfo = new HashMap<>();
+                            skipInfo.put("row", excelRowNumber);
+                            skipInfo.put("year", dto.getYear());
+                            skipInfo.put("reason", errorMessage);
+                            skippedBAUNotFound.add(skipInfo);
+                            continue; // Skip this row
+                        }
+                        // Check for Crop Rotation Parameter not found error
+                        if (errorMessage.contains("Crop Rotation Parameter") || 
+                            errorMessage.contains("active parameter") || 
+                            errorMessage.contains("No active Crop Rotation Parameter")) {
+                            Map<String, Object> skipInfo = new HashMap<>();
+                            skipInfo.put("row", excelRowNumber);
+                            skipInfo.put("year", dto.getYear());
+                            skipInfo.put("reason", errorMessage);
+                            skippedParameterNotFound.add(skipInfo);
+                            continue; // Skip this row
+                        }
+                    }
+                    // If it's a different error, re-throw it (e.g., file format issues)
+                    throw e;
+                }
             }
+
+            // Calculate total skipped count
+            int totalSkipped = skippedYears.size() + skippedBAUNotFound.size() + 
+                              skippedParameterNotFound.size() + skippedInterventionNotFound.size() + 
+                              skippedMissingFields.size();
 
             Map<String, Object> result = new HashMap<>();
             result.put("saved", savedRecords);
             result.put("savedCount", savedRecords.size());
-            result.put("skippedCount", skippedYears.size());
+            result.put("skippedCount", totalSkipped);
             result.put("skippedYears", skippedYears);
+            result.put("skippedBAUNotFound", skippedBAUNotFound);
+            result.put("skippedParameterNotFound", skippedParameterNotFound);
+            result.put("skippedInterventionNotFound", skippedInterventionNotFound);
+            result.put("skippedMissingFields", skippedMissingFields);
             result.put("totalProcessed", totalProcessed);
 
             return result;
