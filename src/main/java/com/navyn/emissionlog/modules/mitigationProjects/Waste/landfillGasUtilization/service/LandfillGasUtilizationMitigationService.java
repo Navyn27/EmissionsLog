@@ -9,13 +9,13 @@ import java.util.Map;
 import java.util.UUID;
 
 public interface LandfillGasUtilizationMitigationService {
-    
+
     LandfillGasUtilizationMitigation createLandfillGasUtilizationMitigation(LandfillGasUtilizationMitigationDto dto);
-    
+
     LandfillGasUtilizationMitigation updateLandfillGasUtilizationMitigation(UUID id, LandfillGasUtilizationMitigationDto dto);
-    
+
     void deleteLandfillGasUtilizationMitigation(UUID id);
-    
+
     List<LandfillGasUtilizationMitigation> getAllLandfillGasUtilizationMitigation(Integer year);
 
     byte[] generateExcelTemplate();

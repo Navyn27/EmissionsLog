@@ -9,8 +9,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface LandfillGasUtilizationMitigationRepository extends JpaRepository<LandfillGasUtilizationMitigation, UUID>, 
+public interface LandfillGasUtilizationMitigationRepository extends JpaRepository<LandfillGasUtilizationMitigation, UUID>,
         JpaSpecificationExecutor<LandfillGasUtilizationMitigation> {
-    
+
     Optional<LandfillGasUtilizationMitigation> findByYear(Integer year);
 }
