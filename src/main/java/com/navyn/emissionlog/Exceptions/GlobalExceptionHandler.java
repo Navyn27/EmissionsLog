@@ -48,11 +48,11 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.validationError( errors.get(0), errors));
+                .body(ApiResponse.validationError(errors.get(0), errors));
     }
 
     private String formatFieldError(FieldError fieldError) {
-        return String.format( "%s",
+        return String.format("%s",
                 // fieldError.getField(),
                 fieldError.getDefaultMessage());
     }
@@ -60,7 +60,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
         logger.error("Data integrity violation: {}", ex.getMessage());
-        
+
         String message;
         if (ex.getMessage() != null && ex.getMessage().contains("unique")) {
             if (ex.getMessage().toLowerCase().contains("year")) {
@@ -77,7 +77,7 @@ public class GlobalExceptionHandler {
         } else {
             message = "Unable to save the record. Please check your input and try again.";
         }
-        
+
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(message));
@@ -100,7 +100,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
         logger.warn("Invalid argument: {}", ex.getMessage());
-        
+
         // Sanitize message to avoid exposing internal details
         String message = ex.getMessage();
         if (message == null || message.isEmpty()) {
@@ -108,7 +108,7 @@ public class GlobalExceptionHandler {
         } else if (message.contains("not found") || message.contains("does not exist")) {
             message = "The requested resource was not found.";
         }
-        
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(message));
@@ -119,7 +119,8 @@ public class GlobalExceptionHandler {
         logger.warn("Email already exists: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
-                .body(ApiResponse.error("This email address is already registered. Please use a different email or try logging in."));
+                .body(ApiResponse.error(
+                        "This email address is already registered. Please use a different email or try logging in."));
     }
 
     @ExceptionHandler(UnmatchingPasswordsException.class)
@@ -135,7 +136,8 @@ public class GlobalExceptionHandler {
         logger.warn("User not found: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error("We couldn't find an account with those credentials. Please check and try again."));
+                .body(ApiResponse
+                        .error("We couldn't find an account with those credentials. Please check and try again."));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
@@ -173,16 +175,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ApiResponse> handleConstraintViolationException(ConstraintViolationException ex) {
         logger.warn("Constraint violation: {}", ex.getMessage());
-        
+
         List<String> errors = ex.getConstraintViolations()
                 .stream()
                 .map(violation -> violation.getMessage())
                 .collect(Collectors.toList());
-        
-        String message = errors.isEmpty() 
-                ? "Please check your input and try again." 
+
+        String message = errors.isEmpty()
+                ? "Please check your input and try again."
                 : errors.get(0);
-        
+
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.validationError(message, errors));
@@ -207,28 +209,39 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException ex) {
         logger.error("Runtime exception: {}", ex.getMessage(), ex);
-        
+
         // Check if it's actually a user error (400) vs server error (500)
         String message = ex.getMessage();
         HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-        
+
         if (message != null) {
-            if (message.contains("not found") || message.contains("does not exist")) {
+            // Preserve helpful business logic error messages (BAU, Zero Tillage Parameter, etc.)
+            if (message.contains("BAU") || message.contains("Zero Tillage Parameter") || 
+                message.contains("Zero Tillage Mitigation") || message.contains("Please create")) {
+                // These are user-friendly business logic errors - preserve the full message
+                status = HttpStatus.BAD_REQUEST;
+                // Keep the original message as it contains helpful details for the user
+            } else if (message.contains("not found") || message.contains("does not exist")) {
                 status = HttpStatus.NOT_FOUND;
                 message = "The requested resource was not found.";
             } else if (message.contains("already exists") || message.contains("duplicate")) {
                 status = HttpStatus.CONFLICT;
                 message = "This record already exists.";
+            } else if (message.contains("Template") || message.contains("template") || message.contains("validation")
+                    || message.contains("format")) {
+                // Template/validation errors should be shown to user with full message
+                status = HttpStatus.BAD_REQUEST;
+                // Keep the original message as it contains helpful details
             } else if (message.contains("invalid") || message.contains("required")) {
                 status = HttpStatus.BAD_REQUEST;
             } else {
-                // Don't expose internal error details
+                // Don't expose internal error details for unknown errors
                 message = "An error occurred while processing your request. Please try again.";
             }
         } else {
             message = "An error occurred while processing your request. Please try again.";
         }
-        
+
         return ResponseEntity
                 .status(status)
                 .body(ApiResponse.error(message));
@@ -282,5 +295,3 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("An unexpected error occurred. Please try again later."));
     }
 }
-
-

@@ -8,12 +8,20 @@ import java.util.UUID;
 
 public interface EICVReportService {
     EICVReport createEICVReport(EICVReportDto eicvReportDto);
+
     EICVReport getEICVReportByYear(int year);
+
     EICVReport getEICVReportById(UUID id);
+
     List<EICVReport> findAll(String name, Integer year);
+
     List<EICVReport> createReportsFromExcel(MultipartFile file);
 
     EICVReport updateEICVReport(UUID eicvReportId, EICVReportDto eicvReportDto);
 
+    void deleteEICVReport(UUID eicvReportId);
+
     EICVReport getEICVReportsByName(String name);
+
+    byte[] generateExcelTemplate();
 }

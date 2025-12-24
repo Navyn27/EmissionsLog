@@ -16,5 +16,4 @@ public enum MMS {
     }
 
     private double fractionOfManureNThatVolatilizes = 0.0;
-    private final double fractionOfManureNThatLeaches = 0.1;
 }

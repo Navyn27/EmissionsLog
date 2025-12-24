@@ -23,4 +23,8 @@ public interface WasteDataRepository extends JpaRepository<WasteDataAbstract, UU
     List<WasteDataAbstract> findByActivityYearBetweenOrderByYearDesc(LocalDateTime startDate, LocalDateTime endDate);
     
     List<WasteDataAbstract> findAllByOrderByYearDesc();
+
+    // Find latest solid waste record excluding a specific ID (for update
+    // operations)
+    WasteDataAbstract findFirstByWasteTypeAndIdNotOrderByCreatedAtDesc(WasteType wasteType, UUID excludeId);
 }

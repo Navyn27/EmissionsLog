@@ -19,6 +19,8 @@ public interface TransportFuelEmissionFactorsRepository extends JpaRepository<Tr
 
     List<TransportFuelEmissionFactors> findByRegionGroup(RegionGroup regionGroup);
 
+    List<TransportFuelEmissionFactors> findByFuelAndRegionGroup(Fuel fuel, RegionGroup regionGroup);
+
     Optional<TransportFuelEmissionFactors> findByFuelAndRegionGroupAndTransportTypeAndVehicleEngineType(Fuel fuel, RegionGroup regionGroup, TransportType transportType, VehicleEngineType vehicleEngineType);
 
     List<TransportFuelEmissionFactors> findByTransportType(TransportType transportType);

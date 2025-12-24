@@ -2,7 +2,6 @@ package com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.servic
 
 import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveType;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveTypeRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.service.StoveTypeService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -36,5 +35,48 @@ public class StoveTypeServiceImpl implements StoveTypeService {
     @Override
     public void deleteById(UUID id) {
         repository.deleteById(id);
+    }
+
+    @Override
+    public StoveType update(UUID id, StoveType stoveType) {
+        StoveType existing = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("StoveType not found with id: " + id));
+
+        existing.setName(stoveType.getName());
+        existing.setBaselinePercentage(stoveType.getBaselinePercentage());
+
+        return repository.save(existing);
+    }
+
+    @Override
+    public StoveType findOrCreateStoveType(String name, double baselinePercentage) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Stove type name cannot be null or empty");
+        }
+
+        // Normalize name: trim whitespace
+        String normalizedName = name.trim();
+
+        // Case-insensitive lookup
+        Optional<StoveType> existing = repository.findByNameIgnoreCase(normalizedName);
+
+        if (existing.isPresent()) {
+            // Stove type exists, return it (ignore baselinePercentage parameter)
+            return existing.get();
+        } else {
+            // Create new stove type
+            StoveType newStoveType = new StoveType();
+            newStoveType.setName(normalizedName); // Store original (trimmed) name
+            newStoveType.setBaselinePercentage(baselinePercentage);
+            return repository.save(newStoveType);
+        }
+    }
+
+    @Override
+    public Optional<StoveType> findByNameIgnoreCase(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return Optional.empty();
+        }
+        return repository.findByNameIgnoreCase(name.trim());
     }
 }

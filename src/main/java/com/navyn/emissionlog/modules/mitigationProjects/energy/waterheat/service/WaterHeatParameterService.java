@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class WaterHeatParameterService  {
+public class WaterHeatParameterService {
 
     private final WaterHeatParameterRepository repository;
 
@@ -17,6 +17,9 @@ public class WaterHeatParameterService  {
     }
 
     public WaterHeatParameter create(WaterHeatParameter param) {
+        param.setAvoidedElectricityPerHousehold(
+                (param.getAverageWaterHeat() * param.getDeltaTemperature() * param.getSpecificHeatWater() * 365.0) / (3600000 * 1000.0)
+        );
         return repository.save(param);
     }
 

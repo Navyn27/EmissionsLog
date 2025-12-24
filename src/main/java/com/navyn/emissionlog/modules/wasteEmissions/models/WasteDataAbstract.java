@@ -43,12 +43,23 @@ public abstract class WasteDataAbstract {
 
     private LocalDateTime activityYear = LocalDateTime.now();
 
-    private Integer year = activityYear.getYear();
+    private Integer year;
 
     @PrePersist
     private void setCO2EqEmissions() {
         this.CO2EqEmissions = calculateCO2EqEmissions();
-        this.year = activityYear.getYear();
+        // Always update year from activityYear to ensure consistency
+        if (this.activityYear != null) {
+            this.year = this.activityYear.getYear();
+        }
+    }
+
+    @PostLoad
+    private void updateYearFromActivityYear() {
+        // Ensure year is always in sync with activityYear after loading from DB
+        if (this.activityYear != null && this.year == null) {
+            this.year = this.activityYear.getYear();
+        }
     }
 
     private Double calculateCO2EqEmissions() {

@@ -8,11 +8,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -50,5 +55,58 @@ public class KigaliFSTPMitigationController {
             @RequestParam(required = false) Integer year) {
         List<KigaliFSTPMitigation> mitigations = service.getAllKigaliFSTPMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Kigali FSTP mitigation records fetched successfully", mitigations));
+    }
+    
+    @Operation(summary = "Delete Kigali FSTP mitigation record",
+               description = "Deletes an existing Kigali FSTP mitigation record by its ID")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse> deleteKigaliFSTPMitigation(@PathVariable UUID id) {
+        service.deleteKigaliFSTPMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Kigali FSTP mitigation record deleted successfully", null));
+    }
+
+    @GetMapping("/template")
+    @Operation(summary = "Download Kigali FSTP Mitigation Excel template", description = "Downloads an Excel template file with the required column headers and data validation for uploading Kigali FSTP Mitigation records")
+    public ResponseEntity<byte[]> downloadExcelTemplate() {
+        byte[] templateBytes = service.generateExcelTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Kigali_FSTP_Mitigation_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(templateBytes);
+    }
+
+    @PostMapping("/excel")
+    @Operation(summary = "Upload Kigali FSTP Mitigation records from Excel file", description = "Uploads multiple Kigali FSTP Mitigation records from an Excel file. Records with duplicate years will be skipped.")
+    public ResponseEntity<ApiResponse> createKigaliFSTPMitigationFromExcel(
+            @RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = service.createKigaliFSTPMitigationFromExcel(file);
+
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        @SuppressWarnings("unchecked")
+        List<Integer> skippedYears = (List<Integer>) result.get("skippedYears");
+        @SuppressWarnings("unchecked")
+        List<Integer> skippedPhaseRows = (List<Integer>) result.getOrDefault("skippedPhaseRows", new ArrayList<>());
+        int skippedPhaseCount = (Integer) result.getOrDefault("skippedPhaseCount", 0);
+
+        StringBuilder messageBuilder = new StringBuilder();
+        messageBuilder.append(String.format("Upload completed. %d record(s) saved successfully.", savedCount));
+        
+        if (skippedCount > 0) {
+            messageBuilder.append(String.format(" %d record(s) skipped (years already exist: %s).",
+                    skippedCount, skippedYears.isEmpty() ? "none" : skippedYears.toString()));
+        }
+        
+        if (skippedPhaseCount > 0) {
+            messageBuilder.append(String.format(" %d record(s) skipped (phase precedence violation: %s).",
+                    skippedPhaseCount, skippedPhaseRows.isEmpty() ? "none" : skippedPhaseRows.toString()));
+        }
+
+        return ResponseEntity.ok(new ApiResponse(true, messageBuilder.toString(), result));
     }
 }

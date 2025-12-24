@@ -13,3 +13,14 @@ FINAL_IMPLEMENTATION_SUMMARY.md
 MINI_DASHBOARDS_IMPLEMENTATION_GUIDE.md
 MINI_DASHBOARDS_SUMMARY.md
 WASTE_MITIGATION_SUMMARY.md
+IMPLEMENTATION_GUIDE_AGRICULTURE_UPDATES.md
+.idea
+
+# macOS system files
+.DS_Store
+**/.DS_Store
+
+# Transport Scenarios documentation
+src/main/java/com/navyn/emissionlog/modules/transportScenarios/README.md
+src/main/java/com/navyn/emissionlog/modules/transportScenarios/QUICK_REFERENCE.md
+src/main/java/com/navyn/emissionlog/modules/transportScenarios/ARCHITECTURE.md

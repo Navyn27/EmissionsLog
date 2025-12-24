@@ -8,6 +8,9 @@ import com.navyn.emissionlog.modules.activities.models.Activity;
 import com.navyn.emissionlog.modules.activities.dtos.CreateTransportActivityByFuelDto;
 import com.navyn.emissionlog.modules.activities.dtos.CreateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.modules.activities.dtos.CreateStationaryActivityDto;
+import com.navyn.emissionlog.modules.activities.dtos.UpdateTransportActivityByFuelDto;
+import com.navyn.emissionlog.modules.activities.dtos.UpdateTransportActivityByVehicleDataDto;
+import com.navyn.emissionlog.modules.activities.dtos.UpdateStationaryActivityDto;
 import com.navyn.emissionlog.utils.DashboardData;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +22,10 @@ import java.util.UUID;
 public interface ActivityService {
     Activity createStationaryActivity(CreateStationaryActivityDto activity);
 
+    Activity updateStationaryActivity(UUID id, UpdateStationaryActivityDto activity);
+
+    void deleteStationaryActivity(UUID id);
+
     void deleteActivity(UUID id);
 
     Activity getActivityById(UUID id);
@@ -28,6 +35,12 @@ public interface ActivityService {
     Activity createTransportActivityByFuel(CreateTransportActivityByFuelDto activityDto);
 
     Activity createTransportActivityByVehicleData(CreateTransportActivityByVehicleDataDto activityDto);
+
+    Activity updateTransportActivityByFuel(UUID id, UpdateTransportActivityByFuelDto activityDto);
+
+    Activity updateTransportActivityByVehicleData(UUID id, UpdateTransportActivityByVehicleDataDto activityDto);
+
+    void deleteTransportActivity(UUID id);
 
     List<Activity> getStationaryActivities(UUID region, Sectors sector, UUID fuel, FuelTypes fuelType, Integer year);
 

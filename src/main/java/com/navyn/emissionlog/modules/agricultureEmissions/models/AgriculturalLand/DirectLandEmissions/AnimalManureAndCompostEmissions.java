@@ -8,13 +8,15 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "manure_mgmt_emissions")
+@Table(name = "manure_mgmt_emissions", uniqueConstraints = @UniqueConstraint(columnNames = {"year", "livestock_species"}))
+@AttributeOverride(name = "year", column = @Column(name = "year", nullable = false, unique = false))
 public class AnimalManureAndCompostEmissions extends AgricultureAbstractClass {
 
     @Enumerated(EnumType.STRING)
     private OrganicAmendmentTypes amendmentType;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "livestock_species",nullable = false)
     private LivestockSpecies livestockSpecies;
 
     private double population = 0.0;

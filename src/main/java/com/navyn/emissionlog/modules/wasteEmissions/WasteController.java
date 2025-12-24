@@ -160,26 +160,70 @@ public class WasteController {
     public ResponseEntity<ApiResponse> populateWasteDataWithSolid(@RequestParam("file") MultipartFile file) throws IOException {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Waste data populated successfully", wasteService.populateSolidWasteData(file)));
     }
-    
+    // ============= DELETE ENDPOINTS =============
+
+    @Operation(summary = "Delete Industrial Waste Water Data", description = "Permanently deletes an industrial waste water record by ID. This action cannot be undone.")
+    @DeleteMapping("/industrialWasteWater/{id}")
+    public ResponseEntity<ApiResponse> deleteIndustrialWasteWaterData(@PathVariable UUID id) {
+        wasteService.deleteIndustrialWasteWaterData(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Industrial waste water deleted successfully", null));
+    }
+
+    @Operation(summary = "Delete Solid Waste Data", description = "Permanently deletes a solid waste record by ID. This action cannot be undone.")
+    @DeleteMapping("/solidWaste/{id}")
+    public ResponseEntity<ApiResponse> deleteSolidWasteData(@PathVariable UUID id) {
+        wasteService.deleteSolidWasteData(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Solid waste deleted successfully", null));
+    }
+
+    @Operation(summary = "Delete Waste Water Data", description = "Permanently deletes a waste water record by ID. This action cannot be undone.")
+    @DeleteMapping("/wasteWater/{id}")
+    public ResponseEntity<ApiResponse> deleteWasteWaterData(@PathVariable UUID id) {
+        wasteService.deleteWasteWaterData(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Waste water deleted successfully", null));
+    }
+
+    @Operation(summary = "Delete Biologically Treated Waste Data", description = "Permanently deletes a biologically treated waste record by ID. This action cannot be undone.")
+    @DeleteMapping("/bioTreatedWasteWater/{id}")
+    public ResponseEntity<ApiResponse> deleteBioTreatedWasteWaterData(@PathVariable UUID id) {
+        wasteService.deleteBioTreatedWasteWaterData(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Biologically treated waste deleted successfully", null));
+    }
+
+    @Operation(summary = "Delete Burnt Waste Data", description = "Permanently deletes a burnt waste record by ID. This action cannot be undone.")
+    @DeleteMapping("/burntWaste/{id}")
+    public ResponseEntity<ApiResponse> deleteBurntWasteData(@PathVariable UUID id) {
+        wasteService.deleteBurntWasteData(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Burnt waste deleted successfully", null));
+    }
+
+    @Operation(summary = "Delete Incineration Waste Data", description = "Permanently deletes an incineration waste record by ID. This action cannot be undone.")
+    @DeleteMapping("/incinerationWaste/{id}")
+    public ResponseEntity<ApiResponse> deleteIncinerationWasteData(@PathVariable UUID id) {
+        wasteService.deleteIncinerationWasteData(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Incineration waste deleted successfully", null));
+    }
+
+
     // ============= MINI DASHBOARDS =============
-    
+
     @Operation(summary = "Get Waste dashboard summary", description = "Retrieves waste emissions summary.")
     @GetMapping("/dashboard/summary")
     public ResponseEntity<ApiResponse> getWasteDashboardSummary(
             @RequestParam(required = false, value = "startingYear") Integer startingYear,
             @RequestParam(required = false, value = "endingYear") Integer endingYear) {
         return ResponseEntity.status(HttpStatus.OK).body(
-                new ApiResponse(true, "Waste dashboard summary fetched successfully", 
+                new ApiResponse(true, "Waste dashboard summary fetched successfully",
                         wasteService.getWasteDashboardSummary(startingYear, endingYear)));
     }
-    
+
     @Operation(summary = "Get Waste dashboard graph", description = "Retrieves waste emissions graph data by year.")
     @GetMapping("/dashboard/graph")
     public ResponseEntity<ApiResponse> getWasteDashboardGraph(
             @RequestParam(required = false, value = "startingYear") Integer startingYear,
             @RequestParam(required = false, value = "endingYear") Integer endingYear) {
         return ResponseEntity.status(HttpStatus.OK).body(
-                new ApiResponse(true, "Waste dashboard graph fetched successfully", 
+                new ApiResponse(true, "Waste dashboard graph fetched successfully",
                         wasteService.getWasteDashboardGraph(startingYear, endingYear)));
     }
 }

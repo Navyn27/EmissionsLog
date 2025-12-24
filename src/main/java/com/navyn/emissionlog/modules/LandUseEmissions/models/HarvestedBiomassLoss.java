@@ -9,6 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Data
+@Table(name = "harvested_biomass_loss")
 public class HarvestedBiomassLoss {
 
     @Id

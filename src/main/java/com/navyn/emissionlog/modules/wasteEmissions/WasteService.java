@@ -51,4 +51,17 @@ public interface WasteService {
     DashboardData getWasteDashboardSummary(Integer startingYear, Integer endingYear);
     
     List<DashboardData> getWasteDashboardGraph(Integer startingYear, Integer endingYear);
+
+    // Delete methods
+    void deleteIndustrialWasteWaterData(UUID id);
+
+    void deleteSolidWasteData(UUID id);
+
+    void deleteWasteWaterData(UUID id);
+
+    void deleteBioTreatedWasteWaterData(UUID id);
+
+    void deleteBurntWasteData(UUID id);
+
+    void deleteIncinerationWasteData(UUID id);
 }
