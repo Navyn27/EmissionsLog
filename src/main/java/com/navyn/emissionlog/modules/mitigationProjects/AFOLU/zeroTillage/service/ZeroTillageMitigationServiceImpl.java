@@ -2,9 +2,9 @@ package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.servi
 
 import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.Enums.Metrics.AreaUnits;
-import com.navyn.emissionlog.Enums.Mitigation.ZeroTillageConstants;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.dtos.ZeroTillageMitigationDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.dtos.ZeroTillageMitigationResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.dtos.ZeroTillageParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.models.ZeroTillageMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.zeroTillage.repositories.ZeroTillageMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
@@ -15,6 +15,7 @@ import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositorie
 import com.navyn.emissionlog.utils.ExcelReader;
 import com.navyn.emissionlog.utils.Specifications.MitigationSpecifications;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
@@ -37,6 +38,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     private final ZeroTillageMitigationRepository repository;
     private final InterventionRepository interventionRepository;
     private final BAURepository bauRepository;
+    private final ZeroTillageParameterService zeroTillageParameterService;
 
     /**
      * Maps ZeroTillageMitigation entity to Response DTO
@@ -61,11 +63,11 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
             // Force Hibernate to initialize the proxy while session is still open
             Hibernate.initialize(mitigation.getIntervention());
             Intervention intervention = mitigation.getIntervention();
-            ZeroTillageMitigationResponseDto.InterventionInfo interventionInfo = 
-                new ZeroTillageMitigationResponseDto.InterventionInfo(
-                    intervention.getId(),
-                    intervention.getName()
-                );
+            ZeroTillageMitigationResponseDto.InterventionInfo interventionInfo =
+                    new ZeroTillageMitigationResponseDto.InterventionInfo(
+                            intervention.getId(),
+                            intervention.getName()
+                    );
             dto.setIntervention(interventionInfo);
         } else {
             dto.setIntervention(null);
@@ -77,8 +79,19 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     @Override
     @Transactional
     public ZeroTillageMitigationResponseDto createZeroTillageMitigation(ZeroTillageMitigationDto dto) {
-        ZeroTillageMitigation mitigation = new ZeroTillageMitigation();
+        // Fetch latest active parameter - throws exception if none exists
+        ZeroTillageParameterResponseDto param;
+        try {
+            param = zeroTillageParameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot create Zero Tillage Mitigation: No active Zero Tillage Parameter found. " +
+                            "Please create an active parameter first before creating mitigation records.",
+                    e
+            );
+        }
 
+        ZeroTillageMitigation mitigation = new ZeroTillageMitigation();
         // Convert area to hectares (standard unit)
         double areaInHectares = dto.getAreaUnit().toHectares(dto.getAreaUnderZeroTillage());
 
@@ -87,27 +100,20 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
         mitigation.setAreaUnderZeroTillage(areaInHectares);
 
         // 1. Calculate Total Carbon Increase in Soil (Tonnes C)
-        // Total carbon = Area × Carbon increase in soil
-        double totalCarbon = areaInHectares *
-                ZeroTillageConstants.CARBON_INCREASE_SOIL.getValue();
+        // Total carbon = Area × Carbon increase in soil (from parameter)
+        double totalCarbon = areaInHectares * param.getCarbonIncreaseInSoil();
         mitigation.setTotalCarbonIncreaseInSoil(totalCarbon);
 
         // 2. Calculate Emissions Savings (Kilotonnes CO2e)
-        // Emissions savings = Total carbon × C to CO2 conversion / 1000
-        double emissionsSavings = (totalCarbon *
-                ZeroTillageConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        // Emissions savings = Total carbon × C to CO2 conversion (from parameter) / 1000
+        double emissionsSavings = (totalCarbon * param.getCarbonToC02()) / 1000.0;
         mitigation.setEmissionsSavings(emissionsSavings);
 
-        // 3. Calculate Urea Applied (tonnes)
-        // Urea applied = Area × Urea application rate
-        double ureaApplied = areaInHectares *
-                ZeroTillageConstants.UREA_APPLICATION_RATE.getValue();
-        mitigation.setUreaApplied(ureaApplied);
+        mitigation.setUreaApplied(dto.getUreaApplied());
 
         // 4. Calculate Emissions from Urea (Tonnes CO2)
-        // Emissions from urea = Urea applied × Emission factor from urea
-        double emissionsFromUrea = ureaApplied *
-                ZeroTillageConstants.EMISSION_FACTOR_UREA.getValue();
+        // Emissions from urea = Urea applied × Emission factor from urea (from parameter)
+        double emissionsFromUrea = dto.getUreaApplied() * param.getEmissionFactorFromUrea();
         mitigation.setEmissionsFromUrea(emissionsFromUrea);
 
         // 5. Calculate GHG Emissions Savings (Kilotonnes CO2e) - NET
@@ -120,7 +126,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
         // Find BAU record for AFOLU sector and same year
         BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
                 .orElseThrow(() -> new RuntimeException(
-                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.", 
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
                                 mitigation.getYear())
                 ));
         double adjustmentMitigation = bau.getValue() - ghgSavings;
@@ -142,6 +148,18 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     @Override
     @Transactional
     public ZeroTillageMitigationResponseDto updateZeroTillageMitigation(UUID id, ZeroTillageMitigationDto dto) {
+        // Fetch latest active parameter - throws exception if none exists
+        ZeroTillageParameterResponseDto param;
+        try {
+            param = zeroTillageParameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot update Zero Tillage Mitigation: No active Zero Tillage Parameter found. " +
+                            "Please create an active parameter first before updating mitigation records.",
+                    e
+            );
+        }
+
         ZeroTillageMitigation mitigation = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Zero Tillage Mitigation record not found with id: " + id));
 
@@ -152,32 +170,35 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
         mitigation.setYear(dto.getYear());
         mitigation.setAreaUnderZeroTillage(areaInHectares);
 
-        // Recalculate all derived fields
-        double totalCarbon = areaInHectares *
-                ZeroTillageConstants.CARBON_INCREASE_SOIL.getValue();
+        // Recalculate all derived fields using parameter values
+        // 1. Calculate Total Carbon Increase in Soil (Tonnes C)
+        // Total carbon = Area × Carbon increase in soil (from parameter)
+        double totalCarbon = areaInHectares * param.getCarbonIncreaseInSoil();
         mitigation.setTotalCarbonIncreaseInSoil(totalCarbon);
 
-        double emissionsSavings = (totalCarbon *
-                ZeroTillageConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        // 2. Calculate Emissions Savings (Kilotonnes CO2e)
+        // Emissions savings = Total carbon × C to CO2 conversion (from parameter) / 1000
+        double emissionsSavings = (totalCarbon * param.getCarbonToC02()) / 1000.0;
         mitigation.setEmissionsSavings(emissionsSavings);
 
-        double ureaApplied = areaInHectares *
-                ZeroTillageConstants.UREA_APPLICATION_RATE.getValue();
-        mitigation.setUreaApplied(ureaApplied);
+        mitigation.setUreaApplied(dto.getUreaApplied());
 
-        double emissionsFromUrea = ureaApplied *
-                ZeroTillageConstants.EMISSION_FACTOR_UREA.getValue();
+        // 4. Calculate Emissions from Urea (Tonnes CO2)
+        // Emissions from urea = Urea applied × Emission factor from urea (from parameter)
+        double emissionsFromUrea = dto.getUreaApplied() * param.getEmissionFactorFromUrea();
         mitigation.setEmissionsFromUrea(emissionsFromUrea);
 
+        // 5. Calculate GHG Emissions Savings (Kilotonnes CO2e) - NET
+        // GHG savings = Emissions savings - (Emissions from urea / 1000)
         double ghgSavings = emissionsSavings - (emissionsFromUrea / 1000.0);
         mitigation.setGhgEmissionsSavings(ghgSavings);
 
-        // 6. Calculate Adjustment Mitigation (Kilotonnes CO2)
+        // 6. Calculate Adjustment Mitigation (Kilotons CO2)
         // Adjustment Mitigation = BAU.value - ghgEmissionsSavings
         // Find BAU record for AFOLU sector and same year
         BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
                 .orElseThrow(() -> new RuntimeException(
-                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.", 
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
                                 mitigation.getYear())
                 ));
         double adjustmentMitigation = bau.getValue() - ghgSavings;
@@ -210,7 +231,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                 .<ZeroTillageMitigation>where(MitigationSpecifications.hasYear(year));
         // Use EntityGraph (via findAll override) to eagerly fetch interventions to avoid N+1 queries and lazy loading issues
         List<ZeroTillageMitigation> mitigations = repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
-        // Map each entity to DTO within transaction to avoid lazy loading issues
+        // Map each entity to DTO within the transaction to avoid lazy loading issues
         return mitigations.stream()
                 .map(this::toResponseDto)
                 .toList();
@@ -224,7 +245,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     @Override
     public byte[] generateExcelTemplate() {
         try (Workbook workbook = new XSSFWorkbook();
-                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             Sheet sheet = workbook.createSheet("Zero Tillage Mitigation");
 

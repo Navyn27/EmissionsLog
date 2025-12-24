@@ -17,6 +17,9 @@ public class ZeroTillageMitigationDto {
     @NotNull(message = "Area under zero-tillage is required")
     @DecimalMin(value = "0.0", message = "Area under zero-tillage must be at least 0")
     private Double areaUnderZeroTillage;
+    @NotNull(message = "Urea applied on zero-tillage area is required")
+    @DecimalMin(value = "0.0", message = "Urea applied on zero-tillage area, tonnes must be at least 0")
+    private Double ureaApplied;
     
     @NotNull(message = "Area unit is required")
     private AreaUnits areaUnit; // Unit for area (standard: ha)
