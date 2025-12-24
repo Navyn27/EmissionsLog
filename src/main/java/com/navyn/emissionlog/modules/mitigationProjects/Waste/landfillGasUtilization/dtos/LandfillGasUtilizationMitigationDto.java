@@ -1,34 +1,24 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.dtos;
 
-import com.navyn.emissionlog.Enums.Metrics.EmissionsKilotonneUnit;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class LandfillGasUtilizationMitigationDto {
-    
+
     @NotNull(message = "Year is required")
     private Integer year;
-    
-    @NotNull(message = "BAU Solid Waste Emissions is required")
-    @Positive(message = "BAU Solid Waste Emissions must be positive")
-    private Double bauSolidWasteEmissions; // ktCO2eq
-    
-    @NotNull(message = "BAU solid waste emissions unit is required")
-    private EmissionsKilotonneUnit bauSolidWasteEmissionsUnit;
-    
-    @NotNull(message = "Project Reduction (40% Efficiency) is required")
-    @Positive(message = "Project Reduction must be positive")
-    private Double projectReduction40PercentEfficiency; // ktCO2eq
-    
-    @NotNull(message = "Project reduction unit is required")
-    private EmissionsKilotonneUnit projectReductionUnit;
-    
-    @NotNull(message = "BAU Grand Total is required")
-    @Positive(message = "BAU Grand Total must be positive")
-    private Double bauGrandTotal; // ktCO2eq
-    
-    @NotNull(message = "BAU grand total unit is required")
-    private EmissionsKilotonneUnit bauGrandTotalUnit;
+
+    @NotNull(message = "CH₄ Captured is required")
+    @Positive(message = "CH₄ Captured must be positive")
+    private Double ch4Captured; // CH₄ captured (user input)
+
+    @NotNull(message = "Project Intervention is required")
+    private UUID projectInterventionId; // Foreign key to Intervention table
+
+    // For Excel upload - intervention name (will be converted to UUID)
+    private String projectInterventionName; // Used for Excel import
 }

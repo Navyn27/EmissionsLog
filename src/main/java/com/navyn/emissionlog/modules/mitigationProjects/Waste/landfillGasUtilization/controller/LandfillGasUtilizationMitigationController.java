@@ -24,11 +24,11 @@ import java.util.UUID;
 @SecurityRequirement(name = "BearerAuth")
 @RequiredArgsConstructor
 public class LandfillGasUtilizationMitigationController {
-    
+
     private final LandfillGasUtilizationMitigationService service;
-    
-    @Operation(summary = "Create Landfill Gas Utilization mitigation record", 
-               description = "Creates a new Landfill Gas Utilization mitigation project record for Kigali City with automatic calculations (project active after 2028)")
+
+    @Operation(summary = "Create Landfill Gas Utilization mitigation record",
+            description = "Creates a new Landfill Gas Utilization mitigation project record for Kigali City with automatic calculations (project active after 2028)")
     @PostMapping
     public ResponseEntity<ApiResponse> createLandfillGasUtilizationMitigation(
             @Valid @RequestBody LandfillGasUtilizationMitigationDto dto) {
@@ -36,9 +36,9 @@ public class LandfillGasUtilizationMitigationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Landfill Gas Utilization mitigation record created successfully", mitigation));
     }
-    
+
     @Operation(summary = "Update Landfill Gas Utilization mitigation record",
-               description = "Updates an existing Landfill Gas Utilization mitigation record and recalculates all derived fields")
+            description = "Updates an existing Landfill Gas Utilization mitigation record and recalculates all derived fields")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateLandfillGasUtilizationMitigation(
             @PathVariable UUID id,
@@ -46,18 +46,18 @@ public class LandfillGasUtilizationMitigationController {
         LandfillGasUtilizationMitigation mitigation = service.updateLandfillGasUtilizationMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(true, "Landfill Gas Utilization mitigation record updated successfully", mitigation));
     }
-    
-    @Operation(summary = "Get Landfill Gas Utilization mitigation records", 
-               description = "Retrieves all Landfill Gas Utilization mitigation records with optional year filter")
+
+    @Operation(summary = "Get Landfill Gas Utilization mitigation records",
+            description = "Retrieves all Landfill Gas Utilization mitigation records with optional year filter")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllLandfillGasUtilizationMitigation(
             @RequestParam(required = false) Integer year) {
         List<LandfillGasUtilizationMitigation> mitigations = service.getAllLandfillGasUtilizationMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Landfill Gas Utilization mitigation records fetched successfully", mitigations));
     }
-    
+
     @Operation(summary = "Delete Landfill Gas Utilization mitigation record",
-               description = "Deletes an existing Landfill Gas Utilization mitigation record by its ID")
+            description = "Deletes an existing Landfill Gas Utilization mitigation record by its ID")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse> deleteLandfillGasUtilizationMitigation(@PathVariable UUID id) {
         service.deleteLandfillGasUtilizationMitigation(id);
@@ -65,7 +65,8 @@ public class LandfillGasUtilizationMitigationController {
     }
 
     @GetMapping("/template")
-    @Operation(summary = "Download Landfill Gas Utilization Mitigation Excel template", description = "Downloads an Excel template file with the required column headers and data validation for uploading Landfill Gas Utilization Mitigation records")
+    @Operation(summary = "Download Landfill Gas Utilization Mitigation Excel template",
+            description = "Downloads an Excel template file with the required column headers and data validation for uploading Landfill Gas Utilization Mitigation records")
     public ResponseEntity<byte[]> downloadExcelTemplate() {
         byte[] templateBytes = service.generateExcelTemplate();
 
@@ -80,7 +81,8 @@ public class LandfillGasUtilizationMitigationController {
     }
 
     @PostMapping("/excel")
-    @Operation(summary = "Upload Landfill Gas Utilization Mitigation records from Excel file", description = "Uploads multiple Landfill Gas Utilization Mitigation records from an Excel file. Records with duplicate years will be skipped.")
+    @Operation(summary = "Upload Landfill Gas Utilization Mitigation records from Excel file",
+            description = "Uploads multiple Landfill Gas Utilization Mitigation records from an Excel file. Records with duplicate years will be skipped.")
     public ResponseEntity<ApiResponse> createLandfillGasUtilizationMitigationFromExcel(
             @RequestParam("file") MultipartFile file) {
         Map<String, Object> result = service.createLandfillGasUtilizationMitigationFromExcel(file);
