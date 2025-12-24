@@ -47,4 +47,9 @@ public class LandfillGasUtilizationMitigation {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    // Getter for project reduction emissions (alias for equivalentCO2eReduction in kilotonnes)
+    public Double getProjectReductionEmissions() {
+        return equivalentCO2eReduction;
+    }
 }

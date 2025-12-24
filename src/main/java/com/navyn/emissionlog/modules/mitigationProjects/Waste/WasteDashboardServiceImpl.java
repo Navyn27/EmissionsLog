@@ -792,12 +792,10 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         List<LandfillGasUtilizationMitigation> data) {
                 String[] headers = {
                                 "Year",
-                                "BAU Solid Waste Emissions (ktCO2e)",
-                                "Project Reduction (efficiency)",
-                                "BAU Grand Total (ktCO2e)",
-                                "Project Reduction Emissions (ktCO2e)",
-                                "Adjusted Solid Waste Emissions (ktCO2e)",
-                                "Adjusted Grand Total (ktCO2e)"
+                                "CH₄ Captured",
+                                "CH₄ Destroyed",
+                                "Equivalent CO₂e Reduction (ktCO2e)",
+                                "Mitigation Scenario Grand (ktCO2e)"
                 };
                 createHeader(sheet, headerStyle, headers);
                 DataFormat dataFormat = sheet.getWorkbook().createDataFormat();
@@ -822,26 +820,18 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook())
                                         : numberStyle;
                         r.createCell(1).setCellValue(
-                                        item.getBauSolidWasteEmissions() != null ? item.getBauSolidWasteEmissions()
-                                                        : 0.0);
+                                        item.getCh4Captured() != null ? item.getCh4Captured() : 0.0);
                         r.getCell(1).setCellStyle(numStyle);
-                        r.createCell(2).setCellValue(item.getProjectReduction40PercentEfficiency() != null
-                                        ? item.getProjectReduction40PercentEfficiency()
-                                        : 0.0);
+                        r.createCell(2).setCellValue(item.getCh4Destroyed() != null ? item.getCh4Destroyed() : 0.0);
                         r.getCell(2).setCellStyle(numStyle);
-                        r.createCell(3).setCellValue(item.getBauGrandTotal() != null ? item.getBauGrandTotal() : 0.0);
-                        r.getCell(3).setCellStyle(numStyle);
-                        r.createCell(4).setCellValue(item.getProjectReductionEmissions() != null
+                        r.createCell(3).setCellValue(item.getProjectReductionEmissions() != null
                                         ? item.getProjectReductionEmissions()
                                         : 0.0);
+                        r.getCell(3).setCellStyle(numStyle);
+                        r.createCell(4).setCellValue(
+                                        item.getMitigationScenarioGrand() != null ? item.getMitigationScenarioGrand()
+                                                        : 0.0);
                         r.getCell(4).setCellStyle(numStyle);
-                        r.createCell(5).setCellValue(item.getAdjustedSolidWasteEmissions() != null
-                                        ? item.getAdjustedSolidWasteEmissions()
-                                        : 0.0);
-                        r.getCell(5).setCellStyle(numStyle);
-                        r.createCell(6).setCellValue(
-                                        item.getAdjustedGrandTotal() != null ? item.getAdjustedGrandTotal() : 0.0);
-                        r.getCell(6).setCellStyle(numStyle);
                 }
                 autoSizeWithLimits(sheet, headers.length);
         }

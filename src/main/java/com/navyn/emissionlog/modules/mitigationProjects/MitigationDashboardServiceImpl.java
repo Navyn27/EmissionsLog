@@ -147,7 +147,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
                     .filter(w -> w.getYear() >= startingYear && w.getYear() <= endingYear)
                     .toList();
             landfillGasUtilization = landfillGasUtilization.stream()
-                    .filter(l -> l.getYear() >= startingYear && l.getYear() <= endingYear)
+                    .filter(l -> l.getYear() != null && l.getYear() >= startingYear && l.getYear() <= endingYear)
                     .toList();
             mbtComposting = mbtComposting.stream()
                     .filter(m -> m.getYear() >= startingYear && m.getYear() <= endingYear)
@@ -259,7 +259,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
                 .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
                 .toList();
         landfillGasUtilization = landfillGasUtilization.stream()
-                .filter(l -> l.getYear() >= finalStartYear && l.getYear() <= finalEndYear)
+                .filter(l -> l.getYear() != null && l.getYear() >= finalStartYear && l.getYear() <= finalEndYear)
                 .toList();
         mbtComposting = mbtComposting.stream()
                 .filter(m -> m.getYear() >= finalStartYear && m.getYear() <= finalEndYear)
