@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.models;
 
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -23,8 +24,9 @@ public class WasteToEnergyMitigation {
     @Column(nullable = false)
     private Double wasteToWtE; // t/year
     
-    @Column(nullable = false)
-    private Double bauEmissionsSolidWaste; // ktCO2e
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_intervention_id", nullable = false)
+    private Intervention projectIntervention; // Foreign key to Intervention table
     
     // Calculated fields
     @Column(nullable = false)

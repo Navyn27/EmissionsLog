@@ -1,12 +1,17 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.service;
 
 import com.navyn.emissionlog.Enums.ExcelType;
-import com.navyn.emissionlog.Enums.Metrics.EmissionsKilotonneUnit;
 import com.navyn.emissionlog.Enums.Metrics.MassPerYearUnit;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.constants.WasteToEnergyConstants;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.services.BAUService;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.dtos.WasteToEnergyMitigationDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.models.WasteToEnergyMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.models.WasteToWtEParameter;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.repository.WasteToEnergyMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.repository.WasteToWtEParameterRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -21,10 +26,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
@@ -34,31 +39,48 @@ import static com.navyn.emissionlog.utils.Specifications.MitigationSpecification
 public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigationService {
     
     private final WasteToEnergyMitigationRepository repository;
+    private final WasteToWtEParameterRepository parameterRepository;
+    private final InterventionRepository interventionRepository;
+    private final BAUService bauService;
     
     @Override
     public WasteToEnergyMitigation createWasteToEnergyMitigation(WasteToEnergyMitigationDto dto) {
         WasteToEnergyMitigation mitigation = new WasteToEnergyMitigation();
         
+        // Get WasteToWtEParameter (latest)
+        WasteToWtEParameter parameter = parameterRepository.findFirstByOrderByCreatedAtDesc()
+                .orElseThrow(() -> new RuntimeException("Waste to WtE Parameter not found. Please create parameters first."));
+        
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+        
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+        
         // Convert to standard units
         double wasteInTonnesPerYear = dto.getWasteToWtEUnit().toTonnesPerYear(dto.getWasteToWtE());
-        double bauEmissionsInKilotonnes = dto.getBauEmissionsUnit().toKilotonnesCO2e(dto.getBauEmissionsSolidWaste());
         
         // Set user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setWasteToWtE(wasteInTonnesPerYear);
-        mitigation.setBauEmissionsSolidWaste(bauEmissionsInKilotonnes);
+        mitigation.setProjectIntervention(intervention);
         
         // Calculations
         // GHG Reduction (tCO2eq) = Net Emission Factor (tCO2eq/t) * Waste to WtE (t/year)
-        Double ghgReductionTonnes = WasteToEnergyConstants.NET_EMISSION_FACTOR.getValue() * wasteInTonnesPerYear;
+        Double ghgReductionTonnes = parameter.getNetEmissionFactor() * wasteInTonnesPerYear;
         mitigation.setGhgReductionTonnes(ghgReductionTonnes);
         
         // GHG Reduction (KtCO2eq) = GHG Reduction (tCO2eq) / 1000
         Double ghgReductionKilotonnes = ghgReductionTonnes / 1000;
         mitigation.setGhgReductionKilotonnes(ghgReductionKilotonnes);
         
-        // Adjusted Emissions (with WtE, ktCO₂e) = BAU Emissions (Solid Waste, ktCO₂e) - GHG Reduction (KtCO2eq)
-        Double adjustedEmissions = bauEmissionsInKilotonnes - ghgReductionKilotonnes;
+        // Adjusted Emissions (with WtE, ktCO₂e) = BAU (ktCO₂e) - GHG Reduction (KtCO2eq)
+        Double adjustedEmissions = bau.getValue() - ghgReductionKilotonnes;
         mitigation.setAdjustedEmissionsWithWtE(adjustedEmissions);
         
         return repository.save(mitigation);
@@ -69,23 +91,37 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
         WasteToEnergyMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Waste to Energy Mitigation record not found with id: " + id));
         
+        // Get WasteToWtEParameter (latest)
+        WasteToWtEParameter parameter = parameterRepository.findFirstByOrderByCreatedAtDesc()
+                .orElseThrow(() -> new RuntimeException("Waste to WtE Parameter not found. Please create parameters first."));
+        
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+        
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+        
         // Convert to standard units
         double wasteInTonnesPerYear = dto.getWasteToWtEUnit().toTonnesPerYear(dto.getWasteToWtE());
-        double bauEmissionsInKilotonnes = dto.getBauEmissionsUnit().toKilotonnesCO2e(dto.getBauEmissionsSolidWaste());
         
         // Update user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setWasteToWtE(wasteInTonnesPerYear);
-        mitigation.setBauEmissionsSolidWaste(bauEmissionsInKilotonnes);
+        mitigation.setProjectIntervention(intervention);
         
         // Recalculate derived fields
-        Double ghgReductionTonnes = WasteToEnergyConstants.NET_EMISSION_FACTOR.getValue() * wasteInTonnesPerYear;
+        Double ghgReductionTonnes = parameter.getNetEmissionFactor() * wasteInTonnesPerYear;
         mitigation.setGhgReductionTonnes(ghgReductionTonnes);
         
         Double ghgReductionKilotonnes = ghgReductionTonnes / 1000;
         mitigation.setGhgReductionKilotonnes(ghgReductionKilotonnes);
         
-        Double adjustedEmissions = bauEmissionsInKilotonnes - ghgReductionKilotonnes;
+        Double adjustedEmissions = bau.getValue() - ghgReductionKilotonnes;
         mitigation.setAdjustedEmissionsWithWtE(adjustedEmissions);
         
         return repository.save(mitigation);
@@ -198,7 +234,7 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Waste to Energy Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
 
             rowIdx++; // Blank row
 
@@ -209,8 +245,7 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
                     "Year",
                     "Waste to WtE",
                     "Waste to WtE Unit",
-                    "BAU Emissions Solid Waste",
-                    "BAU Emissions Unit"
+                    "Project Intervention Name"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -220,11 +255,14 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
             }
 
             // Get enum values for dropdowns
-            String[] wasteToWtEUnitValues = Arrays.stream(MassPerYearUnit.values())
+            String[] wasteToWtEUnitValues = java.util.Arrays.stream(MassPerYearUnit.values())
                     .map(Enum::name)
                     .toArray(String[]::new);
-            String[] bauEmissionsUnitValues = Arrays.stream(EmissionsKilotonneUnit.values())
-                    .map(Enum::name)
+
+            // Get all intervention names for dropdown
+            List<Intervention> interventions = interventionRepository.findAll();
+            String[] interventionNames = interventions.stream()
+                    .map(Intervention::getName)
                     .toArray(String[]::new);
 
             // Create data validation helper
@@ -244,35 +282,36 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
             wasteUnitValidation.createPromptBox("Waste to WtE Unit", "Select a unit from the dropdown list.");
             sheet.addValidationData(wasteUnitValidation);
 
-            // Data validation for BAU Emissions Unit column (Column E, index 4)
-            CellRangeAddressList bauUnitList = new CellRangeAddressList(3, 1000, 4, 4);
-            DataValidationConstraint bauUnitConstraint = validationHelper
-                    .createExplicitListConstraint(bauEmissionsUnitValues);
-            DataValidation bauUnitValidation = validationHelper.createValidation(bauUnitConstraint,
-                    bauUnitList);
-            bauUnitValidation.setShowErrorBox(true);
-            bauUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            bauUnitValidation.createErrorBox("Invalid BAU Emissions Unit",
-                    "Please select a valid unit from the dropdown list.");
-            bauUnitValidation.setShowPromptBox(true);
-            bauUnitValidation.createPromptBox("BAU Emissions Unit", "Select a unit from the dropdown list.");
-            sheet.addValidationData(bauUnitValidation);
+            // Data validation for Project Intervention Name column (Column D, index 3)
+            if (interventionNames.length > 0) {
+                CellRangeAddressList interventionNameList = new CellRangeAddressList(3, 1000, 3, 3);
+                DataValidationConstraint interventionNameConstraint = validationHelper
+                        .createExplicitListConstraint(interventionNames);
+                DataValidation interventionNameValidation = validationHelper.createValidation(interventionNameConstraint,
+                        interventionNameList);
+                interventionNameValidation.setShowErrorBox(true);
+                interventionNameValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionNameValidation.createErrorBox("Invalid Intervention",
+                        "Please select a valid intervention from the dropdown list.");
+                interventionNameValidation.setShowPromptBox(true);
+                interventionNameValidation.createPromptBox("Project Intervention Name", "Select an intervention from the dropdown list.");
+                sheet.addValidationData(interventionNameValidation);
+            }
 
             // Create example data rows
             Object[] exampleData1 = {
                     2024,
                     1000.0,
                     "TONNES_PER_YEAR",
-                    50.0,
-                    "KILOTONNES_CO2E"
+                    interventions.isEmpty() ? "Example Intervention" : interventions.get(0).getName()
             };
 
             Object[] exampleData2 = {
                     2025,
                     1200.0,
                     "TONNES_PER_YEAR",
-                    55.0,
-                    "KILOTONNES_CO2E"
+                    interventions.size() > 1 ? interventions.get(1).getName() :
+                            (interventions.isEmpty() ? "Example Intervention" : interventions.get(0).getName())
             };
 
             // First example row
@@ -283,10 +322,10 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
                 if (i == 0) { // Year
                     cell.setCellStyle(yearStyle);
                     cell.setCellValue(((Number) exampleData1[i]).intValue());
-                } else if (i == 1 || i == 3) { // Numbers
+                } else if (i == 1) { // Waste to WtE (number)
                     cell.setCellStyle(numberStyle);
                     cell.setCellValue(((Number) exampleData1[i]).doubleValue());
-                } else { // Units (string)
+                } else { // Units and Intervention Name (string)
                     cell.setCellStyle(dataStyle);
                     cell.setCellValue((String) exampleData1[i]);
                 }
@@ -303,14 +342,14 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
                     altYearStyle.setAlignment(HorizontalAlignment.CENTER);
                     cell.setCellStyle(altYearStyle);
                     cell.setCellValue(((Number) exampleData2[i]).intValue());
-                } else if (i == 1 || i == 3) { // Numbers
+                } else if (i == 1) { // Waste to WtE (number)
                     CellStyle altNumStyle = workbook.createCellStyle();
                     altNumStyle.cloneStyleFrom(numberStyle);
                     altNumStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
                     altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                     cell.setCellStyle(altNumStyle);
                     cell.setCellValue(((Number) exampleData2[i]).doubleValue());
-                } else { // Units (string)
+                } else { // Units and Intervention Name (string)
                     cell.setCellStyle(alternateDataStyle);
                     cell.setCellValue((String) exampleData2[i]);
                 }
@@ -366,11 +405,8 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
                 if (dto.getWasteToWtEUnit() == null) {
                     missingFields.add("Waste to WtE Unit");
                 }
-                if (dto.getBauEmissionsSolidWaste() == null) {
-                    missingFields.add("BAU Emissions Solid Waste");
-                }
-                if (dto.getBauEmissionsUnit() == null) {
-                    missingFields.add("BAU Emissions Unit");
+                if (dto.getProjectInterventionName() == null || dto.getProjectInterventionName().trim().isEmpty()) {
+                    missingFields.add("Project Intervention Name");
                 }
 
                 if (!missingFields.isEmpty()) {
@@ -378,6 +414,15 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
                             "Row %d: Missing required fields: %s. Please fill in all required fields in your Excel file.",
                             actualRowNumber, String.join(", ", missingFields)));
                 }
+
+                // Convert intervention name to UUID
+                Optional<Intervention> interventionOpt = interventionRepository.findByNameIgnoreCase(dto.getProjectInterventionName().trim());
+                if (interventionOpt.isEmpty()) {
+                    throw new RuntimeException(String.format(
+                            "Row %d: Intervention '%s' not found. Please use a valid intervention name from the dropdown.",
+                            actualRowNumber, dto.getProjectInterventionName()));
+                }
+                dto.setProjectInterventionId(interventionOpt.get().getId());
 
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {

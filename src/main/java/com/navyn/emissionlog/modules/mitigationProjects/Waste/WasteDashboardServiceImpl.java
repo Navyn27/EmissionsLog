@@ -695,7 +695,7 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                 String[] headers = {
                                 "Year",
                                 "Waste to WtE (t/year)",
-                                "BAU Emissions Solid Waste (ktCO2e)",
+                                "Project Intervention",
                                 "GHG Reduction (ktCO2e)",
                                 "Adjusted Emissions With WtE (ktCO2e)"
                 };
@@ -723,8 +723,17 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                                         : numberStyle;
                         r.createCell(1).setCellValue(item.getWasteToWtE());
                         r.getCell(1).setCellStyle(numStyle);
-                        r.createCell(2).setCellValue(item.getBauEmissionsSolidWaste());
-                        r.getCell(2).setCellStyle(numStyle);
+                        
+                        // Project Intervention column (text)
+                        Cell interventionCell = r.createCell(2);
+                        interventionCell.setCellValue(
+                                        item.getProjectIntervention() != null ? item.getProjectIntervention().getName() : "");
+                        CellStyle baseTextStyle = isAlternate ? alternateDataStyle : dataStyle;
+                        CellStyle textCellStyle = sheet.getWorkbook().createCellStyle();
+                        textCellStyle.cloneStyleFrom(baseTextStyle);
+                        textCellStyle.setAlignment(HorizontalAlignment.LEFT);
+                        interventionCell.setCellStyle(textCellStyle);
+                        
                         r.createCell(3).setCellValue(item.getGhgReductionKilotonnes());
                         r.getCell(3).setCellStyle(numStyle);
                         r.createCell(4).setCellValue(item.getAdjustedEmissionsWithWtE());
