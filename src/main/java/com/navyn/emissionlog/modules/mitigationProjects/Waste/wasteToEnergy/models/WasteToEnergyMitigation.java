@@ -25,7 +25,7 @@ public class WasteToEnergyMitigation {
     private Double wasteToWtE; // t/year
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_intervention_id", nullable = false)
+    @JoinColumn(name = "project_intervention_id", nullable = true)
     private Intervention projectIntervention; // Foreign key to Intervention table
     
     // Calculated fields
