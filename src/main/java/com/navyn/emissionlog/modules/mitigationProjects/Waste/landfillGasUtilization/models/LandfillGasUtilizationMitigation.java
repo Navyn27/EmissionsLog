@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.models;
 
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -22,29 +23,23 @@ public class LandfillGasUtilizationMitigation {
     @Column(nullable = false)
     private Integer year;
     
-    // User inputs (stored in ktCO₂eq)
-    @Column(nullable = false, name = "bau_solid_waste_emissions")
-    private Double bauSolidWasteEmissions; // BAU Solid Waste Emissions (ktCO₂eq)
+    // User inputs
+    @Column(nullable = false, name = "ch4_captured")
+    private Double ch4Captured; // CH₄ captured (user input)
     
-    @Column(nullable = false, name = "project_reduction_40_percent_efficiency")
-    private Double projectReduction40PercentEfficiency; // Project Reduction (40% Efficiency) (ktCO₂eq)
-    
-    @Column(nullable = false, name = "bau_grand_total")
-    private Double bauGrandTotal; // BAU Grand Total (ktCO₂eq)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_intervention_id", nullable = false)
+    private Intervention projectIntervention; // Foreign key to Intervention table
     
     // Calculated fields
-    @Column(nullable = false, name = "project_reduction_emissions")
-    private Double projectReductionEmissions; // Project Reduction Emissions (KtCO₂eq)
-    // if year > 2028: BAU Solid Waste Emissions * Project Reduction (40% Efficiency)
-    // else: 0
+    @Column(nullable = false, name = "ch4_destroyed")
+    private Double ch4Destroyed; // CH₄Captured * DestructionEfficiency(%)
     
-    @Column(nullable = false, name = "adjusted_solid_waste_emissions")
-    private Double adjustedSolidWasteEmissions; // Adjusted Solid Waste Emissions (KtCO₂eq)
-    // BAU Solid Waste Emissions - Project Reduction Emissions
+    @Column(nullable = false, name = "equivalent_co2e_reduction")
+    private Double equivalentCO2eReduction; // CH₄Destroyed * GlobalWarmingPotential(CH₄)
     
-    @Column(nullable = false, name = "adjusted_grand_total")
-    private Double adjustedGrandTotal; // Adjusted Grand Total (KtCO₂eq)
-    // BAU Grand Total - Project Reduction Emissions
+    @Column(nullable = false, name = "mitigation_scenario_grand")
+    private Double mitigationScenarioGrand; // BAU - EquivalentCO₂eReduction
     
     @CreationTimestamp
     @Column(updatable = false)

@@ -65,7 +65,8 @@ public class LandfillGasUtilizationMitigationController {
     }
 
     @GetMapping("/template")
-    @Operation(summary = "Download Landfill Gas Utilization Mitigation Excel template", description = "Downloads an Excel template file with the required column headers and data validation for uploading Landfill Gas Utilization Mitigation records")
+    @Operation(summary = "Download Landfill Gas Utilization Mitigation Excel template", 
+               description = "Downloads an Excel template file with the required column headers and data validation for uploading Landfill Gas Utilization Mitigation records")
     public ResponseEntity<byte[]> downloadExcelTemplate() {
         byte[] templateBytes = service.generateExcelTemplate();
 
@@ -80,7 +81,8 @@ public class LandfillGasUtilizationMitigationController {
     }
 
     @PostMapping("/excel")
-    @Operation(summary = "Upload Landfill Gas Utilization Mitigation records from Excel file", description = "Uploads multiple Landfill Gas Utilization Mitigation records from an Excel file. Records with duplicate years will be skipped.")
+    @Operation(summary = "Upload Landfill Gas Utilization Mitigation records from Excel file", 
+               description = "Uploads multiple Landfill Gas Utilization Mitigation records from an Excel file. Records with duplicate years will be skipped.")
     public ResponseEntity<ApiResponse> createLandfillGasUtilizationMitigationFromExcel(
             @RequestParam("file") MultipartFile file) {
         Map<String, Object> result = service.createLandfillGasUtilizationMitigationFromExcel(file);

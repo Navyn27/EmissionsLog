@@ -1,10 +1,16 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.service;
 
 import com.navyn.emissionlog.Enums.ExcelType;
-import com.navyn.emissionlog.Enums.Metrics.EmissionsKilotonneUnit;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.services.BAUService;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.dtos.LandfillGasUtilizationMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.models.LandfillGasParameter;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.models.LandfillGasUtilizationMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.repository.LandfillGasParameterRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.repository.LandfillGasUtilizationMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -19,10 +25,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
@@ -32,43 +38,46 @@ import static com.navyn.emissionlog.utils.Specifications.MitigationSpecification
 public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasUtilizationMitigationService {
     
     private final LandfillGasUtilizationMitigationRepository repository;
+    private final LandfillGasParameterRepository parameterRepository;
+    private final InterventionRepository interventionRepository;
+    private final BAUService bauService;
     
     @Override
     public LandfillGasUtilizationMitigation createLandfillGasUtilizationMitigation(LandfillGasUtilizationMitigationDto dto) {
         LandfillGasUtilizationMitigation mitigation = new LandfillGasUtilizationMitigation();
         
-        // Convert to standard units (ktCO₂eq)
-        double bauSolidWasteInKilotonnes = dto.getBauSolidWasteEmissionsUnit().toKilotonnesCO2e(dto.getBauSolidWasteEmissions());
-        double projectReductionInKilotonnes = dto.getProjectReductionUnit().toKilotonnesCO2e(dto.getProjectReduction40PercentEfficiency());
-        double bauGrandTotalInKilotonnes = dto.getBauGrandTotalUnit().toKilotonnesCO2e(dto.getBauGrandTotal());
+        // Get LandfillGasParameter (latest)
+        LandfillGasParameter parameter = parameterRepository.findFirstByOrderByCreatedAtDesc()
+            .orElseThrow(() -> new RuntimeException("Landfill Gas Parameter not found. Please create parameters first."));
         
-        // Set user inputs (store in standard units)
-        mitigation.setYear(dto.getYear());
-        mitigation.setBauSolidWasteEmissions(bauSolidWasteInKilotonnes);
-        mitigation.setProjectReduction40PercentEfficiency(projectReductionInKilotonnes);
-        mitigation.setBauGrandTotal(bauGrandTotalInKilotonnes);
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+            .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
         
-        // Calculations
-        // Project Reduction Emissions (KtCO₂eq)
-        // if year > 2028: BAU Solid Waste Emissions * Project Reduction (40% Efficiency)
-        // else: 0
-        Double projectReductionEmissions;
-        if (dto.getYear() > 2028) {
-            projectReductionEmissions = bauSolidWasteInKilotonnes * projectReductionInKilotonnes;
-        } else {
-            projectReductionEmissions = 0.0;
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
         }
-        mitigation.setProjectReductionEmissions(projectReductionEmissions);
+        BAU bau = bauOptional.get();
         
-        // Adjusted Solid Waste Emissions (KtCO₂eq)
-        // BAU Solid Waste Emissions - Project Reduction Emissions
-        Double adjustedSolidWasteEmissions = bauSolidWasteInKilotonnes - projectReductionEmissions;
-        mitigation.setAdjustedSolidWasteEmissions(adjustedSolidWasteEmissions);
+        // Set user inputs
+        mitigation.setYear(dto.getYear());
+        mitigation.setCh4Captured(dto.getCh4Captured());
+        mitigation.setProjectIntervention(intervention);
         
-        // Adjusted Grand Total (KtCO₂eq)
-        // BAU Grand Total - Project Reduction Emissions
-        Double adjustedGrandTotal = bauGrandTotalInKilotonnes - projectReductionEmissions;
-        mitigation.setAdjustedGrandTotal(adjustedGrandTotal);
+        // Calculate CH₄Destroyed = CH₄Captured * DestructionEfficiency(%)
+        // Note: DestructionEfficiency is a percentage (0-100), so divide by 100
+        Double ch4Destroyed = dto.getCh4Captured() * (parameter.getDestructionEfficiencyPercentage() / 100.0);
+        mitigation.setCh4Destroyed(ch4Destroyed);
+        
+        // Calculate EquivalentCO₂eReduction = CH₄Destroyed * GlobalWarmingPotential(CH₄)
+        Double equivalentCO2eReduction = ch4Destroyed * parameter.getGlobalWarmingPotentialCh4();
+        mitigation.setEquivalentCO2eReduction(equivalentCO2eReduction);
+        
+        // Calculate MitigationScenarioGrand = BAU - EquivalentCO₂eReduction
+        Double mitigationScenarioGrand = bau.getValue() - equivalentCO2eReduction;
+        mitigation.setMitigationScenarioGrand(mitigationScenarioGrand);
         
         return repository.save(mitigation);
     }
@@ -78,31 +87,38 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
         LandfillGasUtilizationMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Landfill Gas Utilization Mitigation record not found with id: " + id));
         
-        // Convert to standard units (ktCO₂eq)
-        double bauSolidWasteInKilotonnes = dto.getBauSolidWasteEmissionsUnit().toKilotonnesCO2e(dto.getBauSolidWasteEmissions());
-        double projectReductionInKilotonnes = dto.getProjectReductionUnit().toKilotonnesCO2e(dto.getProjectReduction40PercentEfficiency());
-        double bauGrandTotalInKilotonnes = dto.getBauGrandTotalUnit().toKilotonnesCO2e(dto.getBauGrandTotal());
+        // Get LandfillGasParameter (latest)
+        LandfillGasParameter parameter = parameterRepository.findFirstByOrderByCreatedAtDesc()
+            .orElseThrow(() -> new RuntimeException("Landfill Gas Parameter not found. Please create parameters first."));
         
-        // Update user inputs (store in standard units)
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+            .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+        
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+        
+        // Update user inputs
         mitigation.setYear(dto.getYear());
-        mitigation.setBauSolidWasteEmissions(bauSolidWasteInKilotonnes);
-        mitigation.setProjectReduction40PercentEfficiency(projectReductionInKilotonnes);
-        mitigation.setBauGrandTotal(bauGrandTotalInKilotonnes);
+        mitigation.setCh4Captured(dto.getCh4Captured());
+        mitigation.setProjectIntervention(intervention);
         
         // Recalculate derived fields
-        Double projectReductionEmissions;
-        if (dto.getYear() > 2028) {
-            projectReductionEmissions = bauSolidWasteInKilotonnes * projectReductionInKilotonnes;
-        } else {
-            projectReductionEmissions = 0.0;
-        }
-        mitigation.setProjectReductionEmissions(projectReductionEmissions);
+        // Calculate CH₄Destroyed = CH₄Captured * DestructionEfficiency(%)
+        Double ch4Destroyed = dto.getCh4Captured() * (parameter.getDestructionEfficiencyPercentage() / 100.0);
+        mitigation.setCh4Destroyed(ch4Destroyed);
         
-        Double adjustedSolidWasteEmissions = bauSolidWasteInKilotonnes - projectReductionEmissions;
-        mitigation.setAdjustedSolidWasteEmissions(adjustedSolidWasteEmissions);
+        // Calculate EquivalentCO₂eReduction = CH₄Destroyed * GlobalWarmingPotential(CH₄)
+        Double equivalentCO2eReduction = ch4Destroyed * parameter.getGlobalWarmingPotentialCh4();
+        mitigation.setEquivalentCO2eReduction(equivalentCO2eReduction);
         
-        Double adjustedGrandTotal = bauGrandTotalInKilotonnes - projectReductionEmissions;
-        mitigation.setAdjustedGrandTotal(adjustedGrandTotal);
+        // Calculate MitigationScenarioGrand = BAU - EquivalentCO₂eReduction
+        Double mitigationScenarioGrand = bau.getValue() - equivalentCO2eReduction;
+        mitigation.setMitigationScenarioGrand(mitigationScenarioGrand);
         
         return repository.save(mitigation);
     }
@@ -214,7 +230,7 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Landfill Gas Utilization Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
 
             rowIdx++; // Blank row
 
@@ -223,12 +239,8 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
             headerRow.setHeightInPoints(22);
             String[] headers = {
                     "Year",
-                    "BAU Solid Waste Emissions",
-                    "BAU Solid Waste Emissions Unit",
-                    "Project Reduction (40% Efficiency)",
-                    "Project Reduction Unit",
-                    "BAU Grand Total",
-                    "BAU Grand Total Unit"
+                    "CH₄ Captured",
+                    "Project Intervention Name"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -237,75 +249,43 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
                 cell.setCellStyle(headerStyle);
             }
 
-            // Get enum values for dropdowns
-            String[] emissionsUnitValues = Arrays.stream(EmissionsKilotonneUnit.values())
-                    .map(Enum::name)
+            // Get all intervention names for dropdown
+            List<Intervention> interventions = interventionRepository.findAll();
+            String[] interventionNames = interventions.stream()
+                    .map(Intervention::getName)
                     .toArray(String[]::new);
 
             // Create data validation helper
             DataValidationHelper validationHelper = sheet.getDataValidationHelper();
 
-            // Data validation for BAU Solid Waste Emissions Unit column (Column C, index 2)
-            CellRangeAddressList bauSolidWasteUnitList = new CellRangeAddressList(3, 1000, 2, 2);
-            DataValidationConstraint bauSolidWasteUnitConstraint = validationHelper
-                    .createExplicitListConstraint(emissionsUnitValues);
-            DataValidation bauSolidWasteUnitValidation = validationHelper.createValidation(bauSolidWasteUnitConstraint,
-                    bauSolidWasteUnitList);
-            bauSolidWasteUnitValidation.setShowErrorBox(true);
-            bauSolidWasteUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            bauSolidWasteUnitValidation.createErrorBox("Invalid Unit",
-                    "Please select a valid unit from the dropdown list.");
-            bauSolidWasteUnitValidation.setShowPromptBox(true);
-            bauSolidWasteUnitValidation.createPromptBox("BAU Solid Waste Emissions Unit", "Select a unit from the dropdown list.");
-            sheet.addValidationData(bauSolidWasteUnitValidation);
-
-            // Data validation for Project Reduction Unit column (Column E, index 4)
-            CellRangeAddressList projectReductionUnitList = new CellRangeAddressList(3, 1000, 4, 4);
-            DataValidationConstraint projectReductionUnitConstraint = validationHelper
-                    .createExplicitListConstraint(emissionsUnitValues);
-            DataValidation projectReductionUnitValidation = validationHelper.createValidation(projectReductionUnitConstraint,
-                    projectReductionUnitList);
-            projectReductionUnitValidation.setShowErrorBox(true);
-            projectReductionUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            projectReductionUnitValidation.createErrorBox("Invalid Unit",
-                    "Please select a valid unit from the dropdown list.");
-            projectReductionUnitValidation.setShowPromptBox(true);
-            projectReductionUnitValidation.createPromptBox("Project Reduction Unit", "Select a unit from the dropdown list.");
-            sheet.addValidationData(projectReductionUnitValidation);
-
-            // Data validation for BAU Grand Total Unit column (Column G, index 6)
-            CellRangeAddressList bauGrandTotalUnitList = new CellRangeAddressList(3, 1000, 6, 6);
-            DataValidationConstraint bauGrandTotalUnitConstraint = validationHelper
-                    .createExplicitListConstraint(emissionsUnitValues);
-            DataValidation bauGrandTotalUnitValidation = validationHelper.createValidation(bauGrandTotalUnitConstraint,
-                    bauGrandTotalUnitList);
-            bauGrandTotalUnitValidation.setShowErrorBox(true);
-            bauGrandTotalUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            bauGrandTotalUnitValidation.createErrorBox("Invalid Unit",
-                    "Please select a valid unit from the dropdown list.");
-            bauGrandTotalUnitValidation.setShowPromptBox(true);
-            bauGrandTotalUnitValidation.createPromptBox("BAU Grand Total Unit", "Select a unit from the dropdown list.");
-            sheet.addValidationData(bauGrandTotalUnitValidation);
+            // Data validation for Project Intervention Name column (Column C, index 2)
+            if (interventionNames.length > 0) {
+                CellRangeAddressList interventionNameList = new CellRangeAddressList(3, 1000, 2, 2);
+                DataValidationConstraint interventionNameConstraint = validationHelper
+                        .createExplicitListConstraint(interventionNames);
+                DataValidation interventionNameValidation = validationHelper.createValidation(interventionNameConstraint,
+                        interventionNameList);
+                interventionNameValidation.setShowErrorBox(true);
+                interventionNameValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionNameValidation.createErrorBox("Invalid Intervention",
+                        "Please select a valid intervention from the dropdown list.");
+                interventionNameValidation.setShowPromptBox(true);
+                interventionNameValidation.createPromptBox("Project Intervention Name", "Select an intervention from the dropdown list.");
+                sheet.addValidationData(interventionNameValidation);
+            }
 
             // Create example data rows
             Object[] exampleData1 = {
                     2029,
                     100.0,
-                    "KILOTONNES_CO2E",
-                    0.4,
-                    "KILOTONNES_CO2E",
-                    500.0,
-                    "KILOTONNES_CO2E"
+                    interventions.isEmpty() ? "Example Intervention" : interventions.get(0).getName()
             };
 
             Object[] exampleData2 = {
                     2030,
                     110.0,
-                    "KILOTONNES_CO2E",
-                    0.44,
-                    "KILOTONNES_CO2E",
-                    550.0,
-                    "KILOTONNES_CO2E"
+                    interventions.size() > 1 ? interventions.get(1).getName() : 
+                    (interventions.isEmpty() ? "Example Intervention" : interventions.get(0).getName())
             };
 
             // First example row
@@ -316,10 +296,10 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
                 if (i == 0) { // Year
                     cell.setCellStyle(yearStyle);
                     cell.setCellValue(((Number) exampleData1[i]).intValue());
-                } else if (i == 1 || i == 3 || i == 5) { // Numbers
+                } else if (i == 1) { // CH₄ Captured (number)
                     cell.setCellStyle(numberStyle);
                     cell.setCellValue(((Number) exampleData1[i]).doubleValue());
-                } else { // Units (string)
+                } else { // Intervention Name (string)
                     cell.setCellStyle(dataStyle);
                     cell.setCellValue((String) exampleData1[i]);
                 }
@@ -336,14 +316,14 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
                     altYearStyle.setAlignment(HorizontalAlignment.CENTER);
                     cell.setCellStyle(altYearStyle);
                     cell.setCellValue(((Number) exampleData2[i]).intValue());
-                } else if (i == 1 || i == 3 || i == 5) { // Numbers
+                } else if (i == 1) { // CH₄ Captured (number)
                     CellStyle altNumStyle = workbook.createCellStyle();
                     altNumStyle.cloneStyleFrom(numberStyle);
                     altNumStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
                     altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                     cell.setCellStyle(altNumStyle);
                     cell.setCellValue(((Number) exampleData2[i]).doubleValue());
-                } else { // Units (string)
+                } else { // Intervention Name (string)
                     cell.setCellStyle(alternateDataStyle);
                     cell.setCellValue((String) exampleData2[i]);
                 }
@@ -393,23 +373,11 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
                 if (dto.getYear() == null) {
                     missingFields.add("Year");
                 }
-                if (dto.getBauSolidWasteEmissions() == null) {
-                    missingFields.add("BAU Solid Waste Emissions");
+                if (dto.getCh4Captured() == null) {
+                    missingFields.add("CH₄ Captured");
                 }
-                if (dto.getBauSolidWasteEmissionsUnit() == null) {
-                    missingFields.add("BAU Solid Waste Emissions Unit");
-                }
-                if (dto.getProjectReduction40PercentEfficiency() == null) {
-                    missingFields.add("Project Reduction (40% Efficiency)");
-                }
-                if (dto.getProjectReductionUnit() == null) {
-                    missingFields.add("Project Reduction Unit");
-                }
-                if (dto.getBauGrandTotal() == null) {
-                    missingFields.add("BAU Grand Total");
-                }
-                if (dto.getBauGrandTotalUnit() == null) {
-                    missingFields.add("BAU Grand Total Unit");
+                if (dto.getProjectInterventionName() == null || dto.getProjectInterventionName().trim().isEmpty()) {
+                    missingFields.add("Project Intervention Name");
                 }
 
                 if (!missingFields.isEmpty()) {
@@ -417,6 +385,15 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
                             "Row %d: Missing required fields: %s. Please fill in all required fields in your Excel file.",
                             actualRowNumber, String.join(", ", missingFields)));
                 }
+
+                // Convert intervention name to UUID
+                Optional<Intervention> interventionOpt = interventionRepository.findByNameIgnoreCase(dto.getProjectInterventionName().trim());
+                if (interventionOpt.isEmpty()) {
+                    throw new RuntimeException(String.format(
+                            "Row %d: Intervention '%s' not found. Please use a valid intervention name from the dropdown.",
+                            actualRowNumber, dto.getProjectInterventionName()));
+                }
+                dto.setProjectInterventionId(interventionOpt.get().getId());
 
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
