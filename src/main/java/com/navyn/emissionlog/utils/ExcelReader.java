@@ -147,10 +147,8 @@ public class ExcelReader {
         cropRotationToDtoMap.put("Year", "year");
         cropRotationToDtoMap.put("Cropland Under Crop Rotation", "croplandUnderCropRotation");
         cropRotationToDtoMap.put("Cropland Area Unit", "croplandAreaUnit");
-        cropRotationToDtoMap.put("Aboveground Biomass", "abovegroundBiomass");
-        cropRotationToDtoMap.put("Aboveground Biomass Unit", "abovegroundBiomassUnit");
         cropRotationToDtoMap.put("Increased Biomass", "increasedBiomass");
-        cropRotationToDtoMap.put("Increased Biomass Unit", "increasedBiomassUnit");
+        cropRotationToDtoMap.put("Intervention", "interventionName");
     }
 
     // This hashmap is responsible for reading data from street trees mitigation
