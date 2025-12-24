@@ -1,10 +1,11 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.dtos;
 
-import com.navyn.emissionlog.Enums.Metrics.EmissionsKilotonneUnit;
 import com.navyn.emissionlog.Enums.Metrics.MassPerYearUnit;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
+
+import java.util.UUID;
 
 @Data
 public class WasteToEnergyMitigationDto {
@@ -19,10 +20,9 @@ public class WasteToEnergyMitigationDto {
     @NotNull(message = "Waste to WtE unit is required")
     private MassPerYearUnit wasteToWtEUnit;
     
-    @NotNull(message = "BAU Emissions (Solid Waste) is required")
-    @Positive(message = "BAU Emissions must be positive")
-    private Double bauEmissionsSolidWaste; // ktCO2e
+    @NotNull(message = "Project Intervention is required")
+    private UUID projectInterventionId; // Foreign key to Intervention table
     
-    @NotNull(message = "BAU emissions unit is required")
-    private EmissionsKilotonneUnit bauEmissionsUnit;
+    // For Excel upload - intervention name (will be converted to UUID)
+    private String projectInterventionName; // Used for Excel import
 }
