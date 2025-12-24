@@ -26,4 +26,7 @@ public class ZeroTillageMitigationDto {
     
     // Optional intervention reference
     private UUID interventionId;
+    
+    // Temporary field for Excel import - intervention name (will be converted to interventionId)
+    private String interventionName;
 }

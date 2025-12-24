@@ -122,6 +122,8 @@ public class ExcelReader {
         zeroTillageToDtoMap.put("Year", "year");
         zeroTillageToDtoMap.put("Area Under Zero Tillage", "areaUnderZeroTillage");
         zeroTillageToDtoMap.put("Area Unit", "areaUnit");
+        zeroTillageToDtoMap.put("Urea Applied", "ureaApplied");
+        zeroTillageToDtoMap.put("Intervention", "interventionName");
     }
 
     // This hashmap is responsible for reading data from wetland parks mitigation

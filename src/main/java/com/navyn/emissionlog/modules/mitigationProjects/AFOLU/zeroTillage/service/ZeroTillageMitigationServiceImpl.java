@@ -15,7 +15,6 @@ import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositorie
 import com.navyn.emissionlog.utils.ExcelReader;
 import com.navyn.emissionlog.utils.Specifications.MitigationSpecifications;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
@@ -336,13 +335,20 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
 
             int rowIdx = 0;
 
+            // Get all interventions for dropdown
+            List<Intervention> allInterventions = interventionRepository.findAll();
+            String[] interventionNames = allInterventions.stream()
+                    .map(Intervention::getName)
+                    .sorted()
+                    .toArray(String[]::new);
+
             // Title row
             Row titleRow = sheet.createRow(rowIdx++);
             titleRow.setHeightInPoints(30);
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Zero Tillage Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4)); // Updated to cover 5 columns
 
             rowIdx++; // Blank row
 
@@ -352,7 +358,9 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
             String[] headers = {
                     "Year",
                     "Area Under Zero Tillage",
-                    "Area Unit"
+                    "Area Unit",
+                    "Urea Applied",
+                    "Intervention"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -366,34 +374,61 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                     .map(Enum::name)
                     .toArray(String[]::new);
 
-            // Create data validation for Area Unit column (Column C, index 2)
+            // Create data validation helper
             DataValidationHelper validationHelper = sheet.getDataValidationHelper();
-            CellRangeAddressList addressList = new CellRangeAddressList(
+
+            // Data validation for Area Unit column (Column C, index 2)
+            CellRangeAddressList areaUnitList = new CellRangeAddressList(
                     3, // Start row (first data row after headers)
                     1000, // End row (sufficient for most use cases)
                     2, 2 // Column C (Area Unit column, 0-indexed)
             );
+            DataValidationConstraint areaUnitConstraint = validationHelper.createExplicitListConstraint(areaUnitValues);
+            DataValidation areaUnitValidation = validationHelper.createValidation(areaUnitConstraint, areaUnitList);
+            areaUnitValidation.setShowErrorBox(true);
+            areaUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+            areaUnitValidation.createErrorBox("Invalid Area Unit", "Please select a valid area unit from the dropdown list.");
+            areaUnitValidation.setShowPromptBox(true);
+            areaUnitValidation.createPromptBox("Area Unit", "Select an area unit from the dropdown list.");
+            sheet.addValidationData(areaUnitValidation);
 
-            DataValidationConstraint constraint = validationHelper.createExplicitListConstraint(areaUnitValues);
-            DataValidation validation = validationHelper.createValidation(constraint, addressList);
-            validation.setShowErrorBox(true);
-            validation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            validation.createErrorBox("Invalid Area Unit", "Please select a valid area unit from the dropdown list.");
-            validation.setShowPromptBox(true);
-            validation.createPromptBox("Area Unit", "Select an area unit from the dropdown list.");
-            sheet.addValidationData(validation);
+            // Data validation for Intervention column (Column E, index 4) - optional, can be empty
+            if (interventionNames.length > 0) {
+                // Add empty string option for optional field
+                String[] interventionOptions = new String[interventionNames.length + 1];
+                interventionOptions[0] = ""; // Empty option
+                System.arraycopy(interventionNames, 0, interventionOptions, 1, interventionNames.length);
+
+                CellRangeAddressList interventionList = new CellRangeAddressList(
+                        3, // Start row (first data row after headers)
+                        1000, // End row (sufficient for most use cases)
+                        4, 4 // Column E (Intervention column, 0-indexed)
+                );
+                DataValidationConstraint interventionConstraint = validationHelper.createExplicitListConstraint(interventionOptions);
+                DataValidation interventionValidation = validationHelper.createValidation(interventionConstraint, interventionList);
+                interventionValidation.setShowErrorBox(true);
+                interventionValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionValidation.createErrorBox("Invalid Intervention", "Please select a valid intervention from the dropdown list or leave empty.");
+                interventionValidation.setShowPromptBox(true);
+                interventionValidation.createPromptBox("Intervention", "Select an intervention from the dropdown list (optional).");
+                sheet.addValidationData(interventionValidation);
+            }
 
             // Create example data rows
             Object[] exampleData1 = {
                     2024,
                     100.5,
-                    "HECTARES"
+                    "HECTARES",
+                    50.0,
+                    interventionNames.length > 0 ? interventionNames[0] : ""
             };
 
             Object[] exampleData2 = {
                     2025,
                     150.75,
-                    "ACRES"
+                    "ACRES",
+                    75.5,
+                    "" // Empty intervention for second example
             };
 
             // First example row
@@ -407,7 +442,10 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                 } else if (i == 1) { // Area
                     cell.setCellStyle(numberStyle);
                     cell.setCellValue(((Number) exampleData1[i]).doubleValue());
-                } else { // Area Unit
+                } else if (i == 3) { // Urea Applied
+                    cell.setCellStyle(numberStyle);
+                    cell.setCellValue(((Number) exampleData1[i]).doubleValue());
+                } else { // Area Unit or Intervention (string)
                     cell.setCellStyle(dataStyle);
                     cell.setCellValue((String) exampleData1[i]);
                 }
@@ -431,7 +469,14 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                     altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                     cell.setCellStyle(altNumStyle);
                     cell.setCellValue(((Number) exampleData2[i]).doubleValue());
-                } else { // Area Unit
+                } else if (i == 3) { // Urea Applied
+                    CellStyle altNumStyle = workbook.createCellStyle();
+                    altNumStyle.cloneStyleFrom(numberStyle);
+                    altNumStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+                    altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                    cell.setCellStyle(altNumStyle);
+                    cell.setCellValue(((Number) exampleData2[i]).doubleValue());
+                } else { // Area Unit or Intervention (string)
                     cell.setCellStyle(alternateDataStyle);
                     cell.setCellValue((String) exampleData2[i]);
                 }
@@ -461,6 +506,10 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
     public Map<String, Object> createZeroTillageMitigationFromExcel(MultipartFile file) {
         List<ZeroTillageMitigationResponseDto> savedRecords = new ArrayList<>();
         List<Integer> skippedYears = new ArrayList<>();
+        List<Map<String, Object>> skippedBAUNotFound = new ArrayList<>();
+        List<Map<String, Object>> skippedParameterNotFound = new ArrayList<>();
+        List<Map<String, Object>> skippedInterventionNotFound = new ArrayList<>();
+        List<Map<String, Object>> skippedMissingFields = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -473,6 +522,7 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                 ZeroTillageMitigationDto dto = dtos.get(i);
                 totalProcessed++;
                 int rowNumber = i + 1; // Excel row number (1-based, accounting for header row)
+                int excelRowNumber = rowNumber + 2; // +2 for header row and 0-based index
 
                 // Validate required fields
                 List<String> missingFields = new ArrayList<>();
@@ -487,10 +537,31 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                 }
 
                 if (!missingFields.isEmpty()) {
-                    throw new RuntimeException(String.format(
-                            "Missing required fields: %s. Please fill in all required fields in your Excel file.",
-                            String.join(", ", missingFields)));
+                    Map<String, Object> skipInfo = new HashMap<>();
+                    skipInfo.put("row", excelRowNumber);
+                    skipInfo.put("year", dto.getYear() != null ? dto.getYear() : "N/A");
+                    skipInfo.put("reason", "Missing required fields: " + String.join(", ", missingFields));
+                    skippedMissingFields.add(skipInfo);
+                    continue; // Skip this row
                 }
+
+                // Handle intervention name from Excel - convert to interventionId
+                if (dto.getInterventionName() != null && !dto.getInterventionName().trim().isEmpty()) {
+                    String interventionName = dto.getInterventionName().trim();
+                    Optional<Intervention> intervention = interventionRepository.findByNameIgnoreCase(interventionName);
+                    if (intervention.isPresent()) {
+                        dto.setInterventionId(intervention.get().getId());
+                    } else {
+                        Map<String, Object> skipInfo = new HashMap<>();
+                        skipInfo.put("row", excelRowNumber);
+                        skipInfo.put("year", dto.getYear());
+                        skipInfo.put("reason", String.format("Intervention '%s' not found", interventionName));
+                        skippedInterventionNotFound.add(skipInfo);
+                        continue; // Skip this row
+                    }
+                }
+                // Clear the temporary interventionName field
+                dto.setInterventionName(null);
 
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
@@ -498,16 +569,53 @@ public class ZeroTillageMitigationServiceImpl implements ZeroTillageMitigationSe
                     continue; // Skip this row
                 }
 
-                // Create the record
-                ZeroTillageMitigationResponseDto saved = createZeroTillageMitigation(dto);
-                savedRecords.add(saved);
+                // Try to create the record - catch specific errors and skip instead of failing
+                try {
+                    ZeroTillageMitigationResponseDto saved = createZeroTillageMitigation(dto);
+                    savedRecords.add(saved);
+                } catch (RuntimeException e) {
+                    String errorMessage = e.getMessage();
+                    if (errorMessage != null) {
+                        // Check for BAU not found error
+                        if ((errorMessage.contains("BAU record") || errorMessage.contains("BAU")) && errorMessage.contains("not found")) {
+                            Map<String, Object> skipInfo = new HashMap<>();
+                            skipInfo.put("row", excelRowNumber);
+                            skipInfo.put("year", dto.getYear());
+                            skipInfo.put("reason", errorMessage);
+                            skippedBAUNotFound.add(skipInfo);
+                            continue; // Skip this row
+                        }
+                        // Check for Zero Tillage Parameter not found error
+                        if (errorMessage.contains("Zero Tillage Parameter") || 
+                            errorMessage.contains("active parameter") || 
+                            errorMessage.contains("No active Zero Tillage Parameter")) {
+                            Map<String, Object> skipInfo = new HashMap<>();
+                            skipInfo.put("row", excelRowNumber);
+                            skipInfo.put("year", dto.getYear());
+                            skipInfo.put("reason", errorMessage);
+                            skippedParameterNotFound.add(skipInfo);
+                            continue; // Skip this row
+                        }
+                    }
+                    // If it's a different error, re-throw it (e.g., file format issues)
+                    throw e;
+                }
             }
+
+            // Calculate total skipped count
+            int totalSkipped = skippedYears.size() + skippedBAUNotFound.size() + 
+                              skippedParameterNotFound.size() + skippedInterventionNotFound.size() + 
+                              skippedMissingFields.size();
 
             Map<String, Object> result = new HashMap<>();
             result.put("saved", savedRecords);
             result.put("savedCount", savedRecords.size());
-            result.put("skippedCount", skippedYears.size());
+            result.put("skippedCount", totalSkipped);
             result.put("skippedYears", skippedYears);
+            result.put("skippedBAUNotFound", skippedBAUNotFound);
+            result.put("skippedParameterNotFound", skippedParameterNotFound);
+            result.put("skippedInterventionNotFound", skippedInterventionNotFound);
+            result.put("skippedMissingFields", skippedMissingFields);
             result.put("totalProcessed", totalProcessed);
 
             return result;
