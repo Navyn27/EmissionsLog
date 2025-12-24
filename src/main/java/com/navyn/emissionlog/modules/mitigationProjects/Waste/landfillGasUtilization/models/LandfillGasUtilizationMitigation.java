@@ -28,7 +28,7 @@ public class LandfillGasUtilizationMitigation {
     private Double ch4Captured; // CH₄ captured (user input)
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_intervention_id", nullable = false)
+    @JoinColumn(name = "project_intervention_id", nullable = true)
     private Intervention projectIntervention; // Foreign key to Intervention table
 
     // Calculated fields
