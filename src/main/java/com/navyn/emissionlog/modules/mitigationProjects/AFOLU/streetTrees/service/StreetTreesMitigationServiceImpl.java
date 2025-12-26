@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -458,9 +459,16 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Street Trees Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4));
 
             rowIdx++; // Blank row
+
+            // Get all interventions for dropdown
+            List<Intervention> allInterventions = interventionRepository.findAll();
+            String[] interventionNames = allInterventions.stream()
+                    .map(Intervention::getName)
+                    .sorted()
+                    .toArray(String[]::new);
 
             // Create a header row
             Row headerRow = sheet.createRow(rowIdx++);
@@ -469,7 +477,8 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                     "Year",
                     "Number of Trees Planted",
                     "AGB Single Tree Current Year",
-                    "AGB Unit"
+                    "AGB Unit",
+                    "Intervention"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -499,19 +508,43 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
             agbUnitValidation.createPromptBox("AGB Unit", "Select an AGB unit from the dropdown list.");
             sheet.addValidationData(agbUnitValidation);
 
+            // Data validation for Intervention column (Column E, index 4) - optional, can be empty
+            if (interventionNames.length > 0) {
+                // Add empty string option for optional field
+                String[] interventionOptions = new String[interventionNames.length + 1];
+                interventionOptions[0] = ""; // Empty option
+                System.arraycopy(interventionNames, 0, interventionOptions, 1, interventionNames.length);
+
+                CellRangeAddressList interventionList = new CellRangeAddressList(
+                        3, // Start row (first data row after headers)
+                        1000, // End row (sufficient for most use cases)
+                        4, 4 // Column E (Intervention column, 0-indexed)
+                );
+                DataValidationConstraint interventionConstraint = validationHelper.createExplicitListConstraint(interventionOptions);
+                DataValidation interventionValidation = validationHelper.createValidation(interventionConstraint, interventionList);
+                interventionValidation.setShowErrorBox(true);
+                interventionValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionValidation.createErrorBox("Invalid Intervention", "Please select a valid intervention from the dropdown list or leave empty.");
+                interventionValidation.setShowPromptBox(true);
+                interventionValidation.createPromptBox("Intervention", "Select an intervention from the dropdown list (optional).");
+                sheet.addValidationData(interventionValidation);
+            }
+
             // Create example data rows
             Object[] exampleData1 = {
                     2024,
                     1000.0,
                     0.5,
-                    "CUBIC_METER"
+                    "CUBIC_METER",
+                    interventionNames.length > 0 ? interventionNames[0] : ""
             };
 
             Object[] exampleData2 = {
                     2025,
                     1500.0,
                     0.75,
-                    "CUBIC_METER"
+                    "CUBIC_METER",
+                    "" // Empty intervention for second example
             };
 
             // First example row
@@ -525,7 +558,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                 } else if (i == 1 || i == 2) { // Numbers
                     cell.setCellStyle(numberStyle);
                     cell.setCellValue(((Number) exampleData1[i]).doubleValue());
-                } else { // Unit (string)
+                } else { // Unit or Intervention (string)
                     cell.setCellStyle(dataStyle);
                     cell.setCellValue((String) exampleData1[i]);
                 }
@@ -549,7 +582,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                     altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                     cell.setCellStyle(altNumStyle);
                     cell.setCellValue(((Number) exampleData2[i]).doubleValue());
-                } else { // Unit (string)
+                } else { // Unit or Intervention (string)
                     cell.setCellStyle(alternateDataStyle);
                     cell.setCellValue((String) exampleData2[i]);
                 }
@@ -582,6 +615,9 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
     public Map<String, Object> createStreetTreesMitigationFromExcel(MultipartFile file) {
         List<StreetTreesMitigationResponseDto> savedRecords = new ArrayList<>();
         List<Integer> skippedYears = new ArrayList<>();
+        List<Map<String, Object>> skippedParameterNotFound = new ArrayList<>();
+        List<Map<String, Object>> skippedInterventionNotFound = new ArrayList<>();
+        List<Map<String, Object>> skippedMissingFields = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -590,9 +626,31 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                     StreetTreesMitigationDto.class,
                     ExcelType.STREET_TREES_MITIGATION);
 
+            // Create a list of DTOs with their original row numbers for error reporting
+            List<Map.Entry<StreetTreesMitigationDto, Integer>> dtoWithRowNumbers = new ArrayList<>();
             for (int i = 0; i < dtos.size(); i++) {
-                StreetTreesMitigationDto dto = dtos.get(i);
+                dtoWithRowNumbers.add(new AbstractMap.SimpleEntry<>(dtos.get(i), i));
+            }
+
+            // Sort by year (ascending) to ensure cumulative calculations are correct
+            // This ensures that when processing new records, they are processed in chronological order
+            // Skipped years (already exist) will still work correctly because they query the database
+            dtoWithRowNumbers.sort((entry1, entry2) -> {
+                Integer year1 = entry1.getKey().getYear();
+                Integer year2 = entry2.getKey().getYear();
+                // Handle null years - put them at the end
+                if (year1 == null && year2 == null) return 0;
+                if (year1 == null) return 1;
+                if (year2 == null) return -1;
+                return year1.compareTo(year2);
+            });
+
+            for (Map.Entry<StreetTreesMitigationDto, Integer> entry : dtoWithRowNumbers) {
+                StreetTreesMitigationDto dto = entry.getKey();
+                int originalIndex = entry.getValue();
                 totalProcessed++;
+                int rowNumber = originalIndex + 1; // Excel row number (1-based, accounting for header row)
+                int excelRowNumber = rowNumber + 2; // +2 for header row and 0-based index
 
                 // Validate required fields
                 List<String> missingFields = new ArrayList<>();
@@ -610,10 +668,31 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                 }
 
                 if (!missingFields.isEmpty()) {
-                    throw new RuntimeException(String.format(
-                            "Missing required fields: %s. Please fill in all required fields in your Excel file.",
-                            String.join(", ", missingFields)));
+                    Map<String, Object> skipInfo = new HashMap<>();
+                    skipInfo.put("row", excelRowNumber);
+                    skipInfo.put("year", dto.getYear() != null ? dto.getYear() : "N/A");
+                    skipInfo.put("reason", "Missing required fields: " + String.join(", ", missingFields));
+                    skippedMissingFields.add(skipInfo);
+                    continue; // Skip this row
                 }
+
+                // Handle intervention name from Excel - convert to interventionId
+                if (dto.getInterventionName() != null && !dto.getInterventionName().trim().isEmpty()) {
+                    String interventionName = dto.getInterventionName().trim();
+                    Optional<Intervention> intervention = interventionRepository.findByNameIgnoreCase(interventionName);
+                    if (intervention.isPresent()) {
+                        dto.setInterventionId(intervention.get().getId());
+                    } else {
+                        Map<String, Object> skipInfo = new HashMap<>();
+                        skipInfo.put("row", excelRowNumber);
+                        skipInfo.put("year", dto.getYear());
+                        skipInfo.put("reason", String.format("Intervention '%s' not found", interventionName));
+                        skippedInterventionNotFound.add(skipInfo);
+                        continue; // Skip this row
+                    }
+                }
+                // Clear the temporary interventionName field
+                dto.setInterventionName(null);
 
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
@@ -621,49 +700,64 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                     continue; // Skip this row
                 }
 
-                // Create the record
-                StreetTreesMitigationResponseDto saved = createStreetTreesMitigation(dto);
-                savedRecords.add(saved);
+                // Try to create the record - catch specific errors and skip instead of failing
+                try {
+                    StreetTreesMitigationResponseDto saved = createStreetTreesMitigation(dto);
+                    savedRecords.add(saved);
+                } catch (RuntimeException e) {
+                    String errorMessage = e.getMessage();
+                    if (errorMessage != null) {
+                        // Check for Street Trees Parameter not found error
+                        if (errorMessage.contains("Street Trees Parameter") || 
+                            errorMessage.contains("active parameter") || 
+                            errorMessage.contains("No active Street Trees Parameter")) {
+                            Map<String, Object> skipInfo = new HashMap<>();
+                            skipInfo.put("row", excelRowNumber);
+                            skipInfo.put("year", dto.getYear());
+                            skipInfo.put("reason", errorMessage);
+                            skippedParameterNotFound.add(skipInfo);
+                            continue; // Skip this row
+                        }
+                    }
+                    // If it's a different error, re-throw it (e.g., file format issues)
+                    throw e;
+                }
             }
+
+            // Calculate total skipped count
+            int totalSkipped = skippedYears.size() + skippedParameterNotFound.size() + 
+                              skippedInterventionNotFound.size() + skippedMissingFields.size();
 
             Map<String, Object> result = new HashMap<>();
             result.put("saved", savedRecords);
             result.put("savedCount", savedRecords.size());
-            result.put("skippedCount", skippedYears.size());
+            result.put("skippedCount", totalSkipped);
             result.put("skippedYears", skippedYears);
+            result.put("skippedParameterNotFound", skippedParameterNotFound);
+            result.put("skippedInterventionNotFound", skippedInterventionNotFound);
+            result.put("skippedMissingFields", skippedMissingFields);
             result.put("totalProcessed", totalProcessed);
 
             return result;
         } catch (IOException e) {
             // Re-throw IOException with user-friendly message
             String message = e.getMessage();
-            if (message != null && message.contains("Template")) {
+            if (message != null) {
                 throw new RuntimeException(message, e);
             } else {
-                throw new RuntimeException("Template format error: " + (message != null ? message
-                        : "The uploaded file does not match the required template format. Please download the template and ensure all columns and data are correct."),
+                throw new RuntimeException("Incorrect template. Please download the correct template and try again.",
                         e);
             }
         } catch (NullPointerException e) {
             // Handle null pointer exceptions with clear message
-            String errorMsg = e.getMessage();
-            if (errorMsg != null && errorMsg.contains("getAgbUnit")) {
-                throw new RuntimeException(
-                        "Template validation error: Missing required field 'AGB Unit'. Please ensure the AGB Unit column is filled with a valid value from the dropdown list.",
-                        e);
-            } else {
-                throw new RuntimeException(
-                        "Template validation error: One or more required fields are missing. Please ensure all required fields are filled in the Excel file.",
-                        e);
-            }
+            throw new RuntimeException(
+                    "Missing required fields. Please fill in all required fields in your Excel file.", e);
         } catch (Exception e) {
             String errorMsg = e.getMessage();
-            if (errorMsg != null && (errorMsg.contains("Template") || errorMsg.contains("validation")
-                    || errorMsg.contains("format") || errorMsg.contains("missing required field"))) {
+            if (errorMsg != null) {
                 throw new RuntimeException(errorMsg, e);
             }
-            throw new RuntimeException("Error processing Excel file: "
-                    + (errorMsg != null ? errorMsg : "Please ensure the file matches the template format exactly."), e);
+            throw new RuntimeException("Error processing Excel file. Please check your file and try again.", e);
         }
     }
 }

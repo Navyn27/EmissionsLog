@@ -160,6 +160,7 @@ public class ExcelReader {
         streetTreesToDtoMap.put("Number of Trees Planted", "numberOfTreesPlanted");
         streetTreesToDtoMap.put("AGB Single Tree Current Year", "agbSingleTreeCurrentYear");
         streetTreesToDtoMap.put("AGB Unit", "agbUnit");
+        streetTreesToDtoMap.put("Intervention", "interventionName");
     }
 
     // This hashmap is responsible for reading data from settlement trees mitigation
