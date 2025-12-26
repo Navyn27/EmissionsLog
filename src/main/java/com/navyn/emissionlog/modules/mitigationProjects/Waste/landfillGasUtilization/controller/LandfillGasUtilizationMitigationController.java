@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.dtos.LandfillGasUtilizationMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.models.LandfillGasUtilizationMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.dtos.LandfillGasUtilizationMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.service.LandfillGasUtilizationMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +32,7 @@ public class LandfillGasUtilizationMitigationController {
     @PostMapping
     public ResponseEntity<ApiResponse> createLandfillGasUtilizationMitigation(
             @Valid @RequestBody LandfillGasUtilizationMitigationDto dto) {
-        LandfillGasUtilizationMitigation mitigation = service.createLandfillGasUtilizationMitigation(dto);
+        LandfillGasUtilizationMitigationResponseDto mitigation = service.createLandfillGasUtilizationMitigation(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Landfill Gas Utilization mitigation record created successfully", mitigation));
     }
@@ -43,7 +43,7 @@ public class LandfillGasUtilizationMitigationController {
     public ResponseEntity<ApiResponse> updateLandfillGasUtilizationMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody LandfillGasUtilizationMitigationDto dto) {
-        LandfillGasUtilizationMitigation mitigation = service.updateLandfillGasUtilizationMitigation(id, dto);
+        LandfillGasUtilizationMitigationResponseDto mitigation = service.updateLandfillGasUtilizationMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(true, "Landfill Gas Utilization mitigation record updated successfully", mitigation));
     }
 
@@ -52,7 +52,7 @@ public class LandfillGasUtilizationMitigationController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllLandfillGasUtilizationMitigation(
             @RequestParam(required = false) Integer year) {
-        List<LandfillGasUtilizationMitigation> mitigations = service.getAllLandfillGasUtilizationMitigation(year);
+        List<LandfillGasUtilizationMitigationResponseDto> mitigations = service.getAllLandfillGasUtilizationMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Landfill Gas Utilization mitigation records fetched successfully", mitigations));
     }
 

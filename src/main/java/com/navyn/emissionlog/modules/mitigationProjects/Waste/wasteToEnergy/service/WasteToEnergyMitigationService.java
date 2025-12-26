@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.service;
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.dtos.WasteToEnergyMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.models.WasteToEnergyMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.dtos.WasteToEnergyMitigationResponseDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -10,13 +10,13 @@ import java.util.UUID;
 
 public interface WasteToEnergyMitigationService {
     
-    WasteToEnergyMitigation createWasteToEnergyMitigation(WasteToEnergyMitigationDto dto);
+    WasteToEnergyMitigationResponseDto createWasteToEnergyMitigation(WasteToEnergyMitigationDto dto);
     
-    WasteToEnergyMitigation updateWasteToEnergyMitigation(UUID id, WasteToEnergyMitigationDto dto);
+    WasteToEnergyMitigationResponseDto updateWasteToEnergyMitigation(UUID id, WasteToEnergyMitigationDto dto);
     
     void deleteWasteToEnergyMitigation(UUID id);
     
-    List<WasteToEnergyMitigation> getAllWasteToEnergyMitigation(Integer year);
+    List<WasteToEnergyMitigationResponseDto> getAllWasteToEnergyMitigation(Integer year);
 
     byte[] generateExcelTemplate();
 

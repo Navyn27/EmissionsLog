@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.dtos.LandfillGasParameterDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.models.LandfillGasParameter;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.dtos.LandfillGasParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.service.LandfillGasParameterService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,7 +28,7 @@ public class LandfillGasParameterController {
     @PostMapping
     public ResponseEntity<ApiResponse> createLandfillGasParameter(
             @Valid @RequestBody LandfillGasParameterDto dto) {
-        LandfillGasParameter parameter = service.createLandfillGasParameter(dto);
+        LandfillGasParameterResponseDto parameter = service.createLandfillGasParameter(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Landfill Gas Parameter created successfully", parameter));
     }
@@ -39,7 +39,7 @@ public class LandfillGasParameterController {
     public ResponseEntity<ApiResponse> updateLandfillGasParameter(
             @PathVariable UUID id,
             @Valid @RequestBody LandfillGasParameterDto dto) {
-        LandfillGasParameter parameter = service.updateLandfillGasParameter(id, dto);
+        LandfillGasParameterResponseDto parameter = service.updateLandfillGasParameter(id, dto);
         return ResponseEntity.ok(new ApiResponse(true, "Landfill Gas Parameter updated successfully", parameter));
     }
 
@@ -47,7 +47,7 @@ public class LandfillGasParameterController {
             description = "Retrieves a specific Landfill Gas Parameter by its ID")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getLandfillGasParameterById(@PathVariable UUID id) {
-        LandfillGasParameter parameter = service.getLandfillGasParameterById(id);
+        LandfillGasParameterResponseDto parameter = service.getLandfillGasParameterById(id);
         return ResponseEntity.ok(new ApiResponse(true, "Landfill Gas Parameter fetched successfully", parameter));
     }
 
@@ -55,16 +55,24 @@ public class LandfillGasParameterController {
             description = "Retrieves all Landfill Gas Parameters ordered by creation date (newest first)")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllLandfillGasParameters() {
-        List<LandfillGasParameter> parameters = service.getAllLandfillGasParameters();
+        List<LandfillGasParameterResponseDto> parameters = service.getAllLandfillGasParameters();
         return ResponseEntity.ok(new ApiResponse(true, "Landfill Gas Parameters fetched successfully", parameters));
     }
 
-    @Operation(summary = "Get latest Landfill Gas Parameter",
-            description = "Retrieves the most recently created Landfill Gas Parameter")
+    @Operation(summary = "Get latest active Landfill Gas Parameter",
+            description = "Retrieves the most recently created active Landfill Gas Parameter")
     @GetMapping("/latest")
-    public ResponseEntity<ApiResponse> getLatestLandfillGasParameter() {
-        LandfillGasParameter parameter = service.getLatestLandfillGasParameter();
-        return ResponseEntity.ok(new ApiResponse(true, "Latest Landfill Gas Parameter fetched successfully", parameter));
+    public ResponseEntity<ApiResponse> getLatestActive() {
+        LandfillGasParameterResponseDto parameter = service.getLatestActive();
+        return ResponseEntity.ok(new ApiResponse(true, "Latest active Landfill Gas Parameter fetched successfully", parameter));
+    }
+
+    @Operation(summary = "Disable Landfill Gas Parameter",
+            description = "Disables an existing Landfill Gas Parameter by setting isActive to false")
+    @PutMapping("/{id}/disable")
+    public ResponseEntity<ApiResponse> disableLandfillGasParameter(@PathVariable UUID id) {
+        service.disable(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Landfill Gas Parameter disabled successfully", null));
     }
 
     @Operation(summary = "Delete Landfill Gas Parameter",

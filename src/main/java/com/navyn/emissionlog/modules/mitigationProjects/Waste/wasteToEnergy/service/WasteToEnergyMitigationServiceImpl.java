@@ -6,10 +6,12 @@ import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.services.BAUService;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.dtos.WasteToEnergyMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.dtos.WasteToEnergyMitigationResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.dtos.WasteToWtEParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.models.WasteToEnergyMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.models.WasteToWtEParameter;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.repository.WasteToEnergyMitigationRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.repository.WasteToWtEParameterRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.service.WasteToWtEParameterService;
 import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
@@ -18,9 +20,11 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.*;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
@@ -39,17 +43,49 @@ import static com.navyn.emissionlog.utils.Specifications.MitigationSpecification
 public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigationService {
     
     private final WasteToEnergyMitigationRepository repository;
-    private final WasteToWtEParameterRepository parameterRepository;
+    private final WasteToWtEParameterService parameterService;
     private final InterventionRepository interventionRepository;
     private final BAUService bauService;
-    
-    @Override
-    public WasteToEnergyMitigation createWasteToEnergyMitigation(WasteToEnergyMitigationDto dto) {
+
+    /**
+     * Maps WasteToEnergyMitigation entity to Response DTO
+     * This method loads intervention data within the transaction to avoid lazy loading issues
+     */
+    private WasteToEnergyMitigationResponseDto toResponseDto(WasteToEnergyMitigation mitigation) {
+        WasteToEnergyMitigationResponseDto dto = new WasteToEnergyMitigationResponseDto();
+        dto.setId(mitigation.getId());
+        dto.setYear(mitigation.getYear());
+        dto.setWasteToWtE(mitigation.getWasteToWtE());
+        dto.setGhgReductionTonnes(mitigation.getGhgReductionTonnes());
+        dto.setGhgReductionKilotonnes(mitigation.getGhgReductionKilotonnes());
+        dto.setAdjustedEmissionsWithWtE(mitigation.getAdjustedEmissionsWithWtE());
+
+        // Map intervention - FORCE initialization within transaction to avoid lazy loading
+        if (mitigation.getProjectIntervention() != null) {
+            // Force Hibernate to initialize the proxy while session is still open
+            Hibernate.initialize(mitigation.getProjectIntervention());
+            Intervention intervention = mitigation.getProjectIntervention();
+            WasteToEnergyMitigationResponseDto.InterventionInfo interventionInfo =
+                    new WasteToEnergyMitigationResponseDto.InterventionInfo(
+                            intervention.getId(),
+                            intervention.getName()
+                    );
+            dto.setProjectIntervention(interventionInfo);
+        } else {
+            dto.setProjectIntervention(null);
+        }
+
+        return dto;
+    }
+
+    /**
+     * Internal method for Excel processing that returns entity
+     */
+    private WasteToEnergyMitigation createWasteToEnergyMitigationInternal(WasteToEnergyMitigationDto dto) {
         WasteToEnergyMitigation mitigation = new WasteToEnergyMitigation();
         
-        // Get WasteToWtEParameter (latest)
-        WasteToWtEParameter parameter = parameterRepository.findFirstByOrderByCreatedAtDesc()
-                .orElseThrow(() -> new RuntimeException("Waste to WtE Parameter not found. Please create parameters first."));
+        // Get WasteToWtEParameter (latest active)
+        WasteToWtEParameterResponseDto paramDto = parameterService.getLatestActive();
         
         // Get Intervention
         Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
@@ -72,7 +108,7 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
         
         // Calculations
         // GHG Reduction (tCO2eq) = Net Emission Factor (tCO2eq/t) * Waste to WtE (t/year)
-        Double ghgReductionTonnes = parameter.getNetEmissionFactor() * wasteInTonnesPerYear;
+        Double ghgReductionTonnes = paramDto.getNetEmissionFactor() * wasteInTonnesPerYear;
         mitigation.setGhgReductionTonnes(ghgReductionTonnes);
         
         // GHG Reduction (KtCO2eq) = GHG Reduction (tCO2eq) / 1000
@@ -85,15 +121,22 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
         
         return repository.save(mitigation);
     }
+
+    @Override
+    @Transactional
+    public WasteToEnergyMitigationResponseDto createWasteToEnergyMitigation(WasteToEnergyMitigationDto dto) {
+        WasteToEnergyMitigation saved = createWasteToEnergyMitigationInternal(dto);
+        return toResponseDto(saved);
+    }
     
     @Override
-    public WasteToEnergyMitigation updateWasteToEnergyMitigation(UUID id, WasteToEnergyMitigationDto dto) {
+    @Transactional
+    public WasteToEnergyMitigationResponseDto updateWasteToEnergyMitigation(UUID id, WasteToEnergyMitigationDto dto) {
         WasteToEnergyMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Waste to Energy Mitigation record not found with id: " + id));
         
-        // Get WasteToWtEParameter (latest)
-        WasteToWtEParameter parameter = parameterRepository.findFirstByOrderByCreatedAtDesc()
-                .orElseThrow(() -> new RuntimeException("Waste to WtE Parameter not found. Please create parameters first."));
+        // Get WasteToWtEParameter (latest active)
+        WasteToWtEParameterResponseDto paramDto = parameterService.getLatestActive();
         
         // Get Intervention
         Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
@@ -115,7 +158,7 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
         mitigation.setProjectIntervention(intervention);
         
         // Recalculate derived fields
-        Double ghgReductionTonnes = parameter.getNetEmissionFactor() * wasteInTonnesPerYear;
+        Double ghgReductionTonnes = paramDto.getNetEmissionFactor() * wasteInTonnesPerYear;
         mitigation.setGhgReductionTonnes(ghgReductionTonnes);
         
         Double ghgReductionKilotonnes = ghgReductionTonnes / 1000;
@@ -124,7 +167,8 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
         Double adjustedEmissions = bau.getValue() - ghgReductionKilotonnes;
         mitigation.setAdjustedEmissionsWithWtE(adjustedEmissions);
         
-        return repository.save(mitigation);
+        WasteToEnergyMitigation saved = repository.save(mitigation);
+        return toResponseDto(saved);
     }
     
     @Override
@@ -136,9 +180,13 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
     }
     
     @Override
-    public List<WasteToEnergyMitigation> getAllWasteToEnergyMitigation(Integer year) {
+    @Transactional
+    public List<WasteToEnergyMitigationResponseDto> getAllWasteToEnergyMitigation(Integer year) {
         Specification<WasteToEnergyMitigation> spec = Specification.where(hasYear(year));
-        return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        List<WasteToEnergyMitigation> mitigations = repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        return mitigations.stream()
+                .map(this::toResponseDto)
+                .toList();
     }
 
     @Override
@@ -431,7 +479,7 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
                 }
 
                 // Create the record
-                WasteToEnergyMitigation saved = createWasteToEnergyMitigation(dto);
+                WasteToEnergyMitigation saved = createWasteToEnergyMitigationInternal(dto);
                 savedRecords.add(saved);
             }
 

@@ -11,5 +11,11 @@ import java.util.UUID;
 public interface WasteToWtEParameterRepository extends JpaRepository<WasteToWtEParameter, UUID> {
 
     Optional<WasteToWtEParameter> findFirstByOrderByCreatedAtDesc();
+
+    /**
+     * Finds the latest active WasteToWtEParameter ordered by creation date (most recent first)
+     * @return Optional containing the latest active parameter, or empty if none found
+     */
+    Optional<WasteToWtEParameter> findFirstByIsActiveTrueOrderByCreatedAtDesc();
 }
 
