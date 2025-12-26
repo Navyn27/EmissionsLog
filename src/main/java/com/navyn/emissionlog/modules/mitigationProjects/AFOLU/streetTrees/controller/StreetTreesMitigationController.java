@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.dtos.StreetTreesMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.models.StreetTreesMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.dtos.StreetTreesMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.service.StreetTreesMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +30,7 @@ public class StreetTreesMitigationController {
     @Operation(summary = "Create new street trees mitigation record")
     public ResponseEntity<ApiResponse> createStreetTreesMitigation(
             @Valid @RequestBody StreetTreesMitigationDto dto) {
-        StreetTreesMitigation mitigation = service.createStreetTreesMitigation(dto);
+        StreetTreesMitigationResponseDto mitigation = service.createStreetTreesMitigation(dto);
         return ResponseEntity.ok(new ApiResponse(
                 true,
                 "Street trees mitigation created successfully",
@@ -42,7 +42,7 @@ public class StreetTreesMitigationController {
     public ResponseEntity<ApiResponse> updateStreetTreesMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody StreetTreesMitigationDto dto) {
-        StreetTreesMitigation mitigation = service.updateStreetTreesMitigation(id, dto);
+        StreetTreesMitigationResponseDto mitigation = service.updateStreetTreesMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(
                 true,
                 "Street trees mitigation updated successfully",
@@ -53,7 +53,7 @@ public class StreetTreesMitigationController {
     @Operation(summary = "Get all street trees mitigation records")
     public ResponseEntity<ApiResponse> getAllStreetTreesMitigation(
             @RequestParam(required = false, value = "year") Integer year) {
-        List<StreetTreesMitigation> mitigations = service.getAllStreetTreesMitigation(year);
+        List<StreetTreesMitigationResponseDto> mitigations = service.getAllStreetTreesMitigation(year);
         return ResponseEntity.ok(new ApiResponse(
                 true,
                 "Street trees mitigation records fetched successfully",

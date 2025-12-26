@@ -2,11 +2,17 @@ package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.servi
 
 import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.Enums.Metrics.VolumeUnits;
-import com.navyn.emissionlog.Enums.Mitigation.StreetTreesConstants;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.models.SettlementTreesMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.dtos.StreetTreesMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.dtos.StreetTreesMitigationResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.dtos.StreetTreesParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.models.StreetTreesMitigation;
+import org.hibernate.Hibernate;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.repositories.StreetTreesMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.repositories.BAURepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import com.navyn.emissionlog.utils.Specifications.MitigationSpecifications;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +23,7 @@ import org.apache.poi.xssf.usermodel.*;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
@@ -28,13 +35,66 @@ import java.util.*;
 public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationService {
 
     private final StreetTreesMitigationRepository repository;
+    private final StreetTreesParameterService streetTreesParameterService;
+    private final BAURepository bauRepository;
+    private final InterventionRepository interventionRepository;
 
     private static Double apply(StreetTreesMitigation streetTreesMitigation) {
         return streetTreesMitigation.getNumberOfTreesPlanted() + streetTreesMitigation.getCumulativeNumberOfTrees();
     }
 
+    /**
+     * Maps StreetTreesMitigation entity to Response DTO
+     * This method loads intervention data within the transaction to avoid lazy loading issues
+     */
+    private StreetTreesMitigationResponseDto toResponseDto(StreetTreesMitigation mitigation) {
+        StreetTreesMitigationResponseDto dto = new StreetTreesMitigationResponseDto();
+        dto.setId(mitigation.getId());
+        dto.setYear(mitigation.getYear());
+        dto.setCumulativeNumberOfTrees(mitigation.getCumulativeNumberOfTrees());
+        dto.setNumberOfTreesPlanted(mitigation.getNumberOfTreesPlanted());
+        dto.setAgbSingleTreePreviousYear(mitigation.getAgbSingleTreePreviousYear());
+        dto.setAgbSingleTreeCurrentYear(mitigation.getAgbSingleTreeCurrentYear());
+        dto.setAgbGrowth(mitigation.getAgbGrowth());
+        dto.setAbovegroundBiomassGrowth(mitigation.getAbovegroundBiomassGrowth());
+        dto.setTotalBiomass(mitigation.getTotalBiomass());
+        dto.setBiomassCarbonIncrease(mitigation.getBiomassCarbonIncrease());
+        dto.setMitigatedEmissionsKtCO2e(mitigation.getMitigatedEmissionsKtCO2e());
+        dto.setAdjustmentMitigation(mitigation.getAdjustmentMitigation());
+        dto.setCreatedAt(mitigation.getCreatedAt());
+        dto.setUpdatedAt(mitigation.getUpdatedAt());
+
+        // Map intervention - FORCE initialization within transaction to avoid lazy loading
+        if (mitigation.getIntervention() != null) {
+            Hibernate.initialize(mitigation.getIntervention());
+            com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention intervention = mitigation.getIntervention();
+            StreetTreesMitigationResponseDto.InterventionInfo interventionInfo =
+                    new StreetTreesMitigationResponseDto.InterventionInfo(
+                            intervention.getId(),
+                            intervention.getName()
+                    );
+            dto.setIntervention(interventionInfo);
+        } else {
+            dto.setIntervention(null);
+        }
+
+        return dto;
+    }
+
     @Override
-    public StreetTreesMitigation createStreetTreesMitigation(StreetTreesMitigationDto dto) {
+    @Transactional
+    public StreetTreesMitigationResponseDto createStreetTreesMitigation(StreetTreesMitigationDto dto) {
+        // Fetch the latest active parameter - throws exception if none exists
+        StreetTreesParameterResponseDto param;
+        try {
+            param = streetTreesParameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot create Street Trees Mitigation: No active Street Trees Parameter found. " +
+                            "Please create an active parameter first before creating mitigation records.",
+                    e);
+        }
+
         StreetTreesMitigation mitigation = new StreetTreesMitigation();
 
         Optional<StreetTreesMitigation> lastYearRecord = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
@@ -43,50 +103,80 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                 .orElse(0.0);
 
         // Convert AGB to cubic meters (standard unit)
-        double agbCurrentYearInCubicMeters = dto.getAgbUnit().toCubicMeters(dto.getAgbSingleTreeCurrentYear());
 
         // Map input fields (store in standard units)
         mitigation.setYear(dto.getYear());
         mitigation.setCumulativeNumberOfTrees(cumulativeNumberOfTrees);
         mitigation.setNumberOfTreesPlanted(dto.getNumberOfTreesPlanted());
         mitigation.setAgbSingleTreePreviousYear(agbSingleTreePrevYear);
-        mitigation.setAgbSingleTreeCurrentYear(agbCurrentYearInCubicMeters);
+        mitigation.setAgbSingleTreeCurrentYear(dto.getAgbSingleTreeCurrentYear());
+
+        // Get values from parameter
+        double conversionM3ToTonnes = param.getConversationM3ToTonnes();
+        double ratioBGBToAGB = param.getRatioOfBelowGroundBiomass();
+        double carbonContent = param.getCarbonContent();
+        double carbonToC02 = param.getCarbonToC02();
 
         // 1. Calculate AGB Growth (tonnes m3)
-        double agbGrowth = agbCurrentYearInCubicMeters - agbSingleTreePrevYear;
+        double agbGrowth = (mitigation.getAgbSingleTreeCurrentYear() - agbSingleTreePrevYear) * cumulativeNumberOfTrees;
         mitigation.setAgbGrowth(agbGrowth);
 
         // 2. Calculate Aboveground Biomass Growth (tonnes DM)
-        double abovegroundBiomassGrowth = StreetTreesConstants.CONVERSION_M3_TO_TONNES_DM.getValue() *
-                agbGrowth *
-                cumulativeNumberOfTrees;
-        mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
+        double aboveGroundBiomassGrowth = conversionM3ToTonnes *
+                agbGrowth;
+        mitigation.setAbovegroundBiomassGrowth(aboveGroundBiomassGrowth);
 
         // 3. Calculate Total Biomass (tonnes DM/year) - includes belowground
-        double totalBiomass = abovegroundBiomassGrowth *
-                (1 + StreetTreesConstants.RATIO_BGB_TO_AGB.getValue());
+        double totalBiomass = (aboveGroundBiomassGrowth  * ratioBGBToAGB)+aboveGroundBiomassGrowth;
         mitigation.setTotalBiomass(totalBiomass);
 
         // 4. Calculate Biomass Carbon Increase (tonnes C/year)
         double biomassCarbonIncrease = totalBiomass *
-                StreetTreesConstants.CARBON_CONTENT_DRY_WOOD.getValue();
+                carbonContent;
         mitigation.setBiomassCarbonIncrease(biomassCarbonIncrease);
 
         // 5. Calculate Mitigated Emissions (Kt CO2e)
         double mitigatedEmissions = (biomassCarbonIncrease *
-                StreetTreesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+                carbonToC02) / 1000.0;
         mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
-
-        return repository.save(mitigation);
+        BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
+                                mitigation.getYear())
+                ));
+        double adjustmentMitigation = bau.getValue() - mitigatedEmissions;
+        mitigation.setAdjustmentMitigation(adjustmentMitigation);
+        // Handle intervention if provided
+        if (dto.getInterventionId() != null) {
+            Intervention intervention = interventionRepository.findById(dto.getInterventionId())
+                    .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getInterventionId()));
+            mitigation.setIntervention(intervention);
+        } else {
+            mitigation.setIntervention(null);
+        }
+        StreetTreesMitigation saved = repository.save(mitigation);
+        return toResponseDto(saved);
     }
 
     @Override
-    public StreetTreesMitigation updateStreetTreesMitigation(UUID id, StreetTreesMitigationDto dto) {
+    @Transactional
+    public StreetTreesMitigationResponseDto updateStreetTreesMitigation(UUID id, StreetTreesMitigationDto dto) {
+        // Fetch the latest active parameter - throws exception if none exists
+        StreetTreesParameterResponseDto param;
+        try {
+            param = streetTreesParameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot update Street Trees Mitigation: No active Street Trees Parameter found. " +
+                            "Please create an active parameter first before updating mitigation records.",
+                    e);
+        }
+
         StreetTreesMitigation mitigation = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Street Trees Mitigation record not found with id: " + id));
 
         // Update the current record
-        recalculateAndUpdateRecord(mitigation, dto);
+        recalculateAndUpdateRecord(mitigation, dto, param);
         StreetTreesMitigation updatedRecord = repository.save(mitigation);
 
         // CASCADE: Find and recalculate all subsequent years
@@ -94,15 +184,27 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                 .findByYearGreaterThanOrderByYearAsc(dto.getYear());
 
         for (StreetTreesMitigation subsequent : subsequentRecords) {
-            recalculateExistingRecord(subsequent);
+            recalculateExistingRecord(subsequent, param);
             repository.save(subsequent);
         }
 
-        return updatedRecord;
+        return toResponseDto(updatedRecord);
     }
 
     @Override
+    @Transactional
     public void deleteStreetTreesMitigation(UUID id) {
+        // Fetch latest active parameter - throws exception if none exists
+        StreetTreesParameterResponseDto param;
+        try {
+            param = streetTreesParameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot delete Street Trees Mitigation: No active Street Trees Parameter found. " +
+                            "Please create an active parameter first before deleting mitigation records.",
+                    e);
+        }
+
         StreetTreesMitigation mitigation = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Street Trees Mitigation record not found with id: " + id));
 
@@ -113,7 +215,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
         // records
         List<StreetTreesMitigation> subsequentRecords = repository.findByYearGreaterThanOrderByYearAsc(year);
         for (StreetTreesMitigation subsequent : subsequentRecords) {
-            recalculateExistingRecord(subsequent);
+            recalculateExistingRecord(subsequent, param);
             repository.save(subsequent);
         }
     }
@@ -122,7 +224,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
      * Recalculates an existing record based on its current year and stored input
      * values
      */
-    private void recalculateExistingRecord(StreetTreesMitigation mitigation) {
+    private void recalculateExistingRecord(StreetTreesMitigation mitigation, StreetTreesParameterResponseDto param) {
         Optional<StreetTreesMitigation> lastYearRecord = repository
                 .findTopByYearLessThanOrderByYearDesc(mitigation.getYear());
         Double cumulativeNumberOfTrees = lastYearRecord.map(StreetTreesMitigationServiceImpl::apply).orElse(0.0);
@@ -132,87 +234,134 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
         mitigation.setCumulativeNumberOfTrees(cumulativeNumberOfTrees);
         mitigation.setAgbSingleTreePreviousYear(agbSingleTreePrevYear);
 
-        // Recalculate all derived fields using existing AGB value
+        // Get values from parameter
+        double conversionM3ToTonnes = param.getConversationM3ToTonnes();
+        double ratioBGBToAGB = param.getRatioOfBelowGroundBiomass();
+        double carbonContent = param.getCarbonContent();
+        double carbonToC02 = param.getCarbonToC02();
+
+        // Recalculate all derived fields using existing AGB value (matching create method logic)
         double agbCurrentYearInCubicMeters = mitigation.getAgbSingleTreeCurrentYear();
 
-        double agbGrowth = agbCurrentYearInCubicMeters - agbSingleTreePrevYear;
+        // 1. Calculate AGB Growth (tonnes m3)
+        double agbGrowth = (agbCurrentYearInCubicMeters - agbSingleTreePrevYear) * cumulativeNumberOfTrees;
         mitigation.setAgbGrowth(agbGrowth);
 
-        double abovegroundBiomassGrowth = StreetTreesConstants.CONVERSION_M3_TO_TONNES_DM.getValue() *
-                agbGrowth *
-                cumulativeNumberOfTrees;
+        // 2. Calculate Aboveground Biomass Growth (tonnes DM)
+        double abovegroundBiomassGrowth = conversionM3ToTonnes *
+                agbGrowth;
         mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
 
-        double totalBiomass = abovegroundBiomassGrowth *
-                (1 + StreetTreesConstants.RATIO_BGB_TO_AGB.getValue());
+        // 3. Calculate Total Biomass (tonnes DM/year) - includes belowground
+        double totalBiomass = (abovegroundBiomassGrowth * 2) * ratioBGBToAGB;
         mitigation.setTotalBiomass(totalBiomass);
 
         double biomassCarbonIncrease = totalBiomass *
-                StreetTreesConstants.CARBON_CONTENT_DRY_WOOD.getValue();
+                carbonContent;
         mitigation.setBiomassCarbonIncrease(biomassCarbonIncrease);
 
         double mitigatedEmissions = (biomassCarbonIncrease *
-                StreetTreesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+                carbonToC02) / 1000.0;
         mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
+
+        // Calculate Adjustment Mitigation (Kilotonnes CO2)
+        BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
+                                mitigation.getYear())
+                ));
+        double adjustmentMitigation = bau.getValue() - mitigatedEmissions;
+        mitigation.setAdjustmentMitigation(adjustmentMitigation);
     }
 
     /**
      * Recalculates a record with new DTO values
      */
-    private void recalculateAndUpdateRecord(StreetTreesMitigation mitigation, StreetTreesMitigationDto dto) {
+    private void recalculateAndUpdateRecord(StreetTreesMitigation mitigation, StreetTreesMitigationDto dto,
+                                            StreetTreesParameterResponseDto param) {
         Optional<StreetTreesMitigation> lastYearRecord = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
         Double cumulativeNumberOfTrees = lastYearRecord.map(StreetTreesMitigationServiceImpl::apply).orElse(0.0);
         Double agbSingleTreePrevYear = lastYearRecord.map(StreetTreesMitigation::getAgbSingleTreeCurrentYear)
                 .orElse(0.0);
 
-        // Convert AGB to cubic meters (standard unit)
-        double agbCurrentYearInCubicMeters = dto.getAgbUnit().toCubicMeters(dto.getAgbSingleTreeCurrentYear());
-
-        // Update input fields (store in standard units)
+        // Update input fields (store in standard units - AGB is already in m3 from DTO)
         mitigation.setYear(dto.getYear());
         mitigation.setCumulativeNumberOfTrees(cumulativeNumberOfTrees);
         mitigation.setNumberOfTreesPlanted(dto.getNumberOfTreesPlanted());
         mitigation.setAgbSingleTreePreviousYear(agbSingleTreePrevYear);
-        mitigation.setAgbSingleTreeCurrentYear(agbCurrentYearInCubicMeters);
+        mitigation.setAgbSingleTreeCurrentYear(dto.getAgbSingleTreeCurrentYear());
 
-        // Recalculate derived fields
-        double agbGrowth = agbCurrentYearInCubicMeters - agbSingleTreePrevYear;
+        // Get values from parameter
+        double conversionM3ToTonnes = param.getConversationM3ToTonnes();
+        double ratioBGBToAGB = param.getRatioOfBelowGroundBiomass();
+        double carbonContent = param.getCarbonContent();
+        double carbonToC02 = param.getCarbonToC02();
+
+        // Recalculate derived fields using parameter values (matching create method logic)
+        // 1. Calculate AGB Growth (tonnes m3)
+        double agbGrowth = (mitigation.getAgbSingleTreeCurrentYear() - agbSingleTreePrevYear) * cumulativeNumberOfTrees;
         mitigation.setAgbGrowth(agbGrowth);
 
-        double abovegroundBiomassGrowth = StreetTreesConstants.CONVERSION_M3_TO_TONNES_DM.getValue() *
-                agbGrowth *
-                cumulativeNumberOfTrees;
+        // 2. Calculate Aboveground Biomass Growth (tonnes DM)
+        double abovegroundBiomassGrowth = conversionM3ToTonnes *
+                agbGrowth;
         mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
 
-        double totalBiomass = abovegroundBiomassGrowth *
-                (1 + StreetTreesConstants.RATIO_BGB_TO_AGB.getValue());
+        // 3. Calculate Total Biomass (tonnes DM/year) - includes belowground
+        double totalBiomass = (abovegroundBiomassGrowth * 2) * ratioBGBToAGB;
         mitigation.setTotalBiomass(totalBiomass);
 
+        // 4. Calculate Biomass Carbon Increase (tonnes C/year)
         double biomassCarbonIncrease = totalBiomass *
-                StreetTreesConstants.CARBON_CONTENT_DRY_WOOD.getValue();
+                carbonContent;
         mitigation.setBiomassCarbonIncrease(biomassCarbonIncrease);
 
+        // 5. Calculate Mitigated Emissions (Kt CO2e)
         double mitigatedEmissions = (biomassCarbonIncrease *
-                StreetTreesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+                carbonToC02) / 1000.0;
         mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
+
+        // 6. Calculate Adjustment Mitigation (Kilotonnes CO2)
+        BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
+                                mitigation.getYear())
+                ));
+        double adjustmentMitigation = bau.getValue() - mitigatedEmissions;
+        mitigation.setAdjustmentMitigation(adjustmentMitigation);
+
+        // Handle intervention if provided
+        if (dto.getInterventionId() != null) {
+            Intervention intervention = interventionRepository.findById(dto.getInterventionId())
+                    .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getInterventionId()));
+            mitigation.setIntervention(intervention);
+        } else {
+            mitigation.setIntervention(null);
+        }
     }
 
     @Override
-    public List<StreetTreesMitigation> getAllStreetTreesMitigation(Integer year) {
+    @Transactional(readOnly = true)
+    public List<StreetTreesMitigationResponseDto> getAllStreetTreesMitigation(Integer year) {
         Specification<StreetTreesMitigation> spec = Specification
                 .<StreetTreesMitigation>where(MitigationSpecifications.hasYear(year));
-        return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<StreetTreesMitigation> mitigations = repository.findAll(spec, Sort.by(Sort.Direction.ASC, "year"));
+        return mitigations.stream()
+                .map(this::toResponseDto)
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @Override
-    public Optional<StreetTreesMitigation> getByYear(Integer year) {
-        return repository.findByYear(year);
+    @Transactional(readOnly = true)
+    public Optional<StreetTreesMitigationResponseDto> getByYear(Integer year) {
+        return repository.findByYear(year)
+                .map(this::toResponseDto);
     }
 
     @Override
     public byte[] generateExcelTemplate() {
         try (Workbook workbook = new XSSFWorkbook();
-                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             Sheet sheet = workbook.createSheet("Street Trees Mitigation");
 
@@ -313,7 +462,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
 
             rowIdx++; // Blank row
 
-            // Create header row
+            // Create a header row
             Row headerRow = sheet.createRow(rowIdx++);
             headerRow.setHeightInPoints(22);
             String[] headers = {
@@ -431,7 +580,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
 
     @Override
     public Map<String, Object> createStreetTreesMitigationFromExcel(MultipartFile file) {
-        List<StreetTreesMitigation> savedRecords = new ArrayList<>();
+        List<StreetTreesMitigationResponseDto> savedRecords = new ArrayList<>();
         List<Integer> skippedYears = new ArrayList<>();
         int totalProcessed = 0;
 
@@ -444,7 +593,6 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
             for (int i = 0; i < dtos.size(); i++) {
                 StreetTreesMitigationDto dto = dtos.get(i);
                 totalProcessed++;
-                int actualRowNumber = i + 1 + 3; // +1 for 1-based, +3 for title(1) + blank(1) + header(1)
 
                 // Validate required fields
                 List<String> missingFields = new ArrayList<>();
@@ -474,7 +622,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                 }
 
                 // Create the record
-                StreetTreesMitigation saved = createStreetTreesMitigation(dto);
+                StreetTreesMitigationResponseDto saved = createStreetTreesMitigation(dto);
                 savedRecords.add(saved);
             }
 
