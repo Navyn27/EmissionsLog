@@ -23,6 +23,8 @@ public class LandfillGasParameter {
     @Column(nullable = false, name = "global_warming_potential_ch4")
     private Double globalWarmingPotentialCh4; // GWP for CH₄
 
+    private Boolean isActive = true;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

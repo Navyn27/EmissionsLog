@@ -20,6 +20,8 @@ public class WasteToWtEParameter {
     @Column(nullable = false, name = "net_emission_factor")
     private Double netEmissionFactor; // tCO2eq/t
 
+    private Boolean isActive = true;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

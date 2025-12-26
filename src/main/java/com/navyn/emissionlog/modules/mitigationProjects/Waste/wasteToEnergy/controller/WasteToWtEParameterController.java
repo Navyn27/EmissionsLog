@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.dtos.WasteToWtEParameterDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.models.WasteToWtEParameter;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.dtos.WasteToWtEParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.service.WasteToWtEParameterService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,7 +28,7 @@ public class WasteToWtEParameterController {
     @PostMapping
     public ResponseEntity<ApiResponse> createWasteToWtEParameter(
             @Valid @RequestBody WasteToWtEParameterDto dto) {
-        WasteToWtEParameter parameter = service.createWasteToWtEParameter(dto);
+        WasteToWtEParameterResponseDto parameter = service.createWasteToWtEParameter(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Waste to WtE Parameter created successfully", parameter));
     }
@@ -39,7 +39,7 @@ public class WasteToWtEParameterController {
     public ResponseEntity<ApiResponse> updateWasteToWtEParameter(
             @PathVariable UUID id,
             @Valid @RequestBody WasteToWtEParameterDto dto) {
-        WasteToWtEParameter parameter = service.updateWasteToWtEParameter(id, dto);
+        WasteToWtEParameterResponseDto parameter = service.updateWasteToWtEParameter(id, dto);
         return ResponseEntity.ok(new ApiResponse(true, "Waste to WtE Parameter updated successfully", parameter));
     }
 
@@ -47,7 +47,7 @@ public class WasteToWtEParameterController {
             description = "Retrieves a specific Waste to WtE Parameter by its ID")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getWasteToWtEParameterById(@PathVariable UUID id) {
-        WasteToWtEParameter parameter = service.getWasteToWtEParameterById(id);
+        WasteToWtEParameterResponseDto parameter = service.getWasteToWtEParameterById(id);
         return ResponseEntity.ok(new ApiResponse(true, "Waste to WtE Parameter fetched successfully", parameter));
     }
 
@@ -55,16 +55,24 @@ public class WasteToWtEParameterController {
             description = "Retrieves all Waste to WtE Parameters ordered by creation date (newest first)")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllWasteToWtEParameters() {
-        List<WasteToWtEParameter> parameters = service.getAllWasteToWtEParameters();
+        List<WasteToWtEParameterResponseDto> parameters = service.getAllWasteToWtEParameters();
         return ResponseEntity.ok(new ApiResponse(true, "Waste to WtE Parameters fetched successfully", parameters));
     }
 
-    @Operation(summary = "Get latest Waste to WtE Parameter",
-            description = "Retrieves the most recently created Waste to WtE Parameter")
+    @Operation(summary = "Get latest active Waste to WtE Parameter",
+            description = "Retrieves the most recently created active Waste to WtE Parameter")
     @GetMapping("/latest")
-    public ResponseEntity<ApiResponse> getLatestWasteToWtEParameter() {
-        WasteToWtEParameter parameter = service.getLatestWasteToWtEParameter();
-        return ResponseEntity.ok(new ApiResponse(true, "Latest Waste to WtE Parameter fetched successfully", parameter));
+    public ResponseEntity<ApiResponse> getLatestActive() {
+        WasteToWtEParameterResponseDto parameter = service.getLatestActive();
+        return ResponseEntity.ok(new ApiResponse(true, "Latest active Waste to WtE Parameter fetched successfully", parameter));
+    }
+
+    @Operation(summary = "Disable Waste to WtE Parameter",
+            description = "Disables an existing Waste to WtE Parameter by setting isActive to false")
+    @PutMapping("/{id}/disable")
+    public ResponseEntity<ApiResponse> disableWasteToWtEParameter(@PathVariable UUID id) {
+        service.disable(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Waste to WtE Parameter disabled successfully", null));
     }
 
     @Operation(summary = "Delete Waste to WtE Parameter",

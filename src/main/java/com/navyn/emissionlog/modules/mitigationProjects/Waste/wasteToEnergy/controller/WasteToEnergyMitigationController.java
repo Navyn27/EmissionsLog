@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.dtos.WasteToEnergyMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.models.WasteToEnergyMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.dtos.WasteToEnergyMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.wasteToEnergy.service.WasteToEnergyMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +32,7 @@ public class WasteToEnergyMitigationController {
     @PostMapping
     public ResponseEntity<ApiResponse> createWasteToEnergyMitigation(
             @Valid @RequestBody WasteToEnergyMitigationDto dto) {
-        WasteToEnergyMitigation mitigation = service.createWasteToEnergyMitigation(dto);
+        WasteToEnergyMitigationResponseDto mitigation = service.createWasteToEnergyMitigation(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Waste-to-Energy mitigation record created successfully", mitigation));
     }
@@ -43,7 +43,7 @@ public class WasteToEnergyMitigationController {
     public ResponseEntity<ApiResponse> updateWasteToEnergyMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody WasteToEnergyMitigationDto dto) {
-        WasteToEnergyMitigation mitigation = service.updateWasteToEnergyMitigation(id, dto);
+        WasteToEnergyMitigationResponseDto mitigation = service.updateWasteToEnergyMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(true, "Waste-to-Energy mitigation record updated successfully", mitigation));
     }
     
@@ -52,7 +52,7 @@ public class WasteToEnergyMitigationController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllWasteToEnergyMitigation(
             @RequestParam(required = false) Integer year) {
-        List<WasteToEnergyMitigation> mitigations = service.getAllWasteToEnergyMitigation(year);
+        List<WasteToEnergyMitigationResponseDto> mitigations = service.getAllWasteToEnergyMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Waste-to-Energy mitigation records fetched successfully", mitigations));
     }
     

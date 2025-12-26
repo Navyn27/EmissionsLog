@@ -11,4 +11,10 @@ import java.util.UUID;
 public interface LandfillGasParameterRepository extends JpaRepository<LandfillGasParameter, UUID> {
 
     Optional<LandfillGasParameter> findFirstByOrderByCreatedAtDesc();
+
+    /**
+     * Finds the latest active LandfillGasParameter ordered by creation date (most recent first)
+     * @return Optional containing the latest active parameter, or empty if none found
+     */
+    Optional<LandfillGasParameter> findFirstByIsActiveTrueOrderByCreatedAtDesc();
 }

@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -29,6 +30,7 @@ public class LandfillGasUtilizationMitigation {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_intervention_id", nullable = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Intervention projectIntervention; // Foreign key to Intervention table
 
     // Calculated fields

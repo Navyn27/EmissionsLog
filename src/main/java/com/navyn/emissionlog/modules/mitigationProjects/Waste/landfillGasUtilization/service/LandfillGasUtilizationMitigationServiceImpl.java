@@ -5,9 +5,11 @@ import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.services.BAUService;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.dtos.LandfillGasUtilizationMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.dtos.LandfillGasUtilizationMitigationResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.dtos.LandfillGasParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.models.LandfillGasParameter;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.models.LandfillGasUtilizationMitigation;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.repository.LandfillGasParameterRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.service.LandfillGasParameterService;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.repository.LandfillGasUtilizationMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
@@ -17,9 +19,11 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.*;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
@@ -38,17 +42,51 @@ import static com.navyn.emissionlog.utils.Specifications.MitigationSpecification
 public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasUtilizationMitigationService {
 
     private final LandfillGasUtilizationMitigationRepository repository;
-    private final LandfillGasParameterRepository parameterRepository;
+    private final LandfillGasParameterService parameterService;
     private final InterventionRepository interventionRepository;
     private final BAUService bauService;
 
-    @Override
-    public LandfillGasUtilizationMitigation createLandfillGasUtilizationMitigation(LandfillGasUtilizationMitigationDto dto) {
+    /**
+     * Maps LandfillGasUtilizationMitigation entity to Response DTO
+     * This method loads intervention data within the transaction to avoid lazy loading issues
+     */
+    private LandfillGasUtilizationMitigationResponseDto toResponseDto(LandfillGasUtilizationMitigation mitigation) {
+        LandfillGasUtilizationMitigationResponseDto dto = new LandfillGasUtilizationMitigationResponseDto();
+        dto.setId(mitigation.getId());
+        dto.setYear(mitigation.getYear());
+        dto.setCh4Captured(mitigation.getCh4Captured());
+        dto.setCh4Destroyed(mitigation.getCh4Destroyed());
+        dto.setEquivalentCO2eReduction(mitigation.getEquivalentCO2eReduction());
+        dto.setMitigationScenarioGrand(mitigation.getMitigationScenarioGrand());
+        dto.setCreatedAt(mitigation.getCreatedAt());
+        dto.setUpdatedAt(mitigation.getUpdatedAt());
+
+        // Map intervention - FORCE initialization within transaction to avoid lazy loading
+        if (mitigation.getProjectIntervention() != null) {
+            // Force Hibernate to initialize the proxy while session is still open
+            Hibernate.initialize(mitigation.getProjectIntervention());
+            Intervention intervention = mitigation.getProjectIntervention();
+            LandfillGasUtilizationMitigationResponseDto.InterventionInfo interventionInfo =
+                    new LandfillGasUtilizationMitigationResponseDto.InterventionInfo(
+                            intervention.getId(),
+                            intervention.getName()
+                    );
+            dto.setProjectIntervention(interventionInfo);
+        } else {
+            dto.setProjectIntervention(null);
+        }
+
+        return dto;
+    }
+
+    /**
+     * Internal method for Excel processing that returns entity
+     */
+    private LandfillGasUtilizationMitigation createLandfillGasUtilizationMitigationInternal(LandfillGasUtilizationMitigationDto dto) {
         LandfillGasUtilizationMitigation mitigation = new LandfillGasUtilizationMitigation();
 
-        // Get LandfillGasParameter (latest)
-        LandfillGasParameter parameter = parameterRepository.findFirstByOrderByCreatedAtDesc()
-                .orElseThrow(() -> new RuntimeException("Landfill Gas Parameter not found. Please create parameters first."));
+        // Get LandfillGasParameter (latest active)
+        LandfillGasParameterResponseDto paramDto = parameterService.getLatestActive();
 
         // Get Intervention
         Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
@@ -68,11 +106,11 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
 
         // Calculate CH₄Destroyed = CH₄Captured * DestructionEfficiency(%)
         // Note: DestructionEfficiency is a percentage (0-100), so divide by 100
-        Double ch4Destroyed = dto.getCh4Captured() * (parameter.getDestructionEfficiencyPercentage() / 100.0);
+        Double ch4Destroyed = dto.getCh4Captured() * (paramDto.getDestructionEfficiencyPercentage() / 100.0);
         mitigation.setCh4Destroyed(ch4Destroyed);
 
         // Calculate EquivalentCO₂eReduction = CH₄Destroyed * GlobalWarmingPotential(CH₄)
-        Double equivalentCO2eReduction = ch4Destroyed * parameter.getGlobalWarmingPotentialCh4();
+        Double equivalentCO2eReduction = ch4Destroyed * paramDto.getGlobalWarmingPotentialCh4();
         mitigation.setEquivalentCO2eReduction(equivalentCO2eReduction);
 
         // Calculate MitigationScenarioGrand = BAU - EquivalentCO₂eReduction
@@ -83,13 +121,20 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
     }
 
     @Override
-    public LandfillGasUtilizationMitigation updateLandfillGasUtilizationMitigation(UUID id, LandfillGasUtilizationMitigationDto dto) {
+    @Transactional
+    public LandfillGasUtilizationMitigationResponseDto createLandfillGasUtilizationMitigation(LandfillGasUtilizationMitigationDto dto) {
+        LandfillGasUtilizationMitigation saved = createLandfillGasUtilizationMitigationInternal(dto);
+        return toResponseDto(saved);
+    }
+
+    @Override
+    @Transactional
+    public LandfillGasUtilizationMitigationResponseDto updateLandfillGasUtilizationMitigation(UUID id, LandfillGasUtilizationMitigationDto dto) {
         LandfillGasUtilizationMitigation mitigation = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Landfill Gas Utilization Mitigation record not found with id: " + id));
 
-        // Get LandfillGasParameter (latest)
-        LandfillGasParameter parameter = parameterRepository.findFirstByOrderByCreatedAtDesc()
-                .orElseThrow(() -> new RuntimeException("Landfill Gas Parameter not found. Please create parameters first."));
+        // Get LandfillGasParameter (latest active)
+        LandfillGasParameterResponseDto paramDto = parameterService.getLatestActive();
 
         // Get Intervention
         Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
@@ -109,24 +154,29 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
 
         // Recalculate derived fields
         // Calculate CH₄Destroyed = CH₄Captured * DestructionEfficiency(%)
-        Double ch4Destroyed = dto.getCh4Captured() * (parameter.getDestructionEfficiencyPercentage() / 100.0);
+        Double ch4Destroyed = dto.getCh4Captured() * (paramDto.getDestructionEfficiencyPercentage() / 100.0);
         mitigation.setCh4Destroyed(ch4Destroyed);
 
         // Calculate EquivalentCO₂eReduction = CH₄Destroyed * GlobalWarmingPotential(CH₄)
-        Double equivalentCO2eReduction = ch4Destroyed * parameter.getGlobalWarmingPotentialCh4();
+        Double equivalentCO2eReduction = ch4Destroyed * paramDto.getGlobalWarmingPotentialCh4();
         mitigation.setEquivalentCO2eReduction(equivalentCO2eReduction);
 
         // Calculate MitigationScenarioGrand = BAU - EquivalentCO₂eReduction
         Double mitigationScenarioGrand = bau.getValue() - equivalentCO2eReduction;
         mitigation.setMitigationScenarioGrand(mitigationScenarioGrand);
 
-        return repository.save(mitigation);
+        LandfillGasUtilizationMitigation saved = repository.save(mitigation);
+        return toResponseDto(saved);
     }
 
     @Override
-    public List<LandfillGasUtilizationMitigation> getAllLandfillGasUtilizationMitigation(Integer year) {
+    @Transactional
+    public List<LandfillGasUtilizationMitigationResponseDto> getAllLandfillGasUtilizationMitigation(Integer year) {
         Specification<LandfillGasUtilizationMitigation> spec = Specification.where(hasYear(year));
-        return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        List<LandfillGasUtilizationMitigation> mitigations = repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        return mitigations.stream()
+                .map(this::toResponseDto)
+                .toList();
     }
 
     @Override
@@ -401,8 +451,8 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
                     continue; // Skip this row
                 }
 
-                // Create the record
-                LandfillGasUtilizationMitigation saved = createLandfillGasUtilizationMitigation(dto);
+                // Create the record (internal method that returns entity for Excel processing)
+                LandfillGasUtilizationMitigation saved = createLandfillGasUtilizationMitigationInternal(dto);
                 savedRecords.add(saved);
             }
 

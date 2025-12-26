@@ -1,22 +1,24 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.service;
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.dtos.LandfillGasParameterDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.models.LandfillGasParameter;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.landfillGasUtilization.dtos.LandfillGasParameterResponseDto;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface LandfillGasParameterService {
 
-    LandfillGasParameter createLandfillGasParameter(LandfillGasParameterDto dto);
+    LandfillGasParameterResponseDto createLandfillGasParameter(LandfillGasParameterDto dto);
 
-    LandfillGasParameter updateLandfillGasParameter(UUID id, LandfillGasParameterDto dto);
+    LandfillGasParameterResponseDto updateLandfillGasParameter(UUID id, LandfillGasParameterDto dto);
 
-    LandfillGasParameter getLandfillGasParameterById(UUID id);
+    LandfillGasParameterResponseDto getLandfillGasParameterById(UUID id);
 
-    List<LandfillGasParameter> getAllLandfillGasParameters();
+    List<LandfillGasParameterResponseDto> getAllLandfillGasParameters();
 
     void deleteLandfillGasParameter(UUID id);
 
-    LandfillGasParameter getLatestLandfillGasParameter();
+    LandfillGasParameterResponseDto getLatestActive();
+
+    void disable(UUID id);
 }
