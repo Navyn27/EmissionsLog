@@ -746,9 +746,8 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         CellStyle alternateDataStyle, CellStyle numberStyle, List<MBTCompostingMitigation> data) {
                 String[] headers = {
                                 "Year",
-                                "Operation Status",
-                                "Organic Waste Treated (t/day)",
                                 "Organic Waste Treated (t/year)",
+                                "Project Intervention",
                                 "Estimated GHG Reduction (kt/year)",
                                 "Adjusted BAU Emission (ktCO2e)"
                 };
@@ -771,27 +770,29 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         yearCellStyle.setDataFormat(dataFormat.getFormat("0"));
                         yearCell.setCellStyle(yearCellStyle);
 
-                        // Text column (Operation Status)
-                        Cell textCell = r.createCell(1);
-                        textCell.setCellValue(
-                                        item.getOperationStatus() != null ? item.getOperationStatus().name() : "");
+                        // Number columns
+                        CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook())
+                                        : numberStyle;
+                        r.createCell(1).setCellValue(item.getOrganicWasteTreatedTonsPerYear() != null 
+                                        ? item.getOrganicWasteTreatedTonsPerYear() : 0.0);
+                        r.getCell(1).setCellStyle(numStyle);
+                        
+                        // Project Intervention column (text)
+                        Cell interventionCell = r.createCell(2);
+                        interventionCell.setCellValue(
+                                        item.getProjectIntervention() != null ? item.getProjectIntervention().getName() : "");
                         CellStyle baseTextStyle = isAlternate ? alternateDataStyle : dataStyle;
                         CellStyle textCellStyle = sheet.getWorkbook().createCellStyle();
                         textCellStyle.cloneStyleFrom(baseTextStyle);
                         textCellStyle.setAlignment(HorizontalAlignment.LEFT);
-                        textCell.setCellStyle(textCellStyle);
-
-                        // Number columns
-                        CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook())
-                                        : numberStyle;
-                        r.createCell(2).setCellValue(item.getOrganicWasteTreatedTonsPerDay());
-                        r.getCell(2).setCellStyle(numStyle);
-                        r.createCell(3).setCellValue(item.getOrganicWasteTreatedTonsPerYear());
+                        interventionCell.setCellStyle(textCellStyle);
+                        
+                        r.createCell(3).setCellValue(item.getEstimatedGhgReductionKilotonnesPerYear() != null 
+                                        ? item.getEstimatedGhgReductionKilotonnesPerYear() : 0.0);
                         r.getCell(3).setCellStyle(numStyle);
-                        r.createCell(4).setCellValue(item.getEstimatedGhgReductionKilotonnesPerYear());
+                        r.createCell(4).setCellValue(item.getAdjustedBauEmissionBiologicalTreatment() != null 
+                                        ? item.getAdjustedBauEmissionBiologicalTreatment() : 0.0);
                         r.getCell(4).setCellStyle(numStyle);
-                        r.createCell(5).setCellValue(item.getAdjustedBauEmissionBiologicalTreatment());
-                        r.getCell(5).setCellStyle(numStyle);
                 }
                 autoSizeWithLimits(sheet, headers.length);
         }
