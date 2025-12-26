@@ -156,6 +156,17 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
             mitigation.setIntervention(null);
         }
         StreetTreesMitigation saved = repository.save(mitigation);
+
+        // CASCADE: Find and recalculate all subsequent years that depend on this new record
+        // This ensures cumulative calculations are correct when inserting a year in the middle
+        List<StreetTreesMitigation> subsequentRecords = repository
+                .findByYearGreaterThanOrderByYearAsc(dto.getYear());
+
+        for (StreetTreesMitigation subsequent : subsequentRecords) {
+            recalculateExistingRecord(subsequent, param);
+            repository.save(subsequent);
+        }
+
         return toResponseDto(saved);
     }
 
@@ -195,7 +206,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
     @Override
     @Transactional
     public void deleteStreetTreesMitigation(UUID id) {
-        // Fetch latest active parameter - throws exception if none exists
+        // Fetch the latest active parameter - throws exception if none exists
         StreetTreesParameterResponseDto param;
         try {
             param = streetTreesParameterService.getLatestActive();
@@ -249,12 +260,13 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
         mitigation.setAgbGrowth(agbGrowth);
 
         // 2. Calculate Aboveground Biomass Growth (tonnes DM)
-        double abovegroundBiomassGrowth = conversionM3ToTonnes *
+        double aboveGroundBiomassGrowth = conversionM3ToTonnes *
                 agbGrowth;
-        mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
+        mitigation.setAbovegroundBiomassGrowth(aboveGroundBiomassGrowth);
 
         // 3. Calculate Total Biomass (tonnes DM/year) - includes belowground
-        double totalBiomass = (abovegroundBiomassGrowth * 2) * ratioBGBToAGB;
+        double totalBiomass = (aboveGroundBiomassGrowth  * ratioBGBToAGB)+aboveGroundBiomassGrowth;
+
         mitigation.setTotalBiomass(totalBiomass);
 
         double biomassCarbonIncrease = totalBiomass *
@@ -304,12 +316,12 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
         mitigation.setAgbGrowth(agbGrowth);
 
         // 2. Calculate Aboveground Biomass Growth (tonnes DM)
-        double abovegroundBiomassGrowth = conversionM3ToTonnes *
+        double aboveGroundBiomassGrowth = conversionM3ToTonnes *
                 agbGrowth;
-        mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
+        mitigation.setAbovegroundBiomassGrowth(aboveGroundBiomassGrowth);
 
         // 3. Calculate Total Biomass (tonnes DM/year) - includes belowground
-        double totalBiomass = (abovegroundBiomassGrowth * 2) * ratioBGBToAGB;
+        double totalBiomass = (aboveGroundBiomassGrowth  * ratioBGBToAGB)+aboveGroundBiomassGrowth;
         mitigation.setTotalBiomass(totalBiomass);
 
         // 4. Calculate Biomass Carbon Increase (tonnes C/year)

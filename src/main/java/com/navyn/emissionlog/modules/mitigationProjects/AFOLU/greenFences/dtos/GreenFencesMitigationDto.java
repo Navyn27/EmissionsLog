@@ -4,6 +4,8 @@ import com.navyn.emissionlog.Enums.Metrics.BiomassUnit;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class GreenFencesMitigationDto {
     
@@ -22,4 +24,10 @@ public class GreenFencesMitigationDto {
     
     @NotNull(message = "AGB unit is required")
     private BiomassUnit agbUnit; // Unit for AGB biomass (standard: tonnes DM)
+    
+    // Optional intervention reference
+    private UUID interventionId;
+
+    // Temporary field for Excel import - intervention name (will be converted to interventionId)
+    private String interventionName;
 }

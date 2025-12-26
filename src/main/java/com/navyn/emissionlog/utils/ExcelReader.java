@@ -219,6 +219,7 @@ public class ExcelReader {
         greenFencesToDtoMap.put("Number of Households with 10m2 Fence", "numberOfHouseholdsWith10m2Fence");
         greenFencesToDtoMap.put("AGB of 10m2 Live Fence", "agbOf10m2LiveFence");
         greenFencesToDtoMap.put("AGB Unit", "agbUnit");
+        greenFencesToDtoMap.put("Intervention", "interventionName");
     }
 
     // This hashmap is responsible for reading data from waste to energy mitigation
