@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.mitigationProjects.BAU.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -16,6 +17,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class BAU {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

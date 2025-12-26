@@ -1,5 +1,6 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
@@ -52,6 +53,7 @@ public class StreetTreesMitigation {
     // ===== INTERVENTION RELATIONSHIP =====
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "intervention_id", nullable = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Intervention intervention;
     @CreationTimestamp
     @Column(updatable = false)
