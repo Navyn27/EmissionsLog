@@ -2,10 +2,17 @@ package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.servi
 
 import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.Enums.Metrics.BiomassUnit;
-import com.navyn.emissionlog.Enums.Mitigation.GreenFencesConstants;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.dtos.GreenFencesMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.dtos.GreenFencesMitigationResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.dtos.GreenFencesParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.models.GreenFencesMitigation;
+import org.hibernate.Hibernate;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.repositories.GreenFencesMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.repositories.BAURepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import com.navyn.emissionlog.utils.Specifications.MitigationSpecifications;
 import lombok.RequiredArgsConstructor;
@@ -16,26 +23,72 @@ import org.apache.poi.xssf.usermodel.*;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationService {
-    
+
     private final GreenFencesMitigationRepository repository;
-    
+    private final GreenFencesParameterService greenFencesParameterService;
+    private final BAURepository bauRepository;
+    private final InterventionRepository interventionRepository;
+
+    /**
+     * Maps GreenFencesMitigation entity to Response DTO
+     * This method loads intervention data within the transaction to avoid lazy loading issues
+     */
+    private GreenFencesMitigationResponseDto toResponseDto(GreenFencesMitigation mitigation) {
+        GreenFencesMitigationResponseDto dto = new GreenFencesMitigationResponseDto();
+        dto.setId(mitigation.getId());
+        dto.setYear(mitigation.getYear());
+        dto.setCumulativeNumberOfHouseholds(mitigation.getCumulativeNumberOfHouseholds());
+        dto.setNumberOfHouseholdsWith10m2Fence(mitigation.getNumberOfHouseholdsWith10m2Fence());
+        dto.setAgbOf10m2LiveFence(mitigation.getAgbOf10m2LiveFence());
+        dto.setAgbFenceBiomassCumulativeHouseholds(mitigation.getAgbFenceBiomassCumulativeHouseholds());
+        dto.setAgbPlusBgbCumulativeHouseholds(mitigation.getAgbPlusBgbCumulativeHouseholds());
+        dto.setMitigatedEmissionsKtCO2e(mitigation.getMitigatedEmissionsKtCO2e());
+        dto.setAdjustmentMitigation(mitigation.getAdjustmentMitigation());
+        dto.setCreatedAt(mitigation.getCreatedAt());
+        dto.setUpdatedAt(mitigation.getUpdatedAt());
+
+        // Map intervention - FORCE initialization within transaction to avoid lazy loading
+        if (mitigation.getIntervention() != null) {
+            Hibernate.initialize(mitigation.getIntervention());
+            Intervention intervention = mitigation.getIntervention();
+            GreenFencesMitigationResponseDto.InterventionInfo interventionInfo =
+                    new GreenFencesMitigationResponseDto.InterventionInfo(
+                            intervention.getId(),
+                            intervention.getName()
+                    );
+            dto.setIntervention(interventionInfo);
+        } else {
+            dto.setIntervention(null);
+        }
+
+        return dto;
+    }
+
     @Override
-    public GreenFencesMitigation createGreenFencesMitigation(GreenFencesMitigationDto dto) {
+    @Transactional
+    public GreenFencesMitigationResponseDto createGreenFencesMitigation(GreenFencesMitigationDto dto) {
+        // Fetch the latest active parameter - throws exception if none exists
+        GreenFencesParameterResponseDto param;
+        try {
+            param = greenFencesParameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot create Green Fences Mitigation: No active Green Fences Parameter found. " +
+                            "Please create an active parameter first before creating mitigation records.",
+                    e);
+        }
+
         GreenFencesMitigation mitigation = new GreenFencesMitigation();
 
         Optional<GreenFencesMitigation> latestYear = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
@@ -49,54 +102,101 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
         mitigation.setCumulativeNumberOfHouseholds(cumulativeHouseholds);
         mitigation.setNumberOfHouseholdsWith10m2Fence(dto.getNumberOfHouseholdsWith10m2Fence());
         mitigation.setAgbOf10m2LiveFence(agbInTonnesDM);
-        
-        // 1. Calculate AGB of 10m3 fence biomass from cumulative households (Tonnes C)
+
+        // Get values from parameter
+        double carbonContentInDryWoods = param.getCarbonContentInDryWoods();
+        double ratioBGBToAGB = param.getRatioOfBelowGroundBiomass();
+        double carbonToC02 = param.getCarbonToC02();
+
+        // 1. Calculate AGB of 10m2 fence biomass from cumulative households (Tonnes C)
         // AGB fence biomass = AGB of 10m2 fence × Carbon content × Cumulative households
-        double agbFenceBiomass = agbInTonnesDM * 
-            GreenFencesConstants.CARBON_CONTENT_DRY_AGB.getValue() * 
-            cumulativeHouseholds;
+        double agbFenceBiomass = agbInTonnesDM *
+                carbonContentInDryWoods *
+                cumulativeHouseholds;
         mitigation.setAgbFenceBiomassCumulativeHouseholds(agbFenceBiomass);
-        
+
         // 2. Calculate AGB+BGB from cumulative households (Tonnes C)
-        // Total biomass = AGB fence biomass × (1 + Ratio BGB to AGB)
-        double totalBiomass = agbFenceBiomass * 
-            (1 + GreenFencesConstants.RATIO_BGB_TO_AGB.getValue());
+        // Total biomass = (AGB fence biomass × Ratio BGB to AGB + AGB fence biomass) × Carbon content
+        double totalBiomass = ((agbFenceBiomass * ratioBGBToAGB) + agbFenceBiomass) * carbonContentInDryWoods;
         mitigation.setAgbPlusBgbCumulativeHouseholds(totalBiomass);
-        
+
         // 3. Calculate Mitigated Emissions (Kt CO2e)
         // NOTE: Uses AGB only (not total with BGB) for emissions calculation
         // Mitigated emissions = AGB fence biomass × Conversion C to CO2 / 1000
-        double mitigatedEmissions = (agbFenceBiomass * 
-            GreenFencesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+        double mitigatedEmissions = (agbFenceBiomass *
+                carbonToC02) / 1000.0;
         mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
-        
-        return repository.save(mitigation);
+
+        // 4. Calculate Adjustment Mitigation
+        BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
+                                mitigation.getYear())
+                ));
+        double adjustmentMitigation = bau.getValue() - mitigatedEmissions;
+        mitigation.setAdjustmentMitigation(adjustmentMitigation);
+
+        // Handle intervention if provided
+        if (dto.getInterventionId() != null) {
+            Intervention intervention = interventionRepository.findById(dto.getInterventionId())
+                    .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getInterventionId()));
+            mitigation.setIntervention(intervention);
+        } else {
+            mitigation.setIntervention(null);
+        }
+
+        GreenFencesMitigation saved = repository.save(mitigation);
+        return toResponseDto(saved);
     }
-    
+
     @Override
-    public GreenFencesMitigation updateGreenFencesMitigation(UUID id, GreenFencesMitigationDto dto) {
+    @Transactional
+    public GreenFencesMitigationResponseDto updateGreenFencesMitigation(UUID id, GreenFencesMitigationDto dto) {
+        // Fetch the latest active parameter - throws exception if none exists
+        GreenFencesParameterResponseDto param;
+        try {
+            param = greenFencesParameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot update Green Fences Mitigation: No active Green Fences Parameter found. " +
+                            "Please create an active parameter first before updating mitigation records.",
+                    e);
+        }
+
         GreenFencesMitigation mitigation = repository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Green Fences Mitigation record not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Green Fences Mitigation record not found with id: " + id));
 
         // Update the current record
-        recalculateAndUpdateRecord(mitigation, dto);
+        recalculateAndUpdateRecord(mitigation, dto, param);
         GreenFencesMitigation updatedRecord = repository.save(mitigation);
-        
+
         // CASCADE: Find and recalculate all subsequent years that depend on this record
         List<GreenFencesMitigation> subsequentRecords = repository.findByYearGreaterThanOrderByYearAsc(dto.getYear());
-        
+
         for (GreenFencesMitigation subsequent : subsequentRecords) {
-            recalculateExistingRecord(subsequent);
+            recalculateExistingRecord(subsequent, param);
             repository.save(subsequent);
         }
-        
-        return updatedRecord;
+
+        return toResponseDto(updatedRecord);
     }
 
     @Override
+    @Transactional
     public void deleteGreenFencesMitigation(UUID id) {
+        // Fetch latest active parameter - throws exception if none exists
+        GreenFencesParameterResponseDto param;
+        try {
+            param = greenFencesParameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot delete Green Fences Mitigation: No active Green Fences Parameter found. " +
+                            "Please create an active parameter first before deleting mitigation records.",
+                    e);
+        }
+
         GreenFencesMitigation mitigation = repository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Green Fences Mitigation record not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Green Fences Mitigation record not found with id: " + id));
 
         Integer year = mitigation.getYear();
         repository.delete(mitigation);
@@ -104,48 +204,62 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
         // Recalculate all subsequent years as cumulative fields depend on previous records
         List<GreenFencesMitigation> subsequentRecords = repository.findByYearGreaterThanOrderByYearAsc(year);
         for (GreenFencesMitigation subsequent : subsequentRecords) {
-            recalculateExistingRecord(subsequent);
+            recalculateExistingRecord(subsequent, param);
             repository.save(subsequent);
         }
     }
-    
+
     /**
      * Recalculates an existing record based on its current year and stored input values
      */
-    private void recalculateExistingRecord(GreenFencesMitigation mitigation) {
+    private void recalculateExistingRecord(GreenFencesMitigation mitigation, GreenFencesParameterResponseDto param) {
         // Fetch previous year's data for cumulative calculation
         Optional<GreenFencesMitigation> latestYear = repository.findTopByYearLessThanOrderByYearDesc(mitigation.getYear());
-        Double cumulativeHouseholds = latestYear.map(greenFencesMitigation -> 
-            greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()
+        Double cumulativeHouseholds = latestYear.map(greenFencesMitigation ->
+                greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()
         ).orElse(0.0);
 
         // Update cumulative field
         mitigation.setCumulativeNumberOfHouseholds(cumulativeHouseholds);
-        
+
+        // Get values from parameter
+        double carbonContentInDryWoods = param.getCarbonContentInDryWoods();
+        double ratioBGBToAGB = param.getRatioOfBelowGroundBiomass();
+        double carbonToC02 = param.getCarbonToC02();
+
         // Recalculate derived fields using existing AGB value
         double agbInTonnesDM = mitigation.getAgbOf10m2LiveFence();
-        
-        double agbFenceBiomass = agbInTonnesDM * 
-            GreenFencesConstants.CARBON_CONTENT_DRY_AGB.getValue() * 
-            cumulativeHouseholds;
+
+        double agbFenceBiomass = agbInTonnesDM *
+                carbonContentInDryWoods *
+                cumulativeHouseholds;
         mitigation.setAgbFenceBiomassCumulativeHouseholds(agbFenceBiomass);
-        
-        double totalBiomass = agbFenceBiomass * 
-            (1 + GreenFencesConstants.RATIO_BGB_TO_AGB.getValue());
+
+        double totalBiomass = ((agbFenceBiomass * ratioBGBToAGB) + agbFenceBiomass) * carbonContentInDryWoods;
+
         mitigation.setAgbPlusBgbCumulativeHouseholds(totalBiomass);
-        
-        double mitigatedEmissions = (agbFenceBiomass * 
-            GreenFencesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+
+        double mitigatedEmissions = (agbFenceBiomass *
+                carbonToC02) / 1000.0;
         mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
+
+        // Recalculate Adjustment Mitigation
+        BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
+                                mitigation.getYear())
+                ));
+        double adjustmentMitigation = bau.getValue() - mitigatedEmissions;
+        mitigation.setAdjustmentMitigation(adjustmentMitigation);
     }
-    
+
     /**
      * Recalculates a record with new DTO values
      */
-    private void recalculateAndUpdateRecord(GreenFencesMitigation mitigation, GreenFencesMitigationDto dto) {
+    private void recalculateAndUpdateRecord(GreenFencesMitigation mitigation, GreenFencesMitigationDto dto, GreenFencesParameterResponseDto param) {
         Optional<GreenFencesMitigation> latestYear = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
-        Double cumulativeHouseholds = latestYear.map(greenFencesMitigation -> 
-            greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()
+        Double cumulativeHouseholds = latestYear.map(greenFencesMitigation ->
+                greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()
         ).orElse(0.0);
 
         // Convert AGB to tonnes DM (standard unit)
@@ -156,38 +270,67 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
         mitigation.setCumulativeNumberOfHouseholds(cumulativeHouseholds);
         mitigation.setNumberOfHouseholdsWith10m2Fence(dto.getNumberOfHouseholdsWith10m2Fence());
         mitigation.setAgbOf10m2LiveFence(agbInTonnesDM);
-        
+
+        // Get values from parameter
+        double carbonContentInDryWoods = param.getCarbonContentInDryWoods();
+        double ratioBGBToAGB = param.getRatioOfBelowGroundBiomass();
+        double carbonToC02 = param.getCarbonToC02();
+
         // Recalculate derived fields
-        double agbFenceBiomass = agbInTonnesDM * 
-            GreenFencesConstants.CARBON_CONTENT_DRY_AGB.getValue() * 
-            cumulativeHouseholds;
+        double agbFenceBiomass = agbInTonnesDM *
+                carbonContentInDryWoods *
+                cumulativeHouseholds;
         mitigation.setAgbFenceBiomassCumulativeHouseholds(agbFenceBiomass);
-        
-        double totalBiomass = agbFenceBiomass * 
-            (1 + GreenFencesConstants.RATIO_BGB_TO_AGB.getValue());
+
+        double totalBiomass = ((agbFenceBiomass * ratioBGBToAGB) + agbFenceBiomass) * carbonContentInDryWoods;
+
         mitigation.setAgbPlusBgbCumulativeHouseholds(totalBiomass);
-        
-        double mitigatedEmissions = (agbFenceBiomass * 
-            GreenFencesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+
+        double mitigatedEmissions = (agbFenceBiomass *
+                carbonToC02) / 1000.0;
         mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
-    }
-    
-    @Override
-    public List<GreenFencesMitigation> getAllGreenFencesMitigation(Integer year) {
-        Specification<GreenFencesMitigation> spec = 
-            Specification.<GreenFencesMitigation>where(MitigationSpecifications.hasYear(year));
-        return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+
+        // Recalculate Adjustment Mitigation
+        BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                .orElseThrow(() -> new RuntimeException(
+                        String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
+                                mitigation.getYear())
+                ));
+        double adjustmentMitigation = bau.getValue() - mitigatedEmissions;
+        mitigation.setAdjustmentMitigation(adjustmentMitigation);
+
+        // Handle intervention if provided
+        if (dto.getInterventionId() != null) {
+            Intervention intervention = interventionRepository.findById(dto.getInterventionId())
+                    .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getInterventionId()));
+            mitigation.setIntervention(intervention);
+        } else {
+            mitigation.setIntervention(null);
+        }
     }
 
     @Override
-    public Optional<GreenFencesMitigation> getByYear(Integer year) {
-        return repository.findByYear(year);
+    @Transactional(readOnly = true)
+    public List<GreenFencesMitigationResponseDto> getAllGreenFencesMitigation(Integer year) {
+        Specification<GreenFencesMitigation> spec =
+                Specification.<GreenFencesMitigation>where(MitigationSpecifications.hasYear(year));
+        List<GreenFencesMitigation> mitigations = repository.findAll(spec, Sort.by(Sort.Direction.ASC, "year"));
+        return mitigations.stream()
+                .map(this::toResponseDto)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<GreenFencesMitigationResponseDto> getByYear(Integer year) {
+        return repository.findByYear(year)
+                .map(this::toResponseDto);
     }
 
     @Override
     public byte[] generateExcelTemplate() {
         try (Workbook workbook = new XSSFWorkbook();
-                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("Green Fences Mitigation");
 
             // Create title style
@@ -277,9 +420,15 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Green Fences Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4));
 
             rowIdx++; // Blank row
+
+            // Fetch all interventions for dropdown
+            List<Intervention> allInterventions = interventionRepository.findAll();
+            String[] interventionNames = allInterventions.stream()
+                    .map(Intervention::getName)
+                    .toArray(String[]::new);
 
             // Create header row
             Row headerRow = sheet.createRow(rowIdx++);
@@ -288,7 +437,8 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
                     "Year",
                     "Number of Households with 10m2 Fence",
                     "AGB of 10m2 Live Fence",
-                    "AGB Unit"
+                    "AGB Unit",
+                    "Intervention"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -319,19 +469,43 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
             agbUnitValidation.createPromptBox("AGB Unit", "Select an AGB unit from the dropdown list.");
             sheet.addValidationData(agbUnitValidation);
 
+            // Data validation for Intervention column (Column E, index 4) - optional, can be empty
+            if (interventionNames.length > 0) {
+                // Add empty string option for optional field
+                String[] interventionOptions = new String[interventionNames.length + 1];
+                interventionOptions[0] = ""; // Empty option
+                System.arraycopy(interventionNames, 0, interventionOptions, 1, interventionNames.length);
+
+                CellRangeAddressList interventionList = new CellRangeAddressList(
+                        3, // Start row (first data row after headers)
+                        1000, // End row (sufficient for most use cases)
+                        4, 4 // Column E (Intervention column, 0-indexed)
+                );
+                DataValidationConstraint interventionConstraint = validationHelper.createExplicitListConstraint(interventionOptions);
+                DataValidation interventionValidation = validationHelper.createValidation(interventionConstraint, interventionList);
+                interventionValidation.setShowErrorBox(true);
+                interventionValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionValidation.createErrorBox("Invalid Intervention", "Please select a valid intervention from the dropdown list or leave empty.");
+                interventionValidation.setShowPromptBox(true);
+                interventionValidation.createPromptBox("Intervention", "Select an intervention from the dropdown list (optional).");
+                sheet.addValidationData(interventionValidation);
+            }
+
             // Create example data rows
             Object[] exampleData1 = {
                     2024,
                     1000.0,
                     5.0,
-                    "TONNES_DM"
+                    "TONNES_DM",
+                    interventionNames.length > 0 ? interventionNames[0] : ""
             };
 
             Object[] exampleData2 = {
                     2025,
                     1500.0,
                     6.0,
-                    "TONNES_DM"
+                    "TONNES_DM",
+                    "" // Empty intervention for second example
             };
 
             // First example row
@@ -345,7 +519,7 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
                 } else if (i == 1 || i == 2) { // Numbers
                     cell.setCellStyle(numberStyle);
                     cell.setCellValue(((Number) exampleData1[i]).doubleValue());
-                } else { // Unit (string)
+                } else { // Unit or Intervention (string)
                     cell.setCellStyle(dataStyle);
                     cell.setCellValue((String) exampleData1[i]);
                 }
@@ -369,7 +543,7 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
                     altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                     cell.setCellStyle(altNumStyle);
                     cell.setCellValue(((Number) exampleData2[i]).doubleValue());
-                } else { // Unit (string)
+                } else { // Unit or Intervention (string)
                     cell.setCellStyle(alternateDataStyle);
                     cell.setCellValue((String) exampleData2[i]);
                 }
@@ -399,8 +573,12 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
 
     @Override
     public Map<String, Object> createGreenFencesMitigationFromExcel(MultipartFile file) {
-        List<GreenFencesMitigation> savedRecords = new ArrayList<>();
+        List<GreenFencesMitigationResponseDto> savedRecords = new ArrayList<>();
         List<Integer> skippedYears = new ArrayList<>();
+            List<Map<String, Object>> skippedParameterNotFound = new ArrayList<>();
+            List<Map<String, Object>> skippedInterventionNotFound = new ArrayList<>();
+            List<Map<String, Object>> skippedMissingFields = new ArrayList<>();
+            List<Map<String, Object>> skippedBAUNotFound = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -409,10 +587,31 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
                     GreenFencesMitigationDto.class,
                     ExcelType.GREEN_FENCES_MITIGATION);
 
+            // Create a list of DTOs with their original row numbers for error reporting
+            List<Map.Entry<GreenFencesMitigationDto, Integer>> dtoWithRowNumbers = new ArrayList<>();
             for (int i = 0; i < dtos.size(); i++) {
-                GreenFencesMitigationDto dto = dtos.get(i);
+                dtoWithRowNumbers.add(new AbstractMap.SimpleEntry<>(dtos.get(i), i));
+            }
+
+            // Sort by year (ascending) to ensure cumulative calculations are correct
+            // This ensures that when processing new records, they are processed in chronological order
+            // Skipped years (already exist) will still work correctly because they query the database
+            dtoWithRowNumbers.sort((entry1, entry2) -> {
+                Integer year1 = entry1.getKey().getYear();
+                Integer year2 = entry2.getKey().getYear();
+                // Handle null years - put them at the end
+                if (year1 == null && year2 == null) return 0;
+                if (year1 == null) return 1;
+                if (year2 == null) return -1;
+                return year1.compareTo(year2);
+            });
+
+            for (Map.Entry<GreenFencesMitigationDto, Integer> entry : dtoWithRowNumbers) {
+                GreenFencesMitigationDto dto = entry.getKey();
+                int originalIndex = entry.getValue();
                 totalProcessed++;
-                int actualRowNumber = i + 1 + 3; // +1 for 1-based, +3 for title(1) + blank(1) + header(1)
+                int rowNumber = originalIndex + 1; // Excel row number (1-based, accounting for header row)
+                int excelRowNumber = rowNumber + 2; // +2 for header row and 0-based index
 
                 // Validate required fields
                 List<String> missingFields = new ArrayList<>();
@@ -430,10 +629,31 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
                 }
 
                 if (!missingFields.isEmpty()) {
-                    throw new RuntimeException(String.format(
-                            "Row %d: Missing required fields: %s. Please fill in all required fields in your Excel file.",
-                            actualRowNumber, String.join(", ", missingFields)));
+                    Map<String, Object> skipInfo = new HashMap<>();
+                    skipInfo.put("row", excelRowNumber);
+                    skipInfo.put("year", dto.getYear() != null ? dto.getYear() : "N/A");
+                    skipInfo.put("reason", "Missing required fields: " + String.join(", ", missingFields));
+                    skippedMissingFields.add(skipInfo);
+                    continue; // Skip this row
                 }
+
+                // Handle intervention name from Excel - convert to interventionId
+                if (dto.getInterventionName() != null && !dto.getInterventionName().trim().isEmpty()) {
+                    String interventionName = dto.getInterventionName().trim();
+                    Optional<Intervention> intervention = interventionRepository.findByNameIgnoreCase(interventionName);
+                    if (intervention.isPresent()) {
+                        dto.setInterventionId(intervention.get().getId());
+                    } else {
+                        Map<String, Object> skipInfo = new HashMap<>();
+                        skipInfo.put("row", excelRowNumber);
+                        skipInfo.put("year", dto.getYear());
+                        skipInfo.put("reason", String.format("Intervention '%s' not found", interventionName));
+                        skippedInterventionNotFound.add(skipInfo);
+                        continue; // Skip this row
+                    }
+                }
+                // Clear the temporary interventionName field
+                dto.setInterventionName(null);
 
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
@@ -441,20 +661,75 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
                     continue; // Skip this row
                 }
 
-                // Create the record
-                GreenFencesMitigation saved = createGreenFencesMitigation(dto);
-                savedRecords.add(saved);
+                // Try to create the record - catch specific errors and skip instead of failing
+                try {
+                    GreenFencesMitigationResponseDto saved = createGreenFencesMitigation(dto);
+                    savedRecords.add(saved);
+                } catch (RuntimeException e) {
+                    String errorMessage = e.getMessage();
+                    if (errorMessage != null) {
+                        // Check for Green Fences Parameter not found error
+                        if (errorMessage.contains("Green Fences Parameter") ||
+                                errorMessage.contains("active parameter") ||
+                                errorMessage.contains("No active Green Fences Parameter")) {
+                            Map<String, Object> skipInfo = new HashMap<>();
+                            skipInfo.put("row", excelRowNumber);
+                            skipInfo.put("year", dto.getYear());
+                            skipInfo.put("reason", errorMessage);
+                            skippedParameterNotFound.add(skipInfo);
+                            continue; // Skip this row
+                        }
+                        // Check for BAU not found error
+                        if (errorMessage.contains("BAU record") && errorMessage.contains("not found")) {
+                            Map<String, Object> skipInfo = new HashMap<>();
+                            skipInfo.put("row", excelRowNumber);
+                            skipInfo.put("year", dto.getYear());
+                            skipInfo.put("reason", errorMessage);
+                            skippedBAUNotFound.add(skipInfo);
+                            continue; // Skip this row
+                        }
+                    }
+                    // If it's a different error, re-throw it (e.g., file format issues)
+                    throw e;
+                }
             }
 
-            Map<String, Object> result = new HashMap<>();
-            result.put("savedCount", savedRecords.size());
-            result.put("skippedCount", skippedYears.size());
-            result.put("skippedYears", skippedYears);
-            result.put("totalProcessed", totalProcessed);
-            return result;
+            // Calculate total skipped count
+            int totalSkipped = skippedYears.size() + skippedParameterNotFound.size() +
+                    skippedInterventionNotFound.size() + skippedMissingFields.size() +
+                    skippedBAUNotFound.size();
 
+            Map<String, Object> result = new HashMap<>();
+            result.put("saved", savedRecords);
+            result.put("savedCount", savedRecords.size());
+            result.put("skippedCount", totalSkipped);
+            result.put("skippedYears", skippedYears);
+            result.put("skippedParameterNotFound", skippedParameterNotFound);
+            result.put("skippedInterventionNotFound", skippedInterventionNotFound);
+            result.put("skippedMissingFields", skippedMissingFields);
+            result.put("skippedBAUNotFound", skippedBAUNotFound);
+            result.put("totalProcessed", totalProcessed);
+
+            return result;
         } catch (IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            // Re-throw IOException with user-friendly message
+            String message = e.getMessage();
+            if (message != null) {
+                throw new RuntimeException(message, e);
+            } else {
+                throw new RuntimeException("Incorrect template. Please download the correct template and try again.",
+                        e);
+            }
+        } catch (NullPointerException e) {
+            // Handle null pointer exceptions with clear message
+            throw new RuntimeException(
+                    "Missing required fields. Please fill in all required fields in your Excel file.", e);
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            if (errorMsg != null) {
+                throw new RuntimeException(errorMsg, e);
+            }
+            throw new RuntimeException("Error processing Excel file. Please check your file and try again.", e);
         }
     }
 }
