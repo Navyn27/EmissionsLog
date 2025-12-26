@@ -156,6 +156,17 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
             mitigation.setIntervention(null);
         }
         StreetTreesMitigation saved = repository.save(mitigation);
+
+        // CASCADE: Find and recalculate all subsequent years that depend on this new record
+        // This ensures cumulative calculations are correct when inserting a year in the middle
+        List<StreetTreesMitigation> subsequentRecords = repository
+                .findByYearGreaterThanOrderByYearAsc(dto.getYear());
+
+        for (StreetTreesMitigation subsequent : subsequentRecords) {
+            recalculateExistingRecord(subsequent, param);
+            repository.save(subsequent);
+        }
+
         return toResponseDto(saved);
     }
 
