@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.dtos.GreenFencesMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.models.GreenFencesMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.dtos.GreenFencesMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.service.GreenFencesMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +30,7 @@ public class GreenFencesMitigationController {
     @Operation(summary = "Create new green fences mitigation record")
     public ResponseEntity<ApiResponse> createGreenFencesMitigation(
             @Valid @RequestBody GreenFencesMitigationDto dto) {
-        GreenFencesMitigation mitigation = service.createGreenFencesMitigation(dto);
+        GreenFencesMitigationResponseDto mitigation = service.createGreenFencesMitigation(dto);
         return ResponseEntity.ok(new ApiResponse(
             true, 
             "Green fences mitigation created successfully", 
@@ -43,7 +43,7 @@ public class GreenFencesMitigationController {
     public ResponseEntity<ApiResponse> updateGreenFencesMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody GreenFencesMitigationDto dto) {
-        GreenFencesMitigation mitigation = service.updateGreenFencesMitigation(id, dto);
+        GreenFencesMitigationResponseDto mitigation = service.updateGreenFencesMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(
             true, 
             "Green fences mitigation updated successfully", 
@@ -55,7 +55,7 @@ public class GreenFencesMitigationController {
     @Operation(summary = "Get all green fences mitigation records")
     public ResponseEntity<ApiResponse> getAllGreenFencesMitigation(
             @RequestParam(required = false, value = "year") Integer year) {
-        List<GreenFencesMitigation> mitigations = service.getAllGreenFencesMitigation(year);
+        List<GreenFencesMitigationResponseDto> mitigations = service.getAllGreenFencesMitigation(year);
         return ResponseEntity.ok(new ApiResponse(
             true, 
             "Green fences mitigation records fetched successfully", 
@@ -99,13 +99,26 @@ public class GreenFencesMitigationController {
         int skippedCount = (Integer) result.get("skippedCount");
         @SuppressWarnings("unchecked")
         List<Integer> skippedYears = (List<Integer>) result.get("skippedYears");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> skippedBAUNotFound = (List<Map<String, Object>>) result.get("skippedBAUNotFound");
 
-        String message = String.format(
-                "Upload completed. %d record(s) saved successfully. %d record(s) skipped (years already exist: %s)",
-                savedCount,
-                skippedCount,
-                skippedYears.isEmpty() ? "none" : skippedYears.toString());
+        StringBuilder messageBuilder = new StringBuilder();
+        messageBuilder.append(String.format("Upload completed. %d record(s) saved successfully.", savedCount));
+        
+        if (skippedCount > 0) {
+            messageBuilder.append(String.format(" %d record(s) skipped.", skippedCount));
+            if (!skippedYears.isEmpty()) {
+                messageBuilder.append(String.format(" Years already exist: %s.", skippedYears.toString()));
+            }
+            if (skippedBAUNotFound != null && !skippedBAUNotFound.isEmpty()) {
+                List<Integer> bauYears = skippedBAUNotFound.stream()
+                        .map(skip -> (Integer) skip.get("year"))
+                        .distinct()
+                        .collect(java.util.stream.Collectors.toList());
+                messageBuilder.append(String.format(" BAU not found for years: %s.", bauYears.toString()));
+            }
+        }
 
-        return ResponseEntity.ok(new ApiResponse(true, message, result));
+        return ResponseEntity.ok(new ApiResponse(true, messageBuilder.toString(), result));
     }
 }

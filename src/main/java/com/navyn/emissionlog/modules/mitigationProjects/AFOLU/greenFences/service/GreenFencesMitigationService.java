@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.service;
 
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.dtos.GreenFencesMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.models.GreenFencesMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.greenFences.dtos.GreenFencesMitigationResponseDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -11,15 +11,15 @@ import java.util.UUID;
 
 public interface GreenFencesMitigationService {
     
-    GreenFencesMitigation createGreenFencesMitigation(GreenFencesMitigationDto dto);
+    GreenFencesMitigationResponseDto createGreenFencesMitigation(GreenFencesMitigationDto dto);
     
-    GreenFencesMitigation updateGreenFencesMitigation(UUID id, GreenFencesMitigationDto dto);
+    GreenFencesMitigationResponseDto updateGreenFencesMitigation(UUID id, GreenFencesMitigationDto dto);
 
     void deleteGreenFencesMitigation(UUID id);
     
-    List<GreenFencesMitigation> getAllGreenFencesMitigation(Integer year);
+    List<GreenFencesMitigationResponseDto> getAllGreenFencesMitigation(Integer year);
     
-    Optional<GreenFencesMitigation> getByYear(Integer year);
+    Optional<GreenFencesMitigationResponseDto> getByYear(Integer year);
 
     byte[] generateExcelTemplate();
 
