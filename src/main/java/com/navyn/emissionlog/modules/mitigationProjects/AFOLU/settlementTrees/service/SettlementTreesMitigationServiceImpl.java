@@ -2,10 +2,17 @@ package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.s
 
 import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.Enums.Metrics.VolumeUnits;
-import com.navyn.emissionlog.Enums.Mitigation.SettlementTreesConstants;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.dtos.SettlementTreesMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.dtos.SettlementTreesMitigationResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.dtos.SettlementTreesParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.models.SettlementTreesMitigation;
+import org.hibernate.Hibernate;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.repositories.SettlementTreesMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.repositories.BAURepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import com.navyn.emissionlog.utils.Specifications.MitigationSpecifications;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +23,7 @@ import org.apache.poi.xssf.usermodel.*;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
@@ -27,15 +35,72 @@ import java.util.*;
 public class SettlementTreesMitigationServiceImpl implements SettlementTreesMitigationService {
 
         private final SettlementTreesMitigationRepository repository;
+        private final SettlementTreesParameterService settlementTreesParameterService;
+        private final BAURepository bauRepository;
+        private final InterventionRepository interventionRepository;
+
+        private static Double apply(SettlementTreesMitigation settlementTreesMitigation) {
+                return settlementTreesMitigation.getNumberOfTreesPlanted()
+                                + settlementTreesMitigation.getCumulativeNumberOfTrees();
+        }
+
+        /**
+         * Maps SettlementTreesMitigation entity to Response DTO
+         * This method loads intervention data within the transaction to avoid lazy
+         * loading issues
+         */
+        private SettlementTreesMitigationResponseDto toResponseDto(SettlementTreesMitigation mitigation) {
+                SettlementTreesMitigationResponseDto dto = new SettlementTreesMitigationResponseDto();
+                dto.setId(mitigation.getId());
+                dto.setYear(mitigation.getYear());
+                dto.setCumulativeNumberOfTrees(mitigation.getCumulativeNumberOfTrees());
+                dto.setNumberOfTreesPlanted(mitigation.getNumberOfTreesPlanted());
+                dto.setAgbSingleTreeCurrentYear(mitigation.getAgbSingleTreeCurrentYear());
+                dto.setAgbGrowth(mitigation.getAgbGrowth());
+                dto.setAboveGroundBiomassGrowth(mitigation.getAboveGroundBiomassGrowth());
+                dto.setTotalBiomass(mitigation.getTotalBiomass());
+                dto.setBiomassCarbonIncrease(mitigation.getBiomassCarbonIncrease());
+                dto.setMitigatedEmissionsKtCO2e(mitigation.getMitigatedEmissionsKtCO2e());
+                dto.setAdjustmentMitigation(mitigation.getAdjustmentMitigation());
+                dto.setCreatedAt(mitigation.getCreatedAt());
+                dto.setUpdatedAt(mitigation.getUpdatedAt());
+
+                // Map intervention - FORCE initialization within transaction to avoid lazy
+                // loading
+                if (mitigation.getIntervention() != null) {
+                        Hibernate.initialize(mitigation.getIntervention());
+                        Intervention intervention = mitigation.getIntervention();
+                        SettlementTreesMitigationResponseDto.InterventionInfo interventionInfo = new SettlementTreesMitigationResponseDto.InterventionInfo(
+                                        intervention.getId(),
+                                        intervention.getName());
+                        dto.setIntervention(interventionInfo);
+                } else {
+                        dto.setIntervention(null);
+                }
+
+                return dto;
+        }
 
         @Override
-        public SettlementTreesMitigation createSettlementTreesMitigation(SettlementTreesMitigationDto dto) {
+        @Transactional
+        public SettlementTreesMitigationResponseDto createSettlementTreesMitigation(SettlementTreesMitigationDto dto) {
+                // Fetch the latest active parameter - throws exception if none exists
+                SettlementTreesParameterResponseDto param;
+                try {
+                        param = settlementTreesParameterService.getLatestActive();
+                } catch (RuntimeException e) {
+                        throw new RuntimeException(
+                                        "Cannot create Settlement Trees Mitigation: No active Settlement Trees Parameter found. "
+                                                        +
+                                                        "Please create an active parameter first before creating mitigation records.",
+                                        e);
+                }
+
                 SettlementTreesMitigation mitigation = new SettlementTreesMitigation();
+
                 Optional<SettlementTreesMitigation> lastYearRecord = repository
                                 .findTopByYearLessThanOrderByYearDesc(dto.getYear());
-                Double cumulativeNumberOfTrees = lastYearRecord
-                                .map(settlementTreesMitigation -> settlementTreesMitigation.getNumberOfTreesPlanted()
-                                                + settlementTreesMitigation.getCumulativeNumberOfTrees())
+                Double cumulativeNumberOfTrees = lastYearRecord.map(SettlementTreesMitigationServiceImpl::apply)
                                 .orElse(0.0);
                 Double agbSingleTreePrevYear = lastYearRecord
                                 .map(SettlementTreesMitigation::getAgbSingleTreeCurrentYear)
@@ -48,52 +113,91 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
                 mitigation.setYear(dto.getYear());
                 mitigation.setCumulativeNumberOfTrees(cumulativeNumberOfTrees);
                 mitigation.setNumberOfTreesPlanted(dto.getNumberOfTreesPlanted());
-                mitigation.setAgbSingleTreePreviousYear(agbSingleTreePrevYear);
                 mitigation.setAgbSingleTreeCurrentYear(agbCurrentYearInCubicMeters);
 
+                // Get values from parameter
+                double conversionM3ToTonnes = param.getConversationM3ToTonnes();
+                double ratioBGBToAGB = param.getRatioOfBelowGroundBiomass();
+                double carbonContent = param.getCarbonContent();
+                double carbonToC02 = param.getCarbonToC02();
+
                 // 1. Calculate AGB Growth (tonnes m3)
-                // AGB growth = AGB of single tree in current year - AGB of single tree in
-                // previous year
-                double agbGrowth = agbCurrentYearInCubicMeters - agbSingleTreePrevYear;
+                double agbGrowth = (agbCurrentYearInCubicMeters - agbSingleTreePrevYear) * cumulativeNumberOfTrees;
                 mitigation.setAgbGrowth(agbGrowth);
 
                 // 2. Calculate Aboveground Biomass Growth (tonnes DM)
-                // Aboveground Biomass Growth = Conversion m3 to tonnes DM × AGB growth ×
-                // Cumulative number of trees
-                double abovegroundBiomassGrowth = SettlementTreesConstants.CONVERSION_M3_TO_TONNES_DM.getValue() *
-                                agbGrowth *
-                                cumulativeNumberOfTrees;
-                mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
+                double aboveGroundBiomassGrowth = conversionM3ToTonnes * agbGrowth;
+                mitigation.setAboveGroundBiomassGrowth(aboveGroundBiomassGrowth);
 
                 // 3. Calculate Total Biomass (tonnes DM/year) - includes belowground
-                // Total biomass = Aboveground Biomass Growth × (1 + Ratio BGB to AGB)
-                double totalBiomass = abovegroundBiomassGrowth *
-                                (1 + SettlementTreesConstants.RATIO_BGB_TO_AGB.getValue());
+                double totalBiomass = (aboveGroundBiomassGrowth * ratioBGBToAGB) + aboveGroundBiomassGrowth;
                 mitigation.setTotalBiomass(totalBiomass);
 
                 // 4. Calculate Biomass Carbon Increase (tonnes C/year)
-                // Biomass carbon increase = Total biomass × Carbon content in dry wood
-                double biomassCarbonIncrease = totalBiomass *
-                                SettlementTreesConstants.CARBON_CONTENT_DRY_WOOD.getValue();
+                double biomassCarbonIncrease = totalBiomass * carbonContent;
                 mitigation.setBiomassCarbonIncrease(biomassCarbonIncrease);
 
                 // 5. Calculate Mitigated Emissions (Kt CO2e)
-                // Mitigated emissions = (Biomass carbon increase × Conversion C to CO2) / 1000
-                double mitigatedEmissions = (biomassCarbonIncrease *
-                                SettlementTreesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+                double mitigatedEmissions = (biomassCarbonIncrease * carbonToC02) / 1000.0;
                 mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
 
-                return repository.save(mitigation);
+                // 6. Calculate Adjustment Mitigation (Kilotonnes CO2)
+                BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                                .orElseThrow(() -> new RuntimeException(
+                                                String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
+                                                                mitigation.getYear())));
+                double adjustmentMitigation = bau.getValue() - mitigatedEmissions;
+                mitigation.setAdjustmentMitigation(adjustmentMitigation);
+
+                // Handle intervention if provided
+                if (dto.getInterventionId() != null) {
+                        Intervention intervention = interventionRepository.findById(dto.getInterventionId())
+                                        .orElseThrow(() -> new RuntimeException(
+                                                        "Intervention not found with id: " + dto.getInterventionId()));
+                        mitigation.setIntervention(intervention);
+                } else {
+                        mitigation.setIntervention(null);
+                }
+
+                SettlementTreesMitigation saved = repository.save(mitigation);
+
+                // CASCADE: Find and recalculate all subsequent years that depend on this new
+                // record
+                // This ensures cumulative calculations are correct when inserting a year in the
+                // middle
+                List<SettlementTreesMitigation> subsequentRecords = repository
+                                .findByYearGreaterThanOrderByYearAsc(dto.getYear());
+
+                for (SettlementTreesMitigation subsequent : subsequentRecords) {
+                        recalculateExistingRecord(subsequent, param);
+                        repository.save(subsequent);
+                }
+
+                return toResponseDto(saved);
         }
 
         @Override
-        public SettlementTreesMitigation updateSettlementTreesMitigation(UUID id, SettlementTreesMitigationDto dto) {
+        @Transactional
+        public SettlementTreesMitigationResponseDto updateSettlementTreesMitigation(UUID id,
+                        SettlementTreesMitigationDto dto) {
+                // Fetch the latest active parameter - throws exception if none exists
+                SettlementTreesParameterResponseDto param;
+                try {
+                        param = settlementTreesParameterService.getLatestActive();
+                } catch (RuntimeException e) {
+                        throw new RuntimeException(
+                                        "Cannot update Settlement Trees Mitigation: No active Settlement Trees Parameter found. "
+                                                        +
+                                                        "Please create an active parameter first before updating mitigation records.",
+                                        e);
+                }
+
                 SettlementTreesMitigation mitigation = repository.findById(id)
                                 .orElseThrow(() -> new RuntimeException(
                                                 "Settlement Trees Mitigation record not found with id: " + id));
 
                 // Update the current record
-                recalculateAndUpdateRecord(mitigation, dto);
+                recalculateAndUpdateRecord(mitigation, dto, param);
                 SettlementTreesMitigation updatedRecord = repository.save(mitigation);
 
                 // CASCADE: Find and recalculate all subsequent years
@@ -101,15 +205,28 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
                                 .findByYearGreaterThanOrderByYearAsc(dto.getYear());
 
                 for (SettlementTreesMitigation subsequent : subsequentRecords) {
-                        recalculateExistingRecord(subsequent);
+                        recalculateExistingRecord(subsequent, param);
                         repository.save(subsequent);
                 }
 
-                return updatedRecord;
+                return toResponseDto(updatedRecord);
         }
 
         @Override
+        @Transactional
         public void deleteSettlementTreesMitigation(UUID id) {
+                // Fetch the latest active parameter - throws exception if none exists
+                SettlementTreesParameterResponseDto param;
+                try {
+                        param = settlementTreesParameterService.getLatestActive();
+                } catch (RuntimeException e) {
+                        throw new RuntimeException(
+                                        "Cannot delete Settlement Trees Mitigation: No active Settlement Trees Parameter found. "
+                                                        +
+                                                        "Please create an active parameter first before deleting mitigation records.",
+                                        e);
+                }
+
                 SettlementTreesMitigation mitigation = repository.findById(id)
                                 .orElseThrow(() -> new RuntimeException(
                                                 "Settlement Trees Mitigation record not found with id: " + id));
@@ -122,7 +239,7 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
                 List<SettlementTreesMitigation> subsequentRecords = repository
                                 .findByYearGreaterThanOrderByYearAsc(year);
                 for (SettlementTreesMitigation subsequent : subsequentRecords) {
-                        recalculateExistingRecord(subsequent);
+                        recalculateExistingRecord(subsequent, param);
                         repository.save(subsequent);
                 }
         }
@@ -131,54 +248,65 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
          * Recalculates an existing record based on its current year and stored input
          * values
          */
-        private void recalculateExistingRecord(SettlementTreesMitigation mitigation) {
+        private void recalculateExistingRecord(SettlementTreesMitigation mitigation,
+                        SettlementTreesParameterResponseDto param) {
                 Optional<SettlementTreesMitigation> lastYearRecord = repository
                                 .findTopByYearLessThanOrderByYearDesc(mitigation.getYear());
-                Double cumulativeNumberOfTrees = lastYearRecord
-                                .map(settlementTreesMitigation -> settlementTreesMitigation.getNumberOfTreesPlanted()
-                                                + settlementTreesMitigation.getCumulativeNumberOfTrees())
+                Double cumulativeNumberOfTrees = lastYearRecord.map(SettlementTreesMitigationServiceImpl::apply)
                                 .orElse(0.0);
                 Double agbSingleTreePrevYear = lastYearRecord
                                 .map(SettlementTreesMitigation::getAgbSingleTreeCurrentYear)
                                 .orElse(0.0);
 
                 mitigation.setCumulativeNumberOfTrees(cumulativeNumberOfTrees);
-                mitigation.setAgbSingleTreePreviousYear(agbSingleTreePrevYear);
 
-                // Recalculate all derived fields using existing AGB value
+                // Get values from parameter
+                double conversionM3ToTonnes = param.getConversationM3ToTonnes();
+                double ratioBGBToAGB = param.getRatioOfBelowGroundBiomass();
+                double carbonContent = param.getCarbonContent();
+                double carbonToC02 = param.getCarbonToC02();
+
+                // Recalculate all derived fields using existing AGB value (matching create
+                // method logic)
                 double agbCurrentYearInCubicMeters = mitigation.getAgbSingleTreeCurrentYear();
 
-                double agbGrowth = agbCurrentYearInCubicMeters - agbSingleTreePrevYear;
+                // 1. Calculate AGB Growth (tonnes m3)
+                double agbGrowth = (agbCurrentYearInCubicMeters - agbSingleTreePrevYear) * cumulativeNumberOfTrees;
                 mitigation.setAgbGrowth(agbGrowth);
 
-                double abovegroundBiomassGrowth = SettlementTreesConstants.CONVERSION_M3_TO_TONNES_DM.getValue() *
-                                agbGrowth *
-                                cumulativeNumberOfTrees;
-                mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
+                // 2. Calculate Aboveground Biomass Growth (tonnes DM)
+                double aboveGroundBiomassGrowth = conversionM3ToTonnes * agbGrowth;
+                mitigation.setAboveGroundBiomassGrowth(aboveGroundBiomassGrowth);
 
-                double totalBiomass = abovegroundBiomassGrowth *
-                                (1 + SettlementTreesConstants.RATIO_BGB_TO_AGB.getValue());
+                // 3. Calculate Total Biomass (tonnes DM/year) - includes belowground
+                double totalBiomass = (aboveGroundBiomassGrowth * ratioBGBToAGB) + aboveGroundBiomassGrowth;
                 mitigation.setTotalBiomass(totalBiomass);
 
-                double biomassCarbonIncrease = totalBiomass *
-                                SettlementTreesConstants.CARBON_CONTENT_DRY_WOOD.getValue();
+                // 4. Calculate Biomass Carbon Increase (tonnes C/year)
+                double biomassCarbonIncrease = totalBiomass * carbonContent;
                 mitigation.setBiomassCarbonIncrease(biomassCarbonIncrease);
 
-                double mitigatedEmissions = (biomassCarbonIncrease *
-                                SettlementTreesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+                // 5. Calculate Mitigated Emissions (Kt CO2e)
+                double mitigatedEmissions = (biomassCarbonIncrease * carbonToC02) / 1000.0;
                 mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
+
+                // 6. Calculate Adjustment Mitigation (Kilotonnes CO2)
+                BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                                .orElseThrow(() -> new RuntimeException(
+                                                String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
+                                                                mitigation.getYear())));
+                double adjustmentMitigation = bau.getValue() - mitigatedEmissions;
+                mitigation.setAdjustmentMitigation(adjustmentMitigation);
         }
 
         /**
          * Recalculates a record with new DTO values
          */
         private void recalculateAndUpdateRecord(SettlementTreesMitigation mitigation,
-                        SettlementTreesMitigationDto dto) {
+                        SettlementTreesMitigationDto dto, SettlementTreesParameterResponseDto param) {
                 Optional<SettlementTreesMitigation> lastYearRecord = repository
                                 .findTopByYearLessThanOrderByYearDesc(dto.getYear());
-                Double cumulativeNumberOfTrees = lastYearRecord
-                                .map(settlementTreesMitigation -> settlementTreesMitigation.getNumberOfTreesPlanted()
-                                                + settlementTreesMitigation.getCumulativeNumberOfTrees())
+                Double cumulativeNumberOfTrees = lastYearRecord.map(SettlementTreesMitigationServiceImpl::apply)
                                 .orElse(0.0);
                 Double agbSingleTreePrevYear = lastYearRecord
                                 .map(SettlementTreesMitigation::getAgbSingleTreeCurrentYear)
@@ -191,41 +319,72 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
                 mitigation.setYear(dto.getYear());
                 mitigation.setCumulativeNumberOfTrees(cumulativeNumberOfTrees);
                 mitigation.setNumberOfTreesPlanted(dto.getNumberOfTreesPlanted());
-                mitigation.setAgbSingleTreePreviousYear(agbSingleTreePrevYear);
                 mitigation.setAgbSingleTreeCurrentYear(agbCurrentYearInCubicMeters);
 
-                // Recalculate derived fields
-                double agbGrowth = agbCurrentYearInCubicMeters - agbSingleTreePrevYear;
+                // Get values from parameter
+                double conversionM3ToTonnes = param.getConversationM3ToTonnes();
+                double ratioBGBToAGB = param.getRatioOfBelowGroundBiomass();
+                double carbonContent = param.getCarbonContent();
+                double carbonToC02 = param.getCarbonToC02();
+
+                // Recalculate derived fields using parameter values (matching create method
+                // logic)
+                // 1. Calculate AGB Growth (tonnes m3)
+                double agbGrowth = (agbCurrentYearInCubicMeters - agbSingleTreePrevYear) * cumulativeNumberOfTrees;
                 mitigation.setAgbGrowth(agbGrowth);
 
-                double abovegroundBiomassGrowth = SettlementTreesConstants.CONVERSION_M3_TO_TONNES_DM.getValue() *
-                                agbGrowth *
-                                cumulativeNumberOfTrees;
-                mitigation.setAbovegroundBiomassGrowth(abovegroundBiomassGrowth);
+                // 2. Calculate Aboveground Biomass Growth (tonnes DM)
+                double aboveGroundBiomassGrowth = conversionM3ToTonnes * agbGrowth;
+                mitigation.setAboveGroundBiomassGrowth(aboveGroundBiomassGrowth);
 
-                double totalBiomass = abovegroundBiomassGrowth *
-                                (1 + SettlementTreesConstants.RATIO_BGB_TO_AGB.getValue());
+                // 3. Calculate Total Biomass (tonnes DM/year) - includes belowground
+                double totalBiomass = (aboveGroundBiomassGrowth * ratioBGBToAGB) + aboveGroundBiomassGrowth;
                 mitigation.setTotalBiomass(totalBiomass);
 
-                double biomassCarbonIncrease = totalBiomass *
-                                SettlementTreesConstants.CARBON_CONTENT_DRY_WOOD.getValue();
+                // 4. Calculate Biomass Carbon Increase (tonnes C/year)
+                double biomassCarbonIncrease = totalBiomass * carbonContent;
                 mitigation.setBiomassCarbonIncrease(biomassCarbonIncrease);
 
-                double mitigatedEmissions = (biomassCarbonIncrease *
-                                SettlementTreesConstants.CONVERSION_C_TO_CO2.getValue()) / 1000.0;
+                // 5. Calculate Mitigated Emissions (Kt CO2e)
+                double mitigatedEmissions = (biomassCarbonIncrease * carbonToC02) / 1000.0;
                 mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
+
+                // 6. Calculate Adjustment Mitigation (Kilotonnes CO2)
+                BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
+                                .orElseThrow(() -> new RuntimeException(
+                                                String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
+                                                                mitigation.getYear())));
+                double adjustmentMitigation = bau.getValue() - mitigatedEmissions;
+                mitigation.setAdjustmentMitigation(adjustmentMitigation);
+
+                // Handle intervention if provided
+                if (dto.getInterventionId() != null) {
+                        Intervention intervention = interventionRepository.findById(dto.getInterventionId())
+                                        .orElseThrow(() -> new RuntimeException(
+                                                        "Intervention not found with id: " + dto.getInterventionId()));
+                        mitigation.setIntervention(intervention);
+                } else {
+                        mitigation.setIntervention(null);
+                }
         }
 
         @Override
-        public List<SettlementTreesMitigation> getAllSettlementTreesMitigation(Integer year) {
+        @Transactional(readOnly = true)
+        public List<SettlementTreesMitigationResponseDto> getAllSettlementTreesMitigation(Integer year) {
                 Specification<SettlementTreesMitigation> spec = Specification
                                 .<SettlementTreesMitigation>where(MitigationSpecifications.hasYear(year));
-                return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+                List<SettlementTreesMitigation> mitigations = repository.findAll(spec,
+                                Sort.by(Sort.Direction.ASC, "year"));
+                return mitigations.stream()
+                                .map(this::toResponseDto)
+                                .collect(java.util.stream.Collectors.toList());
         }
 
         @Override
-        public Optional<SettlementTreesMitigation> getByYear(Integer year) {
-                return repository.findByYear(year);
+        @Transactional(readOnly = true)
+        public Optional<SettlementTreesMitigationResponseDto> getByYear(Integer year) {
+                return repository.findByYear(year)
+                                .map(this::toResponseDto);
         }
 
         @Override
@@ -451,8 +610,12 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
 
         @Override
         public Map<String, Object> createSettlementTreesMitigationFromExcel(MultipartFile file) {
-                List<SettlementTreesMitigation> savedRecords = new ArrayList<>();
+                List<SettlementTreesMitigationResponseDto> savedRecords = new ArrayList<>();
                 List<Integer> skippedYears = new ArrayList<>();
+                List<Map<String, Object>> skippedParameterNotFound = new ArrayList<>();
+                List<Map<String, Object>> skippedInterventionNotFound = new ArrayList<>();
+                List<Map<String, Object>> skippedMissingFields = new ArrayList<>();
+                List<Map<String, Object>> skippedBAUNotFound = new ArrayList<>();
                 int totalProcessed = 0;
 
                 try {
@@ -461,11 +624,35 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
                                         SettlementTreesMitigationDto.class,
                                         ExcelType.SETTLEMENT_TREES_MITIGATION);
 
+                        // Create a list of DTOs with their original row numbers for error reporting
+                        List<Map.Entry<SettlementTreesMitigationDto, Integer>> dtoWithRowNumbers = new ArrayList<>();
                         for (int i = 0; i < dtos.size(); i++) {
-                                SettlementTreesMitigationDto dto = dtos.get(i);
+                                dtoWithRowNumbers.add(new AbstractMap.SimpleEntry<>(dtos.get(i), i));
+                        }
+
+                        // Sort by year (ascending) to ensure cumulative calculations are correct
+                        // This ensures that when processing new records, they are processed in chronological order
+                        // Skipped years (already exist) will still work correctly because they query the database
+                        dtoWithRowNumbers.sort((entry1, entry2) -> {
+                                Integer year1 = entry1.getKey().getYear();
+                                Integer year2 = entry2.getKey().getYear();
+                                // Handle null years - put them at the end
+                                if (year1 == null && year2 == null)
+                                        return 0;
+                                if (year1 == null)
+                                        return 1;
+                                if (year2 == null)
+                                        return -1;
+                                return year1.compareTo(year2);
+                        });
+
+                        for (Map.Entry<SettlementTreesMitigationDto, Integer> entry : dtoWithRowNumbers) {
+                                SettlementTreesMitigationDto dto = entry.getKey();
+                                int originalIndex = entry.getValue();
                                 totalProcessed++;
-                                int actualRowNumber = i + 1 + 3; // +1 for 1-based, +3 for title(1) + blank(1) +
-                                                                 // header(1)
+                                int rowNumber = originalIndex + 1; // Excel row number (1-based, accounting for header
+                                                                   // row)
+                                int excelRowNumber = rowNumber + 2; // +2 for header row and 0-based index
 
                                 // Validate required fields
                                 List<String> missingFields = new ArrayList<>();
@@ -483,10 +670,34 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
                                 }
 
                                 if (!missingFields.isEmpty()) {
-                                        throw new RuntimeException(String.format(
-                                                        "Missing required fields: %s. Please fill in all required fields in your Excel file.",
-                                                        String.join(", ", missingFields)));
+                                        Map<String, Object> skipInfo = new HashMap<>();
+                                        skipInfo.put("row", excelRowNumber);
+                                        skipInfo.put("year", dto.getYear() != null ? dto.getYear() : "N/A");
+                                        skipInfo.put("reason",
+                                                        "Missing required fields: " + String.join(", ", missingFields));
+                                        skippedMissingFields.add(skipInfo);
+                                        continue; // Skip this row
                                 }
+
+                                // Handle intervention name from Excel - convert to interventionId
+                                if (dto.getInterventionName() != null && !dto.getInterventionName().trim().isEmpty()) {
+                                        String interventionName = dto.getInterventionName().trim();
+                                        Optional<Intervention> intervention = interventionRepository
+                                                        .findByNameIgnoreCase(interventionName);
+                                        if (intervention.isPresent()) {
+                                                dto.setInterventionId(intervention.get().getId());
+                                        } else {
+                                                Map<String, Object> skipInfo = new HashMap<>();
+                                                skipInfo.put("row", excelRowNumber);
+                                                skipInfo.put("year", dto.getYear());
+                                                skipInfo.put("reason",
+                                                                String.format("Intervention '%s' not found", interventionName));
+                                                skippedInterventionNotFound.add(skipInfo);
+                                                continue; // Skip this row
+                                        }
+                                }
+                                // Clear the temporary interventionName field
+                                dto.setInterventionName(null);
 
                                 // Check if year already exists
                                 if (repository.findByYear(dto.getYear()).isPresent()) {
@@ -494,16 +705,53 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
                                         continue; // Skip this row
                                 }
 
-                                // Create the record
-                                SettlementTreesMitigation saved = createSettlementTreesMitigation(dto);
-                                savedRecords.add(saved);
+                                // Try to create the record - catch specific errors and skip instead of failing
+                                try {
+                                        SettlementTreesMitigationResponseDto saved = createSettlementTreesMitigation(dto);
+                                        savedRecords.add(saved);
+                                } catch (RuntimeException e) {
+                                        String errorMessage = e.getMessage();
+                                        if (errorMessage != null) {
+                                                // Check for Settlement Trees Parameter not found error
+                                                if (errorMessage.contains("Settlement Trees Parameter") ||
+                                                                errorMessage.contains("active parameter") ||
+                                                                errorMessage.contains("No active Settlement Trees Parameter")) {
+                                                        Map<String, Object> skipInfo = new HashMap<>();
+                                                        skipInfo.put("row", excelRowNumber);
+                                                        skipInfo.put("year", dto.getYear());
+                                                        skipInfo.put("reason", errorMessage);
+                                                        skippedParameterNotFound.add(skipInfo);
+                                                        continue; // Skip this row
+                                                }
+                                                // Check for BAU not found error - skip in Excel upload, but single form upload will throw error
+                                                if (errorMessage.contains("BAU record") && errorMessage.contains("not found")) {
+                                                        Map<String, Object> skipInfo = new HashMap<>();
+                                                        skipInfo.put("row", excelRowNumber);
+                                                        skipInfo.put("year", dto.getYear());
+                                                        skipInfo.put("reason", errorMessage);
+                                                        skippedBAUNotFound.add(skipInfo);
+                                                        continue; // Skip this row
+                                                }
+                                        }
+                                        // If it's a different error, re-throw it (e.g., file format issues)
+                                        throw e;
+                                }
                         }
+
+                        // Calculate total skipped count
+                        int totalSkipped = skippedYears.size() + skippedParameterNotFound.size() +
+                                        skippedInterventionNotFound.size() + skippedMissingFields.size() +
+                                        skippedBAUNotFound.size();
 
                         Map<String, Object> result = new HashMap<>();
                         result.put("saved", savedRecords);
                         result.put("savedCount", savedRecords.size());
-                        result.put("skippedCount", skippedYears.size());
+                        result.put("skippedCount", totalSkipped);
                         result.put("skippedYears", skippedYears);
+                        result.put("skippedParameterNotFound", skippedParameterNotFound);
+                        result.put("skippedInterventionNotFound", skippedInterventionNotFound);
+                        result.put("skippedMissingFields", skippedMissingFields);
+                        result.put("skippedBAUNotFound", skippedBAUNotFound);
                         result.put("totalProcessed", totalProcessed);
 
                         return result;

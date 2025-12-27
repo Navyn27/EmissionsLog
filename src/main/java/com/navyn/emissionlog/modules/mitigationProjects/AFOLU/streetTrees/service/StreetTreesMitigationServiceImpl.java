@@ -223,7 +223,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
         Integer year = mitigation.getYear();
         repository.delete(mitigation);
 
-        // Recalculate all subsequent years as cumulative fields depend on previous
+        // Recalculate all later years as cumulative fields depend on previous
         // records
         List<StreetTreesMitigation> subsequentRecords = repository.findByYearGreaterThanOrderByYearAsc(year);
         for (StreetTreesMitigation subsequent : subsequentRecords) {
@@ -277,7 +277,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                 carbonToC02) / 1000.0;
         mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
 
-        // Calculate Adjustment Mitigation (Kilotonnes CO2)
+        // Calculate Adjustment Mitigation (Kilotons CO2)
         BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
                 .orElseThrow(() -> new RuntimeException(
                         String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
@@ -334,7 +334,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                 carbonToC02) / 1000.0;
         mitigation.setMitigatedEmissionsKtCO2e(mitigatedEmissions);
 
-        // 6. Calculate Adjustment Mitigation (Kilotonnes CO2)
+        // 6. Calculate Adjustment Mitigation (Kilotons CO2)
         BAU bau = bauRepository.findByYearAndSector(mitigation.getYear(), ESector.AFOLU)
                 .orElseThrow(() -> new RuntimeException(
                         String.format("BAU record for AFOLU sector and year %d not found. Please create a BAU record first.",
@@ -522,7 +522,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
 
             // Data validation for Intervention column (Column E, index 4) - optional, can be empty
             if (interventionNames.length > 0) {
-                // Add empty string option for optional field
+                // Add an empty string option for optional field
                 String[] interventionOptions = new String[interventionNames.length + 1];
                 interventionOptions[0] = ""; // Empty option
                 System.arraycopy(interventionNames, 0, interventionOptions, 1, interventionNames.length);
@@ -630,6 +630,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
         List<Map<String, Object>> skippedParameterNotFound = new ArrayList<>();
         List<Map<String, Object>> skippedInterventionNotFound = new ArrayList<>();
         List<Map<String, Object>> skippedMissingFields = new ArrayList<>();
+        List<Map<String, Object>> skippedBAUNotFound = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -730,6 +731,15 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
                             skippedParameterNotFound.add(skipInfo);
                             continue; // Skip this row
                         }
+                        // Check for BAU not found error - skip in Excel upload, but single form upload will throw error
+                        if (errorMessage.contains("BAU record") && errorMessage.contains("not found")) {
+                            Map<String, Object> skipInfo = new HashMap<>();
+                            skipInfo.put("row", excelRowNumber);
+                            skipInfo.put("year", dto.getYear());
+                            skipInfo.put("reason", errorMessage);
+                            skippedBAUNotFound.add(skipInfo);
+                            continue; // Skip this row
+                        }
                     }
                     // If it's a different error, re-throw it (e.g., file format issues)
                     throw e;
@@ -738,7 +748,8 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
 
             // Calculate total skipped count
             int totalSkipped = skippedYears.size() + skippedParameterNotFound.size() + 
-                              skippedInterventionNotFound.size() + skippedMissingFields.size();
+                              skippedInterventionNotFound.size() + skippedMissingFields.size() +
+                              skippedBAUNotFound.size();
 
             Map<String, Object> result = new HashMap<>();
             result.put("saved", savedRecords);
@@ -748,6 +759,7 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
             result.put("skippedParameterNotFound", skippedParameterNotFound);
             result.put("skippedInterventionNotFound", skippedInterventionNotFound);
             result.put("skippedMissingFields", skippedMissingFields);
+            result.put("skippedBAUNotFound", skippedBAUNotFound);
             result.put("totalProcessed", totalProcessed);
 
             return result;
