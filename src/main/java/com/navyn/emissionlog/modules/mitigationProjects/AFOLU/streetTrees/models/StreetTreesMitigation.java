@@ -53,7 +53,6 @@ public class StreetTreesMitigation {
     // ===== INTERVENTION RELATIONSHIP =====
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "intervention_id", nullable = true)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Intervention intervention;
     @CreationTimestamp
     @Column(updatable = false)
