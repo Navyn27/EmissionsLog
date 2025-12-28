@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.service;
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.KigaliFSTPMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.models.KigaliFSTPMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.KigaliFSTPMitigationResponseDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -10,13 +10,13 @@ import java.util.UUID;
 
 public interface KigaliFSTPMitigationService {
     
-    KigaliFSTPMitigation createKigaliFSTPMitigation(KigaliFSTPMitigationDto dto);
+    KigaliFSTPMitigationResponseDto createKigaliFSTPMitigation(KigaliFSTPMitigationDto dto);
     
-    KigaliFSTPMitigation updateKigaliFSTPMitigation(UUID id, KigaliFSTPMitigationDto dto);
+    KigaliFSTPMitigationResponseDto updateKigaliFSTPMitigation(UUID id, KigaliFSTPMitigationDto dto);
     
     void deleteKigaliFSTPMitigation(UUID id);
     
-    List<KigaliFSTPMitigation> getAllKigaliFSTPMitigation(Integer year);
+    List<KigaliFSTPMitigationResponseDto> getAllKigaliFSTPMitigation(Integer year);
 
     byte[] generateExcelTemplate();
 

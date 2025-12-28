@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.KigaliFSTPMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.models.KigaliFSTPMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.KigaliFSTPMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.service.KigaliFSTPMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,11 +28,11 @@ public class KigaliFSTPMitigationController {
     private final KigaliFSTPMitigationService service;
     
     @Operation(summary = "Create Kigali FSTP mitigation record", 
-               description = "Creates a new Kigali Fecal Sludge Treatment Plant (FSTP) mitigation project record at Masaka with phase-based capacity calculations")
+               description = "Creates a new Kigali Fecal Sludge Treatment Plant (FSTP) mitigation project record at Masaka with annual sludge treatment calculations")
     @PostMapping
     public ResponseEntity<ApiResponse> createKigaliFSTPMitigation(
             @Valid @RequestBody KigaliFSTPMitigationDto dto) {
-        KigaliFSTPMitigation mitigation = service.createKigaliFSTPMitigation(dto);
+        KigaliFSTPMitigationResponseDto mitigation = service.createKigaliFSTPMitigation(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Kigali FSTP mitigation record created successfully", mitigation));
     }
@@ -44,7 +43,7 @@ public class KigaliFSTPMitigationController {
     public ResponseEntity<ApiResponse> updateKigaliFSTPMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody KigaliFSTPMitigationDto dto) {
-        KigaliFSTPMitigation mitigation = service.updateKigaliFSTPMitigation(id, dto);
+        KigaliFSTPMitigationResponseDto mitigation = service.updateKigaliFSTPMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(true, "Kigali FSTP mitigation record updated successfully", mitigation));
     }
     
@@ -53,7 +52,7 @@ public class KigaliFSTPMitigationController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllKigaliFSTPMitigation(
             @RequestParam(required = false) Integer year) {
-        List<KigaliFSTPMitigation> mitigations = service.getAllKigaliFSTPMitigation(year);
+        List<KigaliFSTPMitigationResponseDto> mitigations = service.getAllKigaliFSTPMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Kigali FSTP mitigation records fetched successfully", mitigations));
     }
     
@@ -90,9 +89,6 @@ public class KigaliFSTPMitigationController {
         int skippedCount = (Integer) result.get("skippedCount");
         @SuppressWarnings("unchecked")
         List<Integer> skippedYears = (List<Integer>) result.get("skippedYears");
-        @SuppressWarnings("unchecked")
-        List<Integer> skippedPhaseRows = (List<Integer>) result.getOrDefault("skippedPhaseRows", new ArrayList<>());
-        int skippedPhaseCount = (Integer) result.getOrDefault("skippedPhaseCount", 0);
 
         StringBuilder messageBuilder = new StringBuilder();
         messageBuilder.append(String.format("Upload completed. %d record(s) saved successfully.", savedCount));
@@ -100,11 +96,6 @@ public class KigaliFSTPMitigationController {
         if (skippedCount > 0) {
             messageBuilder.append(String.format(" %d record(s) skipped (years already exist: %s).",
                     skippedCount, skippedYears.isEmpty() ? "none" : skippedYears.toString()));
-        }
-        
-        if (skippedPhaseCount > 0) {
-            messageBuilder.append(String.format(" %d record(s) skipped (phase precedence violation: %s).",
-                    skippedPhaseCount, skippedPhaseRows.isEmpty() ? "none" : skippedPhaseRows.toString()));
         }
 
         return ResponseEntity.ok(new ApiResponse(true, messageBuilder.toString(), result));
