@@ -32,7 +32,7 @@ public class LandfillGasParameterController {
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Landfill Gas Parameter created successfully", parameter));
     }
-
+//revised none
     @Operation(summary = "Update Landfill Gas Parameter",
             description = "Updates an existing Landfill Gas Parameter")
     @PutMapping("/{id}")
