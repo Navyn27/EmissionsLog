@@ -34,11 +34,11 @@ public class KigaliFSTPMitigation {
     private Intervention projectIntervention; // Foreign key to Intervention table
     
     // Calculated fields
-    @Column(nullable = false, name = "methane_potential")
-    private Double methanePotential; // kg CH4 per m³ (calculated from parameters)
+    @Column(nullable = true, name = "methane_potential")
+    private Double methanePotential; // kg CH4 per m³ (calculated from parameters) - nullable for migration
     
-    @Column(nullable = false, name = "co2e_per_m3_sludge")
-    private Double co2ePerM3Sludge; // kg CO2e per m³ (calculated)
+    @Column(nullable = true, name = "co2e_per_m3_sludge")
+    private Double co2ePerM3Sludge; // kg CO2e per m³ (calculated) - nullable for migration
     
     @Column(nullable = false, name = "annual_emissions_reduction_tonnes")
     private Double annualEmissionsReductionTonnes; // tCO2e
@@ -46,8 +46,8 @@ public class KigaliFSTPMitigation {
     @Column(nullable = false, name = "annual_emissions_reduction_kilotonnes")
     private Double annualEmissionsReductionKilotonnes; // ktCO2e
     
-    @Column(nullable = false, name = "adjusted_bau_emission_mitigation")
-    private Double adjustedBauEmissionMitigation; // ktCO2e
+    @Column(nullable = true, name = "adjusted_bau_emission_mitigation")
+    private Double adjustedBauEmissionMitigation; // ktCO2e - nullable for migration
     
     @CreationTimestamp
     @Column(updatable = false)

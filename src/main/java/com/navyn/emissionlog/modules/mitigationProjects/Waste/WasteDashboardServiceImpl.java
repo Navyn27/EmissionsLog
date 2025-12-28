@@ -982,12 +982,13 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         CellStyle alternateDataStyle, CellStyle numberStyle, List<KigaliFSTPMitigation> data) {
                 String[] headers = {
                                 "Year",
-                                "Project Phase",
-                                "Phase Capacity (m3/day)",
-                                "Operational Efficiency",
-                                "Effective Daily Treatment (m3/day)",
-                                "Annual Sludge Treated (m3/year)",
-                                "Annual Emissions Reduction (ktCO2e)"
+                                "Annual Sludge Treated (m³/year)",
+                                "Project Intervention",
+                                "Methane Potential (kg CH4/m³)",
+                                "CO₂e per m³ sludge (kg CO2e/m³)",
+                                "Annual Emissions Reduction (tCO2e)",
+                                "Annual Emissions Reduction (ktCO2e)",
+                                "Adjusted BAU Emission Mitigation (ktCO2e)"
                 };
                 createHeader(sheet, headerStyle, headers);
                 DataFormat dataFormat = sheet.getWorkbook().createDataFormat();
@@ -1008,37 +1009,41 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         yearCellStyle.setDataFormat(dataFormat.getFormat("0"));
                         yearCell.setCellStyle(yearCellStyle);
 
-                        // Text column (Project Phase)
-                        Cell textCell = r.createCell(1);
-                        textCell.setCellValue(
-                                        item.getProjectPhase() != null ? item.getProjectPhase().name() : "");
+                        // Number columns
+                        CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook())
+                                        : numberStyle;
+                        r.createCell(1).setCellValue(
+                                        item.getAnnualSludgeTreated() != null ? item.getAnnualSludgeTreated() : 0.0);
+                        r.getCell(1).setCellStyle(numStyle);
+                        
+                        // Project Intervention column (text)
+                        Cell interventionCell = r.createCell(2);
+                        interventionCell.setCellValue(
+                                        item.getProjectIntervention() != null ? item.getProjectIntervention().getName() : "");
                         CellStyle baseTextStyle = isAlternate ? alternateDataStyle : dataStyle;
                         CellStyle textCellStyle = sheet.getWorkbook().createCellStyle();
                         textCellStyle.cloneStyleFrom(baseTextStyle);
                         textCellStyle.setAlignment(HorizontalAlignment.LEFT);
-                        textCell.setCellStyle(textCellStyle);
-
-                        // Number columns
-                        CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook())
-                                        : numberStyle;
-                        r.createCell(2).setCellValue(
-                                        item.getPhaseCapacityPerDay() != null ? item.getPhaseCapacityPerDay() : 0.0);
-                        r.getCell(2).setCellStyle(numStyle);
-                        r.createCell(3).setCellValue(item.getPlantOperationalEfficiency() != null
-                                        ? item.getPlantOperationalEfficiency()
-                                        : 0.0);
+                        interventionCell.setCellStyle(textCellStyle);
+                        
+                        r.createCell(3).setCellValue(
+                                        item.getMethanePotential() != null ? item.getMethanePotential() : 0.0);
                         r.getCell(3).setCellStyle(numStyle);
                         r.createCell(4).setCellValue(
-                                        item.getEffectiveDailyTreatment() != null ? item.getEffectiveDailyTreatment()
-                                                        : 0.0);
+                                        item.getCo2ePerM3Sludge() != null ? item.getCo2ePerM3Sludge() : 0.0);
                         r.getCell(4).setCellStyle(numStyle);
-                        r.createCell(5).setCellValue(
-                                        item.getAnnualSludgeTreated() != null ? item.getAnnualSludgeTreated() : 0.0);
+                        r.createCell(5).setCellValue(item.getAnnualEmissionsReductionTonnes() != null
+                                        ? item.getAnnualEmissionsReductionTonnes()
+                                        : 0.0);
                         r.getCell(5).setCellStyle(numStyle);
                         r.createCell(6).setCellValue(item.getAnnualEmissionsReductionKilotonnes() != null
                                         ? item.getAnnualEmissionsReductionKilotonnes()
                                         : 0.0);
                         r.getCell(6).setCellStyle(numStyle);
+                        r.createCell(7).setCellValue(item.getAdjustedBauEmissionMitigation() != null
+                                        ? item.getAdjustedBauEmissionMitigation()
+                                        : 0.0);
+                        r.getCell(7).setCellStyle(numStyle);
                 }
                 autoSizeWithLimits(sheet, headers.length);
         }
