@@ -14,6 +14,7 @@ import org.apache.poi.xssf.usermodel.*;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
@@ -34,11 +35,13 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
     private final ISWMMitigationRepository repository;
     
     @Override
+    @Transactional
     public ISWMMitigation createISWMMitigation(ISWMMitigationDto dto) {
         ISWMMitigation mitigation = new ISWMMitigation();
         
         // Convert BAU Emission to standard units (tCO₂e)
-        double bauEmissionInTonnes = dto.getBauEmissionUnit().toKiloTonnesCO2e(dto.getBauEmission());
+        // Note: toKilotonnesCO2e() converts to kilotonnes, so multiply by 1000 to get tonnes
+        double bauEmissionInTonnes = dto.getBauEmissionUnit().toKiloTonnesCO2e(dto.getBauEmission()) * 1000.0;
         
         // Set user inputs
         mitigation.setYear(dto.getYear());
@@ -73,12 +76,14 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
     }
     
     @Override
+    @Transactional
     public ISWMMitigation updateISWMMitigation(UUID id, ISWMMitigationDto dto) {
         ISWMMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("ISWM Mitigation record not found with id: " + id));
         
         // Convert BAU Emission to standard units (tCO₂e)
-        double bauEmissionInTonnes = dto.getBauEmissionUnit().toKiloTonnesCO2e(dto.getBauEmission());
+        // Note: toKilotonnesCO2e() converts to kilotonnes, so multiply by 1000 to get tonnes
+        double bauEmissionInTonnes = dto.getBauEmissionUnit().toKiloTonnesCO2e(dto.getBauEmission()) * 1000.0;
         
         // Update user inputs
         mitigation.setYear(dto.getYear());
@@ -113,6 +118,7 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
     }
     
     @Override
+    @Transactional(readOnly = true)
     public List<ISWMMitigation> getAllISWMMitigation(Integer year) {
         Specification<ISWMMitigation> spec = Specification.where(hasYear(year));
         return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
@@ -259,6 +265,7 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
     public Map<String, Object> createISWMMitigationFromExcel(MultipartFile file) {
         List<ISWMMitigation> savedRecords = new ArrayList<>();
         List<Integer> skippedYears = new ArrayList<>();
+        List<Map<String, Object>> skippedMissingFields = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -270,7 +277,8 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
             for (int i = 0; i < dtos.size(); i++) {
                 ISWMMitigationDto dto = dtos.get(i);
                 totalProcessed++;
-                int actualRowNumber = i + 1 + 3;
+                int rowNumber = i + 1; // Excel row number (1-based, accounting for header row)
+                int excelRowNumber = rowNumber + 2; // +2 for header row and 0-based index
 
                 // Validate required fields
                 List<String> missingFields = new ArrayList<>();
@@ -283,31 +291,65 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
                 if (dto.getBauEmissionUnit() == null) missingFields.add("BAU Emission Unit");
 
                 if (!missingFields.isEmpty()) {
-                    throw new RuntimeException(String.format(
-                            "Row %d: Missing required fields: %s. Please fill in all required fields in your Excel file.",
-                            actualRowNumber, String.join(", ", missingFields)));
+                    Map<String, Object> skipInfo = new HashMap<>();
+                    skipInfo.put("row", excelRowNumber);
+                    skipInfo.put("year", dto.getYear() != null ? dto.getYear() : "N/A");
+                    skipInfo.put("reason", "Missing required fields: " + String.join(", ", missingFields));
+                    skippedMissingFields.add(skipInfo);
+                    continue; // Skip this row
                 }
 
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
                     skippedYears.add(dto.getYear());
-                    continue;
+                    continue; // Skip this row
                 }
 
                 // Create the record
-                ISWMMitigation saved = createISWMMitigation(dto);
-                savedRecords.add(saved);
+                try {
+                    ISWMMitigation saved = createISWMMitigation(dto);
+                    savedRecords.add(saved);
+                } catch (RuntimeException e) {
+                    // If there's an error creating the record, skip it and continue
+                    Map<String, Object> skipInfo = new HashMap<>();
+                    skipInfo.put("row", excelRowNumber);
+                    skipInfo.put("year", dto.getYear());
+                    skipInfo.put("reason", e.getMessage() != null ? e.getMessage() : "Error creating record");
+                    skippedMissingFields.add(skipInfo);
+                    continue;
+                }
             }
+
+            // Calculate total skipped count
+            int totalSkipped = skippedYears.size() + skippedMissingFields.size();
 
             Map<String, Object> result = new HashMap<>();
             result.put("savedCount", savedRecords.size());
-            result.put("skippedCount", skippedYears.size());
+            result.put("skippedCount", totalSkipped);
             result.put("skippedYears", skippedYears);
+            result.put("skippedMissingFields", skippedMissingFields);
             result.put("totalProcessed", totalProcessed);
             return result;
 
         } catch (IOException e) {
-            throw new RuntimeException(e.getMessage(), e);
+            // Re-throw IOException with user-friendly message
+            String message = e.getMessage();
+            if (message != null) {
+                throw new RuntimeException(message, e);
+            } else {
+                throw new RuntimeException("Incorrect template. Please download the correct template and try again.",
+                        e);
+            }
+        } catch (NullPointerException e) {
+            // Handle null pointer exceptions with clear message
+            throw new RuntimeException(
+                    "Missing required fields. Please fill in all required fields in your Excel file.", e);
+        } catch (Exception e) {
+            String errorMsg = e.getMessage();
+            if (errorMsg != null) {
+                throw new RuntimeException(errorMsg, e);
+            }
+            throw new RuntimeException("Error processing Excel file. Please check your file and try again.", e);
         }
     }
 
