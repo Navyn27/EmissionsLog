@@ -1,30 +1,36 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.service;
 
 import com.navyn.emissionlog.Enums.ExcelType;
-import com.navyn.emissionlog.Enums.Metrics.VolumePerTimeUnit;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.constants.KigaliFSTPConstants;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.constants.ProjectPhase;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.services.BAUService;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.ISWMParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.KigaliFSTPMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.KigaliFSTPMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.models.KigaliFSTPMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.repository.KigaliFSTPMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.*;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
@@ -34,124 +40,168 @@ import static com.navyn.emissionlog.utils.Specifications.MitigationSpecification
 public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationService {
     
     private final KigaliFSTPMitigationRepository repository;
+    private final ISWMParameterService parameterService;
+    private final InterventionRepository interventionRepository;
+    private final BAUService bauService;
     
-    @Override
-    public KigaliFSTPMitigation createKigaliFSTPMitigation(KigaliFSTPMitigationDto dto) {
-        // Validate phase precedence
-        validatePhasePrecedence(dto.getProjectPhase(), null);
+    /**
+     * Maps KigaliFSTPMitigation entity to Response DTO
+     * This method loads intervention data within the transaction to avoid lazy loading issues
+     */
+    private KigaliFSTPMitigationResponseDto toResponseDto(KigaliFSTPMitigation mitigation) {
+        KigaliFSTPMitigationResponseDto dto = new KigaliFSTPMitigationResponseDto();
+        dto.setId(mitigation.getId());
+        dto.setYear(mitigation.getYear());
+        dto.setAnnualSludgeTreated(mitigation.getAnnualSludgeTreated());
+        dto.setMethanePotential(mitigation.getMethanePotential());
+        dto.setCo2ePerM3Sludge(mitigation.getCo2ePerM3Sludge());
+        dto.setAnnualEmissionsReductionTonnes(mitigation.getAnnualEmissionsReductionTonnes());
+        dto.setAnnualEmissionsReductionKilotonnes(mitigation.getAnnualEmissionsReductionKilotonnes());
+        dto.setAdjustedBauEmissionMitigation(mitigation.getAdjustedBauEmissionMitigation());
+        dto.setCreatedAt(mitigation.getCreatedAt());
+        dto.setUpdatedAt(mitigation.getUpdatedAt());
 
+        // Map intervention - FORCE initialization within transaction to avoid lazy loading
+        if (mitigation.getProjectIntervention() != null) {
+            // Force Hibernate to initialize the proxy while session is still open
+            Hibernate.initialize(mitigation.getProjectIntervention());
+            com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention intervention = mitigation.getProjectIntervention();
+            KigaliFSTPMitigationResponseDto.InterventionInfo interventionInfo =
+                    new KigaliFSTPMitigationResponseDto.InterventionInfo(
+                            intervention.getId(),
+                            intervention.getName()
+                    );
+            dto.setProjectIntervention(interventionInfo);
+        } else {
+            dto.setProjectIntervention(null);
+        }
+
+        return dto;
+    }
+    
+    /**
+     * Internal method for Excel processing that returns entity
+     */
+    private KigaliFSTPMitigation createKigaliFSTPMitigationInternal(KigaliFSTPMitigationDto dto) {
         KigaliFSTPMitigation mitigation = new KigaliFSTPMitigation();
         
-        // Convert phase capacity to standard unit (m³/day)
-        double phaseCapacityInCubicMetersPerDay = dto.getPhaseCapacityUnit().toCubicMetersPerDay(dto.getPhaseCapacityPerDay());
+        // Get ISWMParameter (latest active)
+        ISWMParameterResponseDto paramDto = parameterService.getLatestActive();
         
-        // Set user inputs (store in standard units)
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+        
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+        
+        // Set user inputs
         mitigation.setYear(dto.getYear());
-        mitigation.setProjectPhase(dto.getProjectPhase());
-        mitigation.setPhaseCapacityPerDay(phaseCapacityInCubicMetersPerDay);
-        mitigation.setPlantOperationalEfficiency(dto.getPlantOperationalEfficiency());
+        mitigation.setAnnualSludgeTreated(dto.getAnnualSludgeTreated());
+        mitigation.setProjectIntervention(intervention);
         
         // Calculations
-        // 1. Effective Daily Treatment (m³/day) = Plant Operational Efficiency × Phase capacity (m³/day)
-        Double plantEfficiency = dto.getPlantOperationalEfficiency();
-        Double phaseCapacity = phaseCapacityInCubicMetersPerDay;
-        Double effectiveDailyTreatment = plantEfficiency * phaseCapacity;
-        mitigation.setEffectiveDailyTreatment(effectiveDailyTreatment);
+        // 1. MethanePotential (kg CH4 per m³) = MethaneEmissionFactor (kg CH4 per kg COD) × COD_Concentration (kg COD per m³)
+        Double methanePotential = paramDto.getMethaneEmissionFactor() * paramDto.getCodConcentration();
+        mitigation.setMethanePotential(methanePotential);
         
-        // 2. Annual Sludge Treated (m³) = Effective Daily Treatment (m³/day) × 365
-        Double annualSludgeTreated = effectiveDailyTreatment * 365;
-        mitigation.setAnnualSludgeTreated(annualSludgeTreated);
+        // 2. CO₂e per m³ sludge (kg CO2e per m³) = MethanePotential × CH₄ GWP (100-yr) (kg CO2e per kg CH4)
+        Double co2ePerM3Sludge = methanePotential * paramDto.getCh4Gwp100Year();
+        mitigation.setCo2ePerM3Sludge(co2ePerM3Sludge);
         
-        // 3. Annual Emissions Reduction (tCO₂e) = Annual Sludge Treated (m³) × CO₂e per m³ sludge (kg CO₂e per m³) / 1000
-        Double co2ePerM3 = KigaliFSTPConstants.CO2E_PER_M3_SLUDGE.getValue();
-        Double annualEmissionsReductionTonnes = (annualSludgeTreated * co2ePerM3) / 1000;
+        // 3. Annual Emissions Reduction (tCO₂e) = annualSludgeTreated (m³) × CO₂e per m³ sludge (kg CO₂e per m³) / 1000
+        Double annualEmissionsReductionTonnes = (dto.getAnnualSludgeTreated() * co2ePerM3Sludge) / 1000;
         mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
         
         // 4. Annual Emissions Reduction (ktCO₂e) = Annual Emissions Reduction (tCO₂e) / 1000
         Double annualEmissionsReductionKilotonnes = annualEmissionsReductionTonnes / 1000;
         mitigation.setAnnualEmissionsReductionKilotonnes(annualEmissionsReductionKilotonnes);
         
+        // 5. Adjusted BAU Emission Mitigation (ktCO₂e) = BAU (ktCO₂e) - Annual Emissions Reduction (ktCO₂e)
+        Double adjustedBauEmissionMitigation = bau.getValue() - annualEmissionsReductionKilotonnes;
+        mitigation.setAdjustedBauEmissionMitigation(adjustedBauEmissionMitigation);
+        
         return repository.save(mitigation);
     }
     
     @Override
-    public KigaliFSTPMitigation updateKigaliFSTPMitigation(UUID id, KigaliFSTPMitigationDto dto) {
+    @Transactional
+    public KigaliFSTPMitigationResponseDto createKigaliFSTPMitigation(KigaliFSTPMitigationDto dto) {
+        KigaliFSTPMitigation saved = createKigaliFSTPMitigationInternal(dto);
+        return toResponseDto(saved);
+    }
+    
+    @Override
+    @Transactional
+    public KigaliFSTPMitigationResponseDto updateKigaliFSTPMitigation(UUID id, KigaliFSTPMitigationDto dto) {
         KigaliFSTPMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Kigali FSTP Mitigation record not found with id: " + id));
         
-        // Validate phase precedence (exclude current record from validation)
-        validatePhasePrecedence(dto.getProjectPhase(), id);
-
-        // Convert phase capacity to standard unit (m³/day)
-        double phaseCapacityInCubicMetersPerDay = dto.getPhaseCapacityUnit().toCubicMetersPerDay(dto.getPhaseCapacityPerDay());
+        // Get ISWMParameter (latest active)
+        ISWMParameterResponseDto paramDto = parameterService.getLatestActive();
         
-        // Update user inputs (store in standard units)
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+        
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+        
+        // Update user inputs
         mitigation.setYear(dto.getYear());
-        mitigation.setProjectPhase(dto.getProjectPhase());
-        mitigation.setPhaseCapacityPerDay(phaseCapacityInCubicMetersPerDay);
-        mitigation.setPlantOperationalEfficiency(dto.getPlantOperationalEfficiency());
+        mitigation.setAnnualSludgeTreated(dto.getAnnualSludgeTreated());
+        mitigation.setProjectIntervention(intervention);
         
         // Recalculate derived fields
-        Double plantEfficiency = dto.getPlantOperationalEfficiency();
-        Double phaseCapacity = phaseCapacityInCubicMetersPerDay;
-        Double effectiveDailyTreatment = plantEfficiency * phaseCapacity;
-        mitigation.setEffectiveDailyTreatment(effectiveDailyTreatment);
+        // 1. MethanePotential
+        Double methanePotential = paramDto.getMethaneEmissionFactor() * paramDto.getCodConcentration();
+        mitigation.setMethanePotential(methanePotential);
         
-        Double annualSludgeTreated = effectiveDailyTreatment * 365;
-        mitigation.setAnnualSludgeTreated(annualSludgeTreated);
+        // 2. CO₂e per m³ sludge
+        Double co2ePerM3Sludge = methanePotential * paramDto.getCh4Gwp100Year();
+        mitigation.setCo2ePerM3Sludge(co2ePerM3Sludge);
         
-        Double co2ePerM3 = KigaliFSTPConstants.CO2E_PER_M3_SLUDGE.getValue();
-        Double annualEmissionsReductionTonnes = (annualSludgeTreated * co2ePerM3) / 1000;
+        // 3. Annual Emissions Reduction (tCO₂e)
+        Double annualEmissionsReductionTonnes = (dto.getAnnualSludgeTreated() * co2ePerM3Sludge) / 1000;
         mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
         
+        // 4. Annual Emissions Reduction (ktCO₂e)
         Double annualEmissionsReductionKilotonnes = annualEmissionsReductionTonnes / 1000;
         mitigation.setAnnualEmissionsReductionKilotonnes(annualEmissionsReductionKilotonnes);
         
-        return repository.save(mitigation);
+        // 5. Adjusted BAU Emission Mitigation
+        Double adjustedBauEmissionMitigation = bau.getValue() - annualEmissionsReductionKilotonnes;
+        mitigation.setAdjustedBauEmissionMitigation(adjustedBauEmissionMitigation);
+        
+        KigaliFSTPMitigation saved = repository.save(mitigation);
+        return toResponseDto(saved);
     }
     
     @Override
-    public List<KigaliFSTPMitigation> getAllKigaliFSTPMitigation(Integer year) {
+    @Transactional(readOnly = true)
+    public List<KigaliFSTPMitigationResponseDto> getAllKigaliFSTPMitigation(Integer year) {
         Specification<KigaliFSTPMitigation> spec = Specification.where(hasYear(year));
-        return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        List<KigaliFSTPMitigation> mitigations = repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        return mitigations.stream()
+                .map(this::toResponseDto)
+                .toList();
     }
 
     @Override
+    @Transactional
     public void deleteKigaliFSTPMitigation(UUID id) {
         if (!repository.existsById(id)) {
             throw new RuntimeException("Kigali FSTP Mitigation record not found with id: " + id);
         }
         repository.deleteById(id);
-    }
-
-    /**
-     * Validates that the new phase is not smaller than the maximum existing phase.
-     * Phases must progress in ascending order: NONE < PHASE_I < PHASE_II < PHASE_III
-     *
-     * @param newPhase The phase to validate
-     * @param excludeId ID to exclude from validation (for updates)
-     * @throws RuntimeException if phase precedence is violated
-     */
-    private void validatePhasePrecedence(ProjectPhase newPhase, UUID excludeId) {
-        // Get the maximum phase from existing records
-        repository.findTopByOrderByProjectPhaseDesc()
-            .ifPresent(maxRecord -> {
-                // Exclude the current record being updated
-                if (excludeId != null && maxRecord.getId().equals(excludeId)) {
-                    return;
-                }
-
-                ProjectPhase maxPhase = maxRecord.getProjectPhase();
-
-                // Check if new phase is smaller than max phase
-                if (newPhase.ordinal() < maxPhase.ordinal()) {
-                    throw new RuntimeException(
-                        String.format("Cannot set phase to %s. The project has already reached %s. " +
-                                     "Phases cannot go backward.",
-                                     newPhase.getDisplayName(), maxPhase.getDisplayName())
-                    );
-                }
-            });
     }
 
     @Override
@@ -186,7 +236,7 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Kigali FSTP Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
 
             rowIdx++; // Blank row
 
@@ -195,10 +245,8 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
             headerRow.setHeightInPoints(22);
             String[] headers = {
                     "Year",
-                    "Project Phase",
-                    "Phase Capacity Per Day",
-                    "Phase Capacity Unit",
-                    "Plant Operational Efficiency"
+                    "Annual Sludge Treated (m³/year)",
+                    "Project Intervention Name"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -207,44 +255,32 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
                 cell.setCellStyle(headerStyle);
             }
 
-            // Get enum values for dropdowns
-            String[] projectPhaseValues = Arrays.stream(ProjectPhase.values())
-                    .map(Enum::name)
-                    .toArray(String[]::new);
-            String[] volumePerTimeUnitValues = Arrays.stream(VolumePerTimeUnit.values())
-                    .map(Enum::name)
+            // Get all interventions for dropdown
+            List<Intervention> interventions = interventionRepository.findAll();
+            String[] interventionNames = interventions.stream()
+                    .map(Intervention::getName)
                     .toArray(String[]::new);
 
             // Create data validation helper
             DataValidationHelper validationHelper = sheet.getDataValidationHelper();
 
-            // Data validation for Project Phase column (Column B, index 1)
-            CellRangeAddressList phaseList = new CellRangeAddressList(3, 1000, 1, 1);
-            DataValidationConstraint phaseConstraint = validationHelper
-                    .createExplicitListConstraint(projectPhaseValues);
-            DataValidation phaseValidation = validationHelper.createValidation(phaseConstraint, phaseList);
-            phaseValidation.setShowErrorBox(true);
-            phaseValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            phaseValidation.createErrorBox("Invalid Project Phase", "Please select a valid project phase from the dropdown list.");
-            phaseValidation.setShowPromptBox(true);
-            phaseValidation.createPromptBox("Project Phase", "Select a project phase from the dropdown list.");
-            sheet.addValidationData(phaseValidation);
-
-            // Data validation for Phase Capacity Unit column (Column D, index 3)
-            CellRangeAddressList volumeUnitList = new CellRangeAddressList(3, 1000, 3, 3);
-            DataValidationConstraint volumeUnitConstraint = validationHelper
-                    .createExplicitListConstraint(volumePerTimeUnitValues);
-            DataValidation volumeUnitValidation = validationHelper.createValidation(volumeUnitConstraint, volumeUnitList);
-            volumeUnitValidation.setShowErrorBox(true);
-            volumeUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            volumeUnitValidation.createErrorBox("Invalid Unit", "Please select a valid unit from the dropdown list.");
-            volumeUnitValidation.setShowPromptBox(true);
-            volumeUnitValidation.createPromptBox("Phase Capacity Unit", "Select a unit from the dropdown list.");
-            sheet.addValidationData(volumeUnitValidation);
+            // Data validation for Project Intervention Name column (Column C, index 2)
+            if (interventionNames.length > 0) {
+                CellRangeAddressList interventionList = new CellRangeAddressList(3, 1000, 2, 2);
+                DataValidationConstraint interventionConstraint = validationHelper
+                        .createExplicitListConstraint(interventionNames);
+                DataValidation interventionValidation = validationHelper.createValidation(interventionConstraint, interventionList);
+                interventionValidation.setShowErrorBox(true);
+                interventionValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionValidation.createErrorBox("Invalid Intervention", "Please select a valid intervention from the dropdown list.");
+                interventionValidation.setShowPromptBox(true);
+                interventionValidation.createPromptBox("Project Intervention", "Select an intervention from the dropdown list.");
+                sheet.addValidationData(interventionValidation);
+            }
 
             // Create example data rows
-            Object[] exampleData1 = {2024, "PHASE_I", 200.0, "CUBIC_METERS_PER_DAY", 0.85};
-            Object[] exampleData2 = {2025, "PHASE_II", 1000.0, "CUBIC_METERS_PER_DAY", 0.85};
+            Object[] exampleData1 = {2024, 10000.0, interventions.isEmpty() ? "Example Intervention 1" : interventions.get(0).getName()};
+            Object[] exampleData2 = {2025, 12000.0, interventions.size() > 1 ? interventions.get(1).getName() : (interventions.isEmpty() ? "Example Intervention 2" : interventions.get(0).getName())};
 
             // First example row
             Row exampleRow1 = sheet.createRow(rowIdx++);
@@ -254,7 +290,7 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
                 if (i == 0) {
                     cell.setCellStyle(yearStyle);
                     cell.setCellValue(((Number) exampleData1[i]).intValue());
-                } else if (i == 2 || i == 4) {
+                } else if (i == 1) {
                     cell.setCellStyle(numberStyle);
                     cell.setCellValue(((Number) exampleData1[i]).doubleValue());
                 } else {
@@ -274,7 +310,7 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
                     altYearStyle.setAlignment(HorizontalAlignment.CENTER);
                     cell.setCellStyle(altYearStyle);
                     cell.setCellValue(((Number) exampleData2[i]).intValue());
-                } else if (i == 2 || i == 4) {
+                } else if (i == 1) {
                     CellStyle altNumStyle = workbook.createCellStyle();
                     altNumStyle.cloneStyleFrom(numberStyle);
                     altNumStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
@@ -298,10 +334,10 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
     }
 
     @Override
+    @Transactional
     public Map<String, Object> createKigaliFSTPMitigationFromExcel(MultipartFile file) {
         List<KigaliFSTPMitigation> savedRecords = new ArrayList<>();
         List<Integer> skippedYears = new ArrayList<>();
-        List<Integer> skippedPhaseRows = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -318,10 +354,10 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
                 // Validate required fields
                 List<String> missingFields = new ArrayList<>();
                 if (dto.getYear() == null) missingFields.add("Year");
-                if (dto.getProjectPhase() == null) missingFields.add("Project Phase");
-                if (dto.getPhaseCapacityPerDay() == null) missingFields.add("Phase Capacity Per Day");
-                if (dto.getPhaseCapacityUnit() == null) missingFields.add("Phase Capacity Unit");
-                if (dto.getPlantOperationalEfficiency() == null) missingFields.add("Plant Operational Efficiency");
+                if (dto.getAnnualSludgeTreated() == null) missingFields.add("Annual Sludge Treated");
+                if (dto.getProjectInterventionName() == null || dto.getProjectInterventionName().trim().isEmpty()) {
+                    missingFields.add("Project Intervention Name");
+                }
 
                 if (!missingFields.isEmpty()) {
                     throw new RuntimeException(String.format(
@@ -329,37 +365,30 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
                             actualRowNumber, String.join(", ", missingFields)));
                 }
 
+                // Convert intervention name to UUID
+                Optional<Intervention> interventionOpt = interventionRepository.findByNameIgnoreCase(dto.getProjectInterventionName().trim());
+                if (interventionOpt.isEmpty()) {
+                    throw new RuntimeException(String.format(
+                            "Row %d: Intervention '%s' not found. Please use a valid intervention name from the dropdown.",
+                            actualRowNumber, dto.getProjectInterventionName()));
+                }
+                dto.setProjectInterventionId(interventionOpt.get().getId());
+
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
                     skippedYears.add(dto.getYear());
                     continue;
                 }
 
-                // Try to create the record - catch phase precedence errors and skip the row
-                try {
-                    KigaliFSTPMitigation saved = createKigaliFSTPMitigation(dto);
-                    savedRecords.add(saved);
-                } catch (RuntimeException e) {
-                    // Check if it's a phase precedence error
-                    String errorMessage = e.getMessage();
-                    if (errorMessage != null && 
-                        (errorMessage.toLowerCase().contains("phases cannot go backward") ||
-                         errorMessage.toLowerCase().contains("cannot set phase"))) {
-                        // Skip this row due to phase precedence violation
-                        skippedPhaseRows.add(dto.getYear());
-                        continue;
-                    }
-                    // Re-throw if it's a different error
-                    throw e;
-                }
+                // Create the record
+                KigaliFSTPMitigation saved = createKigaliFSTPMitigationInternal(dto);
+                savedRecords.add(saved);
             }
 
             Map<String, Object> result = new HashMap<>();
             result.put("savedCount", savedRecords.size());
             result.put("skippedCount", skippedYears.size());
             result.put("skippedYears", skippedYears);
-            result.put("skippedPhaseRows", skippedPhaseRows);
-            result.put("skippedPhaseCount", skippedPhaseRows.size());
             result.put("totalProcessed", totalProcessed);
             return result;
 

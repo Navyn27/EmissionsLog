@@ -1,9 +1,9 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos;
 
-import com.navyn.emissionlog.Enums.Metrics.VolumePerTimeUnit;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.constants.ProjectPhase;
 import jakarta.validation.constraints.*;
 import lombok.Data;
+
+import java.util.UUID;
 
 @Data
 public class KigaliFSTPMitigationDto {
@@ -13,18 +13,13 @@ public class KigaliFSTPMitigationDto {
     @Max(value = 2100, message = "Year must be 2100 or earlier")
     private Integer year;
     
-    @NotNull(message = "Project Phase is required")
-    private ProjectPhase projectPhase;
+    @NotNull(message = "Annual sludge treated is required")
+    @Positive(message = "Annual sludge treated must be positive")
+    private Double annualSludgeTreated; // m³/year
     
-    @NotNull(message = "Phase capacity per day is required")
-    @DecimalMin(value = "0.0", message = "Phase capacity must be at least 0")
-    private Double phaseCapacityPerDay; // m³/day
+    @NotNull(message = "Project Intervention is required")
+    private UUID projectInterventionId; // Foreign key to Intervention table
     
-    @NotNull(message = "Phase capacity unit is required")
-    private VolumePerTimeUnit phaseCapacityUnit;
-    
-    @NotNull(message = "Plant operational efficiency is required")
-    @DecimalMin(value = "0.0", message = "Plant operational efficiency must be at least 0")
-    @DecimalMax(value = "1.0", message = "Plant operational efficiency must be at most 1.0 (100%)")
-    private Double plantOperationalEfficiency; // Efficiency as decimal (e.g., 0.85 for 85%)
+    // For Excel upload - intervention name (will be converted to UUID)
+    private String projectInterventionName; // Used for Excel import
 }
