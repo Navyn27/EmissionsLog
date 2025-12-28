@@ -14,7 +14,4 @@ public interface KigaliWWTPMitigationRepository extends JpaRepository<KigaliWWTP
         JpaSpecificationExecutor<KigaliWWTPMitigation> {
     
     Optional<KigaliWWTPMitigation> findByYear(Integer year);
-    
-    @Query("SELECT k FROM KigaliWWTPMitigation k ORDER BY k.projectPhase DESC LIMIT 1")
-    Optional<KigaliWWTPMitigation> findTopByOrderByProjectPhaseDesc();
 }

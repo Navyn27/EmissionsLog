@@ -1,9 +1,10 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.dtos;
 
 import com.navyn.emissionlog.Enums.Metrics.VolumePerTimeUnit;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.constants.WWTPProjectPhase;
 import jakarta.validation.constraints.*;
 import lombok.Data;
+
+import java.util.UUID;
 
 @Data
 public class KigaliWWTPMitigationDto {
@@ -13,22 +14,16 @@ public class KigaliWWTPMitigationDto {
     @Max(value = 2100, message = "Year must be 2100 or earlier")
     private Integer year;
     
-    @NotNull(message = "Project phase is required")
-    private WWTPProjectPhase projectPhase;
+    @NotNull(message = "Annual Wastewater Treated is required")
+    @Positive(message = "Annual Wastewater Treated must be positive")
+    private Double annualWastewaterTreated; // m³/year
     
-    @NotNull(message = "Phase capacity per day is required")
-    @DecimalMin(value = "0.0", message = "Phase capacity must be at least 0")
-    private Double phaseCapacityPerDay; // m³/day
+    @NotNull(message = "Annual Wastewater Treated unit is required")
+    private VolumePerTimeUnit annualWastewaterTreatedUnit;
     
-    @NotNull(message = "Phase capacity unit is required")
-    private VolumePerTimeUnit phaseCapacityUnit;
+    @NotNull(message = "Project Intervention is required")
+    private UUID projectInterventionId; // Foreign key to Intervention table
     
-    @NotNull(message = "Connected households is required")
-    @DecimalMin(value = "0.0", message = "Connected households must be at least 0")
-    private Double connectedHouseholds; // Total number of connected households
-    
-    @NotNull(message = "Connected households percentage is required")
-    @DecimalMin(value = "0.0", message = "Connected households percentage must be at least 0")
-    @DecimalMax(value = "1.0", message = "Connected households percentage must be at most 1.0 (100%)")
-    private Double connectedHouseholdsPercentage; // Percentage as decimal (e.g., 0.65 for 65%)
+    // For Excel upload - intervention name (will be converted to UUID)
+    private String projectInterventionName; // Used for Excel import
 }

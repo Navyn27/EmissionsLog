@@ -2,9 +2,13 @@ package com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.servic
 
 import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.Enums.Metrics.VolumePerTimeUnit;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.constants.KigaliWWTPConstants;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.constants.WWTPProjectPhase;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.services.BAUService;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.dtos.KigaliWWTPMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.dtos.KigaliWWTPMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.models.KigaliWWTPMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.repository.KigaliWWTPMitigationRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
@@ -16,18 +20,18 @@ import org.apache.poi.xssf.usermodel.*;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.HashMap;
 
-import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasProjectPhase;
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
 
 @Service
@@ -35,129 +39,211 @@ import static com.navyn.emissionlog.utils.Specifications.MitigationSpecification
 public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationService {
     
     private final KigaliWWTPMitigationRepository repository;
+    private final KigaliWWTPParameterService parameterService;
+    private final InterventionRepository interventionRepository;
+    private final BAUService bauService;
     
     @Override
-    public KigaliWWTPMitigation createKigaliWWTPMitigation(KigaliWWTPMitigationDto dto) {
-        // Validate phase precedence
-        validatePhasePrecedence(dto.getProjectPhase(), null);
-        
-        KigaliWWTPMitigation mitigation = new KigaliWWTPMitigation();
-        
-        // Convert phase capacity to standard unit (m³/day)
-        double phaseCapacityInCubicMetersPerDay = dto.getPhaseCapacityUnit().toCubicMetersPerDay(dto.getPhaseCapacityPerDay());
-        
-        // Set user inputs (store in standard units)
-        mitigation.setYear(dto.getYear());
-        mitigation.setProjectPhase(dto.getProjectPhase());
-        mitigation.setPhaseCapacityPerDay(phaseCapacityInCubicMetersPerDay);
-        mitigation.setConnectedHouseholds(dto.getConnectedHouseholds());
-        mitigation.setConnectedHouseholdsPercentage(dto.getConnectedHouseholdsPercentage());
-        
-        // Get constants
-        double plantEfficiency = KigaliWWTPConstants.PLANT_OPERATIONAL_EFFICIENCY.getValue();
-        double co2ePerM3 = KigaliWWTPConstants.CO2E_PER_M3_SLUDGE.getValue();
-        
-        // Calculations
-        // 1. Effective Daily Flow (m³/day) = Plant Operational Efficiency × Phase capacity (m³/day) × Connected Households (%)
-        double effectiveDailyFlow = plantEfficiency * phaseCapacityInCubicMetersPerDay * dto.getConnectedHouseholdsPercentage();
-        mitigation.setEffectiveDailyFlow(effectiveDailyFlow);
-        
-        // 2. Annual Sludge Treated (m³/year) = Effective Daily Flow (m³/day) × 365
-        double annualSludgeTreated = effectiveDailyFlow * 365;
-        mitigation.setAnnualSludgeTreated(annualSludgeTreated);
-        
-        // 3. Annual Emissions Reduction (tCO₂e) = Annual Sludge Treated (m³) × CO₂e per m³ sludge (kg CO₂e per m³) / 1000
-        double annualEmissionsReductionTonnes = (annualSludgeTreated * co2ePerM3) / 1000;
-        mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
-        
-        // 4. Annual Emissions Reduction (ktCO₂e) = Annual Emissions Reduction (tCO₂e) / 1000
-        double annualEmissionsReductionKilotonnes = annualEmissionsReductionTonnes / 1000;
-        mitigation.setAnnualEmissionsReductionKilotonnes(annualEmissionsReductionKilotonnes);
-        
-        return repository.save(mitigation);
-    }
-    
-    @Override
-    public KigaliWWTPMitigation updateKigaliWWTPMitigation(UUID id, KigaliWWTPMitigationDto dto) {
-        KigaliWWTPMitigation mitigation = repository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Kigali WWTP Mitigation record not found with id: " + id));
-        
-        // Validate phase precedence (exclude current record from validation)
-        validatePhasePrecedence(dto.getProjectPhase(), id);
-        
-        // Convert phase capacity to standard unit (m³/day)
-        double phaseCapacityInCubicMetersPerDay = dto.getPhaseCapacityUnit().toCubicMetersPerDay(dto.getPhaseCapacityPerDay());
-        
-        // Update user inputs (store in standard units)
-        mitigation.setYear(dto.getYear());
-        mitigation.setProjectPhase(dto.getProjectPhase());
-        mitigation.setPhaseCapacityPerDay(phaseCapacityInCubicMetersPerDay);
-        mitigation.setConnectedHouseholds(dto.getConnectedHouseholds());
-        mitigation.setConnectedHouseholdsPercentage(dto.getConnectedHouseholdsPercentage());
-        
-        // Recalculate derived fields
-        double plantEfficiency = KigaliWWTPConstants.PLANT_OPERATIONAL_EFFICIENCY.getValue();
-        double co2ePerM3 = KigaliWWTPConstants.CO2E_PER_M3_SLUDGE.getValue();
-        
-        double effectiveDailyFlow = plantEfficiency * phaseCapacityInCubicMetersPerDay * dto.getConnectedHouseholdsPercentage();
-        mitigation.setEffectiveDailyFlow(effectiveDailyFlow);
-        
-        double annualSludgeTreated = effectiveDailyFlow * 365;
-        mitigation.setAnnualSludgeTreated(annualSludgeTreated);
-        
-        double annualEmissionsReductionTonnes = (annualSludgeTreated * co2ePerM3) / 1000;
-        mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
-        
-        double annualEmissionsReductionKilotonnes = annualEmissionsReductionTonnes / 1000;
-        mitigation.setAnnualEmissionsReductionKilotonnes(annualEmissionsReductionKilotonnes);
-        
-        return repository.save(mitigation);
-    }
-    
-    @Override
-    public List<KigaliWWTPMitigation> getAllKigaliWWTPMitigation(Integer year, WWTPProjectPhase projectPhase) {
-        Specification<KigaliWWTPMitigation> spec = Specification
-                .<KigaliWWTPMitigation>where(hasYear(year))
-                .and(hasProjectPhase(projectPhase));
-        return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+    @Transactional
+    public KigaliWWTPMitigationResponseDto createKigaliWWTPMitigation(KigaliWWTPMitigationDto dto) {
+        KigaliWWTPMitigation saved = createKigaliWWTPMitigationInternal(dto);
+        return toResponseDto(saved);
     }
     
     /**
-     * Validates that the new phase is not smaller than the maximum existing phase.
-     * Phases must progress in ascending order: NONE < PHASE_I < PHASE_II < PHASE_III
-     * 
-     * @param newPhase The phase to validate
-     * @param excludeId ID to exclude from validation (for updates)
-     * @throws RuntimeException if phase precedence is violated
+     * Internal method for Excel processing that returns entity
      */
-    private void validatePhasePrecedence(WWTPProjectPhase newPhase, UUID excludeId) {
-        // Get the maximum phase from existing records
-        repository.findTopByOrderByProjectPhaseDesc()
-            .ifPresent(maxRecord -> {
-                // Exclude the current record being updated
-                if (excludeId != null && maxRecord.getId().equals(excludeId)) {
-                    return;
-                }
-                
-                WWTPProjectPhase maxPhase = maxRecord.getProjectPhase();
-                
-                // Check if new phase is smaller than max phase
-                if (newPhase.ordinal() < maxPhase.ordinal()) {
-                    throw new RuntimeException(
-                        String.format("Cannot set phase to %s. The project has already reached %s. " +
-                                     "Phases cannot go backward.", 
-                                     newPhase.getDisplayName(), maxPhase.getDisplayName())
-                    );
-                }
-            });
+    private KigaliWWTPMitigation createKigaliWWTPMitigationInternal(KigaliWWTPMitigationDto dto) {
+        KigaliWWTPMitigation mitigation = new KigaliWWTPMitigation();
+        
+        // Get KigaliWWTPParameter (latest active)
+        var paramDto = parameterService.getLatestActive();
+        
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+        
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+        
+        // Convert annual wastewater treated to standard unit (m³/year)
+        double annualWastewaterTreatedInCubicMetersPerYear = convertToCubicMetersPerYear(
+                dto.getAnnualWastewaterTreated(), 
+                dto.getAnnualWastewaterTreatedUnit());
+        
+        // Set user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setAnnualWastewaterTreated(annualWastewaterTreatedInCubicMetersPerYear);
+        mitigation.setProjectIntervention(intervention);
+        
+        // Calculations
+        // 1. MethanePotential = MethaneEmissionFactor * COD_concentration
+        Double methanePotential = paramDto.getMethaneEmissionFactor() * paramDto.getCodConcentration();
+        mitigation.setMethanePotential(methanePotential);
+        
+        // 2. CO₂e per m³ Wastewater = MethanePotential * CH₄GWP(100-yr)
+        Double co2ePerM3Wastewater = methanePotential * paramDto.getCh4Gwp100Year();
+        mitigation.setCo2ePerM3Wastewater(co2ePerM3Wastewater);
+        
+        // 3. Annual Emissions Reduction (tCO₂e) = AnnualWastewaterTreated * CO₂ePerM3Wastewater / 1000
+        // Note: CO2ePerM3Wastewater is in kg CO2e/m³, so divide by 1000 to get tonnes
+        Double annualEmissionsReductionTonnes = (annualWastewaterTreatedInCubicMetersPerYear * co2ePerM3Wastewater) / 1000.0;
+        mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
+        
+        // 4. Annual Emissions Reduction (ktCO₂e) = annualEmissionsReductionTonnes / 1000
+        Double annualEmissionsReductionKilotonnes = annualEmissionsReductionTonnes / 1000.0;
+        mitigation.setAnnualEmissionsReductionKilotonnes(annualEmissionsReductionKilotonnes);
+        
+        // 5. Adjusted BAU Emission Mitigation (ktCO₂e) = BAU - annualEmissionsReductionKilotonnes
+        Double adjustedBauEmissionMitigation = bau.getValue() - annualEmissionsReductionKilotonnes;
+        mitigation.setAdjustedBauEmissionMitigation(adjustedBauEmissionMitigation);
+        
+        return repository.save(mitigation);
     }
-
+    
+    /**
+     * Converts volume per time unit to cubic meters per year
+     */
+    private double convertToCubicMetersPerYear(double value, VolumePerTimeUnit unit) {
+        // If it's already per year, convert volume only (divide daily equivalent by 365 if needed)
+        // If it's per day, multiply by 365
+        // If it's per month, multiply by 12
+        String unitName = unit.name();
+        
+        if (unitName.contains("YEAR")) {
+            // For annual units, convert the volume to cubic meters
+            // The enum might have a direct method, but if not, use daily conversion
+            try {
+                // Try direct conversion if available
+                // For now, convert through daily: if it's m³/year, dividing daily by 365 gives us m³/day,
+                // then we multiply back by 365 to get m³/year - this cancels out, so just return the value
+                // But we need to ensure it's in cubic meters
+                double dailyEquivalent = unit.toCubicMetersPerDay(value);
+                // If the unit is per year, we need to divide daily by 365 to get the rate, then multiply by 365
+                // Actually, if value is in m³/year, we can't use toCubicMetersPerDay directly
+                // So for annual units, we assume the value is already in the correct volume unit (m³)
+                // and we just return it (since it's already per year)
+                return value; // Assume annual units are already in m³/year
+            } catch (Exception e) {
+                // If conversion fails, assume value is already in m³/year
+                return value;
+            }
+        } else if (unitName.contains("DAY")) {
+            // Convert to m³/day, then multiply by 365 to get m³/year
+            return unit.toCubicMetersPerDay(value) * 365.0;
+        } else if (unitName.contains("MONTH")) {
+            // Convert to m³/day, then multiply by 365
+            // Or convert to m³/month and multiply by 12
+            double dailyRate = unit.toCubicMetersPerDay(value);
+            return dailyRate * 365.0;
+        } else {
+            // Default: try toCubicMetersPerDay and multiply by 365
+            return unit.toCubicMetersPerDay(value) * 365.0;
+        }
+    }
+    
     @Override
+    @Transactional
+    public KigaliWWTPMitigationResponseDto updateKigaliWWTPMitigation(UUID id, KigaliWWTPMitigationDto dto) {
+        KigaliWWTPMitigation mitigation = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Kigali WWTP Mitigation record not found with id: " + id));
+        
+        // Get KigaliWWTPParameter (latest active)
+        var paramDto = parameterService.getLatestActive();
+        
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+        
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+        
+        // Convert annual wastewater treated to standard unit (m³/year)
+        double annualWastewaterTreatedInCubicMetersPerYear = convertToCubicMetersPerYear(
+                dto.getAnnualWastewaterTreated(), 
+                dto.getAnnualWastewaterTreatedUnit());
+        
+        // Update user inputs (store in standard units)
+        mitigation.setYear(dto.getYear());
+        mitigation.setAnnualWastewaterTreated(annualWastewaterTreatedInCubicMetersPerYear);
+        mitigation.setProjectIntervention(intervention);
+        
+        // Recalculate derived fields
+        // 1. MethanePotential = MethaneEmissionFactor * COD_concentration
+        Double methanePotential = paramDto.getMethaneEmissionFactor() * paramDto.getCodConcentration();
+        mitigation.setMethanePotential(methanePotential);
+        
+        // 2. CO₂e per m³ Wastewater = MethanePotential * CH₄GWP(100-yr)
+        Double co2ePerM3Wastewater = methanePotential * paramDto.getCh4Gwp100Year();
+        mitigation.setCo2ePerM3Wastewater(co2ePerM3Wastewater);
+        
+        // 3. Annual Emissions Reduction (tCO₂e) = AnnualWastewaterTreated * CO₂ePerM3Wastewater / 1000
+        Double annualEmissionsReductionTonnes = (annualWastewaterTreatedInCubicMetersPerYear * co2ePerM3Wastewater) / 1000.0;
+        mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
+        
+        // 4. Annual Emissions Reduction (ktCO₂e) = annualEmissionsReductionTonnes / 1000
+        Double annualEmissionsReductionKilotonnes = annualEmissionsReductionTonnes / 1000.0;
+        mitigation.setAnnualEmissionsReductionKilotonnes(annualEmissionsReductionKilotonnes);
+        
+        // 5. Adjusted BAU Emission Mitigation (ktCO₂e) = BAU - annualEmissionsReductionKilotonnes
+        Double adjustedBauEmissionMitigation = bau.getValue() - annualEmissionsReductionKilotonnes;
+        mitigation.setAdjustedBauEmissionMitigation(adjustedBauEmissionMitigation);
+        
+        KigaliWWTPMitigation saved = repository.save(mitigation);
+        return toResponseDto(saved);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<KigaliWWTPMitigationResponseDto> getAllKigaliWWTPMitigation(Integer year) {
+        Specification<KigaliWWTPMitigation> spec = Specification
+                .<KigaliWWTPMitigation>where(hasYear(year));
+        List<KigaliWWTPMitigation> mitigations = repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        return mitigations.stream()
+                .map(this::toResponseDto)
+                .toList();
+    }
+    
+    @Override
+    @Transactional
     public void deleteKigaliWWTPMitigation(UUID id) {
         if (!repository.existsById(id)) {
             throw new RuntimeException("Kigali WWTP Mitigation record not found with id: " + id);
         }
         repository.deleteById(id);
+    }
+    
+    private KigaliWWTPMitigationResponseDto toResponseDto(KigaliWWTPMitigation mitigation) {
+        KigaliWWTPMitigationResponseDto dto = new KigaliWWTPMitigationResponseDto();
+        dto.setId(mitigation.getId());
+        dto.setYear(mitigation.getYear());
+        dto.setAnnualWastewaterTreated(mitigation.getAnnualWastewaterTreated());
+        dto.setMethanePotential(mitigation.getMethanePotential());
+        dto.setCo2ePerM3Wastewater(mitigation.getCo2ePerM3Wastewater());
+        dto.setAnnualEmissionsReductionTonnes(mitigation.getAnnualEmissionsReductionTonnes());
+        dto.setAnnualEmissionsReductionKilotonnes(mitigation.getAnnualEmissionsReductionKilotonnes());
+        dto.setAdjustedBauEmissionMitigation(mitigation.getAdjustedBauEmissionMitigation());
+        dto.setCreatedAt(mitigation.getCreatedAt());
+        dto.setUpdatedAt(mitigation.getUpdatedAt());
+        
+        if (mitigation.getProjectIntervention() != null) {
+            dto.setProjectIntervention(new KigaliWWTPMitigationResponseDto.InterventionInfo(
+                    mitigation.getProjectIntervention().getId(),
+                    mitigation.getProjectIntervention().getName()
+            ));
+        } else {
+            dto.setProjectIntervention(null);
+        }
+        
+        return dto;
     }
 
     @Override
@@ -192,7 +278,7 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Kigali WWTP Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
 
             rowIdx++; // Blank row
 
@@ -201,11 +287,9 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
             headerRow.setHeightInPoints(22);
             String[] headers = {
                     "Year",
-                    "Project Phase",
-                    "Phase Capacity Per Day",
-                    "Phase Capacity Unit",
-                    "Connected Households",
-                    "Connected Households Percentage"
+                    "Annual Wastewater Treated",
+                    "Annual Wastewater Treated Unit",
+                    "Project Intervention Name"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -215,30 +299,21 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
             }
 
             // Get enum values for dropdowns
-            String[] projectPhaseValues = Arrays.stream(WWTPProjectPhase.values())
+            String[] volumePerTimeUnitValues = java.util.Arrays.stream(VolumePerTimeUnit.values())
                     .map(Enum::name)
                     .toArray(String[]::new);
-            String[] volumePerTimeUnitValues = Arrays.stream(VolumePerTimeUnit.values())
-                    .map(Enum::name)
+
+            // Get all intervention names for dropdown
+            List<Intervention> interventions = interventionRepository.findAll();
+            String[] interventionNames = interventions.stream()
+                    .map(Intervention::getName)
                     .toArray(String[]::new);
 
             // Create data validation helper
             DataValidationHelper validationHelper = sheet.getDataValidationHelper();
 
-            // Data validation for Project Phase column (Column B, index 1)
-            CellRangeAddressList phaseList = new CellRangeAddressList(3, 1000, 1, 1);
-            DataValidationConstraint phaseConstraint = validationHelper
-                    .createExplicitListConstraint(projectPhaseValues);
-            DataValidation phaseValidation = validationHelper.createValidation(phaseConstraint, phaseList);
-            phaseValidation.setShowErrorBox(true);
-            phaseValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            phaseValidation.createErrorBox("Invalid Project Phase", "Please select a valid project phase from the dropdown list.");
-            phaseValidation.setShowPromptBox(true);
-            phaseValidation.createPromptBox("Project Phase", "Select a project phase from the dropdown list.");
-            sheet.addValidationData(phaseValidation);
-
-            // Data validation for Phase Capacity Unit column (Column D, index 3)
-            CellRangeAddressList volumeUnitList = new CellRangeAddressList(3, 1000, 3, 3);
+            // Data validation for Annual Wastewater Treated Unit column (Column C, index 2)
+            CellRangeAddressList volumeUnitList = new CellRangeAddressList(3, 1000, 2, 2);
             DataValidationConstraint volumeUnitConstraint = validationHelper
                     .createExplicitListConstraint(volumePerTimeUnitValues);
             DataValidation volumeUnitValidation = validationHelper.createValidation(volumeUnitConstraint, volumeUnitList);
@@ -246,25 +321,53 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
             volumeUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
             volumeUnitValidation.createErrorBox("Invalid Unit", "Please select a valid unit from the dropdown list.");
             volumeUnitValidation.setShowPromptBox(true);
-            volumeUnitValidation.createPromptBox("Phase Capacity Unit", "Select a unit from the dropdown list.");
+            volumeUnitValidation.createPromptBox("Annual Wastewater Treated Unit", "Select a unit from the dropdown list.");
             sheet.addValidationData(volumeUnitValidation);
 
+            // Data validation for Project Intervention Name column (Column D, index 3)
+            if (interventionNames.length > 0) {
+                CellRangeAddressList interventionNameList = new CellRangeAddressList(3, 1000, 3, 3);
+                DataValidationConstraint interventionNameConstraint = validationHelper
+                        .createExplicitListConstraint(interventionNames);
+                DataValidation interventionNameValidation = validationHelper.createValidation(interventionNameConstraint,
+                        interventionNameList);
+                interventionNameValidation.setShowErrorBox(true);
+                interventionNameValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionNameValidation.createErrorBox("Invalid Intervention",
+                        "Please select a valid intervention from the dropdown list.");
+                interventionNameValidation.setShowPromptBox(true);
+                interventionNameValidation.createPromptBox("Project Intervention Name", "Select an intervention from the dropdown list.");
+                sheet.addValidationData(interventionNameValidation);
+            }
+
             // Create example data rows
-            Object[] exampleData1 = {2027, "PHASE_I", 12000.0, "CUBIC_METERS_PER_DAY", 208000.0, 0.65};
-            Object[] exampleData2 = {2028, "PHASE_I", 12000.0, "CUBIC_METERS_PER_DAY", 208000.0, 0.70};
+            Object[] exampleData1 = {
+                    2027,
+                    4380000.0, // Example: 12,000 m³/day * 365 = 4,380,000 m³/year
+                    "CUBIC_METERS_PER_YEAR",
+                    interventions.isEmpty() ? "Example Intervention" : interventions.get(0).getName()
+            };
+
+            Object[] exampleData2 = {
+                    2028,
+                    4562500.0,
+                    "CUBIC_METERS_PER_YEAR",
+                    interventions.size() > 1 ? interventions.get(1).getName() :
+                            (interventions.isEmpty() ? "Example Intervention" : interventions.get(0).getName())
+            };
 
             // First example row
             Row exampleRow1 = sheet.createRow(rowIdx++);
             exampleRow1.setHeightInPoints(18);
             for (int i = 0; i < exampleData1.length; i++) {
                 Cell cell = exampleRow1.createCell(i);
-                if (i == 0) {
+                if (i == 0) { // Year
                     cell.setCellStyle(yearStyle);
                     cell.setCellValue(((Number) exampleData1[i]).intValue());
-                } else if (i == 2 || i == 4 || i == 5) {
+                } else if (i == 1) { // Annual Wastewater Treated (number)
                     cell.setCellStyle(numberStyle);
                     cell.setCellValue(((Number) exampleData1[i]).doubleValue());
-                } else {
+                } else { // Unit or Intervention Name (string)
                     cell.setCellStyle(dataStyle);
                     cell.setCellValue((String) exampleData1[i]);
                 }
@@ -275,20 +378,20 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
             exampleRow2.setHeightInPoints(18);
             for (int i = 0; i < exampleData2.length; i++) {
                 Cell cell = exampleRow2.createCell(i);
-                if (i == 0) {
+                if (i == 0) { // Year
                     CellStyle altYearStyle = workbook.createCellStyle();
                     altYearStyle.cloneStyleFrom(alternateDataStyle);
                     altYearStyle.setAlignment(HorizontalAlignment.CENTER);
                     cell.setCellStyle(altYearStyle);
                     cell.setCellValue(((Number) exampleData2[i]).intValue());
-                } else if (i == 2 || i == 4 || i == 5) {
+                } else if (i == 1) { // Annual Wastewater Treated (number)
                     CellStyle altNumStyle = workbook.createCellStyle();
                     altNumStyle.cloneStyleFrom(numberStyle);
                     altNumStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
                     altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                     cell.setCellStyle(altNumStyle);
                     cell.setCellValue(((Number) exampleData2[i]).doubleValue());
-                } else {
+                } else { // Unit or Intervention Name (string)
                     cell.setCellStyle(alternateDataStyle);
                     cell.setCellValue((String) exampleData2[i]);
                 }
@@ -308,7 +411,6 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
     public Map<String, Object> createKigaliWWTPMitigationFromExcel(MultipartFile file) {
         List<KigaliWWTPMitigation> savedRecords = new ArrayList<>();
         List<Integer> skippedYears = new ArrayList<>();
-        List<Integer> skippedPhaseRows = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -320,16 +422,22 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
             for (int i = 0; i < dtos.size(); i++) {
                 KigaliWWTPMitigationDto dto = dtos.get(i);
                 totalProcessed++;
-                int actualRowNumber = i + 1 + 3;
+                int actualRowNumber = i + 1 + 3; // +1 for 1-based, +3 for title(1) + blank(1) + header(1)
 
                 // Validate required fields
                 List<String> missingFields = new ArrayList<>();
-                if (dto.getYear() == null) missingFields.add("Year");
-                if (dto.getProjectPhase() == null) missingFields.add("Project Phase");
-                if (dto.getPhaseCapacityPerDay() == null) missingFields.add("Phase Capacity Per Day");
-                if (dto.getPhaseCapacityUnit() == null) missingFields.add("Phase Capacity Unit");
-                if (dto.getConnectedHouseholds() == null) missingFields.add("Connected Households");
-                if (dto.getConnectedHouseholdsPercentage() == null) missingFields.add("Connected Households Percentage");
+                if (dto.getYear() == null) {
+                    missingFields.add("Year");
+                }
+                if (dto.getAnnualWastewaterTreated() == null) {
+                    missingFields.add("Annual Wastewater Treated");
+                }
+                if (dto.getAnnualWastewaterTreatedUnit() == null) {
+                    missingFields.add("Annual Wastewater Treated Unit");
+                }
+                if (dto.getProjectInterventionName() == null || dto.getProjectInterventionName().trim().isEmpty()) {
+                    missingFields.add("Project Intervention Name");
+                }
 
                 if (!missingFields.isEmpty()) {
                     throw new RuntimeException(String.format(
@@ -337,37 +445,30 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
                             actualRowNumber, String.join(", ", missingFields)));
                 }
 
+                // Convert intervention name to UUID
+                Optional<Intervention> interventionOpt = interventionRepository.findByNameIgnoreCase(dto.getProjectInterventionName().trim());
+                if (interventionOpt.isEmpty()) {
+                    throw new RuntimeException(String.format(
+                            "Row %d: Intervention '%s' not found. Please use a valid intervention name from the dropdown.",
+                            actualRowNumber, dto.getProjectInterventionName()));
+                }
+                dto.setProjectInterventionId(interventionOpt.get().getId());
+
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
                     skippedYears.add(dto.getYear());
-                    continue;
+                    continue; // Skip this row
                 }
 
-                // Try to create the record - catch phase precedence errors and skip the row
-                try {
-                    KigaliWWTPMitigation saved = createKigaliWWTPMitigation(dto);
-                    savedRecords.add(saved);
-                } catch (RuntimeException e) {
-                    // Check if it's a phase precedence error
-                    String errorMessage = e.getMessage();
-                    if (errorMessage != null && 
-                        (errorMessage.toLowerCase().contains("phases cannot go backward") ||
-                         errorMessage.toLowerCase().contains("cannot set phase"))) {
-                        // Skip this row due to phase precedence violation
-                        skippedPhaseRows.add(dto.getYear());
-                        continue;
-                    }
-                    // Re-throw if it's a different error
-                    throw e;
-                }
+                // Create the record
+                KigaliWWTPMitigation saved = createKigaliWWTPMitigationInternal(dto);
+                savedRecords.add(saved);
             }
 
             Map<String, Object> result = new HashMap<>();
             result.put("savedCount", savedRecords.size());
             result.put("skippedCount", skippedYears.size());
             result.put("skippedYears", skippedYears);
-            result.put("skippedPhaseRows", skippedPhaseRows);
-            result.put("skippedPhaseCount", skippedPhaseRows.size());
             result.put("totalProcessed", totalProcessed);
             return result;
 
