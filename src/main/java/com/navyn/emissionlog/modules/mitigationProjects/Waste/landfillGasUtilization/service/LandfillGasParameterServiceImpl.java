@@ -60,8 +60,12 @@ public class LandfillGasParameterServiceImpl implements LandfillGasParameterServ
         return repository.findAll().stream()
                 .sorted((a, b) -> {
                     // The first sort by isActive: true (active) comes first
-                    if (a.getIsActive() != b.getIsActive()) {
-                        return b.getIsActive() ? 1 : -1; // true (active) comes first
+                    // Handle null values - treat null as false (inactive)
+                    boolean aIsActive = a.getIsActive() != null && a.getIsActive();
+                    boolean bIsActive = b.getIsActive() != null && b.getIsActive();
+                    
+                    if (aIsActive != bIsActive) {
+                        return bIsActive ? 1 : -1; // true (active) comes first
                     }
                     // Then sort by createdAt DESC (latest first)
                     return b.getCreatedAt().compareTo(a.getCreatedAt());
@@ -106,7 +110,8 @@ public class LandfillGasParameterServiceImpl implements LandfillGasParameterServ
         dto.setId(entity.getId());
         dto.setDestructionEfficiencyPercentage(entity.getDestructionEfficiencyPercentage());
         dto.setGlobalWarmingPotentialCh4(entity.getGlobalWarmingPotentialCh4());
-        dto.setIsActive(entity.getIsActive());
+        // Handle null isActive - default to false for backward compatibility
+        dto.setIsActive(entity.getIsActive() != null ? entity.getIsActive() : false);
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
         return dto;
