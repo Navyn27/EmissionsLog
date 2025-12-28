@@ -1048,15 +1048,12 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                 String[] headers = {
                                 "Year",
                                 "Waste Processed (t)",
-                                "Degradable Organic Fraction (%)",
-                                "Landfill Avoidance (kgCO2e/tonne)",
-                                "Composting EF (kgCO2e/tonne)",
-                                "BAU Emission (tCO2e)",
+                                "Project Intervention",
                                 "DOF Diverted (tonnes)",
                                 "Avoided Landfill (kgCO2e)",
                                 "Composting Emissions (kgCO2e)",
-                                "Net Annual Reduction (tCO2e)",
-                                "Mitigation Scenario Emission (tCO2e)"
+                                "Net Annual Reduction (ktCO2e)",
+                                "Mitigation Scenario Emission (ktCO2e)"
                 };
                 createHeader(sheet, headerStyle, headers);
                 DataFormat dataFormat = sheet.getWorkbook().createDataFormat();
@@ -1080,34 +1077,35 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         // Number columns
                         CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook())
                                         : numberStyle;
+                        
                         r.createCell(1).setCellValue(item.getWasteProcessed() != null ? item.getWasteProcessed() : 0.0);
                         r.getCell(1).setCellStyle(numStyle);
-                        r.createCell(2).setCellValue(item.getDegradableOrganicFraction() != null
-                                        ? item.getDegradableOrganicFraction()
-                                        : 0.0);
-                        r.getCell(2).setCellStyle(numStyle);
-                        r.createCell(3).setCellValue(
-                                        item.getLandfillAvoidance() != null ? item.getLandfillAvoidance() : 0.0);
+                        
+                        // Project Intervention column (text)
+                        Cell interventionCell = r.createCell(2);
+                        interventionCell.setCellValue(
+                                        item.getProjectIntervention() != null ? item.getProjectIntervention().getName() : "");
+                        CellStyle baseTextStyle = isAlternate ? alternateDataStyle : dataStyle;
+                        CellStyle textCellStyle = sheet.getWorkbook().createCellStyle();
+                        textCellStyle.cloneStyleFrom(baseTextStyle);
+                        textCellStyle.setAlignment(HorizontalAlignment.LEFT);
+                        interventionCell.setCellStyle(textCellStyle);
+                        
+                        r.createCell(3).setCellValue(item.getDofDiverted() != null ? item.getDofDiverted() : 0.0);
                         r.getCell(3).setCellStyle(numStyle);
-                        r.createCell(4).setCellValue(item.getCompostingEF() != null ? item.getCompostingEF() : 0.0);
-                        r.getCell(4).setCellStyle(numStyle);
-                        r.createCell(5).setCellValue(item.getBauEmission() != null ? item.getBauEmission() : 0.0);
-                        r.getCell(5).setCellStyle(numStyle);
-                        r.createCell(6).setCellValue(item.getDofDiverted() != null ? item.getDofDiverted() : 0.0);
-                        r.getCell(6).setCellStyle(numStyle);
-                        r.createCell(7).setCellValue(
+                        r.createCell(4).setCellValue(
                                         item.getAvoidedLandfill() != null ? item.getAvoidedLandfill() : 0.0);
-                        r.getCell(7).setCellStyle(numStyle);
-                        r.createCell(8).setCellValue(
+                        r.getCell(4).setCellStyle(numStyle);
+                        r.createCell(5).setCellValue(
                                         item.getCompostingEmissions() != null ? item.getCompostingEmissions() : 0.0);
-                        r.getCell(8).setCellStyle(numStyle);
-                        r.createCell(9).setCellValue(
+                        r.getCell(5).setCellStyle(numStyle);
+                        r.createCell(6).setCellValue(
                                         item.getNetAnnualReduction() != null ? item.getNetAnnualReduction() : 0.0);
-                        r.getCell(9).setCellStyle(numStyle);
-                        r.createCell(10).setCellValue(item.getMitigationScenarioEmission() != null
+                        r.getCell(6).setCellStyle(numStyle);
+                        r.createCell(7).setCellValue(item.getMitigationScenarioEmission() != null
                                         ? item.getMitigationScenarioEmission()
                                         : 0.0);
-                        r.getCell(10).setCellStyle(numStyle);
+                        r.getCell(7).setCellStyle(numStyle);
                 }
                 autoSizeWithLimits(sheet, headers.length);
         }
