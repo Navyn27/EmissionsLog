@@ -180,6 +180,7 @@ public class ExcelReader {
     static {
         dailySpreadToDtoMap.put("Year", "year");
         dailySpreadToDtoMap.put("Number of Cows", "numberOfCows");
+        dailySpreadToDtoMap.put("Intervention Name", "interventionName");
     }
 
     // This hashmap is responsible for reading data from adding straw mitigation
@@ -197,6 +198,7 @@ public class ExcelReader {
     static {
         manureCoveringToDtoMap.put("Year", "year");
         manureCoveringToDtoMap.put("Number of Cows", "numberOfCows");
+        manureCoveringToDtoMap.put("Intervention Name", "interventionName");
     }
 
     // This hashmap is responsible for reading data from protective forest
