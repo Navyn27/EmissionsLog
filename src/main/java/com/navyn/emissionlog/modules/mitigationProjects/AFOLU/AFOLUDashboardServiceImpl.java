@@ -22,8 +22,13 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.adding
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.addingStraw.repository.AddingStrawMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.models.DailySpreadMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.repository.DailySpreadMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.repositories.BAURepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
@@ -50,8 +55,10 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
     private final ManureCoveringMitigationRepository manureCoveringRepository;
     private final AddingStrawMitigationRepository addingStrawRepository;
     private final DailySpreadMitigationRepository dailySpreadRepository;
+    private final BAURepository bauRepository;
 
     @Override
+    @Transactional(readOnly = true)
     public AFOLUDashboardSummaryDto getAFOLUDashboardSummary(Integer startingYear, Integer endingYear) {
         List<WetlandParksMitigation> wetlandParks = wetlandParksRepository.findAll();
         List<SettlementTreesMitigation> settlementTrees = settlementTreesRepository.findAll();
@@ -118,6 +125,181 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
                 + cropRotationTotal + zeroTillageTotal + protectiveForestTotal + manureCoveringTotal
                 + addingStrawTotal + dailySpreadTotal;
 
+        // Calculate Improved MMS Total
+        double improvedMMSTotal = manureCoveringTotal + addingStrawTotal + dailySpreadTotal;
+
+        // Calculate Adjustment Mitigation: Sum of BAU values in year range - Total Mitigation
+        double bauSum = 0.0;
+        if (startingYear != null && endingYear != null) {
+            for (int year = startingYear; year <= endingYear; year++) {
+                Optional<BAU> bau = bauRepository.findByYearAndSector(year, ESector.AFOLU);
+                if (bau.isPresent() && bau.get().getValue() != null) {
+                    bauSum += bau.get().getValue();
+                }
+            }
+        } else {
+            // If no year range specified, get all AFOLU BAU records
+            List<BAU> allBAUs = bauRepository.findBySectorOrderByYearAsc(ESector.AFOLU);
+            bauSum = allBAUs.stream()
+                    .filter(b -> b.getValue() != null)
+                    .mapToDouble(BAU::getValue)
+                    .sum();
+        }
+        double adjustmentMitigation = bauSum - totalMitigation;
+
+        // Calculate record counts
+        Map<String, Long> recordCounts = new HashMap<>();
+        recordCounts.put("wetlandParks", (long) wetlandParks.size());
+        recordCounts.put("settlementTrees", (long) settlementTrees.size());
+        recordCounts.put("streetTrees", (long) streetTrees.size());
+        recordCounts.put("greenFences", (long) greenFences.size());
+        recordCounts.put("cropRotation", (long) cropRotation.size());
+        recordCounts.put("zeroTillage", (long) zeroTillage.size());
+        recordCounts.put("protectiveForest", (long) protectiveForest.size());
+        recordCounts.put("manureCovering", (long) manureCovering.size());
+        recordCounts.put("addingStraw", (long) addingStraw.size());
+        recordCounts.put("dailySpread", (long) dailySpread.size());
+
+        // Calculate data coverage (percentage of years with data)
+        Map<String, Double> dataCoverage = new HashMap<>();
+        Set<Integer> wetlandParksYears = wetlandParks.stream().map(WetlandParksMitigation::getYear).collect(Collectors.toSet());
+        Set<Integer> settlementTreesYears = settlementTrees.stream().map(SettlementTreesMitigation::getYear).collect(Collectors.toSet());
+        Set<Integer> streetTreesYears = streetTrees.stream().map(StreetTreesMitigation::getYear).collect(Collectors.toSet());
+        Set<Integer> greenFencesYears = greenFences.stream().map(GreenFencesMitigation::getYear).collect(Collectors.toSet());
+        Set<Integer> cropRotationYears = cropRotation.stream().map(CropRotationMitigation::getYear).collect(Collectors.toSet());
+        Set<Integer> zeroTillageYears = zeroTillage.stream().map(ZeroTillageMitigation::getYear).collect(Collectors.toSet());
+        Set<Integer> protectiveForestYears = protectiveForest.stream().map(ProtectiveForestMitigation::getYear).collect(Collectors.toSet());
+        Set<Integer> manureCoveringYears = manureCovering.stream().map(ManureCoveringMitigation::getYear).collect(Collectors.toSet());
+        Set<Integer> addingStrawYears = addingStraw.stream().map(AddingStrawMitigation::getYear).collect(Collectors.toSet());
+        Set<Integer> dailySpreadYears = dailySpread.stream().map(DailySpreadMitigation::getYear).collect(Collectors.toSet());
+
+        if (startingYear != null && endingYear != null) {
+            dataCoverage.put("wetlandParks", calculateCoverage(wetlandParksYears, startingYear, endingYear));
+            dataCoverage.put("settlementTrees", calculateCoverage(settlementTreesYears, startingYear, endingYear));
+            dataCoverage.put("streetTrees", calculateCoverage(streetTreesYears, startingYear, endingYear));
+            dataCoverage.put("greenFences", calculateCoverage(greenFencesYears, startingYear, endingYear));
+            dataCoverage.put("cropRotation", calculateCoverage(cropRotationYears, startingYear, endingYear));
+            dataCoverage.put("zeroTillage", calculateCoverage(zeroTillageYears, startingYear, endingYear));
+            dataCoverage.put("protectiveForest", calculateCoverage(protectiveForestYears, startingYear, endingYear));
+            dataCoverage.put("manureCovering", calculateCoverage(manureCoveringYears, startingYear, endingYear));
+            dataCoverage.put("addingStraw", calculateCoverage(addingStrawYears, startingYear, endingYear));
+            dataCoverage.put("dailySpread", calculateCoverage(dailySpreadYears, startingYear, endingYear));
+        }
+
+        // Calculate intervention breakdown (aggregate by intervention name)
+        Map<String, Double> interventionBreakdown = new HashMap<>();
+        
+        // Aggregate interventions from all projects - initialize lazy-loaded interventions first
+        wetlandParks.stream()
+            .filter(w -> w.getIntervention() != null && w.getMitigatedEmissionsKtCO2e() != null)
+            .forEach(w -> {
+                Hibernate.initialize(w.getIntervention());
+                interventionBreakdown.merge(
+                    w.getIntervention().getName(),
+                    w.getMitigatedEmissionsKtCO2e(),
+                    Double::sum
+                );
+            });
+        
+        protectiveForest.stream()
+            .filter(p -> p.getIntervention() != null && p.getMitigatedEmissionsKtCO2e() != null)
+            .forEach(p -> {
+                Hibernate.initialize(p.getIntervention());
+                interventionBreakdown.merge(
+                    p.getIntervention().getName(),
+                    p.getMitigatedEmissionsKtCO2e(),
+                    Double::sum
+                );
+            });
+        
+        settlementTrees.stream()
+            .filter(s -> s.getIntervention() != null && s.getMitigatedEmissionsKtCO2e() != null)
+            .forEach(s -> {
+                Hibernate.initialize(s.getIntervention());
+                interventionBreakdown.merge(
+                    s.getIntervention().getName(),
+                    s.getMitigatedEmissionsKtCO2e(),
+                    Double::sum
+                );
+            });
+        
+        streetTrees.stream()
+            .filter(s -> s.getIntervention() != null && s.getMitigatedEmissionsKtCO2e() != null)
+            .forEach(s -> {
+                Hibernate.initialize(s.getIntervention());
+                interventionBreakdown.merge(
+                    s.getIntervention().getName(),
+                    s.getMitigatedEmissionsKtCO2e(),
+                    Double::sum
+                );
+            });
+        
+        greenFences.stream()
+            .filter(g -> g.getIntervention() != null && g.getMitigatedEmissionsKtCO2e() != null)
+            .forEach(g -> {
+                Hibernate.initialize(g.getIntervention());
+                interventionBreakdown.merge(
+                    g.getIntervention().getName(),
+                    g.getMitigatedEmissionsKtCO2e(),
+                    Double::sum
+                );
+            });
+        
+        cropRotation.stream()
+            .filter(c -> c.getIntervention() != null && c.getMitigatedEmissionsKtCO2e() != null)
+            .forEach(c -> {
+                Hibernate.initialize(c.getIntervention());
+                interventionBreakdown.merge(
+                    c.getIntervention().getName(),
+                    c.getMitigatedEmissionsKtCO2e(),
+                    Double::sum
+                );
+            });
+        
+        zeroTillage.stream()
+            .filter(z -> z.getIntervention() != null && z.getGhgEmissionsSavings() != null)
+            .forEach(z -> {
+                Hibernate.initialize(z.getIntervention());
+                interventionBreakdown.merge(
+                    z.getIntervention().getName(),
+                    z.getGhgEmissionsSavings(),
+                    Double::sum
+                );
+            });
+        
+        manureCovering.stream()
+            .filter(m -> m.getIntervention() != null && m.getMitigatedN2oEmissionsKilotonnes() != null)
+            .forEach(m -> {
+                Hibernate.initialize(m.getIntervention());
+                interventionBreakdown.merge(
+                    m.getIntervention().getName(),
+                    m.getMitigatedN2oEmissionsKilotonnes(),
+                    Double::sum
+                );
+            });
+        
+        addingStraw.stream()
+            .filter(a -> a.getIntervention() != null && a.getMitigatedCh4EmissionsKilotonnes() != null)
+            .forEach(a -> {
+                Hibernate.initialize(a.getIntervention());
+                interventionBreakdown.merge(
+                    a.getIntervention().getName(),
+                    a.getMitigatedCh4EmissionsKilotonnes(),
+                    Double::sum
+                );
+            });
+        
+        dailySpread.stream()
+            .filter(d -> d.getIntervention() != null && d.getMitigatedCh4EmissionsKilotonnes() != null)
+            .forEach(d -> {
+                Hibernate.initialize(d.getIntervention());
+                interventionBreakdown.merge(
+                    d.getIntervention().getName(),
+                    d.getMitigatedCh4EmissionsKilotonnes(),
+                    Double::sum
+                );
+            });
+
         AFOLUDashboardSummaryDto dto = new AFOLUDashboardSummaryDto();
         dto.setStartingYear(startingYear);
         dto.setEndingYear(endingYear);
@@ -132,11 +314,18 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         dto.setAddingStraw(addingStrawTotal);
         dto.setDailySpread(dailySpreadTotal);
         dto.setTotalMitigationKtCO2e(totalMitigation);
+        dto.setTotalBAU(bauSum);
+        dto.setAdjustmentMitigation(adjustmentMitigation);
+        dto.setImprovedMMSTotal(improvedMMSTotal);
+        dto.setRecordCounts(recordCounts);
+        dto.setDataCoverage(dataCoverage);
+        dto.setInterventionBreakdown(interventionBreakdown.isEmpty() ? null : interventionBreakdown);
 
         return dto;
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AFOLUDashboardYearDto> getAFOLUDashboardGraph(Integer startingYear, Integer endingYear) {
         int currentYear = LocalDateTime.now().getYear();
         int start = startingYear != null ? startingYear : currentYear - 4;
@@ -211,6 +400,18 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
                     + cropRotationValue + zeroTillageValue + protectiveForestValue + manureCoveringValue
                     + addingStrawValue + dailySpreadValue;
 
+            // Calculate Improved MMS Total for this year
+            double improvedMMSTotal = manureCoveringValue + addingStrawValue + dailySpreadValue;
+
+            // Calculate BAU and Adjustment Mitigation for this year
+            double bauValue = 0.0;
+            double adjustmentMitigation = 0.0;
+            Optional<BAU> bau = bauRepository.findByYearAndSector(year, ESector.AFOLU);
+            if (bau.isPresent() && bau.get().getValue() != null) {
+                bauValue = bau.get().getValue();
+                adjustmentMitigation = bauValue - totalMitigation;
+            }
+
             AFOLUDashboardYearDto dto = new AFOLUDashboardYearDto();
             dto.setYear(year);
             dto.setWetlandParks(wetlandParksValue);
@@ -224,6 +425,9 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             dto.setAddingStraw(addingStrawValue);
             dto.setDailySpread(dailySpreadValue);
             dto.setTotalMitigationKtCO2e(totalMitigation);
+            dto.setBauValue(bauValue);
+            dto.setAdjustmentMitigation(adjustmentMitigation);
+            dto.setImprovedMMSTotal(improvedMMSTotal);
 
             response.add(dto);
         }
@@ -246,6 +450,15 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
                 .filter(value -> value != null)
                 .mapToDouble(Double::doubleValue)
                 .sum();
+    }
+
+    private double calculateCoverage(Set<Integer> yearsWithData, int startYear, int endYear) {
+        if (startYear > endYear) return 0.0;
+        long yearsInRange = endYear - startYear + 1;
+        long yearsWithDataCount = yearsWithData.stream()
+                .filter(year -> year >= startYear && year <= endYear)
+                .count();
+        return yearsInRange > 0 ? (double) yearsWithDataCount / yearsInRange * 100.0 : 0.0;
     }
 
 
@@ -510,7 +723,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         Cell titleCell = title.createCell(0);
         titleCell.setCellValue("AFOLU Mitigation Dashboard Summary");
         titleCell.setCellStyle(titleStyle);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 11));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 14));
         title.setHeightInPoints(30);
 
         rowIdx++; // Blank row
@@ -575,16 +788,31 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         // Totals Summary Section
         Row totalsHeader = sheet.createRow(rowIdx++);
         totalsHeader.setHeightInPoints(20);
+        // Calculate Improved MMS Total
+        double improvedMMSTotal = manureCoveringTotal + addingStrawTotal + dailySpreadTotal;
+        
+        // Calculate Adjustment Mitigation
+        double bauSum = 0.0;
+        for (int year = startYear; year <= endYear; year++) {
+            Optional<BAU> bau = bauRepository.findByYearAndSector(year, ESector.AFOLU);
+            if (bau.isPresent() && bau.get().getValue() != null) {
+                bauSum += bau.get().getValue();
+            }
+        }
+        double adjustmentMitigation = bauSum - totalMitigation;
+
         String[] totalLabels = new String[]{"Project", "Total Mitigation (ktCO2e)"};
         String[] projectNames = new String[]{
                 "Wetland Parks", "Settlement Trees", "Street Trees", "Green Fences",
-                "Crop Rotation", "Zero Tillage", "Protective Forest", "Manure Covering",
-                "Adding Straw", "Daily Spread", "TOTAL"
+                "Crop Rotation", "Zero Tillage", "Protective Forest", 
+                "Improved MMS (Total)", "  - Manure Covering", "  - Adding Straw", "  - Daily Spread",
+                "TOTAL", "Total BAU", "Adjustment Mitigation"
         };
         double[] totalValues = new double[]{
                 wetlandParksTotal, settlementTreesTotal, streetTreesTotal, greenFencesTotal,
-                cropRotationTotal, zeroTillageTotal, protectiveForestTotal, manureCoveringTotal,
-                addingStrawTotal, dailySpreadTotal, totalMitigation
+                cropRotationTotal, zeroTillageTotal, protectiveForestTotal, 
+                improvedMMSTotal, manureCoveringTotal, addingStrawTotal, dailySpreadTotal,
+                totalMitigation, bauSum, adjustmentMitigation
         };
 
         for (int i = 0; i < totalLabels.length; i++) {
@@ -604,11 +832,17 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             nameStyle.setBorderRight(BorderStyle.THIN);
             nameStyle.setAlignment(HorizontalAlignment.LEFT);
             nameStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            if (i == projectNames.length - 1) { // Last row (TOTAL)
+            if (i == projectNames.length - 3 || i == projectNames.length - 2 || i == projectNames.length - 1) { // TOTAL, Total BAU, or Adjustment Mitigation row
                 Font font = sheet.getWorkbook().createFont();
                 font.setBold(true);
                 nameStyle.setFont(font);
-                nameStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+                if (i == projectNames.length - 3) { // TOTAL row
+                    nameStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+                } else if (i == projectNames.length - 2) { // Total BAU row
+                    nameStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+                } else { // Adjustment Mitigation row
+                    nameStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
+                }
                 nameStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             }
             nameCell.setCellStyle(nameStyle);
@@ -617,11 +851,17 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             valueCell.setCellValue(totalValues[i]);
             CellStyle valueCellStyle = sheet.getWorkbook().createCellStyle();
             valueCellStyle.cloneStyleFrom(numberStyle);
-            if (i == projectNames.length - 1) {
+            if (i == projectNames.length - 3 || i == projectNames.length - 2 || i == projectNames.length - 1) { // TOTAL, Total BAU, or Adjustment Mitigation row
                 Font font = sheet.getWorkbook().createFont();
                 font.setBold(true);
                 valueCellStyle.setFont(font);
-                valueCellStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+                if (i == projectNames.length - 3) { // TOTAL row
+                    valueCellStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
+                } else if (i == projectNames.length - 2) { // Total BAU row
+                    valueCellStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+                } else { // Adjustment Mitigation row
+                    valueCellStyle.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
+                }
                 valueCellStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             }
             valueCell.setCellStyle(valueCellStyle);
@@ -634,8 +874,9 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         perYearHeader.setHeightInPoints(20);
         String[] header = new String[]{
                 "Year", "Wetland Parks", "Settlement Trees", "Street Trees", "Green Fences",
-                "Crop Rotation", "Zero Tillage", "Protective Forest", "Manure Covering",
-                "Adding Straw", "Daily Spread", "Total Mitigation"
+                "Crop Rotation", "Zero Tillage", "Protective Forest", "Improved MMS Total",
+                "  - Manure Covering", "  - Adding Straw", "  - Daily Spread", 
+                "Total Mitigation", "BAU", "Adjustment Mitigation"
         };
         for (int c = 0; c < header.length; c++) {
             Cell cell = perYearHeader.createCell(c);
@@ -667,7 +908,17 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
                     AddingStrawMitigation::getMitigatedCh4EmissionsKilotonnes);
             double ds = sumDouble(filterByYear(dailySpread, DailySpreadMitigation::getYear, year, year),
                     DailySpreadMitigation::getMitigatedCh4EmissionsKilotonnes);
+            double improvedMMS = mc + ast + ds;
             double total = wp + st + stt + gf + cr + zt + pf + mc + ast + ds;
+            
+            // Calculate BAU and Adjustment Mitigation for this year
+            double yearBauValue = 0.0;
+            double yearAdjustmentMitigation = 0.0;
+            Optional<BAU> bau = bauRepository.findByYearAndSector(year, ESector.AFOLU);
+            if (bau.isPresent() && bau.get().getValue() != null) {
+                yearBauValue = bau.get().getValue();
+                yearAdjustmentMitigation = yearBauValue - total;
+            }
 
             Cell yearCell = r.createCell(0);
             yearCell.setCellValue(year);
@@ -693,14 +944,16 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             r.getCell(6).setCellStyle(numStyle);
             r.createCell(7).setCellValue(pf);
             r.getCell(7).setCellStyle(numStyle);
-            r.createCell(8).setCellValue(mc);
+            r.createCell(8).setCellValue(improvedMMS);
             r.getCell(8).setCellStyle(numStyle);
-            r.createCell(9).setCellValue(ast);
+            r.createCell(9).setCellValue(mc);
             r.getCell(9).setCellStyle(numStyle);
-            r.createCell(10).setCellValue(ds);
+            r.createCell(10).setCellValue(ast);
             r.getCell(10).setCellStyle(numStyle);
+            r.createCell(11).setCellValue(ds);
+            r.getCell(11).setCellStyle(numStyle);
 
-            Cell totalCell = r.createCell(11);
+            Cell totalCell = r.createCell(12);
             totalCell.setCellValue(total);
             CellStyle totalStyle = sheet.getWorkbook().createCellStyle();
             totalStyle.cloneStyleFrom(numStyle);
@@ -708,6 +961,14 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             totalFont.setBold(true);
             totalStyle.setFont(totalFont);
             totalCell.setCellStyle(totalStyle);
+            
+            Cell bauCell = r.createCell(13);
+            bauCell.setCellValue(yearBauValue);
+            bauCell.setCellStyle(numStyle);
+            
+            Cell adjustmentCell = r.createCell(14);
+            adjustmentCell.setCellValue(yearAdjustmentMitigation);
+            adjustmentCell.setCellStyle(numStyle);
         }
 
         // Auto-size columns
@@ -761,12 +1022,16 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             bar.setBarDirection(BarDirection.COL);
             bar.setGapWidth(75);
 
-            for (int c = 1; c <= 10; c++) {
-                CellRangeAddress valuesRange = new CellRangeAddress(dataStartRow, dataEndRow, c, c);
-                XDDFNumericalDataSource<Double> values = XDDFDataSourcesFactory
-                        .fromNumericCellRange(sheet, valuesRange);
-                XDDFBarChartData.Series series = (XDDFBarChartData.Series) bar.addSeries(categories, values);
-                series.setTitle(header[c], null);
+            // Add series for each project (excluding Improved MMS sub-items, BAU, and adjustment)
+            int[] seriesColumns = {1, 2, 3, 4, 5, 6, 7, 8, 12, 13}; // Skip 9,10,11 (Improved MMS sub-items) and 14 (adjustment), include 13 (BAU)
+            for (int c : seriesColumns) {
+                if (c < header.length) {
+                    CellRangeAddress valuesRange = new CellRangeAddress(dataStartRow, dataEndRow, c, c);
+                    XDDFNumericalDataSource<Double> values = XDDFDataSourcesFactory
+                            .fromNumericCellRange(sheet, valuesRange);
+                    XDDFBarChartData.Series series = (XDDFBarChartData.Series) bar.addSeries(categories, values);
+                    series.setTitle(header[c], null);
+                }
             }
 
             chart.plot(barData);
