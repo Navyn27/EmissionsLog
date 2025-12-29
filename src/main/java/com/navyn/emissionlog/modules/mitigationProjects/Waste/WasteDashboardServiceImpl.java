@@ -23,6 +23,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.xddf.usermodel.chart.*;
+import org.hibernate.Hibernate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -793,6 +794,8 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         r.createCell(4).setCellValue(item.getAdjustedBauEmissionBiologicalTreatment() != null
                                         ? item.getAdjustedBauEmissionBiologicalTreatment() : 0.0);
                         r.getCell(4).setCellStyle(numStyle);
+                        r.createCell(5).setCellValue(item.getAdjustedBauEmissionBiologicalTreatment());
+                        r.getCell(5).setCellStyle(numStyle);
                 }
                 autoSizeWithLimits(sheet, headers.length);
         }
@@ -1010,40 +1013,42 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         yearCellStyle.setDataFormat(dataFormat.getFormat("0"));
                         yearCell.setCellStyle(yearCellStyle);
 
+                        // Number columns
+                        CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook())
+                                        : numberStyle;
+                        r.createCell(1).setCellValue(
+                                        item.getAnnualSludgeTreated() != null ? item.getAnnualSludgeTreated() : 0.0);
+                        r.getCell(1).setCellStyle(numStyle);
+
                         // Project Intervention column (text)
-                        Cell interventionCell = r.createCell(1);
-                        interventionCell.setCellValue(
-                                        item.getProjectIntervention() != null ? item.getProjectIntervention().getName() : "");
+                        Cell interventionCell = r.createCell(2);
+                        String interventionName = "";
+                        if (item.getProjectIntervention() != null) {
+                                // Force Hibernate to initialize the proxy while session is still open
+                                Hibernate.initialize(item.getProjectIntervention());
+                                interventionName = item.getProjectIntervention().getName();
+                        }
+                        interventionCell.setCellValue(interventionName);
                         CellStyle baseTextStyle = isAlternate ? alternateDataStyle : dataStyle;
                         CellStyle textCellStyle = sheet.getWorkbook().createCellStyle();
                         textCellStyle.cloneStyleFrom(baseTextStyle);
                         textCellStyle.setAlignment(HorizontalAlignment.LEFT);
                         interventionCell.setCellStyle(textCellStyle);
 
-                        // Number columns
-                        CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook())
-                                        : numberStyle;
-                        r.createCell(2).setCellValue(
-                                        item.getAnnualSludgeTreated() != null ? item.getAnnualSludgeTreated() : 0.0);
-                        r.getCell(2).setCellStyle(numStyle);
                         r.createCell(3).setCellValue(
                                         item.getMethanePotential() != null ? item.getMethanePotential() : 0.0);
                         r.getCell(3).setCellStyle(numStyle);
                         r.createCell(4).setCellValue(
                                         item.getCo2ePerM3Sludge() != null ? item.getCo2ePerM3Sludge() : 0.0);
                         r.getCell(4).setCellStyle(numStyle);
-                        r.createCell(5).setCellValue(item.getAnnualEmissionsReductionTonnes() != null
-                                        ? item.getAnnualEmissionsReductionTonnes()
-                                        : 0.0);
-                        r.getCell(5).setCellStyle(numStyle);
-                        r.createCell(6).setCellValue(item.getAnnualEmissionsReductionKilotonnes() != null
+                        r.createCell(5).setCellValue(item.getAnnualEmissionsReductionKilotonnes() != null
                                         ? item.getAnnualEmissionsReductionKilotonnes()
                                         : 0.0);
+                        r.getCell(5).setCellStyle(numStyle);
+                        r.createCell(6).setCellValue(
+                                        item.getAdjustedBauEmissionMitigation() != null ? item.getAdjustedBauEmissionMitigation()
+                                                        : 0.0);
                         r.getCell(6).setCellStyle(numStyle);
-                        r.createCell(7).setCellValue(item.getAdjustedBauEmissionMitigation() != null
-                                        ? item.getAdjustedBauEmissionMitigation()
-                                        : 0.0);
-                        r.getCell(7).setCellStyle(numStyle);
                 }
                 autoSizeWithLimits(sheet, headers.length);
         }
