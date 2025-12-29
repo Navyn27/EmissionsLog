@@ -84,8 +84,17 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
     private WasteToEnergyMitigation createWasteToEnergyMitigationInternal(WasteToEnergyMitigationDto dto) {
         WasteToEnergyMitigation mitigation = new WasteToEnergyMitigation();
         
-        // Get WasteToWtEParameter (latest active)
-        WasteToWtEParameterResponseDto paramDto = parameterService.getLatestActive();
+        // Get WasteToWtEParameter (latest active) - throws exception if none exists
+        WasteToWtEParameterResponseDto paramDto;
+        try {
+            paramDto = parameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot create Waste to Energy Mitigation: No active Waste to Energy Parameter found. " +
+                            "Please create an active parameter first before creating mitigation records.",
+                    e
+            );
+        }
         
         // Get Intervention
         Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
@@ -135,8 +144,17 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
         WasteToEnergyMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Waste to Energy Mitigation record not found with id: " + id));
         
-        // Get WasteToWtEParameter (latest active)
-        WasteToWtEParameterResponseDto paramDto = parameterService.getLatestActive();
+        // Get WasteToWtEParameter (latest active) - throws exception if none exists
+        WasteToWtEParameterResponseDto paramDto;
+        try {
+            paramDto = parameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot update Waste to Energy Mitigation: No active Waste to Energy Parameter found. " +
+                            "Please create an active parameter first before updating mitigation records.",
+                    e
+            );
+        }
         
         // Get Intervention
         Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
@@ -426,6 +444,7 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
     }
 
     @Override
+    @Transactional
     public Map<String, Object> createWasteToEnergyMitigationFromExcel(MultipartFile file) {
         List<WasteToEnergyMitigation> savedRecords = new ArrayList<>();
         List<Integer> skippedYears = new ArrayList<>();

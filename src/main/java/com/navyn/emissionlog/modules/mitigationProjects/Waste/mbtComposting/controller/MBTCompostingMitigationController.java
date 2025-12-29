@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.dtos.MBTCompostingMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.models.MBTCompostingMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.dtos.MBTCompostingMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.service.MBTCompostingMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +32,7 @@ public class MBTCompostingMitigationController {
     @PostMapping
     public ResponseEntity<ApiResponse> createMBTCompostingMitigation(
             @Valid @RequestBody MBTCompostingMitigationDto dto) {
-        MBTCompostingMitigation mitigation = service.createMBTCompostingMitigation(dto);
+        MBTCompostingMitigationResponseDto mitigation = service.createMBTCompostingMitigation(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "MBT/Aerobic Composting mitigation record created successfully", mitigation));
     }
@@ -43,7 +43,7 @@ public class MBTCompostingMitigationController {
     public ResponseEntity<ApiResponse> updateMBTCompostingMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody MBTCompostingMitigationDto dto) {
-        MBTCompostingMitigation mitigation = service.updateMBTCompostingMitigation(id, dto);
+        MBTCompostingMitigationResponseDto mitigation = service.updateMBTCompostingMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(true, "MBT/Aerobic Composting mitigation record updated successfully", mitigation));
     }
     
@@ -52,7 +52,7 @@ public class MBTCompostingMitigationController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllMBTCompostingMitigation(
             @RequestParam(required = false) Integer year) {
-        List<MBTCompostingMitigation> mitigations = service.getAllMBTCompostingMitigation(year);
+        List<MBTCompostingMitigationResponseDto> mitigations = service.getAllMBTCompostingMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "MBT/Aerobic Composting mitigation records fetched successfully", mitigations));
     }
     

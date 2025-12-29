@@ -1,31 +1,36 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.service;
 
 import com.navyn.emissionlog.Enums.ExcelType;
-import com.navyn.emissionlog.Enums.Metrics.EmissionsKilotonneUnit;
-import com.navyn.emissionlog.Enums.Metrics.MassPerTimeUnit;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.constants.MBTCompostingConstants;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.constants.OperationStatus;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.services.BAUService;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.dtos.MBTCompostingMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.dtos.MBTCompostingMitigationResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.dtos.MBTCompostingParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.models.MBTCompostingMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.repository.MBTCompostingMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.*;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
@@ -35,87 +40,141 @@ import static com.navyn.emissionlog.utils.Specifications.MitigationSpecification
 public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigationService {
     
     private final MBTCompostingMitigationRepository repository;
-    
-    @Override
-    public MBTCompostingMitigation createMBTCompostingMitigation(MBTCompostingMitigationDto dto) {
-        // Validate operation status precedence
-        validateOperationStatusPrecedence(dto.getOperationStatus(), null);
+    private final MBTCompostingParameterService parameterService;
+    private final InterventionRepository interventionRepository;
+    private final BAUService bauService;
 
+    /**
+     * Maps MBTCompostingMitigation entity to Response DTO
+     * This method loads intervention data within the transaction to avoid lazy loading issues
+     */
+    private MBTCompostingMitigationResponseDto toResponseDto(MBTCompostingMitigation mitigation) {
+        MBTCompostingMitigationResponseDto dto = new MBTCompostingMitigationResponseDto();
+        dto.setId(mitigation.getId());
+        dto.setYear(mitigation.getYear());
+        dto.setOrganicWasteTreatedTonsPerYear(mitigation.getOrganicWasteTreatedTonsPerYear());
+        dto.setEstimatedGhgReductionTonnesPerYear(mitigation.getEstimatedGhgReductionTonnesPerYear());
+        dto.setEstimatedGhgReductionKilotonnesPerYear(mitigation.getEstimatedGhgReductionKilotonnesPerYear());
+        dto.setAdjustedBauEmissionBiologicalTreatment(mitigation.getAdjustedBauEmissionBiologicalTreatment());
+        dto.setCreatedAt(mitigation.getCreatedAt());
+        dto.setUpdatedAt(mitigation.getUpdatedAt());
+
+        // Map intervention - FORCE initialization within transaction to avoid lazy loading
+        if (mitigation.getProjectIntervention() != null) {
+            // Force Hibernate to initialize the proxy while session is still open
+            Hibernate.initialize(mitigation.getProjectIntervention());
+            Intervention intervention = mitigation.getProjectIntervention();
+            MBTCompostingMitigationResponseDto.InterventionInfo interventionInfo =
+                    new MBTCompostingMitigationResponseDto.InterventionInfo(
+                            intervention.getId(),
+                            intervention.getName()
+                    );
+            dto.setProjectIntervention(interventionInfo);
+        } else {
+            dto.setProjectIntervention(null);
+        }
+
+        return dto;
+    }
+
+    /**
+     * Internal method for Excel processing that returns entity
+     */
+    private MBTCompostingMitigation createMBTCompostingMitigationInternal(MBTCompostingMitigationDto dto) {
         MBTCompostingMitigation mitigation = new MBTCompostingMitigation();
-        
-        // Convert to standard units
-        double organicWasteInTonnesPerDay = dto.getOrganicWasteTreatedUnit().toTonnesPerDay(dto.getOrganicWasteTreatedTonsPerDay());
-        double bauEmissionInKilotonnes = dto.getBauEmissionUnit().toKilotonnesCO2e(dto.getBauEmissionBiologicalTreatment());
-        
-        // Set user inputs (store in standard units)
+
+        // Get MBTCompostingParameter (latest active)
+        MBTCompostingParameterResponseDto paramDto = parameterService.getLatestActive();
+
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+
+        // Set user inputs
         mitigation.setYear(dto.getYear());
-        mitigation.setOperationStatus(dto.getOperationStatus());
-        mitigation.setOrganicWasteTreatedTonsPerDay(organicWasteInTonnesPerDay);
-        mitigation.setBauEmissionBiologicalTreatment(bauEmissionInKilotonnes);
-        
+        mitigation.setOrganicWasteTreatedTonsPerYear(dto.getOrganicWasteTreatedTonsPerYear());
+        mitigation.setProjectIntervention(intervention);
+
         // Calculations
-        // Organic Waste Treated (tons/year) = Organic Waste Treated (tons/day) × days based on operation status
-        // - PRE_OPERATION: 0 days
-        // - HALF_OPERATION: 182.5 days (365/2)
-        // - FULL_OPERATION: 365 days
-        Double daysPerYear = dto.getOperationStatus().getDaysPerYear();
-        Double organicWasteTreatedTonsPerYear = organicWasteInTonnesPerDay * daysPerYear;
-        mitigation.setOrganicWasteTreatedTonsPerYear(organicWasteTreatedTonsPerYear);
-        
         // Estimated GHG Reduction (tCO2eq/year) = Emission Factor * Organic Waste Treated (tons/year)
-        Double estimatedGhgReductionTonnes = MBTCompostingConstants.EMISSION_FACTOR.getValue() * organicWasteTreatedTonsPerYear;
+        Double estimatedGhgReductionTonnes = paramDto.getEmissionFactor() * dto.getOrganicWasteTreatedTonsPerYear();
         mitigation.setEstimatedGhgReductionTonnesPerYear(estimatedGhgReductionTonnes);
-        
-        // Convert to kilotonnes
+
+        // Estimated GHG Reduction (ktCO2eq/year) = Estimated GHG Reduction (tCO2eq/year) / 1000
         Double estimatedGhgReductionKilotonnes = estimatedGhgReductionTonnes / 1000;
         mitigation.setEstimatedGhgReductionKilotonnesPerYear(estimatedGhgReductionKilotonnes);
-        
-        // Adjusted BAU Emission Biological Treatment (ktCO2eq/year) = BAU Emission - GHG Reduction (kt)
-        Double adjustedBauEmission = bauEmissionInKilotonnes - estimatedGhgReductionKilotonnes;
+
+        // Adjusted BAU Emission Biological Treatment (ktCO2e/year) = BAU - Estimated GHG Reduction (ktCO2eq/year)
+        Double adjustedBauEmission = bau.getValue() - estimatedGhgReductionKilotonnes;
         mitigation.setAdjustedBauEmissionBiologicalTreatment(adjustedBauEmission);
-        
+
         return repository.save(mitigation);
+    }
+
+    @Override
+    @Transactional
+    public MBTCompostingMitigationResponseDto createMBTCompostingMitigation(MBTCompostingMitigationDto dto) {
+        MBTCompostingMitigation saved = createMBTCompostingMitigationInternal(dto);
+        return toResponseDto(saved);
     }
     
     @Override
-    public MBTCompostingMitigation updateMBTCompostingMitigation(UUID id, MBTCompostingMitigationDto dto) {
+    @Transactional
+    public MBTCompostingMitigationResponseDto updateMBTCompostingMitigation(UUID id, MBTCompostingMitigationDto dto) {
         MBTCompostingMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("MBT Composting Mitigation record not found with id: " + id));
-        
-        // Validate operation status precedence (exclude current record from validation)
-        validateOperationStatusPrecedence(dto.getOperationStatus(), id);
 
-        // Convert to standard units
-        double organicWasteInTonnesPerDay = dto.getOrganicWasteTreatedUnit().toTonnesPerDay(dto.getOrganicWasteTreatedTonsPerDay());
-        double bauEmissionInKilotonnes = dto.getBauEmissionUnit().toKilotonnesCO2e(dto.getBauEmissionBiologicalTreatment());
-        
-        // Update user inputs (store in standard units)
+        // Get MBTCompostingParameter (latest active)
+        MBTCompostingParameterResponseDto paramDto = parameterService.getLatestActive();
+
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+
+        // Update user inputs
         mitigation.setYear(dto.getYear());
-        mitigation.setOperationStatus(dto.getOperationStatus());
-        mitigation.setOrganicWasteTreatedTonsPerDay(organicWasteInTonnesPerDay);
-        mitigation.setBauEmissionBiologicalTreatment(bauEmissionInKilotonnes);
-        
+        mitigation.setOrganicWasteTreatedTonsPerYear(dto.getOrganicWasteTreatedTonsPerYear());
+        mitigation.setProjectIntervention(intervention);
+
         // Recalculate derived fields
-        Double daysPerYear = dto.getOperationStatus().getDaysPerYear();
-        Double organicWasteTreatedTonsPerYear = organicWasteInTonnesPerDay * daysPerYear;
-        mitigation.setOrganicWasteTreatedTonsPerYear(organicWasteTreatedTonsPerYear);
-        
-        Double estimatedGhgReductionTonnes = MBTCompostingConstants.EMISSION_FACTOR.getValue() * organicWasteTreatedTonsPerYear;
+        // Estimated GHG Reduction (tCO2eq/year) = Emission Factor * Organic Waste Treated (tons/year)
+        Double estimatedGhgReductionTonnes = paramDto.getEmissionFactor() * dto.getOrganicWasteTreatedTonsPerYear();
         mitigation.setEstimatedGhgReductionTonnesPerYear(estimatedGhgReductionTonnes);
-        
+
+        // Estimated GHG Reduction (ktCO2eq/year) = Estimated GHG Reduction (tCO2eq/year) / 1000
         Double estimatedGhgReductionKilotonnes = estimatedGhgReductionTonnes / 1000;
         mitigation.setEstimatedGhgReductionKilotonnesPerYear(estimatedGhgReductionKilotonnes);
-        
-        Double adjustedBauEmission = bauEmissionInKilotonnes - estimatedGhgReductionKilotonnes;
+
+        // Adjusted BAU Emission Biological Treatment (ktCO2e/year) = BAU - Estimated GHG Reduction (ktCO2eq/year)
+        Double adjustedBauEmission = bau.getValue() - estimatedGhgReductionKilotonnes;
         mitigation.setAdjustedBauEmissionBiologicalTreatment(adjustedBauEmission);
-        
-        return repository.save(mitigation);
+
+        MBTCompostingMitigation saved = repository.save(mitigation);
+        return toResponseDto(saved);
     }
     
     @Override
-    public List<MBTCompostingMitigation> getAllMBTCompostingMitigation(Integer year) {
+    @Transactional
+    public List<MBTCompostingMitigationResponseDto> getAllMBTCompostingMitigation(Integer year) {
         Specification<MBTCompostingMitigation> spec = Specification.where(hasYear(year));
-        return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        List<MBTCompostingMitigation> mitigations = repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        return mitigations.stream()
+                .map(this::toResponseDto)
+                .toList();
     }
 
     @Override
@@ -126,43 +185,13 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
         repository.deleteById(id);
     }
 
-    /**
-     * Validates that the new operation status is not smaller than the maximum existing status.
-     * Operation status must progress in ascending order: CONSTRUCTION_PRE_OP < HALF_YEAR_OPERATION < FULL_OPERATION
-     *
-     * @param newStatus The operation status to validate
-     * @param excludeId ID to exclude from validation (for updates)
-     * @throws RuntimeException if operation status precedence is violated
-     */
-    private void validateOperationStatusPrecedence(OperationStatus newStatus, UUID excludeId) {
-        // Get the maximum operation status from existing records
-        repository.findTopByOrderByOperationStatusDesc()
-            .ifPresent(maxRecord -> {
-                // Exclude the current record being updated
-                if (excludeId != null && maxRecord.getId().equals(excludeId)) {
-                    return;
-                }
-
-                OperationStatus maxStatus = maxRecord.getOperationStatus();
-
-                // Check if new status is smaller than max status
-                if (newStatus.ordinal() < maxStatus.ordinal()) {
-                    throw new RuntimeException(
-                        String.format("Cannot set operation status to %s. The project has already reached %s. " +
-                                     "Operation status cannot go backward.",
-                                     newStatus.getDisplayName(), maxStatus.getDisplayName())
-                    );
-                }
-            });
-    }
-
     @Override
     public byte[] generateExcelTemplate() {
         try (Workbook workbook = new XSSFWorkbook();
                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("MBT Composting Mitigation");
 
-            // Create styles (similar to other templates)
+            // Create styles
             XSSFCellStyle titleStyle = (XSSFCellStyle) workbook.createCellStyle();
             Font titleFont = workbook.createFont();
             titleFont.setFontName("Calibri");
@@ -244,7 +273,7 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("MBT Composting Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
 
             rowIdx++; // Blank row
 
@@ -253,11 +282,8 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
             headerRow.setHeightInPoints(22);
             String[] headers = {
                     "Year",
-                    "Operation Status",
-                    "Organic Waste Treated Tons Per Day",
-                    "Organic Waste Treated Unit",
-                    "BAU Emission Biological Treatment",
-                    "BAU Emission Unit"
+                    "Organic Waste Treated (tons/year)",
+                    "Project Intervention Name"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -266,79 +292,43 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
                 cell.setCellStyle(headerStyle);
             }
 
-            // Get enum values for dropdowns
-            String[] operationStatusValues = Arrays.stream(OperationStatus.values())
-                    .map(Enum::name)
-                    .toArray(String[]::new);
-            String[] massPerTimeUnitValues = Arrays.stream(MassPerTimeUnit.values())
-                    .map(Enum::name)
-                    .toArray(String[]::new);
-            String[] emissionsUnitValues = Arrays.stream(EmissionsKilotonneUnit.values())
-                    .map(Enum::name)
+            // Get all intervention names for dropdown
+            List<Intervention> interventions = interventionRepository.findAll();
+            String[] interventionNames = interventions.stream()
+                    .map(Intervention::getName)
                     .toArray(String[]::new);
 
             // Create data validation helper
             DataValidationHelper validationHelper = sheet.getDataValidationHelper();
 
-            // Data validation for Operation Status column (Column B, index 1)
-            CellRangeAddressList operationStatusList = new CellRangeAddressList(3, 1000, 1, 1);
-            DataValidationConstraint operationStatusConstraint = validationHelper
-                    .createExplicitListConstraint(operationStatusValues);
-            DataValidation operationStatusValidation = validationHelper.createValidation(operationStatusConstraint,
-                    operationStatusList);
-            operationStatusValidation.setShowErrorBox(true);
-            operationStatusValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            operationStatusValidation.createErrorBox("Invalid Operation Status",
-                    "Please select a valid operation status from the dropdown list.");
-            operationStatusValidation.setShowPromptBox(true);
-            operationStatusValidation.createPromptBox("Operation Status", "Select an operation status from the dropdown list.");
-            sheet.addValidationData(operationStatusValidation);
-
-            // Data validation for Organic Waste Treated Unit column (Column D, index 3)
-            CellRangeAddressList massUnitList = new CellRangeAddressList(3, 1000, 3, 3);
-            DataValidationConstraint massUnitConstraint = validationHelper
-                    .createExplicitListConstraint(massPerTimeUnitValues);
-            DataValidation massUnitValidation = validationHelper.createValidation(massUnitConstraint,
-                    massUnitList);
-            massUnitValidation.setShowErrorBox(true);
-            massUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            massUnitValidation.createErrorBox("Invalid Unit",
-                    "Please select a valid unit from the dropdown list.");
-            massUnitValidation.setShowPromptBox(true);
-            massUnitValidation.createPromptBox("Organic Waste Treated Unit", "Select a unit from the dropdown list.");
-            sheet.addValidationData(massUnitValidation);
-
-            // Data validation for BAU Emission Unit column (Column F, index 5)
-            CellRangeAddressList bauUnitList = new CellRangeAddressList(3, 1000, 5, 5);
-            DataValidationConstraint bauUnitConstraint = validationHelper
-                    .createExplicitListConstraint(emissionsUnitValues);
-            DataValidation bauUnitValidation = validationHelper.createValidation(bauUnitConstraint,
-                    bauUnitList);
-            bauUnitValidation.setShowErrorBox(true);
-            bauUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            bauUnitValidation.createErrorBox("Invalid Unit",
-                    "Please select a valid unit from the dropdown list.");
-            bauUnitValidation.setShowPromptBox(true);
-            bauUnitValidation.createPromptBox("BAU Emission Unit", "Select a unit from the dropdown list.");
-            sheet.addValidationData(bauUnitValidation);
+            // Data validation for Project Intervention Name column (Column C, index 2)
+            if (interventionNames.length > 0) {
+                CellRangeAddressList interventionNameList = new CellRangeAddressList(3, 1000, 2, 2);
+                DataValidationConstraint interventionNameConstraint = validationHelper
+                        .createExplicitListConstraint(interventionNames);
+                DataValidation interventionNameValidation = validationHelper.createValidation(interventionNameConstraint,
+                        interventionNameList);
+                interventionNameValidation.setShowErrorBox(true);
+                interventionNameValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionNameValidation.createErrorBox("Invalid Intervention",
+                        "Please select a valid intervention from the dropdown list.");
+                interventionNameValidation.setShowPromptBox(true);
+                interventionNameValidation.createPromptBox("Project Intervention Name", "Select an intervention from the dropdown list.");
+                sheet.addValidationData(interventionNameValidation);
+            }
 
             // Create example data rows
             Object[] exampleData1 = {
-                    2024,
-                    "FULL_OPERATION",
-                    50.0,
-                    "TONNES_PER_DAY",
-                    10.0,
-                    "KILOTONNES_CO2E"
+                    2029,
+                    10000.0,
+                    interventions.isEmpty() ? "Example Intervention" : interventions.get(0).getName()
             };
 
             Object[] exampleData2 = {
-                    2025,
-                    "FULL_OPERATION",
-                    55.0,
-                    "TONNES_PER_DAY",
-                    11.0,
-                    "KILOTONNES_CO2E"
+                    2030,
+                    11000.0,
+                    interventions.size() > 1 ? interventions.get(1).getName() :
+                            (interventions.isEmpty() ? "Example Intervention" : interventions.get(0).getName())
             };
 
             // First example row
@@ -349,10 +339,10 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
                 if (i == 0) { // Year
                     cell.setCellStyle(yearStyle);
                     cell.setCellValue(((Number) exampleData1[i]).intValue());
-                } else if (i == 2 || i == 4) { // Numbers
+                } else if (i == 1) { // Organic Waste Treated (number)
                     cell.setCellStyle(numberStyle);
                     cell.setCellValue(((Number) exampleData1[i]).doubleValue());
-                } else { // Strings
+                } else { // Intervention Name (string)
                     cell.setCellStyle(dataStyle);
                     cell.setCellValue((String) exampleData1[i]);
                 }
@@ -369,14 +359,14 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
                     altYearStyle.setAlignment(HorizontalAlignment.CENTER);
                     cell.setCellStyle(altYearStyle);
                     cell.setCellValue(((Number) exampleData2[i]).intValue());
-                } else if (i == 2 || i == 4) { // Numbers
+                } else if (i == 1) { // Organic Waste Treated (number)
                     CellStyle altNumStyle = workbook.createCellStyle();
                     altNumStyle.cloneStyleFrom(numberStyle);
                     altNumStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
                     altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                     cell.setCellStyle(altNumStyle);
                     cell.setCellValue(((Number) exampleData2[i]).doubleValue());
-                } else { // Strings
+                } else { // Intervention Name (string)
                     cell.setCellStyle(alternateDataStyle);
                     cell.setCellValue((String) exampleData2[i]);
                 }
@@ -419,27 +409,18 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
             for (int i = 0; i < dtos.size(); i++) {
                 MBTCompostingMitigationDto dto = dtos.get(i);
                 totalProcessed++;
-                int actualRowNumber = i + 1 + 3;
+                int actualRowNumber = i + 1 + 3; // +1 for 1-based, +3 for title(1) + blank(1) + header(1)
 
                 // Validate required fields
                 List<String> missingFields = new ArrayList<>();
                 if (dto.getYear() == null) {
                     missingFields.add("Year");
                 }
-                if (dto.getOperationStatus() == null) {
-                    missingFields.add("Operation Status");
+                if (dto.getOrganicWasteTreatedTonsPerYear() == null) {
+                    missingFields.add("Organic Waste Treated (tons/year)");
                 }
-                if (dto.getOrganicWasteTreatedTonsPerDay() == null) {
-                    missingFields.add("Organic Waste Treated Tons Per Day");
-                }
-                if (dto.getOrganicWasteTreatedUnit() == null) {
-                    missingFields.add("Organic Waste Treated Unit");
-                }
-                if (dto.getBauEmissionBiologicalTreatment() == null) {
-                    missingFields.add("BAU Emission Biological Treatment");
-                }
-                if (dto.getBauEmissionUnit() == null) {
-                    missingFields.add("BAU Emission Unit");
+                if (dto.getProjectInterventionName() == null || dto.getProjectInterventionName().trim().isEmpty()) {
+                    missingFields.add("Project Intervention Name");
                 }
 
                 if (!missingFields.isEmpty()) {
@@ -448,14 +429,23 @@ public class MBTCompostingMitigationServiceImpl implements MBTCompostingMitigati
                             actualRowNumber, String.join(", ", missingFields)));
                 }
 
+                // Convert intervention name to UUID
+                Optional<Intervention> interventionOpt = interventionRepository.findByNameIgnoreCase(dto.getProjectInterventionName().trim());
+                if (interventionOpt.isEmpty()) {
+                    throw new RuntimeException(String.format(
+                            "Row %d: Intervention '%s' not found. Please use a valid intervention name from the dropdown.",
+                            actualRowNumber, dto.getProjectInterventionName()));
+                }
+                dto.setProjectInterventionId(interventionOpt.get().getId());
+
                 // Check if year already exists
                 if (repository.findByYear(dto.getYear()).isPresent()) {
                     skippedYears.add(dto.getYear());
-                    continue;
+                    continue; // Skip this row
                 }
 
                 // Create the record
-                MBTCompostingMitigation saved = createMBTCompostingMitigation(dto);
+                MBTCompostingMitigation saved = createMBTCompostingMitigationInternal(dto);
                 savedRecords.add(saved);
             }
 
