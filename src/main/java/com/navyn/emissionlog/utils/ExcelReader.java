@@ -134,9 +134,9 @@ public class ExcelReader {
         wetlandParksToDtoMap.put("Year", "year");
         wetlandParksToDtoMap.put("Tree Category", "treeCategory");
         wetlandParksToDtoMap.put("Area Planted", "areaPlanted");
-        wetlandParksToDtoMap.put("Area Unit", "areaUnit");
-        wetlandParksToDtoMap.put("Aboveground Biomass AGB", "abovegroundBiomassAGB");
+        wetlandParksToDtoMap.put("AGB Current Year", "abovegroundBiomassAGB");
         wetlandParksToDtoMap.put("AGB Unit", "agbUnit");
+        wetlandParksToDtoMap.put("Intervention Name", "interventionName");
     }
 
     // This hashmap is responsible for reading data from crop rotation mitigation
@@ -206,9 +206,9 @@ public class ExcelReader {
         protectiveForestToDtoMap.put("Year", "year");
         protectiveForestToDtoMap.put("Category", "category");
         protectiveForestToDtoMap.put("Area Planted", "areaPlanted");
-        protectiveForestToDtoMap.put("Area Planted Unit", "areaPlantedUnit");
         protectiveForestToDtoMap.put("AGB Current Year", "agbCurrentYear");
         protectiveForestToDtoMap.put("AGB Unit", "agbUnit");
+        protectiveForestToDtoMap.put("Intervention Name", "interventionName");
     }
 
     // This hashmap is responsible for reading data from green fences mitigation

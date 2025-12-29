@@ -499,13 +499,20 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
 
             int rowIdx = 0;
 
+            // Get all interventions for dropdown
+            List<Intervention> allInterventions = interventionRepository.findAll();
+            String[] interventionNames = allInterventions.stream()
+                    .map(Intervention::getName)
+                    .sorted()
+                    .toArray(String[]::new);
+
             // Title row
             Row titleRow = sheet.createRow(rowIdx++);
             titleRow.setHeightInPoints(30);
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Protective Forest Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
 
             rowIdx++; // Blank row
 
@@ -517,7 +524,8 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
                     "Category",
                     "Area Planted",
                     "AGB Current Year",
-                    "AGB Unit"
+                    "AGB Unit",
+                    "Intervention Name"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -565,13 +573,31 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
             agbUnitValidation.createPromptBox("AGB Unit", "Select an AGB unit from the dropdown list.");
             sheet.addValidationData(agbUnitValidation);
 
+            // Data validation for Intervention Name column (Column F, index 5)
+            if (interventionNames.length > 0) {
+                CellRangeAddressList interventionList = new CellRangeAddressList(3, 1000, 5, 5);
+                DataValidationConstraint interventionConstraint = validationHelper
+                        .createExplicitListConstraint(interventionNames);
+                DataValidation interventionValidation = validationHelper.createValidation(interventionConstraint,
+                        interventionList);
+                interventionValidation.setShowErrorBox(true);
+                interventionValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionValidation.createErrorBox("Invalid Intervention",
+                        "Please select a valid intervention from the dropdown list.");
+                interventionValidation.setShowPromptBox(true);
+                interventionValidation.createPromptBox("Intervention Name",
+                        "Select an intervention from the dropdown list.");
+                sheet.addValidationData(interventionValidation);
+            }
+
             // Create example data rows
             Object[] exampleData1 = {
                     2024,
                     "PINUS_SPP",
                     100.0,
                     50.0,
-                    "CUBIC_METER_PER_HA"
+                    "CUBIC_METER_PER_HA",
+                    interventionNames.length > 0 ? interventionNames[0] : ""
             };
 
             Object[] exampleData2 = {
@@ -579,7 +605,8 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
                     "EUCALYPTUS_SPP",
                     150.0,
                     60.0,
-                    "CUBIC_METER_PER_HA"
+                    "CUBIC_METER_PER_HA",
+                    ""
             };
 
             // First example row
@@ -590,7 +617,7 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
                 if (i == 0) { // Year
                     cell.setCellStyle(yearStyle);
                     cell.setCellValue(((Number) exampleData1[i]).intValue());
-                } else if (i == 1) { // Category (string)
+                } else if (i == 1 || i == 5) { // Category or Intervention Name (strings)
                     cell.setCellStyle(dataStyle);
                     cell.setCellValue((String) exampleData1[i]);
                 } else if (i == 2 || i == 3) { // Numbers
@@ -613,7 +640,7 @@ public class ProtectiveForestMitigationServiceImpl implements ProtectiveForestMi
                     altYearStyle.setAlignment(HorizontalAlignment.CENTER);
                     cell.setCellStyle(altYearStyle);
                     cell.setCellValue(((Number) exampleData2[i]).intValue());
-                } else if (i == 1) { // Category (string)
+                } else if (i == 1 || i == 5) { // Category or Intervention Name (strings)
                     cell.setCellStyle(alternateDataStyle);
                     cell.setCellValue((String) exampleData2[i]);
                 } else if (i == 2 || i == 3) { // Numbers
