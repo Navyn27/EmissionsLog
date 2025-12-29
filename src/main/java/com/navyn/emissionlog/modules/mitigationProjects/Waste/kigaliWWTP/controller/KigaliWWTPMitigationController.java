@@ -1,8 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.controller;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.constants.WWTPProjectPhase;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.dtos.KigaliWWTPMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.models.KigaliWWTPMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.dtos.KigaliWWTPMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.service.KigaliWWTPMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -30,11 +28,11 @@ public class KigaliWWTPMitigationController {
     private final KigaliWWTPMitigationService service;
     
     @Operation(summary = "Create Kigali WWTP mitigation record", 
-               description = "Creates a new Kigali Wastewater Treatment Plant (WWTP) mitigation project record at GITICYINYONI with year-based household connection rates")
+               description = "Creates a new Kigali Wastewater Treatment Plant (WWTP) mitigation project record")
     @PostMapping
     public ResponseEntity<ApiResponse> createKigaliWWTPMitigation(
             @Valid @RequestBody KigaliWWTPMitigationDto dto) {
-        KigaliWWTPMitigation mitigation = service.createKigaliWWTPMitigation(dto);
+        KigaliWWTPMitigationResponseDto mitigation = service.createKigaliWWTPMitigation(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Kigali WWTP mitigation record created successfully", mitigation));
     }
@@ -45,17 +43,16 @@ public class KigaliWWTPMitigationController {
     public ResponseEntity<ApiResponse> updateKigaliWWTPMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody KigaliWWTPMitigationDto dto) {
-        KigaliWWTPMitigation mitigation = service.updateKigaliWWTPMitigation(id, dto);
+        KigaliWWTPMitigationResponseDto mitigation = service.updateKigaliWWTPMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(true, "Kigali WWTP mitigation record updated successfully", mitigation));
     }
     
     @Operation(summary = "Get Kigali WWTP mitigation records", 
-               description = "Retrieves all Kigali WWTP mitigation records with optional year and project phase filters")
+               description = "Retrieves all Kigali WWTP mitigation records with optional year filter")
     @GetMapping
     public ResponseEntity<ApiResponse> getAllKigaliWWTPMitigation(
-            @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) WWTPProjectPhase projectPhase) {
-        List<KigaliWWTPMitigation> mitigations = service.getAllKigaliWWTPMitigation(year, projectPhase);
+            @RequestParam(required = false) Integer year) {
+        List<KigaliWWTPMitigationResponseDto> mitigations = service.getAllKigaliWWTPMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Kigali WWTP mitigation records fetched successfully", mitigations));
     }
     
@@ -68,7 +65,8 @@ public class KigaliWWTPMitigationController {
     }
 
     @GetMapping("/template")
-    @Operation(summary = "Download Kigali WWTP Mitigation Excel template", description = "Downloads an Excel template file with the required column headers and data validation for uploading Kigali WWTP Mitigation records")
+    @Operation(summary = "Download Kigali WWTP Mitigation Excel template", 
+               description = "Downloads an Excel template file with the required column headers and data validation for uploading Kigali WWTP Mitigation records")
     public ResponseEntity<byte[]> downloadExcelTemplate() {
         byte[] templateBytes = service.generateExcelTemplate();
 
@@ -83,7 +81,8 @@ public class KigaliWWTPMitigationController {
     }
 
     @PostMapping("/excel")
-    @Operation(summary = "Upload Kigali WWTP Mitigation records from Excel file", description = "Uploads multiple Kigali WWTP Mitigation records from an Excel file. Records with duplicate years will be skipped.")
+    @Operation(summary = "Upload Kigali WWTP Mitigation records from Excel file", 
+               description = "Uploads multiple Kigali WWTP Mitigation records from an Excel file. Records with duplicate years will be skipped.")
     public ResponseEntity<ApiResponse> createKigaliWWTPMitigationFromExcel(
             @RequestParam("file") MultipartFile file) {
         Map<String, Object> result = service.createKigaliWWTPMitigationFromExcel(file);
@@ -92,9 +91,6 @@ public class KigaliWWTPMitigationController {
         int skippedCount = (Integer) result.get("skippedCount");
         @SuppressWarnings("unchecked")
         List<Integer> skippedYears = (List<Integer>) result.get("skippedYears");
-        @SuppressWarnings("unchecked")
-        List<Integer> skippedPhaseRows = (List<Integer>) result.getOrDefault("skippedPhaseRows", new ArrayList<>());
-        int skippedPhaseCount = (Integer) result.getOrDefault("skippedPhaseCount", 0);
 
         StringBuilder messageBuilder = new StringBuilder();
         messageBuilder.append(String.format("Upload completed. %d record(s) saved successfully.", savedCount));
@@ -102,11 +98,6 @@ public class KigaliWWTPMitigationController {
         if (skippedCount > 0) {
             messageBuilder.append(String.format(" %d record(s) skipped (years already exist: %s).",
                     skippedCount, skippedYears.isEmpty() ? "none" : skippedYears.toString()));
-        }
-        
-        if (skippedPhaseCount > 0) {
-            messageBuilder.append(String.format(" %d record(s) skipped (phase precedence violation: %s).",
-                    skippedPhaseCount, skippedPhaseRows.isEmpty() ? "none" : skippedPhaseRows.toString()));
         }
 
         return ResponseEntity.ok(new ApiResponse(true, messageBuilder.toString(), result));

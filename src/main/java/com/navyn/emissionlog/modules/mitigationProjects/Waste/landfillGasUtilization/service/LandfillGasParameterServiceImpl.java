@@ -61,8 +61,9 @@ public class LandfillGasParameterServiceImpl implements LandfillGasParameterServ
                 .sorted((a, b) -> {
                     // The first sort by isActive: true (active) comes first
                     // Handle null values - treat null as false (inactive)
-                    boolean aIsActive = a.getIsActive() != null && a.getIsActive();
-                    boolean bIsActive = b.getIsActive() != null && b.getIsActive();
+                    // Use Boolean.TRUE.equals() to safely handle null values
+                    boolean aIsActive = Boolean.TRUE.equals(a.getIsActive());
+                    boolean bIsActive = Boolean.TRUE.equals(b.getIsActive());
                     
                     if (aIsActive != bIsActive) {
                         return bIsActive ? 1 : -1; // true (active) comes first

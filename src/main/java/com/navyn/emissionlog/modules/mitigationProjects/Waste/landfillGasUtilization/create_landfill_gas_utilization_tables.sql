@@ -51,3 +51,4 @@ COMMENT ON COLUMN landfill_gas_utilization_mitigation.ch4_destroyed IS 'CH₄Cap
 COMMENT ON COLUMN landfill_gas_utilization_mitigation.equivalent_co2e_reduction IS 'CH₄Destroyed * GlobalWarmingPotential(CH₄)';
 COMMENT ON COLUMN landfill_gas_utilization_mitigation.mitigation_scenario_grand IS 'BAU - EquivalentCO₂eReduction';
 
+
