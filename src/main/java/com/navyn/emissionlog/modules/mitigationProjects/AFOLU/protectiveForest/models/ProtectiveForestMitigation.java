@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.models;
 
 import com.navyn.emissionlog.Enums.Mitigation.ProtectiveForestCategory;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "protective_forest_mitigation",
+@Table(name = "protective_forest_mitigations",
        uniqueConstraints = @UniqueConstraint(columnNames = {"year", "category"}))
 @Data
 public class ProtectiveForestMitigation {
@@ -36,21 +37,24 @@ public class ProtectiveForestMitigation {
     
     // ===== INPUT FIELDS =====
     @Column(nullable = false)
-    private Double cumulativeArea; // ha
-    
-    @Column(nullable = false)
     private Double areaPlanted; // ha
     
     @Column(nullable = false)
     private Double agbCurrentYear; // m3/ha (USER provides)
     
     // ===== CALCULATED FIELDS =====
-    private Double agbPreviousYear; // m3/ha (AUTO-FETCHED from DB or 0)
+    @Column(nullable = false)
+    private Double cumulativeArea; // ha
     private Double agbGrowth; // tonnes m3/ha
-    private Double abovegroundBiomassGrowth; // tonnes DM/ha
+    private Double aboveGroundBiomassGrowth; // tonnes DM/ha
     private Double totalBiomass; // tonnes DM/year
     private Double biomassCarbonIncrease; // tonnes C/year
     private Double mitigatedEmissionsKtCO2e; // Kt CO2e
+    private Double adjustmentMitigation; // Kilotonnes CO2 (BAU.value - ghgEmissionsSavings)
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "intervention_id", nullable = true)
+    private Intervention intervention;
     
     @CreationTimestamp
     @Column(updatable = false)

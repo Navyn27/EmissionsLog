@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.service;
 
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.dtos.ManureCoveringMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.models.ManureCoveringMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.dtos.ManureCoveringMitigationResponseDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -10,13 +10,13 @@ import java.util.UUID;
 
 public interface ManureCoveringMitigationService {
 
-    ManureCoveringMitigation createManureCoveringMitigation(ManureCoveringMitigationDto dto);
+    ManureCoveringMitigationResponseDto createManureCoveringMitigation(ManureCoveringMitigationDto dto);
 
-    ManureCoveringMitigation updateManureCoveringMitigation(UUID id, ManureCoveringMitigationDto dto);
+    ManureCoveringMitigationResponseDto updateManureCoveringMitigation(UUID id, ManureCoveringMitigationDto dto);
 
     void deleteManureCoveringMitigation(UUID id);
 
-    List<ManureCoveringMitigation> getAllManureCoveringMitigation(Integer year);
+    List<ManureCoveringMitigationResponseDto> getAllManureCoveringMitigation(Integer year);
 
     byte[] generateExcelTemplate();
 

@@ -2,7 +2,7 @@ package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandParks.serv
 
 import com.navyn.emissionlog.Enums.Mitigation.WetlandTreeCategory;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandParks.dtos.WetlandParksMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandParks.models.WetlandParksMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandParks.dtos.WetlandParksMitigationResponseDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -12,15 +12,15 @@ import java.util.UUID;
 
 public interface WetlandParksMitigationService {
 
-    WetlandParksMitigation createWetlandParksMitigation(WetlandParksMitigationDto dto);
+    WetlandParksMitigationResponseDto createWetlandParksMitigation(WetlandParksMitigationDto dto);
 
-    WetlandParksMitigation updateWetlandParksMitigation(UUID id, WetlandParksMitigationDto dto);
+    WetlandParksMitigationResponseDto updateWetlandParksMitigation(UUID id, WetlandParksMitigationDto dto);
 
     void deleteWetlandParksMitigation(UUID id);
 
-    List<WetlandParksMitigation> getAllWetlandParksMitigation(Integer year, WetlandTreeCategory category);
+    List<WetlandParksMitigationResponseDto> getAllWetlandParksMitigation(Integer year, WetlandTreeCategory category);
 
-    Optional<WetlandParksMitigation> getByYearAndCategory(Integer year, WetlandTreeCategory category);
+    Optional<WetlandParksMitigationResponseDto> getByYearAndCategory(Integer year, WetlandTreeCategory category);
 
     byte[] generateExcelTemplate();
 
