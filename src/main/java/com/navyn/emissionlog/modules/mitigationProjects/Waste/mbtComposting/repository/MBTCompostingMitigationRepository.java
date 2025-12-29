@@ -3,7 +3,6 @@ package com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.rep
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.mbtComposting.models.MBTCompostingMitigation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -14,7 +13,4 @@ public interface MBTCompostingMitigationRepository extends JpaRepository<MBTComp
         JpaSpecificationExecutor<MBTCompostingMitigation> {
     
     Optional<MBTCompostingMitigation> findByYear(Integer year);
-    
-    @Query("SELECT m FROM MBTCompostingMitigation m ORDER BY m.operationStatus DESC LIMIT 1")
-    Optional<MBTCompostingMitigation> findTopByOrderByOperationStatusDesc();
 }
