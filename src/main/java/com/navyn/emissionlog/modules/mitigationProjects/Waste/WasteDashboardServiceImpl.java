@@ -773,10 +773,10 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         // Number columns
                         CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook())
                                         : numberStyle;
-                        r.createCell(1).setCellValue(item.getOrganicWasteTreatedTonsPerYear() != null 
+                        r.createCell(1).setCellValue(item.getOrganicWasteTreatedTonsPerYear() != null
                                         ? item.getOrganicWasteTreatedTonsPerYear() : 0.0);
                         r.getCell(1).setCellStyle(numStyle);
-                        
+
                         // Project Intervention column (text)
                         Cell interventionCell = r.createCell(2);
                         interventionCell.setCellValue(
@@ -786,11 +786,11 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         textCellStyle.cloneStyleFrom(baseTextStyle);
                         textCellStyle.setAlignment(HorizontalAlignment.LEFT);
                         interventionCell.setCellStyle(textCellStyle);
-                        
-                        r.createCell(3).setCellValue(item.getEstimatedGhgReductionKilotonnesPerYear() != null 
+
+                        r.createCell(3).setCellValue(item.getEstimatedGhgReductionKilotonnesPerYear() != null
                                         ? item.getEstimatedGhgReductionKilotonnesPerYear() : 0.0);
                         r.getCell(3).setCellStyle(numStyle);
-                        r.createCell(4).setCellValue(item.getAdjustedBauEmissionBiologicalTreatment() != null 
+                        r.createCell(4).setCellValue(item.getAdjustedBauEmissionBiologicalTreatment() != null
                                         ? item.getAdjustedBauEmissionBiologicalTreatment() : 0.0);
                         r.getCell(4).setCellStyle(numStyle);
                 }
