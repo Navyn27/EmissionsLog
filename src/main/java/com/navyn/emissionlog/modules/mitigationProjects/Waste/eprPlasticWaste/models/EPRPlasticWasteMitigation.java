@@ -1,5 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -20,35 +22,30 @@ public class EPRPlasticWasteMitigation {
     private Integer year;
     
     // User inputs
-    @Column(nullable = false)
-    private Double bauSolidWasteEmissions; // ktCO2eq
-    
-    @Column(nullable = false)
-    private Double plasticWasteGrowthFactor; // multiplier (e.g., 1.05 for 5% growth)
-    
-    @Column(nullable = false)
-    private Double recyclingRateWithEPR; // percentage as decimal (e.g., 0.15 for 15%)
-    
-    // Optional: Base plastic waste for first year or override
-    @Column
-    private Double plasticWasteBaseTonnesPerYear; // t/year (optional, used for first year)
-    
-    // Calculated fields
-    @Column(nullable = false)
+    @Column(nullable = false, name = "plastic_waste_tonnes_per_year")
     private Double plasticWasteTonnesPerYear; // t/year
     
-    @Column(nullable = false)
-    private Double recyclingWithoutEPRTonnesPerYear; // t/year (3% baseline)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_intervention_id", nullable = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Intervention projectIntervention; // Foreign key to Intervention table
     
-    @Column(nullable = false)
+    // Calculated fields
+    @Column(nullable = false, name = "recycled_plastic_without_epr_tonnes_per_year")
+    private Double recycledPlasticWithoutEPRTonnesPerYear; // t/year
+    
+    @Column(nullable = false, name = "recycled_plastic_with_epr_tonnes_per_year")
     private Double recycledPlasticWithEPRTonnesPerYear; // t/year
     
-    @Column(nullable = false)
+    @Column(nullable = false, name = "additional_recycling_vs_bau_tonnes_per_year")
     private Double additionalRecyclingVsBAUTonnesPerYear; // t/year
     
-    @Column(nullable = false)
+    @Column(nullable = false, name = "ghg_reduction_tonnes")
     private Double ghgReductionTonnes; // tCO2eq
     
-    @Column(nullable = false)
+    @Column(nullable = false, name = "ghg_reduction_kilotonnes")
     private Double ghgReductionKilotonnes; // ktCO2eq
+    
+    @Column(nullable = false, name = "adjusted_bau_emission_mitigation")
+    private Double adjustedBauEmissionMitigation; // ktCO2e
 }

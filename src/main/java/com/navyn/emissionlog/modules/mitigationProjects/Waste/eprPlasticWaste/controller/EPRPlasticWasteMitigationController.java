@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.dtos.EPRPlasticWasteMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.models.EPRPlasticWasteMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.dtos.EPRPlasticWasteMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.service.EPRPlasticWasteMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,11 +28,11 @@ public class EPRPlasticWasteMitigationController {
     private final EPRPlasticWasteMitigationService service;
     
     @Operation(summary = "Create EPR Circular Economy Plastic Waste mitigation record", 
-               description = "Creates a new EPR Plastic Waste mitigation project record for Kigali with year-over-year growth tracking. For the first year, 'plasticWasteBaseTonnesPerYear' must be provided. For subsequent years, it's calculated from the previous year's data.")
+               description = "Creates a new EPR Plastic Waste mitigation project record. Requires an active EPR Parameter and a BAU record for the Waste sector and same year.")
     @PostMapping
     public ResponseEntity<ApiResponse> createEPRPlasticWasteMitigation(
             @Valid @RequestBody EPRPlasticWasteMitigationDto dto) {
-        EPRPlasticWasteMitigation mitigation = service.createEPRPlasticWasteMitigation(dto);
+        EPRPlasticWasteMitigationResponseDto mitigation = service.createEPRPlasticWasteMitigation(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "EPR Plastic Waste mitigation record created successfully", mitigation));
     }
@@ -43,7 +43,7 @@ public class EPRPlasticWasteMitigationController {
     public ResponseEntity<ApiResponse> updateEPRPlasticWasteMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody EPRPlasticWasteMitigationDto dto) {
-        EPRPlasticWasteMitigation mitigation = service.updateEPRPlasticWasteMitigation(id, dto);
+        EPRPlasticWasteMitigationResponseDto mitigation = service.updateEPRPlasticWasteMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(true, "EPR Plastic Waste mitigation record updated successfully", mitigation));
     }
     
@@ -52,7 +52,7 @@ public class EPRPlasticWasteMitigationController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllEPRPlasticWasteMitigation(
             @RequestParam(required = false) Integer year) {
-        List<EPRPlasticWasteMitigation> mitigations = service.getAllEPRPlasticWasteMitigation(year);
+        List<EPRPlasticWasteMitigationResponseDto> mitigations = service.getAllEPRPlasticWasteMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "EPR Plastic Waste mitigation records fetched successfully", mitigations));
     }
     
@@ -80,7 +80,7 @@ public class EPRPlasticWasteMitigationController {
     }
 
     @PostMapping("/excel")
-    @Operation(summary = "Upload EPR Plastic Waste Mitigation records from Excel file", description = "Uploads multiple EPR Plastic Waste Mitigation records from an Excel file. Records with duplicate years will be skipped. Note: Plastic Waste Base Tonnes Per Year is optional - required for first year only.")
+    @Operation(summary = "Upload EPR Plastic Waste Mitigation records from Excel file", description = "Uploads multiple EPR Plastic Waste Mitigation records from an Excel file. Records with duplicate years will be skipped. Requires an active EPR Parameter and BAU records for each year.")
     public ResponseEntity<ApiResponse> createEPRPlasticWasteMitigationFromExcel(
             @RequestParam("file") MultipartFile file) {
         Map<String, Object> result = service.createEPRPlasticWasteMitigationFromExcel(file);
