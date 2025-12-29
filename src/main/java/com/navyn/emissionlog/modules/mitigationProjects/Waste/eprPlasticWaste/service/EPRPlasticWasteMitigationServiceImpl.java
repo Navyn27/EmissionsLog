@@ -1,20 +1,28 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.service;
 
 import com.navyn.emissionlog.Enums.ExcelType;
-import com.navyn.emissionlog.Enums.Metrics.EmissionsKilotonneUnit;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.constants.EPRPlasticWasteConstants;
+import com.navyn.emissionlog.Enums.Metrics.MassPerYearUnit;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.services.BAUService;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.dtos.EPRParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.dtos.EPRPlasticWasteMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.dtos.EPRPlasticWasteMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.models.EPRPlasticWasteMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.eprPlasticWaste.repository.EPRPlasticWasteMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.*;
+import org.hibernate.Hibernate;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
@@ -34,125 +42,184 @@ import static com.navyn.emissionlog.utils.Specifications.MitigationSpecification
 public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMitigationService {
     
     private final EPRPlasticWasteMitigationRepository repository;
+    private final EPRParameterService parameterService;
+    private final InterventionRepository interventionRepository;
+    private final BAUService bauService;
     
-    @Override
-    public EPRPlasticWasteMitigation createEPRPlasticWasteMitigation(EPRPlasticWasteMitigationDto dto) {
+    /**
+     * Maps EPRPlasticWasteMitigation entity to Response DTO
+     * This method loads intervention data within the transaction to avoid lazy loading issues
+     */
+    private EPRPlasticWasteMitigationResponseDto toResponseDto(EPRPlasticWasteMitigation mitigation) {
+        EPRPlasticWasteMitigationResponseDto dto = new EPRPlasticWasteMitigationResponseDto();
+        dto.setId(mitigation.getId());
+        dto.setYear(mitigation.getYear());
+        dto.setPlasticWasteTonnesPerYear(mitigation.getPlasticWasteTonnesPerYear());
+        dto.setRecycledPlasticWithoutEPRTonnesPerYear(mitigation.getRecycledPlasticWithoutEPRTonnesPerYear());
+        dto.setRecycledPlasticWithEPRTonnesPerYear(mitigation.getRecycledPlasticWithEPRTonnesPerYear());
+        dto.setAdditionalRecyclingVsBAUTonnesPerYear(mitigation.getAdditionalRecyclingVsBAUTonnesPerYear());
+        dto.setGhgReductionTonnes(mitigation.getGhgReductionTonnes());
+        dto.setGhgReductionKilotonnes(mitigation.getGhgReductionKilotonnes());
+        dto.setAdjustedBauEmissionMitigation(mitigation.getAdjustedBauEmissionMitigation());
+
+        // Map intervention - FORCE initialization within transaction to avoid lazy loading
+        if (mitigation.getProjectIntervention() != null) {
+            // Force Hibernate to initialize the proxy while session is still open
+            Hibernate.initialize(mitigation.getProjectIntervention());
+            Intervention intervention = mitigation.getProjectIntervention();
+            EPRPlasticWasteMitigationResponseDto.InterventionInfo interventionInfo =
+                    new EPRPlasticWasteMitigationResponseDto.InterventionInfo(
+                            intervention.getId(),
+                            intervention.getName()
+                    );
+            dto.setProjectIntervention(interventionInfo);
+        } else {
+            dto.setProjectIntervention(null);
+        }
+
+        return dto;
+    }
+    
+    /**
+     * Internal method for Excel processing that returns entity
+     */
+    private EPRPlasticWasteMitigation createEPRPlasticWasteMitigationInternal(EPRPlasticWasteMitigationDto dto) {
         EPRPlasticWasteMitigation mitigation = new EPRPlasticWasteMitigation();
         
-        // Convert BAU emissions to standard unit (ktCO₂eq)
-        double bauEmissionsInKilotonnes = dto.getBauSolidWasteEmissionsUnit().toKilotonnesCO2e(dto.getBauSolidWasteEmissions());
+        // Get EPRParameter (latest active) - throws exception if none exists
+        EPRParameterResponseDto paramDto;
+        try {
+            paramDto = parameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot create EPR Plastic Waste Mitigation: No active EPR Parameter found. " +
+                            "Please create an active parameter first before creating mitigation records.",
+                    e
+            );
+        }
+        
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+        
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+        
+        // Convert to standard units
+        double plasticWasteInTonnesPerYear = dto.getPlasticWasteTonnesPerYearUnit().toTonnesPerYear(dto.getPlasticWasteTonnesPerYear());
         
         // Set user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
-        mitigation.setBauSolidWasteEmissions(bauEmissionsInKilotonnes);
-        mitigation.setPlasticWasteGrowthFactor(dto.getPlasticWasteGrowthFactor());
-        mitigation.setRecyclingRateWithEPR(dto.getRecyclingRateWithEPR());
-        mitigation.setPlasticWasteBaseTonnesPerYear(dto.getPlasticWasteBaseTonnesPerYear());
+        mitigation.setPlasticWasteTonnesPerYear(plasticWasteInTonnesPerYear);
+        mitigation.setProjectIntervention(intervention);
         
         // Calculations
-        // 1. Plastic Waste (t/year) = Growth Factor × Last year's Plastic Waste
-        //    OR use base value if provided or if no previous year exists
-        Double plasticWasteTonnesPerYear;
+        // 1. Recycled Plastic (without EPR) (t/year) = Plastic Waste × Recycling Rate (without EPR)
+        Double recycledPlasticWithoutEPR = plasticWasteInTonnesPerYear * paramDto.getRecyclingRateWithoutEPR();
+        mitigation.setRecycledPlasticWithoutEPRTonnesPerYear(recycledPlasticWithoutEPR);
         
-        if (dto.getPlasticWasteBaseTonnesPerYear() != null) {
-            // User provided base value - use it directly
-            plasticWasteTonnesPerYear = dto.getPlasticWasteBaseTonnesPerYear();
-        } else {
-            // Try to find previous year's data
-            Optional<EPRPlasticWasteMitigation> previousYear = repository.findPreviousYear(dto.getYear());
-            
-            if (previousYear.isPresent()) {
-                // Calculate from previous year
-                plasticWasteTonnesPerYear = previousYear.get().getPlasticWasteTonnesPerYear() * dto.getPlasticWasteGrowthFactor();
-            } else {
-                // No previous year and no base provided - error
-                throw new IllegalArgumentException(
-                    "Plastic Waste Base (t/year) is required for the first year or when no previous year data exists. " +
-                    "Please provide 'plasticWasteBaseTonnesPerYear' in the request."
-                );
-            }
-        }
-        mitigation.setPlasticWasteTonnesPerYear(plasticWasteTonnesPerYear);
-        
-        // 2. Recycling Rate (without EPR) (t/year) = Plastic Waste × 0.03
-        Double recyclingWithoutEPR = plasticWasteTonnesPerYear * EPRPlasticWasteConstants.RECYCLING_RATE_WITHOUT_EPR.getValue();
-        mitigation.setRecyclingWithoutEPRTonnesPerYear(recyclingWithoutEPR);
-        
-        // 3. Recycled Plastic (t/year) (with EPR) = Plastic Waste × Recycling Rate (with EPR)
-        Double recycledPlasticWithEPR = plasticWasteTonnesPerYear * dto.getRecyclingRateWithEPR();
+        // 2. Recycled Plastic (with EPR) (t/year) = Plastic Waste × Recycling Rate (with EPR)
+        Double recycledPlasticWithEPR = plasticWasteInTonnesPerYear * paramDto.getRecyclingRateWithEPR();
         mitigation.setRecycledPlasticWithEPRTonnesPerYear(recycledPlasticWithEPR);
         
-        // 4. Additional Recycling vs. BAU (t/year) = Recycled Plastic (with EPR) - Recycling (without EPR)
-        Double additionalRecycling = recycledPlasticWithEPR - recyclingWithoutEPR;
+        // 3. Additional Recycling vs. BAU (t/year) = Recycled Plastic (with EPR) - Recycled Plastic (without EPR)
+        Double additionalRecycling = recycledPlasticWithEPR - recycledPlasticWithoutEPR;
         mitigation.setAdditionalRecyclingVsBAUTonnesPerYear(additionalRecycling);
         
-        // 5. GHG Reduction (tCO2eq) = Additional Recycling × Emission Factor
-        Double ghgReductionTonnes = additionalRecycling * EPRPlasticWasteConstants.EMISSION_FACTOR.getValue();
+        // 4. GHG Reduction (tCO2eq) = Additional Recycling vs. BAU × Emission Factor
+        Double ghgReductionTonnes = additionalRecycling * paramDto.getEmissionFactor();
         mitigation.setGhgReductionTonnes(ghgReductionTonnes);
         
-        // 6. GHG Reduction (ktCO2eq) = GHG Reduction (tCO2eq) / 1000
-        Double ghgReductionKilotonnes = ghgReductionTonnes / 1000;
+        // 5. GHG Reduction (ktCO2eq) = GHG Reduction (tCO2eq) / 1000
+        Double ghgReductionKilotonnes = ghgReductionTonnes / 1000.0;
         mitigation.setGhgReductionKilotonnes(ghgReductionKilotonnes);
+        
+        // 6. Adjusted BAU Emission Mitigation (ktCO2e) = BAU - GHG Reduction (ktCO2eq)
+        Double adjustedBauEmissionMitigation = bau.getValue() - ghgReductionKilotonnes;
+        mitigation.setAdjustedBauEmissionMitigation(adjustedBauEmissionMitigation);
         
         return repository.save(mitigation);
     }
     
     @Override
-    public EPRPlasticWasteMitigation updateEPRPlasticWasteMitigation(UUID id, EPRPlasticWasteMitigationDto dto) {
+    @Transactional
+    public EPRPlasticWasteMitigationResponseDto createEPRPlasticWasteMitigation(EPRPlasticWasteMitigationDto dto) {
+        EPRPlasticWasteMitigation saved = createEPRPlasticWasteMitigationInternal(dto);
+        return toResponseDto(saved);
+    }
+    
+    @Override
+    @Transactional
+    public EPRPlasticWasteMitigationResponseDto updateEPRPlasticWasteMitigation(UUID id, EPRPlasticWasteMitigationDto dto) {
         EPRPlasticWasteMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("EPR Plastic Waste Mitigation record not found with id: " + id));
         
-        // Convert BAU emissions to standard unit (ktCO₂eq)
-        double bauEmissionsInKilotonnes = dto.getBauSolidWasteEmissionsUnit().toKilotonnesCO2e(dto.getBauSolidWasteEmissions());
+        // Get EPRParameter (latest active) - throws exception if none exists
+        EPRParameterResponseDto paramDto;
+        try {
+            paramDto = parameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot update EPR Plastic Waste Mitigation: No active EPR Parameter found. " +
+                            "Please create an active parameter first before updating mitigation records.",
+                    e
+            );
+        }
+        
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+        
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+        
+        // Convert to standard units
+        double plasticWasteInTonnesPerYear = dto.getPlasticWasteTonnesPerYearUnit().toTonnesPerYear(dto.getPlasticWasteTonnesPerYear());
         
         // Update user inputs (store in standard units)
         mitigation.setYear(dto.getYear());
-        mitigation.setBauSolidWasteEmissions(bauEmissionsInKilotonnes);
-        mitigation.setPlasticWasteGrowthFactor(dto.getPlasticWasteGrowthFactor());
-        mitigation.setRecyclingRateWithEPR(dto.getRecyclingRateWithEPR());
-        mitigation.setPlasticWasteBaseTonnesPerYear(dto.getPlasticWasteBaseTonnesPerYear());
+        mitigation.setPlasticWasteTonnesPerYear(plasticWasteInTonnesPerYear);
+        mitigation.setProjectIntervention(intervention);
         
-        // Recalculate derived fields - Plastic Waste calculation
-        Double plasticWasteTonnesPerYear;
+        // Recalculate derived fields
+        Double recycledPlasticWithoutEPR = plasticWasteInTonnesPerYear * paramDto.getRecyclingRateWithoutEPR();
+        mitigation.setRecycledPlasticWithoutEPRTonnesPerYear(recycledPlasticWithoutEPR);
         
-        if (dto.getPlasticWasteBaseTonnesPerYear() != null) {
-            plasticWasteTonnesPerYear = dto.getPlasticWasteBaseTonnesPerYear();
-        } else {
-            Optional<EPRPlasticWasteMitigation> previousYear = repository.findPreviousYear(dto.getYear());
-            
-            if (previousYear.isPresent()) {
-                plasticWasteTonnesPerYear = previousYear.get().getPlasticWasteTonnesPerYear() * dto.getPlasticWasteGrowthFactor();
-            } else {
-                throw new IllegalArgumentException(
-                    "Plastic Waste Base (t/year) is required for the first year or when no previous year data exists. " +
-                    "Please provide 'plasticWasteBaseTonnesPerYear' in the request."
-                );
-            }
-        }
-        mitigation.setPlasticWasteTonnesPerYear(plasticWasteTonnesPerYear);
-        
-        Double recyclingWithoutEPR = plasticWasteTonnesPerYear * EPRPlasticWasteConstants.RECYCLING_RATE_WITHOUT_EPR.getValue();
-        mitigation.setRecyclingWithoutEPRTonnesPerYear(recyclingWithoutEPR);
-        
-        Double recycledPlasticWithEPR = plasticWasteTonnesPerYear * dto.getRecyclingRateWithEPR();
+        Double recycledPlasticWithEPR = plasticWasteInTonnesPerYear * paramDto.getRecyclingRateWithEPR();
         mitigation.setRecycledPlasticWithEPRTonnesPerYear(recycledPlasticWithEPR);
         
-        Double additionalRecycling = recycledPlasticWithEPR - recyclingWithoutEPR;
+        Double additionalRecycling = recycledPlasticWithEPR - recycledPlasticWithoutEPR;
         mitigation.setAdditionalRecyclingVsBAUTonnesPerYear(additionalRecycling);
         
-        Double ghgReductionTonnes = additionalRecycling * EPRPlasticWasteConstants.EMISSION_FACTOR.getValue();
+        Double ghgReductionTonnes = additionalRecycling * paramDto.getEmissionFactor();
         mitigation.setGhgReductionTonnes(ghgReductionTonnes);
         
-        Double ghgReductionKilotonnes = ghgReductionTonnes / 1000;
+        Double ghgReductionKilotonnes = ghgReductionTonnes / 1000.0;
         mitigation.setGhgReductionKilotonnes(ghgReductionKilotonnes);
         
-        return repository.save(mitigation);
+        Double adjustedBauEmissionMitigation = bau.getValue() - ghgReductionKilotonnes;
+        mitigation.setAdjustedBauEmissionMitigation(adjustedBauEmissionMitigation);
+        
+        EPRPlasticWasteMitigation saved = repository.save(mitigation);
+        return toResponseDto(saved);
     }
     
     @Override
-    public List<EPRPlasticWasteMitigation> getAllEPRPlasticWasteMitigation(Integer year) {
+    @Transactional(readOnly = true)
+    public List<EPRPlasticWasteMitigationResponseDto> getAllEPRPlasticWasteMitigation(Integer year) {
         Specification<EPRPlasticWasteMitigation> spec = Specification.where(hasYear(year));
-        return repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        List<EPRPlasticWasteMitigation> mitigations = repository.findAll(spec, Sort.by(Sort.Direction.DESC, "year"));
+        return mitigations.stream()
+                .map(this::toResponseDto)
+                .toList();
     }
     
     @Override
@@ -195,7 +262,7 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("EPR Plastic Waste Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
 
             rowIdx++; // Blank row
 
@@ -204,11 +271,9 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
             headerRow.setHeightInPoints(22);
             String[] headers = {
                     "Year",
-                    "BAU Solid Waste Emissions",
-                    "BAU Solid Waste Emissions Unit",
-                    "Plastic Waste Growth Factor",
-                    "Recycling Rate With EPR",
-                    "Plastic Waste Base Tonnes Per Year"
+                    "Plastic Waste (t/year)",
+                    "Plastic Waste Unit",
+                    "Project Intervention Name"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -218,28 +283,28 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
             }
 
             // Get enum values for dropdowns
-            String[] emissionsUnitValues = Arrays.stream(EmissionsKilotonneUnit.values())
+            String[] massPerYearUnitValues = Arrays.stream(MassPerYearUnit.values())
                     .map(Enum::name)
                     .toArray(String[]::new);
 
             // Create data validation helper
             DataValidationHelper validationHelper = sheet.getDataValidationHelper();
 
-            // Data validation for BAU Solid Waste Emissions Unit column (Column C, index 2)
-            CellRangeAddressList bauUnitList = new CellRangeAddressList(3, 1000, 2, 2);
-            DataValidationConstraint bauUnitConstraint = validationHelper
-                    .createExplicitListConstraint(emissionsUnitValues);
-            DataValidation bauUnitValidation = validationHelper.createValidation(bauUnitConstraint, bauUnitList);
-            bauUnitValidation.setShowErrorBox(true);
-            bauUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            bauUnitValidation.createErrorBox("Invalid Unit", "Please select a valid unit from the dropdown list.");
-            bauUnitValidation.setShowPromptBox(true);
-            bauUnitValidation.createPromptBox("BAU Solid Waste Emissions Unit", "Select a unit from the dropdown list.");
-            sheet.addValidationData(bauUnitValidation);
+            // Data validation for Plastic Waste Unit column (Column C, index 2)
+            CellRangeAddressList plasticWasteUnitList = new CellRangeAddressList(3, 1000, 2, 2);
+            DataValidationConstraint plasticWasteUnitConstraint = validationHelper
+                    .createExplicitListConstraint(massPerYearUnitValues);
+            DataValidation plasticWasteUnitValidation = validationHelper.createValidation(plasticWasteUnitConstraint, plasticWasteUnitList);
+            plasticWasteUnitValidation.setShowErrorBox(true);
+            plasticWasteUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+            plasticWasteUnitValidation.createErrorBox("Invalid Unit", "Please select a valid unit from the dropdown list.");
+            plasticWasteUnitValidation.setShowPromptBox(true);
+            plasticWasteUnitValidation.createPromptBox("Plastic Waste Unit", "Select a unit from the dropdown list.");
+            sheet.addValidationData(plasticWasteUnitValidation);
 
             // Create example data rows
-            Object[] exampleData1 = {2024, 100.0, "KILOTONNES_CO2E", 1.05, 0.15, 10000.0};
-            Object[] exampleData2 = {2025, 110.0, "KILOTONNES_CO2E", 1.05, 0.20, null};
+            Object[] exampleData1 = {2024, 10000.0, "TONNES_PER_YEAR", "EPR Implementation"};
+            Object[] exampleData2 = {2025, 10500.0, "TONNES_PER_YEAR", "EPR Implementation"};
 
             // First example row
             Row exampleRow1 = sheet.createRow(rowIdx++);
@@ -249,11 +314,9 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
                 if (i == 0) {
                     cell.setCellStyle(yearStyle);
                     cell.setCellValue(((Number) exampleData1[i]).intValue());
-                } else if (i == 1 || i == 3 || i == 4 || i == 5) {
+                } else if (i == 1) {
                     cell.setCellStyle(numberStyle);
-                    if (exampleData1[i] != null) {
-                        cell.setCellValue(((Number) exampleData1[i]).doubleValue());
-                    }
+                    cell.setCellValue(((Number) exampleData1[i]).doubleValue());
                 } else {
                     cell.setCellStyle(dataStyle);
                     cell.setCellValue((String) exampleData1[i]);
@@ -271,15 +334,13 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
                     altYearStyle.setAlignment(HorizontalAlignment.CENTER);
                     cell.setCellStyle(altYearStyle);
                     cell.setCellValue(((Number) exampleData2[i]).intValue());
-                } else if (i == 1 || i == 3 || i == 4 || i == 5) {
+                } else if (i == 1) {
                     CellStyle altNumStyle = workbook.createCellStyle();
                     altNumStyle.cloneStyleFrom(numberStyle);
                     altNumStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
                     altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                     cell.setCellStyle(altNumStyle);
-                    if (exampleData2[i] != null) {
-                        cell.setCellValue(((Number) exampleData2[i]).doubleValue());
-                    }
+                    cell.setCellValue(((Number) exampleData2[i]).doubleValue());
                 } else {
                     cell.setCellStyle(alternateDataStyle);
                     cell.setCellValue((String) exampleData2[i]);
@@ -313,18 +374,30 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
                 totalProcessed++;
                 int actualRowNumber = i + 1 + 3;
 
-                // Validate required fields (plasticWasteBaseTonnesPerYear is optional)
+                // Validate required fields
                 List<String> missingFields = new ArrayList<>();
                 if (dto.getYear() == null) missingFields.add("Year");
-                if (dto.getBauSolidWasteEmissions() == null) missingFields.add("BAU Solid Waste Emissions");
-                if (dto.getBauSolidWasteEmissionsUnit() == null) missingFields.add("BAU Solid Waste Emissions Unit");
-                if (dto.getPlasticWasteGrowthFactor() == null) missingFields.add("Plastic Waste Growth Factor");
-                if (dto.getRecyclingRateWithEPR() == null) missingFields.add("Recycling Rate With EPR");
+                if (dto.getPlasticWasteTonnesPerYear() == null) missingFields.add("Plastic Waste (t/year)");
+                if (dto.getPlasticWasteTonnesPerYearUnit() == null) missingFields.add("Plastic Waste Unit");
+                if (dto.getProjectInterventionId() == null && dto.getProjectInterventionName() == null) {
+                    missingFields.add("Project Intervention");
+                }
 
                 if (!missingFields.isEmpty()) {
                     throw new RuntimeException(String.format(
                             "Row %d: Missing required fields: %s. Please fill in all required fields in your Excel file.",
                             actualRowNumber, String.join(", ", missingFields)));
+                }
+
+                // Handle intervention name from Excel (if provided instead of ID)
+                if (dto.getProjectInterventionId() == null && dto.getProjectInterventionName() != null) {
+                    Optional<Intervention> interventionOpt = interventionRepository.findByNameIgnoreCase(dto.getProjectInterventionName());
+                    if (interventionOpt.isEmpty()) {
+                        throw new RuntimeException(String.format(
+                                "Row %d: Intervention with name '%s' not found. Please create the intervention first or use a valid intervention name.",
+                                actualRowNumber, dto.getProjectInterventionName()));
+                    }
+                    dto.setProjectInterventionId(interventionOpt.get().getId());
                 }
 
                 // Check if year already exists
@@ -335,9 +408,9 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
 
                 // Create the record
                 try {
-                    EPRPlasticWasteMitigation saved = createEPRPlasticWasteMitigation(dto);
+                    EPRPlasticWasteMitigation saved = createEPRPlasticWasteMitigationInternal(dto);
                     savedRecords.add(saved);
-                } catch (IllegalArgumentException e) {
+                } catch (RuntimeException e) {
                     throw new RuntimeException(String.format("Row %d: %s", actualRowNumber, e.getMessage()));
                 }
             }

@@ -849,13 +849,12 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         CellStyle alternateDataStyle, CellStyle numberStyle, List<EPRPlasticWasteMitigation> data) {
                 String[] headers = {
                                 "Year",
-                                "BAU Solid Waste Emissions (ktCO2e)",
-                                "Plastic Waste Growth Factor",
-                                "Recycling Rate With EPR",
                                 "Plastic Waste (t/year)",
-                                "Recycled With EPR (t/year)",
+                                "Recycled Plastic Without EPR (t/year)",
+                                "Recycled Plastic With EPR (t/year)",
                                 "Additional Recycling vs BAU (t/year)",
-                                "GHG Reduction (ktCO2e)"
+                                "GHG Reduction (ktCO2e)",
+                                "Adjusted BAU Emission Mitigation (ktCO2e)"
                 };
                 createHeader(sheet, headerStyle, headers);
                 DataFormat dataFormat = sheet.getWorkbook().createDataFormat();
@@ -879,33 +878,30 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         // Number columns
                         CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook())
                                         : numberStyle;
-                        r.createCell(1).setCellValue(
-                                        item.getBauSolidWasteEmissions() != null ? item.getBauSolidWasteEmissions()
-                                                        : 0.0);
-                        r.getCell(1).setCellStyle(numStyle);
-                        r.createCell(2).setCellValue(
-                                        item.getPlasticWasteGrowthFactor() != null ? item.getPlasticWasteGrowthFactor()
-                                                        : 0.0);
-                        r.getCell(2).setCellStyle(numStyle);
-                        r.createCell(3).setCellValue(
-                                        item.getRecyclingRateWithEPR() != null ? item.getRecyclingRateWithEPR() : 0.0);
-                        r.getCell(3).setCellStyle(numStyle);
-                        r.createCell(4).setCellValue(item.getPlasticWasteTonnesPerYear() != null
+                        r.createCell(1).setCellValue(item.getPlasticWasteTonnesPerYear() != null
                                         ? item.getPlasticWasteTonnesPerYear()
                                         : 0.0);
-                        r.getCell(4).setCellStyle(numStyle);
-                        r.createCell(5).setCellValue(item.getRecycledPlasticWithEPRTonnesPerYear() != null
+                        r.getCell(1).setCellStyle(numStyle);
+                        r.createCell(2).setCellValue(item.getRecycledPlasticWithoutEPRTonnesPerYear() != null
+                                        ? item.getRecycledPlasticWithoutEPRTonnesPerYear()
+                                        : 0.0);
+                        r.getCell(2).setCellStyle(numStyle);
+                        r.createCell(3).setCellValue(item.getRecycledPlasticWithEPRTonnesPerYear() != null
                                         ? item.getRecycledPlasticWithEPRTonnesPerYear()
                                         : 0.0);
-                        r.getCell(5).setCellStyle(numStyle);
-                        r.createCell(6).setCellValue(item.getAdditionalRecyclingVsBAUTonnesPerYear() != null
+                        r.getCell(3).setCellStyle(numStyle);
+                        r.createCell(4).setCellValue(item.getAdditionalRecyclingVsBAUTonnesPerYear() != null
                                         ? item.getAdditionalRecyclingVsBAUTonnesPerYear()
                                         : 0.0);
-                        r.getCell(6).setCellStyle(numStyle);
-                        r.createCell(7).setCellValue(
+                        r.getCell(4).setCellStyle(numStyle);
+                        r.createCell(5).setCellValue(
                                         item.getGhgReductionKilotonnes() != null ? item.getGhgReductionKilotonnes()
                                                         : 0.0);
-                        r.getCell(7).setCellStyle(numStyle);
+                        r.getCell(5).setCellStyle(numStyle);
+                        r.createCell(6).setCellValue(
+                                        item.getAdjustedBauEmissionMitigation() != null ? item.getAdjustedBauEmissionMitigation()
+                                                        : 0.0);
+                        r.getCell(6).setCellStyle(numStyle);
                 }
                 autoSizeWithLimits(sheet, headers.length);
         }
