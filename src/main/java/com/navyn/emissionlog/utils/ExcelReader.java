@@ -188,6 +188,7 @@ public class ExcelReader {
     static {
         addingStrawToDtoMap.put("Year", "year");
         addingStrawToDtoMap.put("Number of Cows", "numberOfCows");
+        addingStrawToDtoMap.put("Intervention Name", "interventionName");
     }
 
     // This hashmap is responsible for reading data from manure covering mitigation
