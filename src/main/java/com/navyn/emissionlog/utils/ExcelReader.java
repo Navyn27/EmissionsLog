@@ -134,9 +134,9 @@ public class ExcelReader {
         wetlandParksToDtoMap.put("Year", "year");
         wetlandParksToDtoMap.put("Tree Category", "treeCategory");
         wetlandParksToDtoMap.put("Area Planted", "areaPlanted");
-        wetlandParksToDtoMap.put("Area Unit", "areaUnit");
-        wetlandParksToDtoMap.put("Aboveground Biomass AGB", "abovegroundBiomassAGB");
+        wetlandParksToDtoMap.put("AGB Current Year", "abovegroundBiomassAGB");
         wetlandParksToDtoMap.put("AGB Unit", "agbUnit");
+        wetlandParksToDtoMap.put("Intervention Name", "interventionName");
     }
 
     // This hashmap is responsible for reading data from crop rotation mitigation
@@ -180,6 +180,7 @@ public class ExcelReader {
     static {
         dailySpreadToDtoMap.put("Year", "year");
         dailySpreadToDtoMap.put("Number of Cows", "numberOfCows");
+        dailySpreadToDtoMap.put("Intervention Name", "interventionName");
     }
 
     // This hashmap is responsible for reading data from adding straw mitigation
@@ -188,6 +189,7 @@ public class ExcelReader {
     static {
         addingStrawToDtoMap.put("Year", "year");
         addingStrawToDtoMap.put("Number of Cows", "numberOfCows");
+        addingStrawToDtoMap.put("Intervention Name", "interventionName");
     }
 
     // This hashmap is responsible for reading data from manure covering mitigation
@@ -196,6 +198,7 @@ public class ExcelReader {
     static {
         manureCoveringToDtoMap.put("Year", "year");
         manureCoveringToDtoMap.put("Number of Cows", "numberOfCows");
+        manureCoveringToDtoMap.put("Intervention Name", "interventionName");
     }
 
     // This hashmap is responsible for reading data from protective forest
@@ -206,9 +209,9 @@ public class ExcelReader {
         protectiveForestToDtoMap.put("Year", "year");
         protectiveForestToDtoMap.put("Category", "category");
         protectiveForestToDtoMap.put("Area Planted", "areaPlanted");
-        protectiveForestToDtoMap.put("Area Planted Unit", "areaPlantedUnit");
         protectiveForestToDtoMap.put("AGB Current Year", "agbCurrentYear");
         protectiveForestToDtoMap.put("AGB Unit", "agbUnit");
+        protectiveForestToDtoMap.put("Intervention Name", "interventionName");
     }
 
     // This hashmap is responsible for reading data from green fences mitigation

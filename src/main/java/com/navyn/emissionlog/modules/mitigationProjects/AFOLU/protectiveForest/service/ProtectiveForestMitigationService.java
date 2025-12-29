@@ -2,7 +2,7 @@ package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.
 
 import com.navyn.emissionlog.Enums.Mitigation.ProtectiveForestCategory;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.dtos.ProtectiveForestMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.models.ProtectiveForestMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.dtos.ProtectiveForestMitigationResponseDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -12,18 +12,18 @@ import java.util.UUID;
 
 public interface ProtectiveForestMitigationService {
 
-    ProtectiveForestMitigation createProtectiveForestMitigation(ProtectiveForestMitigationDto dto);
+    ProtectiveForestMitigationResponseDto createProtectiveForestMitigation(ProtectiveForestMitigationDto dto);
 
-    ProtectiveForestMitigation updateProtectiveForestMitigation(UUID id, ProtectiveForestMitigationDto dto);
+    ProtectiveForestMitigationResponseDto updateProtectiveForestMitigation(UUID id, ProtectiveForestMitigationDto dto);
 
     void deleteProtectiveForestMitigation(UUID id);
 
-    List<ProtectiveForestMitigation> getAllProtectiveForestMitigation(
+    List<ProtectiveForestMitigationResponseDto> getAllProtectiveForestMitigation(
         Integer year,
         ProtectiveForestCategory category
     );
 
-    Optional<ProtectiveForestMitigation> getByYearAndCategory(
+    Optional<ProtectiveForestMitigationResponseDto> getByYearAndCategory(
         Integer year,
         ProtectiveForestCategory category
     );
