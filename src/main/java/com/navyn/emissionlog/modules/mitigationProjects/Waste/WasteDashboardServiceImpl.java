@@ -1017,6 +1017,20 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                 autoSizeWithLimits(sheet, headers.length);
         }
 
+        /**
+         * Builds the ISWM (Integrated Solid Waste Management) sheet for Excel export.
+         * 
+         * Note: Parameters (degradableOrganicFraction, landfillAvoidance, compostingEF) and BAU
+         * are not displayed as they are fetched from ISWMParameter and BAU table respectively,
+         * not stored in the mitigation record.
+         * 
+         * @param sheet Excel sheet to populate
+         * @param headerStyle Style for header row
+         * @param dataStyle Style for data rows
+         * @param alternateDataStyle Style for alternate data rows
+         * @param numberStyle Style for numeric cells
+         * @param data List of ISWMMitigation records to export
+         */
         private void buildIswmSheet(XSSFSheet sheet, CellStyle headerStyle, CellStyle dataStyle,
                         CellStyle alternateDataStyle, CellStyle numberStyle, List<ISWMMitigation> data) {
                 String[] headers = {
