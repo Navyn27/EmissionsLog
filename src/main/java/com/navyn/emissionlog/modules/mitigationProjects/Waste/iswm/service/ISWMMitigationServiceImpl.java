@@ -42,12 +42,34 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
     private final InterventionRepository interventionRepository;
     private final BAUService bauService;
     
+    /**
+     * Creates a new ISWM Mitigation record.
+     * 
+     * Data Sources:
+     * - Parameters (degradableOrganicFraction, landfillAvoidance, compostingEF) are fetched from ISWMParameter (latest active)
+     * - BAU value is fetched from BAU table (sector: WASTE, same year as input)
+     * - Project Intervention is fetched from Intervention table using the provided ID
+     * 
+     * Calculation Flow:
+     * 1. DOFDiverted = wasteProcessed × (degradableOrganicFraction / 100)
+     * 2. AvoidedLandfill = wasteProcessed × landfillAvoidance (kgCO₂e)
+     * 3. CompostingEmissions = DOFDiverted × compostingEF (kgCO₂e)
+     * 4. NetAnnualReduction = (AvoidedLandfill - CompostingEmissions) / 1000 / 1000 (ktCO₂e)
+     *    - First /1000: converts kgCO₂e to tCO₂e
+     *    - Second /1000: converts tCO₂e to ktCO₂e (to match BAU unit)
+     * 5. MitigationScenarioEmission = BAU - NetAnnualReduction (ktCO₂e)
+     * 
+     * @param dto DTO containing year, wasteProcessed, and projectInterventionId
+     * @return Saved ISWMMitigation entity with all calculated fields
+     * @throws RuntimeException if ISWMParameter, Intervention, or BAU not found
+     */
     @Override
     @Transactional
     public ISWMMitigation createISWMMitigation(ISWMMitigationDto dto) {
         ISWMMitigation mitigation = new ISWMMitigation();
         
         // Get ISWMParameter (latest active) - throws exception if none exists
+        // These parameters are dynamic and managed separately from mitigation records
         ISWMParameterResponseDto paramDto;
         try {
             paramDto = parameterService.getLatestActive();
@@ -59,11 +81,12 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
             );
         }
         
-        // Get Intervention
+        // Get Intervention - required foreign key reference
         Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
                 .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
         
         // Get BAU for Waste sector and same year
+        // BAU is fetched from central BAU table, not stored in mitigation record
         Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
         if (bauOptional.isEmpty()) {
             throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
@@ -77,44 +100,59 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
         
         // Calculations using parameters from ISWMParameter
         // DOFDiverted = wasteProcessed * (degradableOrganicFraction / 100)
+        // degradableOrganicFraction is a percentage (0-100), so divide by 100 to get decimal
         Double dofDiverted = dto.getWasteProcessed() * (paramDto.getDegradableOrganicFraction() / 100.0);
         mitigation.setDofDiverted(dofDiverted);
         
         // AvoidedLandfill = wasteProcessed * landfillAvoidance
+        // Result is in kgCO₂e (landfillAvoidance is kgCO₂e/tonne)
         Double avoidedLandfill = dto.getWasteProcessed() * paramDto.getLandfillAvoidance();
         mitigation.setAvoidedLandfill(avoidedLandfill);
         
         // CompostingEmissions = DOFDiverted * compostingEF
+        // Result is in kgCO₂e (compostingEF is kgCO₂e/tonne of DOF)
         Double compostingEmissions = dofDiverted * paramDto.getCompostingEF();
         mitigation.setCompostingEmissions(compostingEmissions);
         
-        // NetAnnualReduction (ktCO₂e) = (AvoidedLandfill - CompostingEmissions) / 1000
-        // Following user specification: /1000
-        // AvoidedLandfill and CompostingEmissions are in kgCO₂e
-        // /1000 converts kgCO₂e to tCO₂e
-        // Since result should be in ktCO₂e and BAU is in ktCO₂e, we convert tCO₂e to ktCO₂e by /1000
+        // NetAnnualReduction (ktCO₂e) = (AvoidedLandfill - CompostingEmissions) / 1000 / 1000
+        // Following user specification: formula uses /1000
+        // Step 1: /1000 converts kgCO₂e to tCO₂e (as per user requirement)
+        // Step 2: /1000 converts tCO₂e to ktCO₂e (to match BAU unit which is in ktCO₂e)
         // This follows the same pattern as wasteToEnergy: calculate in tCO₂e, then convert to ktCO₂e
         Double netAnnualReductionInTonnes = (avoidedLandfill - compostingEmissions) / 1000.0; // kgCO₂e to tCO₂e
         Double netAnnualReduction = netAnnualReductionInTonnes / 1000.0; // tCO₂e to ktCO₂e
         mitigation.setNetAnnualReduction(netAnnualReduction);
         
         // MitigationScenarioEmission (ktCO₂e) = BAU (ktCO₂e) - NetAnnualReduction (ktCO₂e)
+        // Both values are in ktCO₂e, so direct subtraction
         Double mitigationScenarioEmission = bau.getValue() - netAnnualReduction;
         mitigation.setMitigationScenarioEmission(mitigationScenarioEmission);
         
         return repository.save(mitigation);
     }
     
+    /**
+     * Updates an existing ISWM Mitigation record.
+     * 
+     * This method recalculates all derived fields using the latest active ISWMParameter
+     * and the BAU value for the specified year. All calculations follow the same logic
+     * as createISWMMitigation.
+     * 
+     * @param id UUID of the mitigation record to update
+     * @param dto DTO containing updated year, wasteProcessed, and projectInterventionId
+     * @return Updated ISWMMitigation entity with recalculated fields
+     * @throws RuntimeException if record, ISWMParameter, Intervention, or BAU not found
+     */
     @Override
     @Transactional
     public ISWMMitigation updateISWMMitigation(UUID id, ISWMMitigationDto dto) {
         ISWMMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("ISWM Mitigation record not found with id: " + id));
         
-        // Get ISWMParameter (latest active)
+        // Get ISWMParameter (latest active) - always uses latest active parameters
         ISWMParameterResponseDto paramDto = parameterService.getLatestActive();
         
-        // Get Intervention
+        // Get Intervention - required foreign key reference
         Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
                 .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
         
@@ -143,12 +181,8 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
         Double compostingEmissions = dofDiverted * paramDto.getCompostingEF();
         mitigation.setCompostingEmissions(compostingEmissions);
         
-        // NetAnnualReduction (ktCO₂e) = (AvoidedLandfill - CompostingEmissions) / 1000
-        // Following user specification: /1000
-        // AvoidedLandfill and CompostingEmissions are in kgCO₂e
-        // /1000 converts kgCO₂e to tCO₂e
-        // Since result should be in ktCO₂e and BAU is in ktCO₂e, we convert tCO₂e to ktCO₂e by /1000
-        // This follows the same pattern as wasteToEnergy: calculate in tCO₂e, then convert to ktCO₂e
+        // NetAnnualReduction (ktCO₂e) = (AvoidedLandfill - CompostingEmissions) / 1000 / 1000
+        // See createISWMMitigation for detailed calculation explanation
         Double netAnnualReductionInTonnes = (avoidedLandfill - compostingEmissions) / 1000.0; // kgCO₂e to tCO₂e
         Double netAnnualReduction = netAnnualReductionInTonnes / 1000.0; // tCO₂e to ktCO₂e
         mitigation.setNetAnnualReduction(netAnnualReduction);
