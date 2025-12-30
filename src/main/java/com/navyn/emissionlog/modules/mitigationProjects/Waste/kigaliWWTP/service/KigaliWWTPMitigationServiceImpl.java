@@ -88,8 +88,17 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
     private KigaliWWTPMitigation createKigaliWWTPMitigationInternal(KigaliWWTPMitigationDto dto) {
         KigaliWWTPMitigation mitigation = new KigaliWWTPMitigation();
         
-        // Get KigaliWWTPParameter (latest active)
-        KigaliWWTPParameterResponseDto paramDto = parameterService.getLatestActive();
+        // Get KigaliWWTPParameter (latest active) - throws exception if none exists
+        KigaliWWTPParameterResponseDto paramDto;
+        try {
+            paramDto = parameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot create Kigali WWTP Mitigation: No active Kigali WWTP Parameter found. " +
+                            "Please create an active parameter first before creating mitigation records.",
+                    e
+            );
+        }
         
         // Get Intervention
         Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
@@ -150,8 +159,17 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
         KigaliWWTPMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Kigali WWTP Mitigation record not found with id: " + id));
         
-        // Get KigaliWWTPParameter (latest active)
-        KigaliWWTPParameterResponseDto paramDto = parameterService.getLatestActive();
+        // Get KigaliWWTPParameter (latest active) - throws exception if none exists
+        KigaliWWTPParameterResponseDto paramDto;
+        try {
+            paramDto = parameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot update Kigali WWTP Mitigation: No active Kigali WWTP Parameter found. " +
+                            "Please create an active parameter first before updating mitigation records.",
+                    e
+            );
+        }
         
         // Get Intervention
         Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
@@ -391,7 +409,6 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
     @Transactional
     public Map<String, Object> createKigaliWWTPMitigationFromExcel(MultipartFile file) {
         List<KigaliWWTPMitigation> savedRecords = new ArrayList<>();
-        List<Integer> skippedYears = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -429,12 +446,6 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
                 }
                 dto.setProjectInterventionId(interventionOpt.get().getId());
 
-                // Check if year already exists
-                if (repository.findByYear(dto.getYear()).isPresent()) {
-                    skippedYears.add(dto.getYear());
-                    continue;
-                }
-
                 // Create the record
                 KigaliWWTPMitigation saved = createKigaliWWTPMitigationInternal(dto);
                 savedRecords.add(saved);
@@ -442,8 +453,6 @@ public class KigaliWWTPMitigationServiceImpl implements KigaliWWTPMitigationServ
 
             Map<String, Object> result = new HashMap<>();
             result.put("savedCount", savedRecords.size());
-            result.put("skippedCount", skippedYears.size());
-            result.put("skippedYears", skippedYears);
             result.put("totalProcessed", totalProcessed);
             return result;
 

@@ -11,9 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "kigali_wwtp_mitigation", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"year"})
-})
+@Table(name = "kigali_wwtp_mitigation")
 @Data
 public class KigaliWWTPMitigation {
     
