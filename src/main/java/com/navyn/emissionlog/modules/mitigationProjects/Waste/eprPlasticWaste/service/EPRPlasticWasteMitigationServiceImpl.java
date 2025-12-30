@@ -118,19 +118,20 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
         mitigation.setProjectIntervention(intervention);
         
         // Calculations
-        // 1. Recycled Plastic (without EPR) (t/year) = Plastic Waste × Recycling Rate (without EPR)
+        // 1. Recycled Plastic (without EPR) (t/year) = Plastic Waste (t/year) × Recycling Rate (without EPR)
         Double recycledPlasticWithoutEPR = plasticWasteInTonnesPerYear * paramDto.getRecyclingRateWithoutEPR();
         mitigation.setRecycledPlasticWithoutEPRTonnesPerYear(recycledPlasticWithoutEPR);
         
-        // 2. Recycled Plastic (with EPR) (t/year) = Plastic Waste × Recycling Rate (with EPR)
+        // 2. Recycled Plastic (with EPR) (t/year) = Plastic Waste (t/year) × Recycling Rate (with EPR)
         Double recycledPlasticWithEPR = plasticWasteInTonnesPerYear * paramDto.getRecyclingRateWithEPR();
         mitigation.setRecycledPlasticWithEPRTonnesPerYear(recycledPlasticWithEPR);
         
         // 3. Additional Recycling vs. BAU (t/year) = Recycled Plastic (with EPR) - Recycled Plastic (without EPR)
+        // Note: This represents the additional recycling achieved with EPR compared to without EPR
         Double additionalRecycling = recycledPlasticWithEPR - recycledPlasticWithoutEPR;
         mitigation.setAdditionalRecyclingVsBAUTonnesPerYear(additionalRecycling);
         
-        // 4. GHG Reduction (tCO2eq) = Additional Recycling vs. BAU × Emission Factor
+        // 4. GHG Reduction (tCO2eq) = Additional Recycling vs. BAU (t/year) × Emission Factor (tCO2eq)
         Double ghgReductionTonnes = additionalRecycling * paramDto.getEmissionFactor();
         mitigation.setGhgReductionTonnes(ghgReductionTonnes);
         
@@ -138,7 +139,8 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
         Double ghgReductionKilotonnes = ghgReductionTonnes / 1000.0;
         mitigation.setGhgReductionKilotonnes(ghgReductionKilotonnes);
         
-        // 6. Adjusted BAU Emission Mitigation (ktCO2e) = BAU - GHG Reduction (ktCO2eq)
+        // 6. Adjusted BAU Emission Mitigation (ktCO2e) = BAU (ktCO2e) - GHG Reduction (ktCO2eq)
+        // BAU is retrieved from BAU table where sector = WASTE and year matches
         Double adjustedBauEmissionMitigation = bau.getValue() - ghgReductionKilotonnes;
         mitigation.setAdjustedBauEmissionMitigation(adjustedBauEmissionMitigation);
         
@@ -190,21 +192,27 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
         mitigation.setProjectIntervention(intervention);
         
         // Recalculate derived fields
+        // 1. Recycled Plastic (without EPR) (t/year) = Plastic Waste (t/year) × Recycling Rate (without EPR)
         Double recycledPlasticWithoutEPR = plasticWasteInTonnesPerYear * paramDto.getRecyclingRateWithoutEPR();
         mitigation.setRecycledPlasticWithoutEPRTonnesPerYear(recycledPlasticWithoutEPR);
         
+        // 2. Recycled Plastic (with EPR) (t/year) = Plastic Waste (t/year) × Recycling Rate (with EPR)
         Double recycledPlasticWithEPR = plasticWasteInTonnesPerYear * paramDto.getRecyclingRateWithEPR();
         mitigation.setRecycledPlasticWithEPRTonnesPerYear(recycledPlasticWithEPR);
         
+        // 3. Additional Recycling vs. BAU (t/year) = Recycled Plastic (with EPR) - Recycled Plastic (without EPR)
         Double additionalRecycling = recycledPlasticWithEPR - recycledPlasticWithoutEPR;
         mitigation.setAdditionalRecyclingVsBAUTonnesPerYear(additionalRecycling);
         
+        // 4. GHG Reduction (tCO2eq) = Additional Recycling vs. BAU (t/year) × Emission Factor (tCO2eq)
         Double ghgReductionTonnes = additionalRecycling * paramDto.getEmissionFactor();
         mitigation.setGhgReductionTonnes(ghgReductionTonnes);
         
+        // 5. GHG Reduction (ktCO2eq) = GHG Reduction (tCO2eq) / 1000
         Double ghgReductionKilotonnes = ghgReductionTonnes / 1000.0;
         mitigation.setGhgReductionKilotonnes(ghgReductionKilotonnes);
         
+        // 6. Adjusted BAU Emission Mitigation (ktCO2e) = BAU (ktCO2e) - GHG Reduction (ktCO2eq)
         Double adjustedBauEmissionMitigation = bau.getValue() - ghgReductionKilotonnes;
         mitigation.setAdjustedBauEmissionMitigation(adjustedBauEmissionMitigation);
         
@@ -360,7 +368,6 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
     @Override
     public Map<String, Object> createEPRPlasticWasteMitigationFromExcel(MultipartFile file) {
         List<EPRPlasticWasteMitigation> savedRecords = new ArrayList<>();
-        List<Integer> skippedYears = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -400,12 +407,6 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
                     dto.setProjectInterventionId(interventionOpt.get().getId());
                 }
 
-                // Check if year already exists
-                if (repository.findByYear(dto.getYear()).isPresent()) {
-                    skippedYears.add(dto.getYear());
-                    continue;
-                }
-
                 // Create the record
                 try {
                     EPRPlasticWasteMitigation saved = createEPRPlasticWasteMitigationInternal(dto);
@@ -417,8 +418,6 @@ public class EPRPlasticWasteMitigationServiceImpl implements EPRPlasticWasteMiti
 
             Map<String, Object> result = new HashMap<>();
             result.put("savedCount", savedRecords.size());
-            result.put("skippedCount", skippedYears.size());
-            result.put("skippedYears", skippedYears);
             result.put("totalProcessed", totalProcessed);
             return result;
 

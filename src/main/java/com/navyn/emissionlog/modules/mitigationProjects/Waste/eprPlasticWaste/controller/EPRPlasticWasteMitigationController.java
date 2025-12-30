@@ -80,21 +80,16 @@ public class EPRPlasticWasteMitigationController {
     }
 
     @PostMapping("/excel")
-    @Operation(summary = "Upload EPR Plastic Waste Mitigation records from Excel file", description = "Uploads multiple EPR Plastic Waste Mitigation records from an Excel file. Records with duplicate years will be skipped. Requires an active EPR Parameter and BAU records for each year.")
+    @Operation(summary = "Upload EPR Plastic Waste Mitigation records from Excel file", description = "Uploads multiple EPR Plastic Waste Mitigation records from an Excel file. Requires an active EPR Parameter and BAU records for each year.")
     public ResponseEntity<ApiResponse> createEPRPlasticWasteMitigationFromExcel(
             @RequestParam("file") MultipartFile file) {
         Map<String, Object> result = service.createEPRPlasticWasteMitigationFromExcel(file);
 
         int savedCount = (Integer) result.get("savedCount");
-        int skippedCount = (Integer) result.get("skippedCount");
-        @SuppressWarnings("unchecked")
-        List<Integer> skippedYears = (List<Integer>) result.get("skippedYears");
 
         String message = String.format(
-                "Upload completed. %d record(s) saved successfully. %d record(s) skipped (years already exist: %s)",
-                savedCount,
-                skippedCount,
-                skippedYears.isEmpty() ? "none" : skippedYears.toString());
+                "Upload completed. %d record(s) saved successfully.",
+                savedCount);
 
         return ResponseEntity.ok(new ApiResponse(true, message, result));
     }

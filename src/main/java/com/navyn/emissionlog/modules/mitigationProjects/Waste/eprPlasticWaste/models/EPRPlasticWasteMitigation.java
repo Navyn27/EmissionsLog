@@ -8,9 +8,7 @@ import lombok.Data;
 import java.util.UUID;
 
 @Entity
-@Table(name = "epr_plastic_waste_mitigation", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"year"})
-})
+@Table(name = "epr_plastic_waste_mitigation")
 @Data
 public class EPRPlasticWasteMitigation {
     
