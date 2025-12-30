@@ -1,14 +1,14 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import jakarta.persistence.*;
 import lombok.Data;
 
 import java.util.UUID;
 
 @Entity
-@Table(name = "iswm_mitigations", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"year"})
-})
+@Table(name = "iswm_mitigations")
 @Data
 public class ISWMMitigation {
     
@@ -23,17 +23,10 @@ public class ISWMMitigation {
     @Column(nullable = false)
     private Double wasteProcessed; // tonnes
     
-    @Column(nullable = false)
-    private Double degradableOrganicFraction; // percentage (0-100)
-    
-    @Column(nullable = false)
-    private Double landfillAvoidance; // kgCO₂e/tonne
-    
-    @Column(nullable = false)
-    private Double compostingEF; // kgCO₂e/tonne of DOF
-    
-    @Column(nullable = false)
-    private Double bauEmission; // tCO₂e
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_intervention_id", nullable = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Intervention projectIntervention; // Foreign key to Intervention table
     
     // Calculated fields
     @Column(nullable = false)
@@ -46,8 +39,9 @@ public class ISWMMitigation {
     private Double compostingEmissions; // kgCO₂e
     
     @Column(nullable = false)
-    private Double netAnnualReduction; // tCO₂e
+    private Double netAnnualReduction; // ktCO₂e
     
-    @Column(nullable = false)
-    private Double mitigationScenarioEmission; // tCO₂e
+    @Column(nullable = false, name = "mitigation_scenario_emission")
+    private Double mitigationScenarioEmission; // ktCO₂e
 }
+

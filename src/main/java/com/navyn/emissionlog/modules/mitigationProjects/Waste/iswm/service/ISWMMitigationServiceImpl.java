@@ -1,10 +1,15 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.service;
 
 import com.navyn.emissionlog.Enums.ExcelType;
-import com.navyn.emissionlog.Enums.Metrics.EmissionsUnit;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.services.BAUService;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.dtos.ISWMMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.dtos.ISWMParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.models.ISWMMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.repository.ISWMMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -14,15 +19,16 @@ import org.apache.poi.xssf.usermodel.*;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.navyn.emissionlog.utils.Specifications.MitigationSpecifications.hasYear;
@@ -32,81 +38,123 @@ import static com.navyn.emissionlog.utils.Specifications.MitigationSpecification
 public class ISWMMitigationServiceImpl implements ISWMMitigationService {
     
     private final ISWMMitigationRepository repository;
+    private final ISWMParameterService parameterService;
+    private final InterventionRepository interventionRepository;
+    private final BAUService bauService;
     
     @Override
+    @Transactional
     public ISWMMitigation createISWMMitigation(ISWMMitigationDto dto) {
         ISWMMitigation mitigation = new ISWMMitigation();
         
-        // Convert BAU Emission to standard units (tCO₂e)
-        double bauEmissionInTonnes = dto.getBauEmissionUnit().toKiloTonnesCO2e(dto.getBauEmission());
+        // Get ISWMParameter (latest active) - throws exception if none exists
+        ISWMParameterResponseDto paramDto;
+        try {
+            paramDto = parameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot create ISWM Mitigation: No active ISWM Parameter found. " +
+                            "Please create an active parameter first before creating mitigation records.",
+                    e
+            );
+        }
+        
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+        
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
         
         // Set user inputs
         mitigation.setYear(dto.getYear());
         mitigation.setWasteProcessed(dto.getWasteProcessed());
-        mitigation.setDegradableOrganicFraction(dto.getDegradableOrganicFraction());
-        mitigation.setLandfillAvoidance(dto.getLandfillAvoidance());
-        mitigation.setCompostingEF(dto.getCompostingEF());
-        mitigation.setBauEmission(bauEmissionInTonnes);
+        mitigation.setProjectIntervention(intervention);
         
-        // Calculations
-        // DOFDiverted = wasteProcessed * %DegradableOrganicFraction
-        Double dofDiverted = dto.getWasteProcessed() * (dto.getDegradableOrganicFraction() / 100.0);
+        // Calculations using parameters from ISWMParameter
+        // DOFDiverted = wasteProcessed * (degradableOrganicFraction / 100)
+        Double dofDiverted = dto.getWasteProcessed() * (paramDto.getDegradableOrganicFraction() / 100.0);
         mitigation.setDofDiverted(dofDiverted);
         
-        // AvoidedLandfill = wasteProcessed * LandfillAvoidance
-        Double avoidedLandfill = dto.getWasteProcessed() * dto.getLandfillAvoidance();
+        // AvoidedLandfill = wasteProcessed * landfillAvoidance
+        Double avoidedLandfill = dto.getWasteProcessed() * paramDto.getLandfillAvoidance();
         mitigation.setAvoidedLandfill(avoidedLandfill);
         
-        // CompostingEmissions = DOFDiverted * CompostingEF
-        Double compostingEmissions = dofDiverted * dto.getCompostingEF();
+        // CompostingEmissions = DOFDiverted * compostingEF
+        Double compostingEmissions = dofDiverted * paramDto.getCompostingEF();
         mitigation.setCompostingEmissions(compostingEmissions);
         
-        // NetAnnualReduction = (AvoidedLandfill - CompostingEmissions) / 1000
-        Double netAnnualReduction = (avoidedLandfill - compostingEmissions) / 1000.0;
+        // NetAnnualReduction (ktCO₂e) = (AvoidedLandfill - CompostingEmissions) / 1000
+        // Following user specification: /1000
+        // AvoidedLandfill and CompostingEmissions are in kgCO₂e
+        // /1000 converts kgCO₂e to tCO₂e
+        // Since result should be in ktCO₂e and BAU is in ktCO₂e, we convert tCO₂e to ktCO₂e by /1000
+        // This follows the same pattern as wasteToEnergy: calculate in tCO₂e, then convert to ktCO₂e
+        Double netAnnualReductionInTonnes = (avoidedLandfill - compostingEmissions) / 1000.0; // kgCO₂e to tCO₂e
+        Double netAnnualReduction = netAnnualReductionInTonnes / 1000.0; // tCO₂e to ktCO₂e
         mitigation.setNetAnnualReduction(netAnnualReduction);
         
-        // MitigationScenarioEmission = BauEmission - NetAnnualReduction
-        Double mitigationScenarioEmission = bauEmissionInTonnes - netAnnualReduction;
+        // MitigationScenarioEmission (ktCO₂e) = BAU (ktCO₂e) - NetAnnualReduction (ktCO₂e)
+        Double mitigationScenarioEmission = bau.getValue() - netAnnualReduction;
         mitigation.setMitigationScenarioEmission(mitigationScenarioEmission);
         
         return repository.save(mitigation);
     }
     
     @Override
+    @Transactional
     public ISWMMitigation updateISWMMitigation(UUID id, ISWMMitigationDto dto) {
         ISWMMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("ISWM Mitigation record not found with id: " + id));
         
-        // Convert BAU Emission to standard units (tCO₂e)
-        double bauEmissionInTonnes = dto.getBauEmissionUnit().toKiloTonnesCO2e(dto.getBauEmission());
+        // Get ISWMParameter (latest active)
+        ISWMParameterResponseDto paramDto = parameterService.getLatestActive();
+        
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+        
+        // Get BAU for Waste sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.WASTE);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector WASTE. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
         
         // Update user inputs
         mitigation.setYear(dto.getYear());
         mitigation.setWasteProcessed(dto.getWasteProcessed());
-        mitigation.setDegradableOrganicFraction(dto.getDegradableOrganicFraction());
-        mitigation.setLandfillAvoidance(dto.getLandfillAvoidance());
-        mitigation.setCompostingEF(dto.getCompostingEF());
-        mitigation.setBauEmission(bauEmissionInTonnes);
+        mitigation.setProjectIntervention(intervention);
         
-        // Recalculate all derived fields
-        // DOFDiverted = wasteProcessed * %DegradableOrganicFraction
-        Double dofDiverted = dto.getWasteProcessed() * (dto.getDegradableOrganicFraction() / 100.0);
+        // Recalculate all derived fields using parameters from ISWMParameter
+        // DOFDiverted = wasteProcessed * (degradableOrganicFraction / 100)
+        Double dofDiverted = dto.getWasteProcessed() * (paramDto.getDegradableOrganicFraction() / 100.0);
         mitigation.setDofDiverted(dofDiverted);
         
-        // AvoidedLandfill = wasteProcessed * LandfillAvoidance
-        Double avoidedLandfill = dto.getWasteProcessed() * dto.getLandfillAvoidance();
+        // AvoidedLandfill = wasteProcessed * landfillAvoidance
+        Double avoidedLandfill = dto.getWasteProcessed() * paramDto.getLandfillAvoidance();
         mitigation.setAvoidedLandfill(avoidedLandfill);
         
-        // CompostingEmissions = DOFDiverted * CompostingEF
-        Double compostingEmissions = dofDiverted * dto.getCompostingEF();
+        // CompostingEmissions = DOFDiverted * compostingEF
+        Double compostingEmissions = dofDiverted * paramDto.getCompostingEF();
         mitigation.setCompostingEmissions(compostingEmissions);
         
-        // NetAnnualReduction = (AvoidedLandfill - CompostingEmissions) / 1000
-        Double netAnnualReduction = (avoidedLandfill - compostingEmissions) / 1000.0;
+        // NetAnnualReduction (ktCO₂e) = (AvoidedLandfill - CompostingEmissions) / 1000
+        // Following user specification: /1000
+        // AvoidedLandfill and CompostingEmissions are in kgCO₂e
+        // /1000 converts kgCO₂e to tCO₂e
+        // Since result should be in ktCO₂e and BAU is in ktCO₂e, we convert tCO₂e to ktCO₂e by /1000
+        // This follows the same pattern as wasteToEnergy: calculate in tCO₂e, then convert to ktCO₂e
+        Double netAnnualReductionInTonnes = (avoidedLandfill - compostingEmissions) / 1000.0; // kgCO₂e to tCO₂e
+        Double netAnnualReduction = netAnnualReductionInTonnes / 1000.0; // tCO₂e to ktCO₂e
         mitigation.setNetAnnualReduction(netAnnualReduction);
         
-        // MitigationScenarioEmission = BauEmission - NetAnnualReduction
-        Double mitigationScenarioEmission = bauEmissionInTonnes - netAnnualReduction;
+        // MitigationScenarioEmission (ktCO₂e) = BAU (ktCO₂e) - NetAnnualReduction (ktCO₂e)
+        Double mitigationScenarioEmission = bau.getValue() - netAnnualReduction;
         mitigation.setMitigationScenarioEmission(mitigationScenarioEmission);
         
         return repository.save(mitigation);
@@ -157,7 +205,7 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("ISWM Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
 
             rowIdx++; // Blank row
 
@@ -167,11 +215,7 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
             String[] headers = {
                     "Year",
                     "Waste Processed",
-                    "Degradable Organic Fraction",
-                    "Landfill Avoidance",
-                    "Composting Emission Factor",
-                    "BAU Emission",
-                    "BAU Emission Unit"
+                    "Project Intervention Name"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -180,29 +224,40 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
                 cell.setCellStyle(headerStyle);
             }
 
-            // Get enum values for dropdowns
-            String[] emissionsUnitValues = Arrays.stream(EmissionsUnit.values())
-                    .map(Enum::name)
+            // Get all interventions for dropdown
+            List<Intervention> interventions = interventionRepository.findAll();
+            String[] interventionNames = interventions.stream()
+                    .map(Intervention::getName)
                     .toArray(String[]::new);
 
             // Create data validation helper
             DataValidationHelper validationHelper = sheet.getDataValidationHelper();
 
-            // Data validation for BAU Emission Unit column (Column G, index 6)
-            CellRangeAddressList bauUnitList = new CellRangeAddressList(3, 1000, 6, 6);
-            DataValidationConstraint bauUnitConstraint = validationHelper
-                    .createExplicitListConstraint(emissionsUnitValues);
-            DataValidation bauUnitValidation = validationHelper.createValidation(bauUnitConstraint, bauUnitList);
-            bauUnitValidation.setShowErrorBox(true);
-            bauUnitValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
-            bauUnitValidation.createErrorBox("Invalid Unit", "Please select a valid unit from the dropdown list.");
-            bauUnitValidation.setShowPromptBox(true);
-            bauUnitValidation.createPromptBox("BAU Emission Unit", "Select a unit from the dropdown list.");
-            sheet.addValidationData(bauUnitValidation);
+            // Data validation for Project Intervention Name column (Column C, index 2)
+            if (interventionNames.length > 0) {
+                CellRangeAddressList interventionList = new CellRangeAddressList(3, 1000, 2, 2);
+                DataValidationConstraint interventionConstraint = validationHelper
+                        .createExplicitListConstraint(interventionNames);
+                DataValidation interventionValidation = validationHelper.createValidation(interventionConstraint, interventionList);
+                interventionValidation.setShowErrorBox(true);
+                interventionValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionValidation.createErrorBox("Invalid Intervention", "Please select a valid intervention from the dropdown list.");
+                interventionValidation.setShowPromptBox(true);
+                interventionValidation.createPromptBox("Project Intervention", "Select an intervention from the dropdown list.");
+                sheet.addValidationData(interventionValidation);
+            }
 
             // Create example data rows
-            Object[] exampleData1 = {2024, 1000.0, 50.0, 500.0, 50.0, 100.0, "TONNES_CO2E"};
-            Object[] exampleData2 = {2025, 1100.0, 52.0, 550.0, 52.0, 110.0, "TONNES_CO2E"};
+            Object[] exampleData1 = {
+                    2024,
+                    1000.0,
+                    interventions.isEmpty() ? "Example Intervention 1" : interventions.get(0).getName()
+            };
+            Object[] exampleData2 = {
+                    2025,
+                    1100.0,
+                    interventions.size() > 1 ? interventions.get(1).getName() : (interventions.isEmpty() ? "Example Intervention 2" : interventions.get(0).getName())
+            };
 
             // First example row
             Row exampleRow1 = sheet.createRow(rowIdx++);
@@ -212,12 +267,12 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
                 if (i == 0) {
                     cell.setCellStyle(yearStyle);
                     cell.setCellValue(((Number) exampleData1[i]).intValue());
-                } else if (i == 6) {
-                    cell.setCellStyle(dataStyle);
-                    cell.setCellValue((String) exampleData1[i]);
-                } else {
+                } else if (i == 1) {
                     cell.setCellStyle(numberStyle);
                     cell.setCellValue(((Number) exampleData1[i]).doubleValue());
+                } else {
+                    cell.setCellStyle(dataStyle);
+                    cell.setCellValue((String) exampleData1[i]);
                 }
             }
 
@@ -232,16 +287,16 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
                     altYearStyle.setAlignment(HorizontalAlignment.CENTER);
                     cell.setCellStyle(altYearStyle);
                     cell.setCellValue(((Number) exampleData2[i]).intValue());
-                } else if (i == 6) {
-                    cell.setCellStyle(alternateDataStyle);
-                    cell.setCellValue((String) exampleData2[i]);
-                } else {
+                } else if (i == 1) {
                     CellStyle altNumStyle = workbook.createCellStyle();
                     altNumStyle.cloneStyleFrom(numberStyle);
                     altNumStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
                     altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                     cell.setCellStyle(altNumStyle);
                     cell.setCellValue(((Number) exampleData2[i]).doubleValue());
+                } else {
+                    cell.setCellStyle(alternateDataStyle);
+                    cell.setCellValue((String) exampleData2[i]);
                 }
             }
 
@@ -256,9 +311,9 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
     }
 
     @Override
+    @Transactional
     public Map<String, Object> createISWMMitigationFromExcel(MultipartFile file) {
         List<ISWMMitigation> savedRecords = new ArrayList<>();
-        List<Integer> skippedYears = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -270,17 +325,15 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
             for (int i = 0; i < dtos.size(); i++) {
                 ISWMMitigationDto dto = dtos.get(i);
                 totalProcessed++;
-                int actualRowNumber = i + 1 + 3;
+                int actualRowNumber = i + 1 + 3; // +1 for 1-based, +3 for title(1) + blank(1) + header(1)
 
                 // Validate required fields
                 List<String> missingFields = new ArrayList<>();
                 if (dto.getYear() == null) missingFields.add("Year");
                 if (dto.getWasteProcessed() == null) missingFields.add("Waste Processed");
-                if (dto.getDegradableOrganicFraction() == null) missingFields.add("Degradable Organic Fraction");
-                if (dto.getLandfillAvoidance() == null) missingFields.add("Landfill Avoidance");
-                if (dto.getCompostingEF() == null) missingFields.add("Composting Emission Factor");
-                if (dto.getBauEmission() == null) missingFields.add("BAU Emission");
-                if (dto.getBauEmissionUnit() == null) missingFields.add("BAU Emission Unit");
+                if (dto.getProjectInterventionName() == null || dto.getProjectInterventionName().trim().isEmpty()) {
+                    missingFields.add("Project Intervention Name");
+                }
 
                 if (!missingFields.isEmpty()) {
                     throw new RuntimeException(String.format(
@@ -288,21 +341,22 @@ public class ISWMMitigationServiceImpl implements ISWMMitigationService {
                             actualRowNumber, String.join(", ", missingFields)));
                 }
 
-                // Check if year already exists
-                if (repository.findByYear(dto.getYear()).isPresent()) {
-                    skippedYears.add(dto.getYear());
-                    continue;
+                // Convert intervention name to UUID
+                Optional<Intervention> interventionOpt = interventionRepository.findByNameIgnoreCase(dto.getProjectInterventionName().trim());
+                if (interventionOpt.isEmpty()) {
+                    throw new RuntimeException(String.format(
+                            "Row %d: Intervention '%s' not found. Please use a valid intervention name from the dropdown.",
+                            actualRowNumber, dto.getProjectInterventionName()));
                 }
+                dto.setProjectInterventionId(interventionOpt.get().getId());
 
-                // Create the record
+                // Create the record (no longer checking for duplicate years since uniqueness constraint removed)
                 ISWMMitigation saved = createISWMMitigation(dto);
                 savedRecords.add(saved);
             }
 
             Map<String, Object> result = new HashMap<>();
             result.put("savedCount", savedRecords.size());
-            result.put("skippedCount", skippedYears.size());
-            result.put("skippedYears", skippedYears);
             result.put("totalProcessed", totalProcessed);
             return result;
 

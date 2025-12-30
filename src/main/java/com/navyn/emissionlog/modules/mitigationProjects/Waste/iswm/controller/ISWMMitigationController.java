@@ -28,23 +28,21 @@ public class ISWMMitigationController {
     private final ISWMMitigationService service;
     
     @Operation(summary = "Create ISWM mitigation record", 
-               description = "Creates a new Integrated Solid Waste Management (ISWM) mitigation project record. Calculates DOFDiverted, AvoidedLandfill, CompostingEmissions, NetAnnualReduction, and MitigationScenarioEmission based on input parameters.")
+               description = "Creates a new Integrated Solid Waste Management (ISWM) mitigation project record. Calculates DOFDiverted, AvoidedLandfill, CompostingEmissions, NetAnnualReduction, MitigationScenarioEmission, and AdjustedBauEmissionMitigation based on input parameters and BAU.")
     @PostMapping
     public ResponseEntity<ApiResponse> createISWMMitigation(
             @Valid @RequestBody ISWMMitigationDto dto) {
-        ISWMMitigation mitigation = service.createISWMMitigation(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                new ApiResponse(true, "ISWM mitigation record created successfully", mitigation));
+                new ApiResponse(true, "ISWM mitigation record created successfully", service.createISWMMitigation(dto)));
     }
     
     @Operation(summary = "Update ISWM mitigation record",
-               description = "Updates an existing ISWM mitigation record and recalculates all derived fields (DOFDiverted, AvoidedLandfill, CompostingEmissions, NetAnnualReduction, MitigationScenarioEmission)")
+               description = "Updates an existing ISWM mitigation record and recalculates all derived fields (DOFDiverted, AvoidedLandfill, CompostingEmissions, NetAnnualReduction, MitigationScenarioEmission, AdjustedBauEmissionMitigation)")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse> updateISWMMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody ISWMMitigationDto dto) {
-        ISWMMitigation mitigation = service.updateISWMMitigation(id, dto);
-        return ResponseEntity.ok(new ApiResponse(true, "ISWM mitigation record updated successfully", mitigation));
+        return ResponseEntity.ok(new ApiResponse(true, "ISWM mitigation record updated successfully", service.updateISWMMitigation(id, dto)));
     }
     
     @Operation(summary = "Get ISWM mitigation records", 
@@ -80,21 +78,18 @@ public class ISWMMitigationController {
     }
 
     @PostMapping("/excel")
-    @Operation(summary = "Upload ISWM Mitigation records from Excel file", description = "Uploads multiple ISWM Mitigation records from an Excel file. Records with duplicate years will be skipped.")
+    @Operation(summary = "Upload ISWM Mitigation records from Excel file", description = "Uploads multiple ISWM Mitigation records from an Excel file.")
     public ResponseEntity<ApiResponse> createISWMMitigationFromExcel(
             @RequestParam("file") MultipartFile file) {
         Map<String, Object> result = service.createISWMMitigationFromExcel(file);
 
         int savedCount = (Integer) result.get("savedCount");
-        int skippedCount = (Integer) result.get("skippedCount");
-        @SuppressWarnings("unchecked")
-        List<Integer> skippedYears = (List<Integer>) result.get("skippedYears");
+        int totalProcessed = (Integer) result.get("totalProcessed");
 
         String message = String.format(
-                "Upload completed. %d record(s) saved successfully. %d record(s) skipped (years already exist: %s)",
+                "Upload completed. %d record(s) saved successfully out of %d processed.",
                 savedCount,
-                skippedCount,
-                skippedYears.isEmpty() ? "none" : skippedYears.toString());
+                totalProcessed);
 
         return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
