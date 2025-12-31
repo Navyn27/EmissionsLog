@@ -1,18 +1,25 @@
 package com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.service;
 
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.services.BAUService;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.dto.RoofTopMitigationDto;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.dto.RoofTopMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.model.RoofTopMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.model.RoofTopParameter;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.repository.IRoofTopMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.repository.IRoofTopParameterRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -23,16 +30,24 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
     private final IRoofTopMitigationRepository mitigationRepository;
     private final IRoofTopParameterRepository parameterRepository;
     private final IRoofTopParameterService parameterService;
+    private final InterventionRepository interventionRepository;
+    private final BAUService bauService;
 
     private static final double DIESEL_EMISSION_FACTOR = 74.1;
 
     @Override
     @Transactional
     public RoofTopMitigationResponseDto create(RoofTopMitigationDto dto) {
-        // Check if year already exists
-        if (mitigationRepository.findByYear(dto.getYear()).isPresent()) {
-            throw new RuntimeException("Mitigation record for year " + dto.getYear() + " already exists");
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+
+        // Get BAU for Energy sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.ENERGY);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector ENERGY. Please create BAU record first.");
         }
+        BAU bau = bauOptional.get();
 
         // Get latest parameters
         RoofTopParameter parameter = getLatestParameter();
@@ -40,33 +55,49 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
         RoofTopMitigation mitigation = new RoofTopMitigation();
         mitigation.setYear(dto.getYear());
         mitigation.setInstalledUnitPerYear(dto.getInstalledUnitPerYear());
-        mitigation.setBauEmissionWithoutProject(dto.getBauEmissionWithoutProject());
+        mitigation.setSolarPVCapacity(dto.getSolarPVCapacity());
+        mitigation.setProjectIntervention(intervention);
 
         // Calculate all fields
-        calculateAllFields(mitigation, parameter);
+        calculateAllFields(mitigation, parameter, bau);
 
         RoofTopMitigation saved = mitigationRepository.save(mitigation);
         return mapEntityToResponseDto(saved);
     }
 
     @Override
+    @Transactional
     public RoofTopMitigationResponseDto getById(UUID id) {
         RoofTopMitigation mitigation = mitigationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("RoofTopMitigation not found with id: " + id));
 
+        // Get BAU for Energy sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(mitigation.getYear(), ESector.ENERGY);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + mitigation.getYear() + " and sector ENERGY. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+
         RoofTopParameter parameter = getLatestParameter();
-        calculateAllFields(mitigation, parameter);
+        calculateAllFields(mitigation, parameter, bau);
 
         return mapEntityToResponseDto(mitigation);
     }
 
     @Override
+    @Transactional
     public List<RoofTopMitigationResponseDto> getAll() {
         RoofTopParameter parameter = getLatestParameter();
 
         return mitigationRepository.findAllByOrderByYearAsc().stream()
                 .map(mitigation -> {
-                    calculateAllFields(mitigation, parameter);
+                    // Get BAU for Energy sector and same year
+                    Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(mitigation.getYear(), ESector.ENERGY);
+                    if (bauOptional.isEmpty()) {
+                        throw new RuntimeException("BAU record not found for year " + mitigation.getYear() + " and sector ENERGY. Please create BAU record first.");
+                    }
+                    BAU bau = bauOptional.get();
+                    calculateAllFields(mitigation, parameter, bau);
                     return mapEntityToResponseDto(mitigation);
                 })
                 .collect(Collectors.toList());
@@ -78,19 +109,24 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
         RoofTopMitigation mitigation = mitigationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("RoofTopMitigation not found with id: " + id));
 
-        // Check if year is being changed and if new year already exists
-        if (mitigation.getYear() != dto.getYear()) {
-            if (mitigationRepository.findByYear(dto.getYear()).isPresent()) {
-                throw new EntityNotFoundException("Mitigation record for year " + dto.getYear() + " already exists");
-            }
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getProjectInterventionId()));
+
+        // Get BAU for Energy sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(dto.getYear(), ESector.ENERGY);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + dto.getYear() + " and sector ENERGY. Please create BAU record first.");
         }
+        BAU bau = bauOptional.get();
 
         mitigation.setYear(dto.getYear());
         mitigation.setInstalledUnitPerYear(dto.getInstalledUnitPerYear());
-        mitigation.setBauEmissionWithoutProject(dto.getBauEmissionWithoutProject());
+        mitigation.setSolarPVCapacity(dto.getSolarPVCapacity());
+        mitigation.setProjectIntervention(intervention);
 
         RoofTopParameter parameter = getLatestParameter();
-        calculateAllFields(mitigation, parameter);
+        calculateAllFields(mitigation, parameter, bau);
 
         // Recalculate all subsequent years if cumulative values changed
         recalculateSubsequentYears(mitigation.getYear());
@@ -113,39 +149,48 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
     }
 
     @Override
+    @Transactional
     public List<RoofTopMitigationResponseDto> getByYear(int year) {
         List<RoofTopMitigation> mitigations = mitigationRepository.findAllByYear(year);
         if (mitigations.isEmpty()) {
             return Collections.emptyList();
         }
 
+        // Get BAU for Energy sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(year, ESector.ENERGY);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + year + " and sector ENERGY. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+
         RoofTopParameter parameter = getLatestParameter();
         return mitigations.stream()
                 .map(mitigation -> {
-                    calculateAllFields(mitigation, parameter);
+                    calculateAllFields(mitigation, parameter, bau);
                     return mapEntityToResponseDto(mitigation);
                 })
                 .collect(Collectors.toList());
     }
 
     private RoofTopParameter getLatestParameter() {
-        List<RoofTopParameter> all = parameterRepository.findAll();
-        if (all.isEmpty()) {
-            throw new EntityNotFoundException("No RoofTopParameter found. Please create parameters first.");
-        }
-        return all.stream()
-                .max((p1, p2) -> p1.getCreatedAt().compareTo(p2.getCreatedAt()))
-                .orElseThrow(() -> new EntityNotFoundException("No RoofTopParameter found"));
+        return parameterRepository.findFirstByIsActiveTrueOrderByCreatedAtDesc()
+                .orElseThrow(() -> new EntityNotFoundException("No active RoofTopParameter found. Please create an active parameter first."));
     }
 
-    private void calculateAllFields(RoofTopMitigation mitigation, RoofTopParameter parameter) {
+    private void calculateAllFields(RoofTopMitigation mitigation, RoofTopParameter parameter, BAU bau) {
+        // Set BAU emission (transient, from BAU table)
+        mitigation.setBauEmissionWithoutProject(bau.getValue());
+
         // Calculate cumulativeInstalledUnitPerYear
         int previousCumulative = getPreviousCumulativeInstalledUnit(mitigation.getYear());
         int cumulativeInstalledUnitPerYear = previousCumulative + mitigation.getInstalledUnitPerYear();
         mitigation.setCumulativeInstalledUnitPerYear(cumulativeInstalledUnitPerYear);
 
-        // Calculate percentageOfFinalMaximumRate
-        int percentageOfFinalMaximumRate = (int) ((cumulativeInstalledUnitPerYear / parameter.getSolarPVCapacity()) * 100);
+        // Calculate percentageOfFinalMaximumRate (using solarPVCapacity from mitigation)
+        if (mitigation.getSolarPVCapacity() <= 0) {
+            throw new RuntimeException("Solar PV Capacity must be greater than 0 for mitigation record");
+        }
+        int percentageOfFinalMaximumRate = (int) ((cumulativeInstalledUnitPerYear / mitigation.getSolarPVCapacity()) * 100);
         mitigation.setPercentageOfFinalMaximumRate(percentageOfFinalMaximumRate);
 
         // Calculate avoidedDieselConsumptionAverage from parameter
@@ -171,6 +216,10 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
         // Calculate scenarioGhGEmissionWithProject
         double scenarioGhGEmissionWithProject = mitigation.getBauEmissionWithoutProject() - netGhGMitigationAchieved;
         mitigation.setScenarioGhGEmissionWithProject(scenarioGhGEmissionWithProject);
+
+        // Calculate adjustedBauEmissionMitigation
+        double adjustedBauEmissionMitigation = bau.getValue() - netGhGMitigationAchieved;
+        mitigation.setAdjustedBauEmissionMitigation(adjustedBauEmissionMitigation);
     }
 
     private int getPreviousCumulativeInstalledUnit(int year) {
@@ -198,9 +247,13 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
                 cumulative += m.getNetGhGMitigationAchieved();
             } else {
                 // Calculate netGhGMitigation for this record
+                if (m.getSolarPVCapacity() <= 0) {
+                    // Skip records with invalid solarPVCapacity
+                    continue;
+                }
                 int prevCumulative = getPreviousCumulativeInstalledUnit(m.getYear());
                 int cumulativeUnits = prevCumulative + m.getInstalledUnitPerYear();
-                int percentage = (int) ((cumulativeUnits / parameter.getSolarPVCapacity()) * 100);
+                int percentage = (int) ((cumulativeUnits / m.getSolarPVCapacity()) * 100);
 
                 double avoidedDieselConsumptionCalculated = (
                         (
@@ -227,8 +280,13 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
 
         RoofTopParameter parameter = getLatestParameter();
         for (RoofTopMitigation mitigation : subsequent) {
-            calculateAllFields(mitigation, parameter);
-            mitigationRepository.save(mitigation);
+            // Get BAU for Energy sector and same year
+            Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(mitigation.getYear(), ESector.ENERGY);
+            if (bauOptional.isPresent()) {
+                BAU bau = bauOptional.get();
+                calculateAllFields(mitigation, parameter, bau);
+                mitigationRepository.save(mitigation);
+            }
         }
     }
 
@@ -237,6 +295,7 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
         dto.setId(entity.getId());
         dto.setYear(entity.getYear());
         dto.setInstalledUnitPerYear(entity.getInstalledUnitPerYear());
+        dto.setSolarPVCapacity(entity.getSolarPVCapacity());
         dto.setCumulativeInstalledUnitPerYear(entity.getCumulativeInstalledUnitPerYear());
         dto.setPercentageOfFinalMaximumRate(entity.getPercentageOfFinalMaximumRate());
         dto.setDieselDisplacedInMillionLitterPerArea(entity.getDieselDisplacedInMillionLitterPerArea());
@@ -244,8 +303,25 @@ public class RoofTopServiceImpl implements IRoofTopMitigationService {
         dto.setBauEmissionWithoutProject(entity.getBauEmissionWithoutProject());
         dto.setNetGhGMitigationAchieved(entity.getNetGhGMitigationAchieved());
         dto.setScenarioGhGEmissionWithProject(entity.getScenarioGhGEmissionWithProject());
+        dto.setAdjustedBauEmissionMitigation(entity.getAdjustedBauEmissionMitigation());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());
+
+        // Map intervention - FORCE initialization within transaction to avoid lazy loading
+        if (entity.getProjectIntervention() != null) {
+            // Force Hibernate to initialize the proxy while session is still open
+            Hibernate.initialize(entity.getProjectIntervention());
+            Intervention intervention = entity.getProjectIntervention();
+            RoofTopMitigationResponseDto.InterventionInfo interventionInfo =
+                    new RoofTopMitigationResponseDto.InterventionInfo(
+                            intervention.getId(),
+                            intervention.getName()
+                    );
+            dto.setProjectIntervention(interventionInfo);
+        } else {
+            dto.setProjectIntervention(null);
+        }
+
         return dto;
     }
 }

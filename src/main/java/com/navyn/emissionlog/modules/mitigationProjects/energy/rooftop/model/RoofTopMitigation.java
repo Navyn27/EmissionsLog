@@ -1,5 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,9 +30,16 @@ public class RoofTopMitigation {
     @Column(name = "installed_unit_per_year", nullable = false)
     private int installedUnitPerYear;
 
+    @Column(name = "solar_pv_capacity", nullable = false)
+    private double solarPVCapacity;
 
     @Column(name = "cumulative_installed_unit_per_year", nullable = false)
     private int cumulativeInstalledUnitPerYear;  // calculated
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_intervention_id", nullable = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Intervention projectIntervention; // Foreign key to Intervention table
 
     @Transient
     private int percentageOfFinalMaximumRate; // calculated
@@ -41,14 +50,17 @@ public class RoofTopMitigation {
     @Transient
     private double dieselDisplacedInTonJoule; // calculated
 
-    @Column(name = "bau_emission_without_project", nullable = false)
-    private double bauEmissionWithoutProject; // business As Usual
+    @Transient
+    private double bauEmissionWithoutProject; // fetched from BAU table
 
     @Column(name = "net_ghg_mitigation_achieved", nullable = false)
     private double netGhGMitigationAchieved;
 
     @Column(name = "scenario_ghg_emission_with_project", nullable = false)
     private double scenarioGhGEmissionWithProject;
+
+    @Column(name = "adjusted_bau_emission_mitigation", nullable = false)
+    private double adjustedBauEmissionMitigation; // BAU - netGhGMitigationAchieved
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

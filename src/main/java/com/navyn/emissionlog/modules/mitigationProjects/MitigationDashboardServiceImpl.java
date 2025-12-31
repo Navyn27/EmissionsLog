@@ -43,6 +43,8 @@ import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.models.
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliWWTP.repository.KigaliWWTPMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.models.ISWMMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.repository.ISWMMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.model.RoofTopMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.repository.IRoofTopMitigationRepository;
 import com.navyn.emissionlog.modules.transportScenarios.models.TransportScenario;
 import com.navyn.emissionlog.modules.transportScenarios.repositories.TransportScenarioRepository;
 import com.navyn.emissionlog.modules.transportScenarios.services.TransportScenarioService;
@@ -84,6 +86,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
     private final KigaliFSTPMitigationRepository kigaliFSTPRepository;
     private final KigaliWWTPMitigationRepository kigaliWWTPRepository;
     private final ISWMMitigationRepository iswmRepository;
+    private final IRoofTopMitigationRepository roofTopMitigationRepository;
     private final TransportScenarioRepository transportScenarioRepository;
     private final TransportScenarioService transportScenarioService;
     private final FetchMethods fetchMethods;
@@ -109,6 +112,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<KigaliFSTPMitigation> kigaliFSTP = kigaliFSTPRepository.findAll();
         List<KigaliWWTPMitigation> kigaliWWTP = kigaliWWTPRepository.findAll();
         List<ISWMMitigation> iswm = iswmRepository.findAll();
+        List<RoofTopMitigation> roofTopMitigation = roofTopMitigationRepository.findAll();
         List<TransportScenario> transportScenarios = transportScenarioRepository.findAll();
 
         // Filter by year if specified
@@ -164,12 +168,15 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             iswm = iswm.stream()
                     .filter(i -> i.getYear() >= startingYear && i.getYear() <= endingYear)
                     .toList();
+            roofTopMitigation = roofTopMitigation.stream()
+                    .filter(r -> r.getYear() >= startingYear && r.getYear() <= endingYear)
+                    .toList();
         }
 
         DashboardData mitigationData = calculateMitigationDashboardData(wetlandParks, settlementTrees, streetTrees,
                 greenFences, cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread,
                 wasteToEnergy, landfillGasUtilization, mbtComposting, eprPlasticWaste, kigaliFSTP, kigaliWWTP, iswm,
-                transportScenarios, startingYear, endingYear);
+                roofTopMitigation, transportScenarios, startingYear, endingYear);
 
         // Get gross emissions from main dashboard (using helper method to avoid
         // circular dependency)
@@ -219,6 +226,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<KigaliFSTPMitigation> kigaliFSTP = kigaliFSTPRepository.findAll();
         List<KigaliWWTPMitigation> kigaliWWTP = kigaliWWTPRepository.findAll();
         List<ISWMMitigation> iswm = iswmRepository.findAll();
+        List<RoofTopMitigation> roofTopMitigation = roofTopMitigationRepository.findAll();
         List<TransportScenario> transportScenarios = transportScenarioRepository.findAll();
 
         // Filter by year range
@@ -273,9 +281,12 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         kigaliWWTP = kigaliWWTP.stream()
                 .filter(w -> w.getYear() >= finalStartYear && w.getYear() <= finalEndYear)
                 .toList();
-        iswm = iswm.stream()
-                .filter(i -> i.getYear() >= finalStartYear && i.getYear() <= finalEndYear)
-                .toList();
+            iswm = iswm.stream()
+                    .filter(i -> i.getYear() >= finalStartYear && i.getYear() <= finalEndYear)
+                    .toList();
+            roofTopMitigation = roofTopMitigation.stream()
+                    .filter(r -> r.getYear() >= finalStartYear && r.getYear() <= finalEndYear)
+                    .toList();
 
         // Group by year
         Map<Integer, List<WetlandParksMitigation>> wetlandParksByYear = wetlandParks.stream()
@@ -311,6 +322,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         Map<Integer, List<KigaliWWTPMitigation>> kigaliWWTPByYear = kigaliWWTP.stream()
                 .collect(groupingBy(KigaliWWTPMitigation::getYear));
         Map<Integer, List<ISWMMitigation>> iswmByYear = iswm.stream().collect(groupingBy(ISWMMitigation::getYear));
+        Map<Integer, List<RoofTopMitigation>> roofTopMitigationByYear = roofTopMitigation.stream().collect(groupingBy(RoofTopMitigation::getYear));
 
         // For transport scenarios, we'll calculate mitigation per year from all
         // scenarios
@@ -336,6 +348,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
                     kigaliFSTPByYear.getOrDefault(year, List.of()),
                     kigaliWWTPByYear.getOrDefault(year, List.of()),
                     iswmByYear.getOrDefault(year, List.of()),
+                    roofTopMitigationByYear.getOrDefault(year, List.of()),
                     transportScenarios,
                     year,
                     year);
@@ -383,6 +396,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             List<KigaliFSTPMitigation> kigaliFSTP,
             List<KigaliWWTPMitigation> kigaliWWTP,
             List<ISWMMitigation> iswm,
+            List<RoofTopMitigation> roofTopMitigation,
             List<TransportScenario> transportScenarios,
             Integer startingYear,
             Integer endingYear) {
@@ -501,6 +515,13 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         for (ISWMMitigation i : iswm) {
             if (i.getNetAnnualReduction() != null) {
                 totalMitigation += i.getNetAnnualReduction();
+            }
+        }
+
+        // RoofTop Mitigation uses netGhGMitigationAchieved
+        for (RoofTopMitigation r : roofTopMitigation) {
+            if (r.getNetGhGMitigationAchieved() > 0) {
+                totalMitigation += r.getNetGhGMitigationAchieved();
             }
         }
 

@@ -13,4 +13,6 @@ public interface IRoofTopParameterService {
     RoofTopParameterResponseDto update(UUID id, RoofTopParameterDto dto);
     void delete(UUID id);
     RoofTopParameterResponseDto getLatest();
+    RoofTopParameterResponseDto getLatestActive();
+    void disable(UUID id);
 }

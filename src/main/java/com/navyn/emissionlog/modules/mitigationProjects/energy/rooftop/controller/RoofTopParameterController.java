@@ -45,12 +45,24 @@ public class RoofTopParameterController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/latest-active")
+    public ResponseEntity<RoofTopParameterResponseDto> getLatestActive() {
+        RoofTopParameterResponseDto response = roofTopParameterService.getLatestActive();
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<RoofTopParameterResponseDto> update(
             @PathVariable UUID id,
             @Valid @RequestBody RoofTopParameterDto dto) {
         RoofTopParameterResponseDto response = roofTopParameterService.update(id, dto);
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}/disable")
+    public ResponseEntity<Void> disable(@PathVariable UUID id) {
+        roofTopParameterService.disable(id);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")

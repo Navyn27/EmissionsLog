@@ -10,6 +10,7 @@ public class RoofTopMitigationResponseDto {
     private UUID id;
     private int year;
     private int installedUnitPerYear;
+    private double solarPVCapacity;
     private int cumulativeInstalledUnitPerYear;
     private int percentageOfFinalMaximumRate;
     private double dieselDisplacedInMillionLitterPerArea;
@@ -17,7 +18,20 @@ public class RoofTopMitigationResponseDto {
     private double bauEmissionWithoutProject;
     private double netGhGMitigationAchieved;
     private double scenarioGhGEmissionWithProject;
+    private double adjustedBauEmissionMitigation;
+    private InterventionInfo projectIntervention;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    @Data
+    public static class InterventionInfo {
+        private UUID id;
+        private String name;
+
+        public InterventionInfo(UUID id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+    }
 }
 

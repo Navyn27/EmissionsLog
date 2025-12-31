@@ -17,6 +17,7 @@ public class RoofTopParameterResponseDto {
     private double constant;
     private double avoidedDieselConsumptionCalculated;
     private double avoidedDieselConsumptionAverage;
+    private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
