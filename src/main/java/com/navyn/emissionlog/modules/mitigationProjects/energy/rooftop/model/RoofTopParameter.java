@@ -46,6 +46,8 @@ public class RoofTopParameter {
     @Transient
     private double avoidedDieselConsumptionAverage;
 
+    private Boolean isActive = true;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

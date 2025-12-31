@@ -23,6 +23,9 @@ public class RoofTopParameterServiceImpl implements IRoofTopParameterService {
     public RoofTopParameterResponseDto create(RoofTopParameterDto dto) {
         RoofTopParameter parameter = new RoofTopParameter();
         mapDtoToEntity(dto, parameter);
+        
+        // New parameters are active by default (isActive = true is set in entity)
+        parameter.setIsActive(true);
 
         // Calculate transient fields
         calculateTransientFields(parameter);
@@ -43,10 +46,20 @@ public class RoofTopParameterServiceImpl implements IRoofTopParameterService {
 
     @Override
     public List<RoofTopParameterResponseDto> getAll() {
-        return repository.findAll().stream().map(parameter -> {
-            calculateTransientFields(parameter);
-            return mapEntityToResponseDto(parameter);
-        }).collect(Collectors.toList());
+        // Sort: active first (true), then by createdAt DESC (the latest first)
+        return repository.findAll().stream()
+                .sorted((a, b) -> {
+                    // The first sort by isActive: true (active) comes first
+                    if (a.getIsActive() != b.getIsActive()) {
+                        return b.getIsActive() ? 1 : -1; // true (active) comes first
+                    }
+                    // Then sort by createdAt DESC (latest first)
+                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                })
+                .map(parameter -> {
+                    calculateTransientFields(parameter);
+                    return mapEntityToResponseDto(parameter);
+                }).collect(Collectors.toList());
     }
 
     @Override
@@ -55,6 +68,8 @@ public class RoofTopParameterServiceImpl implements IRoofTopParameterService {
         RoofTopParameter parameter = repository.findById(id).orElseThrow(() -> new RuntimeException("RoofTopParameter not found with id: " + id));
 
         mapDtoToEntity(dto, parameter);
+        
+        // Preserve isActive status on update
 
         // Calculate transient fields
         calculateTransientFields(parameter);
@@ -86,6 +101,26 @@ public class RoofTopParameterServiceImpl implements IRoofTopParameterService {
         return mapEntityToResponseDto(latest);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public RoofTopParameterResponseDto getLatestActive() {
+        RoofTopParameter latestActive = repository.findFirstByIsActiveTrueOrderByCreatedAtDesc()
+                .orElseThrow(() -> new RuntimeException("No active RoofTopParameter found"));
+        
+        calculateTransientFields(latestActive);
+        return mapEntityToResponseDto(latestActive);
+    }
+
+    @Override
+    @Transactional
+    public void disable(UUID id) {
+        RoofTopParameter parameter = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("RoofTopParameter not found with id: " + id));
+        
+        parameter.setIsActive(false);
+        repository.save(parameter);
+    }
+
     private void mapDtoToEntity(RoofTopParameterDto dto, RoofTopParameter entity) {
         entity.setSolarPVCapacity(dto.getSolarPVCapacity());
         entity.setEnergyOutPut(dto.getEnergyOutPut());
@@ -108,6 +143,7 @@ public class RoofTopParameterServiceImpl implements IRoofTopParameterService {
         dto.setConstant(entity.getConstant());
         dto.setAvoidedDieselConsumptionCalculated(entity.getAvoidedDieselConsumptionCalculated());
         dto.setAvoidedDieselConsumptionAverage(entity.getAvoidedDieselConsumptionAverage());
+        dto.setIsActive(entity.getIsActive());
         dto.setUpdatedAt(entity.getUpdatedAt());
         dto.setCreatedAt(entity.getCreatedAt());
         return dto;
