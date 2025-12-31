@@ -1,5 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,25 +31,44 @@ public class AvoidedElectricityProduction {
     private int unitsInstalledThisYear;
     @Column
     private int cumulativeUnitsInstalled;
+    
+    // User input - moved from WaterHeatParameter
+    @Column(nullable = false)
+    private int averageWaterHeat;
+    
     @Column
     private double annualAvoidedElectricity;      // MWh
     @Column
     private double cumulativeAvoidedElectricity;  // MWh
 
-    private Double netGhGMitigation;              // tCO2, NEW
+    private Double netGhGMitigation;              // tCO2
+
+    // Foreign key to Intervention table
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_intervention_id", nullable = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Intervention projectIntervention;
+
+    // Calculated field: BAU - netGhGMitigation (in ktCO2e)
+    @Column
+    private Double adjustedBauEmissionMitigation; // ktCO2e
 
     public AvoidedElectricityProduction(int year,
                                         int unitsInstalledThisYear,
                                         int cumulativeUnitsInstalled,
+                                        int averageWaterHeat,
                                         WaterHeatParameter param) {
 
         this.year = year;
         this.unitsInstalledThisYear = unitsInstalledThisYear;
         this.cumulativeUnitsInstalled = cumulativeUnitsInstalled;
+        this.averageWaterHeat = averageWaterHeat;
+        
+        double avoidedElectricityPerHousehold = param.getAvoidedElectricityPerHousehold(averageWaterHeat);
         this.annualAvoidedElectricity =
-                unitsInstalledThisYear * param.getAvoidedElectricityPerHousehold();
+                unitsInstalledThisYear * avoidedElectricityPerHousehold;
 
         this.cumulativeAvoidedElectricity =
-                cumulativeUnitsInstalled * param.getAvoidedElectricityPerHousehold();
+                cumulativeUnitsInstalled * avoidedElectricityPerHousehold;
     }
 }
