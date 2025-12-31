@@ -20,5 +20,8 @@ public class AFOLUDashboardYearDto {
     private Double addingStraw;
     private Double dailySpread;
     private Double totalMitigationKtCO2e;
+    private Double bauValue; // BAU value for this year
+    private Double adjustmentMitigation; // BAU value for this year - Total Mitigation for this year
+    private Double improvedMMSTotal; // Sum of Manure Covering + Adding Straw + Daily Spread for this year
 }
 

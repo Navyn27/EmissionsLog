@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.service;
 
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.dtos.DailySpreadMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.models.DailySpreadMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.dtos.DailySpreadMitigationResponseDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -10,13 +10,13 @@ import java.util.UUID;
 
 public interface DailySpreadMitigationService {
 
-    DailySpreadMitigation createDailySpreadMitigation(DailySpreadMitigationDto dto);
+    DailySpreadMitigationResponseDto createDailySpreadMitigation(DailySpreadMitigationDto dto);
 
-    DailySpreadMitigation updateDailySpreadMitigation(UUID id, DailySpreadMitigationDto dto);
+    DailySpreadMitigationResponseDto updateDailySpreadMitigation(UUID id, DailySpreadMitigationDto dto);
 
     void deleteDailySpreadMitigation(UUID id);
 
-    List<DailySpreadMitigation> getAllDailySpreadMitigation(Integer year);
+    List<DailySpreadMitigationResponseDto> getAllDailySpreadMitigation(Integer year);
 
     byte[] generateExcelTemplate();
 

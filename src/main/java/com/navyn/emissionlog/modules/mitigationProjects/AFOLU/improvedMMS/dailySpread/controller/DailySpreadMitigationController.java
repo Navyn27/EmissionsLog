@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.dtos.DailySpreadMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.models.DailySpreadMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.dtos.DailySpreadMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.service.DailySpreadMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +32,7 @@ public class DailySpreadMitigationController {
     @PostMapping
     public ResponseEntity<ApiResponse> createDailySpreadMitigation(
             @Valid @RequestBody DailySpreadMitigationDto dto) {
-        DailySpreadMitigation mitigation = service.createDailySpreadMitigation(dto);
+        DailySpreadMitigationResponseDto mitigation = service.createDailySpreadMitigation(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Daily spread mitigation record created successfully", mitigation));
     }
@@ -43,7 +43,7 @@ public class DailySpreadMitigationController {
     public ResponseEntity<ApiResponse> updateDailySpreadMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody DailySpreadMitigationDto dto) {
-        DailySpreadMitigation mitigation = service.updateDailySpreadMitigation(id, dto);
+        DailySpreadMitigationResponseDto mitigation = service.updateDailySpreadMitigation(id, dto);
         return ResponseEntity.ok(
                 new ApiResponse(true, "Daily spread mitigation record updated successfully", mitigation)
         );
@@ -54,7 +54,7 @@ public class DailySpreadMitigationController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllDailySpreadMitigation(
             @RequestParam(required = false) Integer year) {
-        List<DailySpreadMitigation> mitigations = service.getAllDailySpreadMitigation(year);
+        List<DailySpreadMitigationResponseDto> mitigations = service.getAllDailySpreadMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Daily spread mitigation records fetched successfully", mitigations));
     }
 

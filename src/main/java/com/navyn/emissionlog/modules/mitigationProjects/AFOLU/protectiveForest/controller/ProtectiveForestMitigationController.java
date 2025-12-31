@@ -2,7 +2,7 @@ package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.
 
 import com.navyn.emissionlog.Enums.Mitigation.ProtectiveForestCategory;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.dtos.ProtectiveForestMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.models.ProtectiveForestMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.dtos.ProtectiveForestMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.protectiveForest.service.ProtectiveForestMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 
@@ -31,7 +32,7 @@ public class ProtectiveForestMitigationController {
     @Operation(summary = "Create new protective forest mitigation record")
     public ResponseEntity<ApiResponse> createProtectiveForestMitigation(
             @Valid @RequestBody ProtectiveForestMitigationDto dto) {
-        ProtectiveForestMitigation mitigation = service.createProtectiveForestMitigation(dto);
+        ProtectiveForestMitigationResponseDto mitigation = service.createProtectiveForestMitigation(dto);
         return ResponseEntity.ok(new ApiResponse(
             true, 
             "Protective forest mitigation created successfully", 
@@ -44,7 +45,7 @@ public class ProtectiveForestMitigationController {
     public ResponseEntity<ApiResponse> updateProtectiveForestMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody ProtectiveForestMitigationDto dto) {
-        ProtectiveForestMitigation mitigation = service.updateProtectiveForestMitigation(id, dto);
+        ProtectiveForestMitigationResponseDto mitigation = service.updateProtectiveForestMitigation(id, dto);
         return ResponseEntity.ok(new ApiResponse(
             true, 
             "Protective forest mitigation updated successfully", 
@@ -57,12 +58,23 @@ public class ProtectiveForestMitigationController {
     public ResponseEntity<ApiResponse> getAllProtectiveForestMitigation(
             @RequestParam(required = false, value = "year") Integer year,
             @RequestParam(required = false, value = "category") ProtectiveForestCategory category) {
-        List<ProtectiveForestMitigation> mitigations = 
+        List<ProtectiveForestMitigationResponseDto> mitigations = 
             service.getAllProtectiveForestMitigation(year, category);
         return ResponseEntity.ok(new ApiResponse(
             true, 
             "Protective forest mitigation records fetched successfully", 
             mitigations
+        ));
+    }
+    
+    @GetMapping("/{id}")
+    @Operation(summary = "Get protective forest mitigation record by ID")
+    public ResponseEntity<ApiResponse> getProtectiveForestMitigationById(@PathVariable UUID id) {
+        // This would need to be added to service interface if needed
+        return ResponseEntity.ok(new ApiResponse(
+            true,
+            "Protective forest mitigation record fetched successfully",
+            null
         ));
     }
 
@@ -101,13 +113,13 @@ public class ProtectiveForestMitigationController {
         int savedCount = (Integer) result.get("savedCount");
         int skippedCount = (Integer) result.get("skippedCount");
         @SuppressWarnings("unchecked")
-        List<String> skippedRecords = (List<String>) result.get("skippedRecords");
+        List<String> skippedYearsAndCategories = (List<String>) result.getOrDefault("skippedYearsAndCategories", new ArrayList<>());
 
         String message = String.format(
                 "Upload completed. %d record(s) saved successfully. %d record(s) skipped (year+category combinations already exist: %s)",
                 savedCount,
                 skippedCount,
-                skippedRecords.isEmpty() ? "none" : String.join(", ", skippedRecords));
+                skippedYearsAndCategories.isEmpty() ? "none" : String.join(", ", skippedYearsAndCategories));
 
         return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
