@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.dtos.ManureCoveringMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.models.ManureCoveringMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.dtos.ManureCoveringMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.manureCovering.service.ManureCoveringMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +32,7 @@ public class ManureCoveringMitigationController {
     @PostMapping
     public ResponseEntity<ApiResponse> createManureCoveringMitigation(
             @Valid @RequestBody ManureCoveringMitigationDto dto) {
-        ManureCoveringMitigation mitigation = service.createManureCoveringMitigation(dto);
+        ManureCoveringMitigationResponseDto mitigation = service.createManureCoveringMitigation(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Manure covering mitigation record created successfully", mitigation));
     }
@@ -43,7 +43,7 @@ public class ManureCoveringMitigationController {
     public ResponseEntity<ApiResponse> updateManureCoveringMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody ManureCoveringMitigationDto dto) {
-        ManureCoveringMitigation mitigation = service.updateManureCoveringMitigation(id, dto);
+        ManureCoveringMitigationResponseDto mitigation = service.updateManureCoveringMitigation(id, dto);
         return ResponseEntity.ok(
                 new ApiResponse(true, "Manure covering mitigation record updated successfully", mitigation)
         );
@@ -54,7 +54,7 @@ public class ManureCoveringMitigationController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllManureCoveringMitigation(
             @RequestParam(required = false) Integer year) {
-        List<ManureCoveringMitigation> mitigations = service.getAllManureCoveringMitigation(year);
+        List<ManureCoveringMitigationResponseDto> mitigations = service.getAllManureCoveringMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Manure covering mitigation records fetched successfully", mitigations));
     }
 
