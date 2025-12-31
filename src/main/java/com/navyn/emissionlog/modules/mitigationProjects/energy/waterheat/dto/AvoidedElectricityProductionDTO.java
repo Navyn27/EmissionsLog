@@ -18,7 +18,12 @@ public class AvoidedElectricityProductionDTO {
     @Min(1)
     private Integer unitsInstalledThisYear;
 
+    // User input - moved from WaterHeatParameter
     @NotNull
-    private UUID waterHeatParameterId;
+    @Min(1)
+    private Integer averageWaterHeat;
+
+    // Foreign key to Intervention table
+    private UUID projectInterventionId;
 
 }
