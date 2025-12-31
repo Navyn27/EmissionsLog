@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.addingStraw.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.addingStraw.dtos.AddingStrawMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.addingStraw.models.AddingStrawMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.addingStraw.dtos.AddingStrawMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.addingStraw.service.AddingStrawMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,7 +32,7 @@ public class AddingStrawMitigationController {
     @PostMapping
     public ResponseEntity<ApiResponse> createAddingStrawMitigation(
             @Valid @RequestBody AddingStrawMitigationDto dto) {
-        AddingStrawMitigation mitigation = service.createAddingStrawMitigation(dto);
+        AddingStrawMitigationResponseDto mitigation = service.createAddingStrawMitigation(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Adding straw mitigation record created successfully", mitigation));
     }
@@ -43,7 +43,7 @@ public class AddingStrawMitigationController {
     public ResponseEntity<ApiResponse> updateAddingStrawMitigation(
             @PathVariable UUID id,
             @Valid @RequestBody AddingStrawMitigationDto dto) {
-        AddingStrawMitigation mitigation = service.updateAddingStrawMitigation(id, dto);
+        AddingStrawMitigationResponseDto mitigation = service.updateAddingStrawMitigation(id, dto);
         return ResponseEntity.ok(
                 new ApiResponse(true, "Adding straw mitigation record updated successfully", mitigation)
         );
@@ -54,7 +54,7 @@ public class AddingStrawMitigationController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllAddingStrawMitigation(
             @RequestParam(required = false) Integer year) {
-        List<AddingStrawMitigation> mitigations = service.getAllAddingStrawMitigation(year);
+        List<AddingStrawMitigationResponseDto> mitigations = service.getAllAddingStrawMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "Adding straw mitigation records fetched successfully", mitigations));
     }
 
