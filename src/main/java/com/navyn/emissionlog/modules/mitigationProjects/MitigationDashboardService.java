@@ -1,11 +1,16 @@
 package com.navyn.emissionlog.modules.mitigationProjects;
 
-import com.navyn.emissionlog.utils.DashboardData;
+import com.navyn.emissionlog.modules.mitigationProjects.dtos.MitigationDashboardSummaryDto;
+import com.navyn.emissionlog.modules.mitigationProjects.dtos.MitigationDashboardYearDto;
+
 import java.util.List;
 
 public interface MitigationDashboardService {
     
-    DashboardData getMitigationDashboardSummary(Integer startingYear, Integer endingYear);
+    MitigationDashboardSummaryDto getMitigationDashboardSummary(Integer startingYear, Integer endingYear);
     
-    List<DashboardData> getMitigationDashboardGraph(Integer startingYear, Integer endingYear);
+    List<MitigationDashboardYearDto> getMitigationDashboardGraph(Integer startingYear, Integer endingYear);
+    
+    byte[] exportMitigationDashboard(Integer startingYear, Integer endingYear);
 }
+
