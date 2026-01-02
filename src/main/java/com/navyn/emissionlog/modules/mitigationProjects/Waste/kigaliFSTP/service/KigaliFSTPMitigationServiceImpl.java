@@ -4,7 +4,7 @@ import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.services.BAUService;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.ISWMParameterResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.KigaliFSTPParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.KigaliFSTPMitigationDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.KigaliFSTPMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.models.KigaliFSTPMitigation;
@@ -40,7 +40,7 @@ import static com.navyn.emissionlog.utils.Specifications.MitigationSpecification
 public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationService {
     
     private final KigaliFSTPMitigationRepository repository;
-    private final ISWMParameterService parameterService;
+    private final KigaliFSTPParameterService parameterService;
     private final InterventionRepository interventionRepository;
     private final BAUService bauService;
     
@@ -85,8 +85,8 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
     private KigaliFSTPMitigation createKigaliFSTPMitigationInternal(KigaliFSTPMitigationDto dto) {
         KigaliFSTPMitigation mitigation = new KigaliFSTPMitigation();
         
-        // Get ISWMParameter (latest active)
-        ISWMParameterResponseDto paramDto = parameterService.getLatestActive();
+        // Get KigaliFSTPParameter (latest active)
+        KigaliFSTPParameterResponseDto paramDto = parameterService.getLatestActive();
         
         // Get Intervention
         Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
@@ -141,8 +141,8 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
         KigaliFSTPMitigation mitigation = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Kigali FSTP Mitigation record not found with id: " + id));
         
-        // Get ISWMParameter (latest active)
-        ISWMParameterResponseDto paramDto = parameterService.getLatestActive();
+        // Get KigaliFSTPParameter (latest active)
+        KigaliFSTPParameterResponseDto paramDto = parameterService.getLatestActive();
         
         // Get Intervention
         Intervention intervention = interventionRepository.findById(dto.getProjectInterventionId())
@@ -337,7 +337,6 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
     @Transactional
     public Map<String, Object> createKigaliFSTPMitigationFromExcel(MultipartFile file) {
         List<KigaliFSTPMitigation> savedRecords = new ArrayList<>();
-        List<Integer> skippedYears = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -374,21 +373,13 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
                 }
                 dto.setProjectInterventionId(interventionOpt.get().getId());
 
-                // Check if year already exists
-                if (repository.findByYear(dto.getYear()).isPresent()) {
-                    skippedYears.add(dto.getYear());
-                    continue;
-                }
-
-                // Create the record
+                // Create the record (duplicate years are now allowed)
                 KigaliFSTPMitigation saved = createKigaliFSTPMitigationInternal(dto);
                 savedRecords.add(saved);
             }
 
             Map<String, Object> result = new HashMap<>();
             result.put("savedCount", savedRecords.size());
-            result.put("skippedCount", skippedYears.size());
-            result.put("skippedYears", skippedYears);
             result.put("totalProcessed", totalProcessed);
             return result;
 

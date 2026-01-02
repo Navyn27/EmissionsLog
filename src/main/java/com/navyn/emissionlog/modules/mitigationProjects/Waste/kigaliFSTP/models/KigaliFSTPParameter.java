@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "iswm_parameters")
+@Table(name = "kigali_fstp_parameters")
 @Data
-public class ISWMParameter {
+public class KigaliFSTPParameter {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

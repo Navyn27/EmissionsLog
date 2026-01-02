@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 @Data
-public class ISWMParameterDto {
+public class KigaliFSTPParameterDto {
 
     @NotNull(message = "Methane Emission Factor is required")
     @Positive(message = "Methane Emission Factor must be positive")

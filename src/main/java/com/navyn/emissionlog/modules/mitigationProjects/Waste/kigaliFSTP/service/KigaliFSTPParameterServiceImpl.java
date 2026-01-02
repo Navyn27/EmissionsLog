@@ -1,9 +1,9 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.service;
 
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.ISWMParameterDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.ISWMParameterResponseDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.models.ISWMParameter;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.repository.ISWMParameterRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.KigaliFSTPParameterDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.dtos.KigaliFSTPParameterResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.models.KigaliFSTPParameter;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.kigaliFSTP.repository.KigaliFSTPParameterRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,50 +14,50 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ISWMParameterServiceImpl implements ISWMParameterService {
+public class KigaliFSTPParameterServiceImpl implements KigaliFSTPParameterService {
 
-    private final ISWMParameterRepository repository;
+    private final KigaliFSTPParameterRepository repository;
 
     @Override
     @Transactional
-    public ISWMParameterResponseDto createISWMParameter(ISWMParameterDto dto) {
-        ISWMParameter parameter = new ISWMParameter();
+    public KigaliFSTPParameterResponseDto createKigaliFSTPParameter(KigaliFSTPParameterDto dto) {
+        KigaliFSTPParameter parameter = new KigaliFSTPParameter();
         parameter.setMethaneEmissionFactor(dto.getMethaneEmissionFactor());
         parameter.setCodConcentration(dto.getCodConcentration());
         parameter.setCh4Gwp100Year(dto.getCh4Gwp100Year());
         // New parameters are active by default (isActive = true is set in entity)
         parameter.setIsActive(true);
         
-        ISWMParameter saved = repository.save(parameter);
+        KigaliFSTPParameter saved = repository.save(parameter);
         return mapEntityToResponseDto(saved);
     }
 
     @Override
     @Transactional
-    public ISWMParameterResponseDto updateISWMParameter(UUID id, ISWMParameterDto dto) {
-        ISWMParameter parameter = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ISWM Parameter not found with id: " + id));
+    public KigaliFSTPParameterResponseDto updateKigaliFSTPParameter(UUID id, KigaliFSTPParameterDto dto) {
+        KigaliFSTPParameter parameter = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Kigali FSTP Parameter not found with id: " + id));
 
         parameter.setMethaneEmissionFactor(dto.getMethaneEmissionFactor());
         parameter.setCodConcentration(dto.getCodConcentration());
         parameter.setCh4Gwp100Year(dto.getCh4Gwp100Year());
         // Preserve isActive status on update
         
-        ISWMParameter updated = repository.save(parameter);
+        KigaliFSTPParameter updated = repository.save(parameter);
         return mapEntityToResponseDto(updated);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public ISWMParameterResponseDto getISWMParameterById(UUID id) {
-        ISWMParameter parameter = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ISWM Parameter not found with id: " + id));
+    public KigaliFSTPParameterResponseDto getKigaliFSTPParameterById(UUID id) {
+        KigaliFSTPParameter parameter = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Kigali FSTP Parameter not found with id: " + id));
         return mapEntityToResponseDto(parameter);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ISWMParameterResponseDto> getAllISWMParameters() {
+    public List<KigaliFSTPParameterResponseDto> getAllKigaliFSTPParameters() {
         // Sort: active first (true), then by createdAt DESC (the latest first)
         return repository.findAll().stream()
                 .sorted((a, b) -> {
@@ -74,9 +74,9 @@ public class ISWMParameterServiceImpl implements ISWMParameterService {
 
     @Override
     @Transactional
-    public void deleteISWMParameter(UUID id) {
+    public void deleteKigaliFSTPParameter(UUID id) {
         if (!repository.existsById(id)) {
-            throw new RuntimeException("ISWM Parameter not found with id: " + id);
+            throw new RuntimeException("Kigali FSTP Parameter not found with id: " + id);
         }
         repository.deleteById(id);
     }
@@ -84,8 +84,8 @@ public class ISWMParameterServiceImpl implements ISWMParameterService {
     @Override
     @Transactional
     public void disable(UUID id) {
-        ISWMParameter parameter = repository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ISWM Parameter not found with id: " + id));
+        KigaliFSTPParameter parameter = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Kigali FSTP Parameter not found with id: " + id));
         
         parameter.setIsActive(false);
         repository.save(parameter);
@@ -93,9 +93,9 @@ public class ISWMParameterServiceImpl implements ISWMParameterService {
 
     @Override
     @Transactional(readOnly = true)
-    public ISWMParameterResponseDto getLatestActive() {
-        ISWMParameter latestActive = repository.findFirstByIsActiveTrueOrderByCreatedAtDesc()
-                .orElseThrow(() -> new RuntimeException("No active ISWMParameter found"));
+    public KigaliFSTPParameterResponseDto getLatestActive() {
+        KigaliFSTPParameter latestActive = repository.findFirstByIsActiveTrueOrderByCreatedAtDesc()
+                .orElseThrow(() -> new RuntimeException("No active Kigali FSTP Parameter found"));
         
         return mapEntityToResponseDto(latestActive);
     }
@@ -103,8 +103,8 @@ public class ISWMParameterServiceImpl implements ISWMParameterService {
     /**
      * Maps entity to response DTO
      */
-    private ISWMParameterResponseDto mapEntityToResponseDto(ISWMParameter entity) {
-        ISWMParameterResponseDto dto = new ISWMParameterResponseDto();
+    private KigaliFSTPParameterResponseDto mapEntityToResponseDto(KigaliFSTPParameter entity) {
+        KigaliFSTPParameterResponseDto dto = new KigaliFSTPParameterResponseDto();
         dto.setId(entity.getId());
         dto.setMethaneEmissionFactor(entity.getMethaneEmissionFactor());
         dto.setCodConcentration(entity.getCodConcentration());

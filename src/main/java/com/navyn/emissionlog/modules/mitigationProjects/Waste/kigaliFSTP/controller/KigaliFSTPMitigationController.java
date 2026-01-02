@@ -80,24 +80,14 @@ public class KigaliFSTPMitigationController {
     }
 
     @PostMapping("/excel")
-    @Operation(summary = "Upload Kigali FSTP Mitigation records from Excel file", description = "Uploads multiple Kigali FSTP Mitigation records from an Excel file. Records with duplicate years will be skipped.")
+    @Operation(summary = "Upload Kigali FSTP Mitigation records from Excel file", description = "Uploads multiple Kigali FSTP Mitigation records from an Excel file.")
     public ResponseEntity<ApiResponse> createKigaliFSTPMitigationFromExcel(
             @RequestParam("file") MultipartFile file) {
         Map<String, Object> result = service.createKigaliFSTPMitigationFromExcel(file);
 
         int savedCount = (Integer) result.get("savedCount");
-        int skippedCount = (Integer) result.get("skippedCount");
-        @SuppressWarnings("unchecked")
-        List<Integer> skippedYears = (List<Integer>) result.get("skippedYears");
+        String message = String.format("Upload completed. %d record(s) saved successfully.", savedCount);
 
-        StringBuilder messageBuilder = new StringBuilder();
-        messageBuilder.append(String.format("Upload completed. %d record(s) saved successfully.", savedCount));
-        
-        if (skippedCount > 0) {
-            messageBuilder.append(String.format(" %d record(s) skipped (years already exist: %s).",
-                    skippedCount, skippedYears.isEmpty() ? "none" : skippedYears.toString()));
-        }
-
-        return ResponseEntity.ok(new ApiResponse(true, messageBuilder.toString(), result));
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
 }
