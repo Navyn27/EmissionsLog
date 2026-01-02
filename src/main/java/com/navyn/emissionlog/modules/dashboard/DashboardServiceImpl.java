@@ -6,8 +6,9 @@ import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLan
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.SyntheticFertilizerEmissions;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.Livestock.EntericFermentationEmissions;
 import com.navyn.emissionlog.modules.LandUseEmissions.models.*;
-import com.navyn.emissionlog.modules.wasteEmissions.models.WasteDataAbstract;
 import com.navyn.emissionlog.modules.mitigationProjects.MitigationDashboardService;
+import com.navyn.emissionlog.modules.mitigationProjects.dtos.MitigationDashboardSummaryDto;
+import com.navyn.emissionlog.modules.wasteEmissions.models.WasteDataAbstract;
 import com.navyn.emissionlog.utils.DashboardData;
 import com.navyn.emissionlog.utils.FetchMethods;
 import com.navyn.emissionlog.utils.DashboardHelperMethods;
@@ -61,7 +62,7 @@ public class DashboardServiceImpl implements DashboardService {
         dashboardHelperMethods.calculateCO2Equivalent(data);
 
         // Get mitigation data
-        DashboardData mitigationData = mitigationDashboardService.getMitigationDashboardSummary(startingYear, endingYear);
+        MitigationDashboardSummaryDto mitigationData = mitigationDashboardService.getMitigationDashboardSummary(startingYear, endingYear);
         if (mitigationData != null && mitigationData.getTotalMitigationKtCO2e() != null) {
             data.setTotalMitigationKtCO2e(mitigationData.getTotalMitigationKtCO2e());
         }
