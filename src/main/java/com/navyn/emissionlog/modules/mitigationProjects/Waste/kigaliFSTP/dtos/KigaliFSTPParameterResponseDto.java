@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
-public class ISWMParameterResponseDto {
+public class KigaliFSTPParameterResponseDto {
     private UUID id;
     private Double methaneEmissionFactor; // kg CH4 per kg COD
     private Double codConcentration; // kg COD per m³
