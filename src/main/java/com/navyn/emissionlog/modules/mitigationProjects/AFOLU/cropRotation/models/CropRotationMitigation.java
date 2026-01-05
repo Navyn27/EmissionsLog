@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "crop_rotation_mitigations", uniqueConstraints = @UniqueConstraint(columnNames = {"year"}))
+@Table(name = "crop_rotation_mitigations")
 @Data
 public class CropRotationMitigation {
 
@@ -26,7 +26,7 @@ public class CropRotationMitigation {
     @NotNull
     @Min(1900)
     @Max(2100)
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private Integer year;
 
     // ===== INPUT FIELDS =====

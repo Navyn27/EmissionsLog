@@ -14,8 +14,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "green_fences_mitigation",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"year"}))
+@Table(name = "green_fences_mitigation")
 @Data
 public class GreenFencesMitigation {
 
@@ -27,7 +26,7 @@ public class GreenFencesMitigation {
     @NotNull
     @Min(1900)
     @Max(2100)
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private Integer year;
 
     // ===== INPUT FIELDS ====

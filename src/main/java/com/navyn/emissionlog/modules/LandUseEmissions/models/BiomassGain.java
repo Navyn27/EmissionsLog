@@ -15,7 +15,7 @@ public class BiomassGain {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private Integer year = LocalDate.now().getYear();
 
     @Enumerated(EnumType.STRING)

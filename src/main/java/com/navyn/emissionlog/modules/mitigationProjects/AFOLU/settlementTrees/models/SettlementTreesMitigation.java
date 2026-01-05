@@ -13,8 +13,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "settlement_trees_mitigations",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"year"}))
+@Table(name = "settlement_trees_mitigations")
 @Data
 public class SettlementTreesMitigation {
 
@@ -22,11 +21,10 @@ public class SettlementTreesMitigation {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // UNIQUE: year only (no category needed)
     @NotNull
     @Min(1900)
     @Max(2100)
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private Integer year;
 
     // ===== INPUT FIELDS =====
