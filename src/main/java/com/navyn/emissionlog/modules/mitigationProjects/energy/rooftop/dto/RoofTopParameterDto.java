@@ -6,10 +6,6 @@ import lombok.Data;
 
 @Data
 public class RoofTopParameterDto {
-    @NotNull(message = "Solar PV Capacity is required")
-    @Positive(message = "Solar PV Capacity must be positive")
-    private double solarPVCapacity;
-
     @NotNull(message = "Energy Output is required")
     @Positive(message = "Energy Output must be positive")
     private double energyOutPut;
