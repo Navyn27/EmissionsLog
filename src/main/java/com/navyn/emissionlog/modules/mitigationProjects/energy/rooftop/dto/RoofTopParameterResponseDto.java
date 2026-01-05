@@ -8,7 +8,6 @@ import java.util.UUID;
 @Data
 public class RoofTopParameterResponseDto {
     private UUID id;
-    private double solarPVCapacity;
     private double energyOutPut;
     private double percentageOutPutDisplacedDiesel;
     private double avoidedDieselConsumption;
