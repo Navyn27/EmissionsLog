@@ -109,8 +109,8 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
         Double ch4Destroyed = dto.getCh4Captured() * (paramDto.getDestructionEfficiencyPercentage() / 100.0);
         mitigation.setCh4Destroyed(ch4Destroyed);
 
-        // Calculate EquivalentCO₂eReduction = CH₄Destroyed * GlobalWarmingPotential(CH₄)
-        Double equivalentCO2eReduction = ch4Destroyed * paramDto.getGlobalWarmingPotentialCh4();
+        // Calculate EquivalentCO₂eReduction = (CH₄Destroyed * GlobalWarmingPotential(CH₄))/1000
+        Double equivalentCO2eReduction = (ch4Destroyed * paramDto.getGlobalWarmingPotentialCh4())/1000;
         mitigation.setEquivalentCO2eReduction(equivalentCO2eReduction);
 
         // Calculate MitigationScenarioGrand = BAU - EquivalentCO₂eReduction
@@ -158,7 +158,7 @@ public class LandfillGasUtilizationMitigationServiceImpl implements LandfillGasU
         mitigation.setCh4Destroyed(ch4Destroyed);
 
         // Calculate EquivalentCO₂eReduction = CH₄Destroyed * GlobalWarmingPotential(CH₄)
-        Double equivalentCO2eReduction = ch4Destroyed * paramDto.getGlobalWarmingPotentialCh4();
+        Double equivalentCO2eReduction = (ch4Destroyed * paramDto.getGlobalWarmingPotentialCh4())/1000;
         mitigation.setEquivalentCO2eReduction(equivalentCO2eReduction);
 
         // Calculate MitigationScenarioGrand = BAU - EquivalentCO₂eReduction
