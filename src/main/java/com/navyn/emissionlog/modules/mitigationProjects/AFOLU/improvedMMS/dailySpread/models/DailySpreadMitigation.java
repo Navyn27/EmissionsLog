@@ -10,9 +10,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "daily_spread_mitigations", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"year"})
-})
+@Table(name = "daily_spread_mitigations")
 @Data
 public class DailySpreadMitigation {
 

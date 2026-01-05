@@ -11,9 +11,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "mbt_composting_mitigation", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"year"})
-})
+@Table(name = "mbt_composting_mitigation")
 @Data
 public class MBTCompostingMitigation {
     

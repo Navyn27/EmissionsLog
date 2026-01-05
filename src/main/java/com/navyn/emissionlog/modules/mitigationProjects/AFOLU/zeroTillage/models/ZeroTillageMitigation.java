@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "zero_tillage_mitigation", uniqueConstraints = @UniqueConstraint(columnNames = { "year" }))
+@Table(name = "zero_tillage_mitigation")
 @Data
 public class ZeroTillageMitigation {
 
@@ -26,7 +26,7 @@ public class ZeroTillageMitigation {
     @NotNull
     @Min(1900)
     @Max(2100)
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private Integer year;
 
     // ===== INPUT FIELDS =====

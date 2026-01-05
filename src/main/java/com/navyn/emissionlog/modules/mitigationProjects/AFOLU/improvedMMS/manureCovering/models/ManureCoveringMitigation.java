@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "manure_covering_mitigation", uniqueConstraints = {@UniqueConstraint(columnNames = {"year"})})
+@Table(name = "manure_covering_mitigation")
 @Data
 public class ManureCoveringMitigation {
 
