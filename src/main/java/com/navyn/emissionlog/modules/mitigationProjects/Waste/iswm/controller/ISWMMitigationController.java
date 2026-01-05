@@ -1,7 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.dtos.ISWMMitigationDto;
-import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.models.ISWMMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.dtos.ISWMMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.service.ISWMMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,7 +50,7 @@ public class ISWMMitigationController {
     @GetMapping
     public ResponseEntity<ApiResponse> getAllISWMMitigation(
             @RequestParam(required = false) Integer year) {
-        List<ISWMMitigation> mitigations = service.getAllISWMMitigation(year);
+        List<ISWMMitigationResponseDto> mitigations = service.getAllISWMMitigation(year);
         return ResponseEntity.ok(new ApiResponse(true, "ISWM mitigation records fetched successfully", mitigations));
     }
     
