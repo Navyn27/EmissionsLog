@@ -24,6 +24,7 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.xddf.usermodel.chart.*;
 import org.hibernate.Hibernate;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -175,6 +176,7 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
         }
 
         @Override
+        @Transactional(readOnly = true)
         public byte[] exportWasteDashboard(Integer startingYear, Integer endingYear) {
                 List<WasteToEnergyMitigation> wasteToEnergy = wasteToEnergyRepository.findAll();
                 List<MBTCompostingMitigation> mbt = mbtCompostingRepository.findAll();
@@ -724,17 +726,22 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                                         : numberStyle;
                         r.createCell(1).setCellValue(item.getWasteToWtE());
                         r.getCell(1).setCellStyle(numStyle);
-                        
+
                         // Project Intervention column (text)
                         Cell interventionCell = r.createCell(2);
-                        interventionCell.setCellValue(
-                                        item.getProjectIntervention() != null ? item.getProjectIntervention().getName() : "");
+                        String interventionName = "";
+                        if (item.getProjectIntervention() != null) {
+                                // Force Hibernate to initialize the proxy while session is still open
+                                Hibernate.initialize(item.getProjectIntervention());
+                                interventionName = item.getProjectIntervention().getName();
+                        }
+                        interventionCell.setCellValue(interventionName);
                         CellStyle baseTextStyle = isAlternate ? alternateDataStyle : dataStyle;
                         CellStyle textCellStyle = sheet.getWorkbook().createCellStyle();
                         textCellStyle.cloneStyleFrom(baseTextStyle);
                         textCellStyle.setAlignment(HorizontalAlignment.LEFT);
                         interventionCell.setCellStyle(textCellStyle);
-                        
+
                         r.createCell(3).setCellValue(item.getGhgReductionKilotonnes());
                         r.getCell(3).setCellStyle(numStyle);
                         r.createCell(4).setCellValue(item.getAdjustedEmissionsWithWtE());
@@ -775,13 +782,19 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook())
                                         : numberStyle;
                         r.createCell(1).setCellValue(item.getOrganicWasteTreatedTonsPerYear() != null
-                                        ? item.getOrganicWasteTreatedTonsPerYear() : 0.0);
+                                        ? item.getOrganicWasteTreatedTonsPerYear()
+                                        : 0.0);
                         r.getCell(1).setCellStyle(numStyle);
 
                         // Project Intervention column (text)
                         Cell interventionCell = r.createCell(2);
-                        interventionCell.setCellValue(
-                                        item.getProjectIntervention() != null ? item.getProjectIntervention().getName() : "");
+                        String interventionName = "";
+                        if (item.getProjectIntervention() != null) {
+                                // Force Hibernate to initialize the proxy while session is still open
+                                Hibernate.initialize(item.getProjectIntervention());
+                                interventionName = item.getProjectIntervention().getName();
+                        }
+                        interventionCell.setCellValue(interventionName);
                         CellStyle baseTextStyle = isAlternate ? alternateDataStyle : dataStyle;
                         CellStyle textCellStyle = sheet.getWorkbook().createCellStyle();
                         textCellStyle.cloneStyleFrom(baseTextStyle);
@@ -789,10 +802,12 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         interventionCell.setCellStyle(textCellStyle);
 
                         r.createCell(3).setCellValue(item.getEstimatedGhgReductionKilotonnesPerYear() != null
-                                        ? item.getEstimatedGhgReductionKilotonnesPerYear() : 0.0);
+                                        ? item.getEstimatedGhgReductionKilotonnesPerYear()
+                                        : 0.0);
                         r.getCell(3).setCellStyle(numStyle);
                         r.createCell(4).setCellValue(item.getAdjustedBauEmissionBiologicalTreatment() != null
-                                        ? item.getAdjustedBauEmissionBiologicalTreatment() : 0.0);
+                                        ? item.getAdjustedBauEmissionBiologicalTreatment()
+                                        : 0.0);
                         r.getCell(4).setCellStyle(numStyle);
                         r.createCell(5).setCellValue(item.getAdjustedBauEmissionBiologicalTreatment());
                         r.getCell(5).setCellStyle(numStyle);
@@ -903,7 +918,8 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                                                         : 0.0);
                         r.getCell(5).setCellStyle(numStyle);
                         r.createCell(6).setCellValue(
-                                        item.getAdjustedBauEmissionMitigation() != null ? item.getAdjustedBauEmissionMitigation()
+                                        item.getAdjustedBauEmissionMitigation() != null
+                                                        ? item.getAdjustedBauEmissionMitigation()
                                                         : 0.0);
                         r.getCell(6).setCellStyle(numStyle);
                 }
@@ -1010,7 +1026,8 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                                         : 0.0);
                         r.getCell(5).setCellStyle(numStyle);
                         r.createCell(6).setCellValue(
-                                        item.getAdjustedBauEmissionMitigation() != null ? item.getAdjustedBauEmissionMitigation()
+                                        item.getAdjustedBauEmissionMitigation() != null
+                                                        ? item.getAdjustedBauEmissionMitigation()
                                                         : 0.0);
                         r.getCell(6).setCellStyle(numStyle);
                 }
@@ -1020,16 +1037,18 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
         /**
          * Builds the ISWM (Integrated Solid Waste Management) sheet for Excel export.
          * 
-         * Note: Parameters (degradableOrganicFraction, landfillAvoidance, compostingEF) and BAU
-         * are not displayed as they are fetched from ISWMParameter and BAU table respectively,
+         * Note: Parameters (degradableOrganicFraction, landfillAvoidance, compostingEF)
+         * and BAU
+         * are not displayed as they are fetched from ISWMParameter and BAU table
+         * respectively,
          * not stored in the mitigation record.
          * 
-         * @param sheet Excel sheet to populate
-         * @param headerStyle Style for header row
-         * @param dataStyle Style for data rows
+         * @param sheet              Excel sheet to populate
+         * @param headerStyle        Style for header row
+         * @param dataStyle          Style for data rows
          * @param alternateDataStyle Style for alternate data rows
-         * @param numberStyle Style for numeric cells
-         * @param data List of ISWMMitigation records to export
+         * @param numberStyle        Style for numeric cells
+         * @param data               List of ISWMMitigation records to export
          */
         private void buildIswmSheet(XSSFSheet sheet, CellStyle headerStyle, CellStyle dataStyle,
                         CellStyle alternateDataStyle, CellStyle numberStyle, List<ISWMMitigation> data) {
@@ -1067,7 +1086,7 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                                         : numberStyle;
                         r.createCell(1).setCellValue(item.getWasteProcessed() != null ? item.getWasteProcessed() : 0.0);
                         r.getCell(1).setCellStyle(numStyle);
-                        
+
                         // Project Intervention column (text)
                         Cell interventionCell = r.createCell(2);
                         String interventionName = "";
@@ -1082,7 +1101,7 @@ public class WasteDashboardServiceImpl implements WasteDashboardService {
                         textCellStyle.cloneStyleFrom(baseTextStyle);
                         textCellStyle.setAlignment(HorizontalAlignment.LEFT);
                         interventionCell.setCellStyle(textCellStyle);
-                        
+
                         r.createCell(3).setCellValue(item.getDofDiverted() != null ? item.getDofDiverted() : 0.0);
                         r.getCell(3).setCellStyle(numStyle);
                         r.createCell(4).setCellValue(

@@ -337,8 +337,15 @@ public class ExcelReader {
         lightBulbToDtoMap.put("Year", "year");
         lightBulbToDtoMap.put("Total Installed Bulbs Per Year", "totalInstalledBulbsPerYear");
         lightBulbToDtoMap.put("Reduction Capacity Per Bulb", "reductionCapacityPerBulb");
-        lightBulbToDtoMap.put("Emission Factor", "emissionFactor");
-        lightBulbToDtoMap.put("BAU", "bau");
+        lightBulbToDtoMap.put("Project Intervention Name", "projectInterventionName");
+    }
+
+    // This hashmap is responsible for reading data from BAU Excel files and mapping it to DTOs.
+    private static final Map<String, String> bauToDtoMap = new HashMap<>();
+    static {
+        bauToDtoMap.put("Year", "year");
+        bauToDtoMap.put("Sector", "sector");
+        bauToDtoMap.put("Value (ktCO₂e)", "value");
     }
 
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
@@ -498,7 +505,8 @@ public class ExcelReader {
             case IPPU_MITIGATION:
             case COOKSTOVE_MITIGATION:
             case LIGHT_BULB_MITIGATION:
-                // All waste mitigation templates, IPPU, Cookstove and LightBulb have: Row 0 = Title, Row 1
+            case BAU:
+                // All waste mitigation templates, IPPU, Cookstove, LightBulb and BAU have: Row 0 = Title, Row 1
                 // = Blank,
                 // Row 2 = Headers
                 return 2;
@@ -762,6 +770,8 @@ public class ExcelReader {
                 return "Cookstove Mitigation";
             case LIGHT_BULB_MITIGATION:
                 return "Light Bulb Mitigation";
+            case BAU:
+                return "BAU";
             default:
                 return "";
         }
@@ -823,6 +833,8 @@ public class ExcelReader {
                 return cookstoveToDtoMap.get(header);
             case LIGHT_BULB_MITIGATION:
                 return lightBulbToDtoMap.get(header);
+            case BAU:
+                return bauToDtoMap.get(header);
             default:
                 return "";
         }

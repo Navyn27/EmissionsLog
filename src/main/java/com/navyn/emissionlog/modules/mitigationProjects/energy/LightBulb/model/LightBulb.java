@@ -1,5 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -27,11 +29,10 @@ public class LightBulb {
     @Column(name = "reduction_capacity_per_bulb", nullable = false)
     private double reductionCapacityPerBulb;
 
-    @Column(name = "emission_factor", nullable = false)
-    private double emissionFactor;
-
-    @Column(name = "bau", nullable = false)
-    private double bau;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_intervention_id", nullable = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    private Intervention projectIntervention; // Foreign key to Intervention table
 
     // Calculated Fields
     @Column(name = "total_reduction_per_year")
@@ -42,6 +43,9 @@ public class LightBulb {
 
     @Column(name = "scenario_ghg_mitigation_achieved")
     private double scenarioGhGMitigationAchieved;
+
+    @Column(name = "adjusted_bau_emission_mitigation")
+    private double adjustedBauEmissionMitigation; // BAU - netGhGMitigationAchieved
 
     @CreationTimestamp
     @Column(updatable = false)

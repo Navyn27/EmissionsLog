@@ -22,12 +22,7 @@ public class LightBulbMitigationExcelDto {
     private double reductionCapacityPerBulb;
 
     /**
-     * Emission factor.
+     * Project Intervention Name (from dropdown).
      */
-    private double emissionFactor;
-
-    /**
-     * Business as usual (BAU) emissions.
-     */
-    private double bau;
+    private String projectInterventionName;
 }
