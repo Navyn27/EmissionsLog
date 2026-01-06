@@ -1,8 +1,8 @@
 package com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.CreateLightBulbDTO;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.LightBulbMitigationResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.UpdateLightBulbDTO;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.model.LightBulb;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.service.ILightBulbService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,39 +30,37 @@ public class LightBulbController {
 
     @PostMapping
     @Operation(summary = "Create a new LightBulb entry")
-
-    public ResponseEntity<LightBulb> create(@Valid @RequestBody CreateLightBulbDTO lightBulbDTO) {
-        LightBulb createdLightBulb = lightBulbService.create(lightBulbDTO);
+    public ResponseEntity<LightBulbMitigationResponseDto> create(@Valid @RequestBody CreateLightBulbDTO lightBulbDTO) {
+        LightBulbMitigationResponseDto createdLightBulb = lightBulbService.create(lightBulbDTO);
         return new ResponseEntity<>(createdLightBulb, HttpStatus.CREATED);
     }
 
     @GetMapping
     @Operation(summary = "Get all LightBulb entries")
-    public ResponseEntity<List<LightBulb>> getAll() {
-        List<LightBulb> lightBulbs = lightBulbService.getAll();
+    public ResponseEntity<List<LightBulbMitigationResponseDto>> getAll() {
+        List<LightBulbMitigationResponseDto> lightBulbs = lightBulbService.getAll();
         return new ResponseEntity<>(lightBulbs, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get a LightBulb entry by ID")
-
-    public ResponseEntity<LightBulb> getById(@PathVariable UUID id) {
-        LightBulb lightBulb = lightBulbService.getById(id);
+    public ResponseEntity<LightBulbMitigationResponseDto> getById(@PathVariable UUID id) {
+        LightBulbMitigationResponseDto lightBulb = lightBulbService.getById(id);
         return new ResponseEntity<>(lightBulb, HttpStatus.OK);
     }
 
     @GetMapping("year/{year}")
     @Operation(summary = "Get a LightBulbs entry by year")
-    public ResponseEntity<List<LightBulb>> getBYear(@PathVariable int year) {
-        List<LightBulb> lightBulb = lightBulbService.getByYear(year);
+    public ResponseEntity<List<LightBulbMitigationResponseDto>> getBYear(@PathVariable int year) {
+        List<LightBulbMitigationResponseDto> lightBulb = lightBulbService.getByYear(year);
         return new ResponseEntity<>(lightBulb, HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update a LightBulb entry")
-    public ResponseEntity<LightBulb> update(@PathVariable UUID id,
+    public ResponseEntity<LightBulbMitigationResponseDto> update(@PathVariable UUID id,
             @Valid @RequestBody UpdateLightBulbDTO lightBulbDTO) {
-        LightBulb updatedLightBulb = lightBulbService.update(id, lightBulbDTO);
+        LightBulbMitigationResponseDto updatedLightBulb = lightBulbService.update(id, lightBulbDTO);
         return new ResponseEntity<>(updatedLightBulb, HttpStatus.OK);
     }
 

@@ -28,4 +28,5 @@ public enum ExcelType {
     IPPU_MITIGATION,
     COOKSTOVE_MITIGATION,
     LIGHT_BULB_MITIGATION,
+    BAU,
 }

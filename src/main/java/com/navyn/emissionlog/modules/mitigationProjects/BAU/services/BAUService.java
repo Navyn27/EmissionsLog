@@ -3,8 +3,10 @@ package com.navyn.emissionlog.modules.mitigationProjects.BAU.services;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
 import com.navyn.emissionlog.modules.mitigationProjects.BAU.dtos.BAUDto;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,5 +27,9 @@ public interface BAUService {
     Optional<BAU> getBAUByYearAndSector(Integer year, ESector sector);
     
     void deleteBAU(UUID id);
+    
+    byte[] generateExcelTemplate();
+    
+    Map<String, Object> createBAUFromExcel(MultipartFile file);
 }
 
