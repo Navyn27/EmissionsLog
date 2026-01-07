@@ -30,4 +30,5 @@ services:
     ports:
       - "8088:8088"
     volumes:
-        - ./logs:/app/logs
+      - ./logs:/app/logs
+      - ./user-manual:/app/user-manual
