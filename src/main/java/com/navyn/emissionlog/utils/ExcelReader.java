@@ -398,6 +398,18 @@ public class ExcelReader {
         riceCultivationToDtoMap.put("Cultivation Period", "cultivationPeriod");
     }
 
+    // This hashmap is responsible for reading data from Burning Emissions Excel files and mapping it to DTOs.
+    private static final Map<String, String> burningToDtoMap = new HashMap<>();
+    static {
+        burningToDtoMap.put("Year", "year");
+        burningToDtoMap.put("Burning Agent Type", "burningAgentType");
+        burningToDtoMap.put("Burnt Area", "burntArea");
+        burningToDtoMap.put("Fire Type", "fireType");
+        burningToDtoMap.put("Fuel Mass Available", "fuelMassAvailable");
+        burningToDtoMap.put("Fuel Mass Unit", "fuelMassUnit");
+        burningToDtoMap.put("Is Eucalyptus Forest", "isEucalyptusForest");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -562,7 +574,8 @@ public class ExcelReader {
             case UREA_EMISSIONS:
             case AQUACULTURE_EMISSIONS:
             case RICE_CULTIVATION_EMISSIONS:
-                // All waste mitigation templates, IPPU, Cookstove, LightBulb, BAU, Enteric Fermentation, Manure Management, Liming, Urea, Aquaculture and Rice Cultivation have: Row 0 = Title, Row 1
+            case BURNING_EMISSIONS:
+                // All waste mitigation templates, IPPU, Cookstove, LightBulb, BAU, Enteric Fermentation, Manure Management, Liming, Urea, Aquaculture, Rice Cultivation and Burning have: Row 0 = Title, Row 1
                 // = Blank,
                 // Row 2 = Headers
                 return 2;
@@ -657,6 +670,28 @@ public class ExcelReader {
                     } else {
                         throw new IllegalArgumentException(
                                 "Cell type is not numeric or string for Double field " + field.getName());
+                    }
+                    break;
+                case "Boolean":
+                case "boolean": // Handle both Boolean wrapper and primitive boolean
+                    if (cellType == CellType.BOOLEAN) {
+                        boolean boolValue = cell.getBooleanCellValue();
+                        field.set(dto, boolValue); // Autoboxing handles both Boolean and boolean
+                    } else if (cellType == CellType.BLANK) {
+                        break;
+                    } else if (cellType == CellType.STRING) {
+                        String stringValue = cell.getStringCellValue().trim().toUpperCase();
+                        if ("TRUE".equals(stringValue) || "YES".equals(stringValue) || "1".equals(stringValue)) {
+                            field.set(dto, true);
+                        } else if ("FALSE".equals(stringValue) || "NO".equals(stringValue) || "0".equals(stringValue)) {
+                            field.set(dto, false);
+                        } else {
+                            throw new IllegalArgumentException("Cannot convert '" + cell.getStringCellValue()
+                                    + "' to Boolean for field " + field.getName() + ". Use TRUE/FALSE, YES/NO, or 1/0");
+                        }
+                    } else {
+                        throw new IllegalArgumentException(
+                                "Cell type is not boolean or string for Boolean field " + field.getName());
                     }
                     break;
                 default:
@@ -840,6 +875,8 @@ public class ExcelReader {
                 return "Aquaculture Emissions";
             case RICE_CULTIVATION_EMISSIONS:
                 return "Rice Cultivation Emissions";
+            case BURNING_EMISSIONS:
+                return "Burning Emissions";
             default:
                 return "";
         }
@@ -915,6 +952,8 @@ public class ExcelReader {
                 return aquacultureToDtoMap.get(header);
             case RICE_CULTIVATION_EMISSIONS:
                 return riceCultivationToDtoMap.get(header);
+            case BURNING_EMISSIONS:
+                return burningToDtoMap.get(header);
             default:
                 return "";
         }
