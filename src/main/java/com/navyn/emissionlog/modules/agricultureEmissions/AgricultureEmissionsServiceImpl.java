@@ -1966,6 +1966,326 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         }
 
         @Override
+        public byte[] generateAquacultureExcelTemplate() {
+                try (Workbook workbook = new XSSFWorkbook();
+                                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+                        Sheet sheet = workbook.createSheet("Aquaculture Emissions");
+
+                        // Create title style
+                        XSSFCellStyle titleStyle = (XSSFCellStyle) workbook.createCellStyle();
+                        Font titleFont = workbook.createFont();
+                        titleFont.setBold(true);
+                        titleFont.setFontHeightInPoints((short) 18);
+                        titleFont.setColor(IndexedColors.WHITE.getIndex());
+                        titleFont.setFontName("Calibri");
+                        titleStyle.setFont(titleFont);
+                        titleStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+                        titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        titleStyle.setAlignment(HorizontalAlignment.CENTER);
+                        titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+                        titleStyle.setBorderTop(BorderStyle.MEDIUM);
+                        titleStyle.setBorderBottom(BorderStyle.MEDIUM);
+                        titleStyle.setBorderLeft(BorderStyle.MEDIUM);
+                        titleStyle.setBorderRight(BorderStyle.MEDIUM);
+
+                        // Create header style
+                        XSSFCellStyle headerStyle = (XSSFCellStyle) workbook.createCellStyle();
+                        Font headerFont = workbook.createFont();
+                        headerFont.setBold(true);
+                        headerFont.setFontHeightInPoints((short) 11);
+                        headerFont.setColor(IndexedColors.WHITE.getIndex());
+                        headerFont.setFontName("Calibri");
+                        headerStyle.setFont(headerFont);
+                        headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+                        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+                        headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+                        headerStyle.setBorderTop(BorderStyle.THIN);
+                        headerStyle.setBorderBottom(BorderStyle.THIN);
+                        headerStyle.setBorderLeft(BorderStyle.THIN);
+                        headerStyle.setBorderRight(BorderStyle.THIN);
+                        headerStyle.setWrapText(true);
+
+                        // Create data style
+                        XSSFCellStyle dataStyle = (XSSFCellStyle) workbook.createCellStyle();
+                        Font dataFont = workbook.createFont();
+                        dataFont.setFontName("Calibri");
+                        dataFont.setFontHeightInPoints((short) 10);
+                        dataStyle.setFont(dataFont);
+                        dataStyle.setBorderBottom(BorderStyle.THIN);
+                        dataStyle.setBorderTop(BorderStyle.THIN);
+                        dataStyle.setBorderLeft(BorderStyle.THIN);
+                        dataStyle.setBorderRight(BorderStyle.THIN);
+                        dataStyle.setAlignment(HorizontalAlignment.LEFT);
+                        dataStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+                        dataStyle.setWrapText(true);
+
+                        // Create alternate data style
+                        XSSFCellStyle alternateDataStyle = (XSSFCellStyle) workbook.createCellStyle();
+                        Font altDataFont = workbook.createFont();
+                        altDataFont.setFontName("Calibri");
+                        altDataFont.setFontHeightInPoints((short) 10);
+                        alternateDataStyle.setFont(altDataFont);
+                        alternateDataStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+                        alternateDataStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        alternateDataStyle.setBorderBottom(BorderStyle.THIN);
+                        alternateDataStyle.setBorderTop(BorderStyle.THIN);
+                        alternateDataStyle.setBorderLeft(BorderStyle.THIN);
+                        alternateDataStyle.setBorderRight(BorderStyle.THIN);
+                        alternateDataStyle.setAlignment(HorizontalAlignment.LEFT);
+                        alternateDataStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+                        alternateDataStyle.setWrapText(true);
+
+                        // Create number style
+                        XSSFCellStyle numberStyle = (XSSFCellStyle) workbook.createCellStyle();
+                        Font numFont = workbook.createFont();
+                        numFont.setFontName("Calibri");
+                        numFont.setFontHeightInPoints((short) 10);
+                        numberStyle.setFont(numFont);
+                        DataFormat dataFormat = workbook.createDataFormat();
+                        numberStyle.setDataFormat(dataFormat.getFormat("#,##0.00"));
+                        numberStyle.setBorderBottom(BorderStyle.THIN);
+                        numberStyle.setBorderTop(BorderStyle.THIN);
+                        numberStyle.setBorderLeft(BorderStyle.THIN);
+                        numberStyle.setBorderRight(BorderStyle.THIN);
+                        numberStyle.setAlignment(HorizontalAlignment.RIGHT);
+                        numberStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+                        // Create year style (centered number)
+                        XSSFCellStyle yearStyle = (XSSFCellStyle) workbook.createCellStyle();
+                        yearStyle.cloneStyleFrom(dataStyle);
+                        yearStyle.setAlignment(HorizontalAlignment.CENTER);
+
+                        int rowIdx = 0;
+
+                        // Title row
+                        Row titleRow = sheet.createRow(rowIdx++);
+                        titleRow.setHeightInPoints(30);
+                        Cell titleCell = titleRow.createCell(0);
+                        titleCell.setCellValue("Aquaculture Emissions Template");
+                        titleCell.setCellStyle(titleStyle);
+                        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+
+                        rowIdx++; // Blank row
+
+                        // Create header row
+                        Row headerRow = sheet.createRow(rowIdx++);
+                        headerRow.setHeightInPoints(22);
+                        String[] headers = {
+                                        "Year",
+                                        "Activity Description",
+                                        "Fish Production"
+                        };
+
+                        for (int i = 0; i < headers.length; i++) {
+                                Cell cell = headerRow.createCell(i);
+                                cell.setCellValue(headers[i]);
+                                cell.setCellStyle(headerStyle);
+                        }
+
+                        // Create example data rows
+                        Object[] exampleData1 = {
+                                        2024,
+                                        "Fish Farming Activity A",
+                                        5000.0
+                        };
+
+                        Object[] exampleData2 = {
+                                        2025,
+                                        "Fish Farming Activity B",
+                                        7500.0
+                        };
+
+                        // First example row
+                        Row exampleRow1 = sheet.createRow(rowIdx++);
+                        exampleRow1.setHeightInPoints(18);
+                        for (int i = 0; i < exampleData1.length; i++) {
+                                Cell cell = exampleRow1.createCell(i);
+                                if (i == 0) { // Year
+                                        cell.setCellStyle(yearStyle);
+                                        cell.setCellValue(((Number) exampleData1[i]).intValue());
+                                } else if (i == 2) { // Fish Production (number)
+                                        cell.setCellStyle(numberStyle);
+                                        cell.setCellValue(((Number) exampleData1[i]).doubleValue());
+                                } else { // Activity Description (text)
+                                        cell.setCellStyle(dataStyle);
+                                        cell.setCellValue((String) exampleData1[i]);
+                                }
+                        }
+
+                        // Second example row with alternate style
+                        Row exampleRow2 = sheet.createRow(rowIdx++);
+                        exampleRow2.setHeightInPoints(18);
+                        for (int i = 0; i < exampleData2.length; i++) {
+                                Cell cell = exampleRow2.createCell(i);
+                                if (i == 0) { // Year
+                                        CellStyle altYearStyle = workbook.createCellStyle();
+                                        altYearStyle.cloneStyleFrom(alternateDataStyle);
+                                        altYearStyle.setAlignment(HorizontalAlignment.CENTER);
+                                        cell.setCellStyle(altYearStyle);
+                                        cell.setCellValue(((Number) exampleData2[i]).intValue());
+                                } else if (i == 2) { // Fish Production (number)
+                                        CellStyle altNumStyle = workbook.createCellStyle();
+                                        altNumStyle.cloneStyleFrom(numberStyle);
+                                        altNumStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+                                        altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                                        cell.setCellStyle(altNumStyle);
+                                        cell.setCellValue(((Number) exampleData2[i]).doubleValue());
+                                } else { // Activity Description (text)
+                                        cell.setCellStyle(alternateDataStyle);
+                                        cell.setCellValue((String) exampleData2[i]);
+                                }
+                        }
+
+                        // Auto-size columns with limits
+                        for (int i = 0; i < headers.length; i++) {
+                                sheet.autoSizeColumn(i);
+                                int currentWidth = sheet.getColumnWidth(i);
+                                int minWidth = 3000;
+                                int maxWidth = 20000;
+                                if (currentWidth < minWidth) {
+                                        sheet.setColumnWidth(i, minWidth);
+                                } else if (currentWidth > maxWidth) {
+                                        sheet.setColumnWidth(i, maxWidth);
+                                }
+                        }
+
+                        workbook.write(out);
+                        return out.toByteArray();
+                } catch (IOException e) {
+                        throw new RuntimeException("Error generating Excel template", e);
+                }
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createAquacultureEmissionsFromExcel(MultipartFile file) {
+                List<AquacultureEmissions> savedRecords = new ArrayList<>();
+                List<Map<String, Object>> skippedRows = new ArrayList<>();
+                Set<String> processedYearActivityDesc = new HashSet<>(); // Track duplicates in file
+                int totalProcessed = 0;
+
+                try {
+                        List<AquacultureEmissionsDto> dtos = ExcelReader.readExcel(
+                                        file.getInputStream(),
+                                        AquacultureEmissionsDto.class,
+                                        ExcelType.AQUACULTURE_EMISSIONS);
+
+                        for (int i = 0; i < dtos.size(); i++) {
+                                AquacultureEmissionsDto dto = dtos.get(i);
+                                totalProcessed++;
+                                int rowNumber = i + 1; // Excel row number (1-based, accounting for header row)
+                                int excelRowNumber = rowNumber + 2; // +2 for title row and blank row
+
+                                // Validate required fields
+                                List<String> missingFields = new ArrayList<>();
+                                if (dto.getYear() == 0) {
+                                        missingFields.add("Year");
+                                }
+                                if (dto.getActivityDesc() == null || dto.getActivityDesc().trim().isEmpty()) {
+                                        missingFields.add("Activity Description");
+                                }
+                                if (dto.getFishProduction() < 0) {
+                                        missingFields.add("Fish Production");
+                                }
+
+                                if (!missingFields.isEmpty()) {
+                                        Map<String, Object> skipInfo = new HashMap<>();
+                                        skipInfo.put("row", excelRowNumber);
+                                        skipInfo.put("year", dto.getYear() > 0 ? dto.getYear() : "N/A");
+                                        skipInfo.put("activityDesc", dto.getActivityDesc() != null && !dto.getActivityDesc().trim().isEmpty() ? dto.getActivityDesc() : "N/A");
+                                        skipInfo.put("reason", "Missing required fields: " + String.join(", ", missingFields));
+                                        skippedRows.add(skipInfo);
+                                        continue; // Skip this row
+                                }
+
+                                // Validate year (must be >= 1900)
+                                if (dto.getYear() < 1900 || dto.getYear() > 2100) {
+                                        Map<String, Object> skipInfo = new HashMap<>();
+                                        skipInfo.put("row", excelRowNumber);
+                                        skipInfo.put("year", dto.getYear());
+                                        skipInfo.put("activityDesc", dto.getActivityDesc());
+                                        skipInfo.put("reason", "Year must be between 1900 and 2100");
+                                        skippedRows.add(skipInfo);
+                                        continue; // Skip this row
+                                }
+
+                                // Check for duplicate in same file
+                                String yearActivityDescKey = dto.getYear() + "_" + dto.getActivityDesc();
+                                if (processedYearActivityDesc.contains(yearActivityDescKey)) {
+                                        Map<String, Object> skipInfo = new HashMap<>();
+                                        skipInfo.put("row", excelRowNumber);
+                                        skipInfo.put("year", dto.getYear());
+                                        skipInfo.put("activityDesc", dto.getActivityDesc());
+                                        skipInfo.put("reason", "Duplicate year and activity description combination in the same file");
+                                        skippedRows.add(skipInfo);
+                                        continue; // Skip this row
+                                }
+                                processedYearActivityDesc.add(yearActivityDescKey);
+
+                                // Check if record with same year AND activityDesc already exists
+                                if (aquacultureEmissionsRepository.findByYearAndActivityDesc(dto.getYear(), dto.getActivityDesc()).isPresent()) {
+                                        Map<String, Object> skipInfo = new HashMap<>();
+                                        skipInfo.put("row", excelRowNumber);
+                                        skipInfo.put("year", dto.getYear());
+                                        skipInfo.put("activityDesc", dto.getActivityDesc());
+                                        skipInfo.put("reason", "Record with this year and activity description combination already exists");
+                                        skippedRows.add(skipInfo);
+                                        continue; // Skip this row
+                                }
+
+                                // Create the record using existing create method
+                                try {
+                                        AquacultureEmissions saved = createAquacultureEmissions(dto);
+                                        savedRecords.add(saved);
+                                } catch (RuntimeException e) {
+                                        String errorMessage = e.getMessage();
+                                        Map<String, Object> skipInfo = new HashMap<>();
+                                        skipInfo.put("row", excelRowNumber);
+                                        skipInfo.put("year", dto.getYear());
+                                        skipInfo.put("activityDesc", dto.getActivityDesc());
+                                        skipInfo.put("reason", errorMessage != null ? errorMessage : "Error creating record");
+                                        skippedRows.add(skipInfo);
+                                        continue; // Skip this row
+                                }
+                        }
+
+                        // Calculate total skipped count
+                        int totalSkipped = skippedRows.size();
+
+                        Map<String, Object> result = new HashMap<>();
+                        result.put("saved", savedRecords);
+                        result.put("savedCount", savedRecords.size());
+                        result.put("skippedCount", totalSkipped);
+                        result.put("skippedRows", skippedRows);
+                        result.put("totalProcessed", totalProcessed);
+
+                        return result;
+                } catch (IOException e) {
+                        // Re-throw IOException with user-friendly message
+                        String message = e.getMessage();
+                        if (message != null) {
+                                throw new RuntimeException(message, e);
+                        } else {
+                                throw new RuntimeException(
+                                                "Incorrect template. Please download the correct template and try again.",
+                                                e);
+                        }
+                } catch (NullPointerException e) {
+                        // Handle null pointer exceptions with clear message
+                        throw new RuntimeException(
+                                        "Missing required fields. Please fill in all required fields in your Excel file.", e);
+                } catch (Exception e) {
+                        String errorMsg = e.getMessage();
+                        if (errorMsg != null) {
+                                throw new RuntimeException(errorMsg, e);
+                        }
+                        throw new RuntimeException("Error processing Excel file. Please check your file and try again.", e);
+                }
+        }
+
+        @Override
         public LimingEmissions updateLimingEmissions(UUID id, LimingEmissionsDto dto) {
                 LimingEmissions emissions = limingEmissionsRepository.findById(id)
                                 .orElseThrow(() -> new EntityNotFoundException(

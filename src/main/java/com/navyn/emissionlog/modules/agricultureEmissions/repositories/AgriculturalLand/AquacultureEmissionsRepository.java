@@ -8,10 +8,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface AquacultureEmissionsRepository extends JpaRepository<AquacultureEmissions, UUID>, JpaSpecificationExecutor<AquacultureEmissions> {
     @Query("SELECT ae FROM AquacultureEmissions ae WHERE ae.year BETWEEN :startYear AND :endYear ORDER BY ae.year DESC")
     List<AquacultureEmissions> findByYearRange(@Param("startYear") int startYear, @Param("endYear") int endYear);
+    
+    Optional<AquacultureEmissions> findByYearAndActivityDesc(int year, String activityDesc);
 }

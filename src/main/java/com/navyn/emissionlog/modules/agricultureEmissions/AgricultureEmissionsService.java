@@ -184,6 +184,10 @@ public interface AgricultureEmissionsService {
 
     java.util.Map<String, Object> createUreaEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
 
+    byte[] generateAquacultureExcelTemplate();
+
+    java.util.Map<String, Object> createAquacultureEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
     // Mini Dashboards
     DashboardData getAgricultureDashboardSummary(Integer startingYear, Integer endingYear);
 
