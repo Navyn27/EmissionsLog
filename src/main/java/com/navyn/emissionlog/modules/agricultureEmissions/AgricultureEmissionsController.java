@@ -85,6 +85,59 @@ public class AgricultureEmissionsController {
                 agricultureEmissionsService.getAllRiceCultivationEmissions(riceEcosystem, waterRegime, year)));
     }
 
+    @GetMapping("/riceCultivationEmissions/template")
+    @Operation(summary = "Download Rice Cultivation Emissions Excel template", description = "Downloads an Excel template file with the required column headers and data validation for uploading Rice Cultivation Emissions records")
+    public ResponseEntity<byte[]> downloadRiceCultivationExcelTemplate() {
+        byte[] templateBytes = agricultureEmissionsService.generateRiceCultivationExcelTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Rice_Cultivation_Emissions_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(templateBytes);
+    }
+
+    @PostMapping("/riceCultivationEmissions/excel")
+    @Operation(summary = "Upload Rice Cultivation Emissions records from Excel file", description = "Uploads multiple Rice Cultivation Emissions records from an Excel file. Records with duplicate year+riceEcosystem+waterRegime combinations will be skipped.")
+    public ResponseEntity<ApiResponse> createRiceCultivationEmissionsFromExcel(
+            @RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = agricultureEmissionsService.createRiceCultivationEmissionsFromExcel(file);
+
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> skippedRows = (List<Map<String, Object>>) result.get("skippedRows");
+
+        String message = String.format(
+                "Upload completed. %d record(s) saved successfully. %d record(s) skipped.",
+                savedCount,
+                skippedCount);
+
+        // Optionally add skipped details to the message if there are few skipped
+        // records
+        if (skippedCount > 0 && skippedRows != null && skippedRows.size() <= 10) {
+            StringBuilder skippedDetails = new StringBuilder();
+            skippedDetails.append(" Details: ");
+            for (Map<String, Object> row : skippedRows) {
+                skippedDetails
+                        .append(String.format("Row %d (Year: %s, Rice Ecosystem: %s, Water Regime: %s, Reason: %s); ",
+                                (Integer) row.get("row"),
+                                row.get("year"),
+                                row.get("riceEcosystem"),
+                                row.get("waterRegime"),
+                                row.get("reason")));
+            }
+            message += skippedDetails.toString().trim();
+        } else if (skippedCount > 0) {
+            message += " See response data for details on skipped rows.";
+        }
+
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
+    }
+
     // Get all manure and compost emissions log
     @GetMapping("/manureAndCompostEmissions")
     @Operation(summary = "Get all manure and compost emissions")

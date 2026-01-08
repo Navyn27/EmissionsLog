@@ -388,6 +388,16 @@ public class ExcelReader {
         aquacultureToDtoMap.put("Fish Production", "fishProduction");
     }
 
+    // This hashmap is responsible for reading data from Rice Cultivation Emissions Excel files and mapping it to DTOs.
+    private static final Map<String, String> riceCultivationToDtoMap = new HashMap<>();
+    static {
+        riceCultivationToDtoMap.put("Year", "year");
+        riceCultivationToDtoMap.put("Rice Ecosystem", "riceEcosystem");
+        riceCultivationToDtoMap.put("Water Regime", "waterRegime");
+        riceCultivationToDtoMap.put("Harvested Area", "harvestedArea");
+        riceCultivationToDtoMap.put("Cultivation Period", "cultivationPeriod");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -551,7 +561,8 @@ public class ExcelReader {
             case LIMING_EMISSIONS:
             case UREA_EMISSIONS:
             case AQUACULTURE_EMISSIONS:
-                // All waste mitigation templates, IPPU, Cookstove, LightBulb, BAU, Enteric Fermentation, Manure Management, Liming, Urea and Aquaculture have: Row 0 = Title, Row 1
+            case RICE_CULTIVATION_EMISSIONS:
+                // All waste mitigation templates, IPPU, Cookstove, LightBulb, BAU, Enteric Fermentation, Manure Management, Liming, Urea, Aquaculture and Rice Cultivation have: Row 0 = Title, Row 1
                 // = Blank,
                 // Row 2 = Headers
                 return 2;
@@ -827,6 +838,8 @@ public class ExcelReader {
                 return "Urea Emissions";
             case AQUACULTURE_EMISSIONS:
                 return "Aquaculture Emissions";
+            case RICE_CULTIVATION_EMISSIONS:
+                return "Rice Cultivation Emissions";
             default:
                 return "";
         }
@@ -900,6 +913,8 @@ public class ExcelReader {
                 return ureaToDtoMap.get(header);
             case AQUACULTURE_EMISSIONS:
                 return aquacultureToDtoMap.get(header);
+            case RICE_CULTIVATION_EMISSIONS:
+                return riceCultivationToDtoMap.get(header);
             default:
                 return "";
         }

@@ -188,6 +188,10 @@ public interface AgricultureEmissionsService {
 
     java.util.Map<String, Object> createAquacultureEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
 
+    byte[] generateRiceCultivationExcelTemplate();
+
+    java.util.Map<String, Object> createRiceCultivationEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
     // Mini Dashboards
     DashboardData getAgricultureDashboardSummary(Integer startingYear, Integer endingYear);
 
