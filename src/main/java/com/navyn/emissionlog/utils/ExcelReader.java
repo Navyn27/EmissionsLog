@@ -348,6 +348,68 @@ public class ExcelReader {
         bauToDtoMap.put("Value (ktCO₂e)", "value");
     }
 
+    // This hashmap is responsible for reading data from Enteric Fermentation Emissions Excel files and mapping it to DTOs.
+    private static final Map<String, String> entericFermentationToDtoMap = new HashMap<>();
+    static {
+        entericFermentationToDtoMap.put("Year", "year");
+        entericFermentationToDtoMap.put("Species", "species");
+        entericFermentationToDtoMap.put("Animal Population", "animalPopulation");
+    }
+
+    // This hashmap is responsible for reading data from Manure Management Emissions Excel files and mapping it to DTOs.
+    private static final Map<String, String> manureManagementToDtoMap = new HashMap<>();
+    static {
+        manureManagementToDtoMap.put("Year", "year");
+        manureManagementToDtoMap.put("Species", "species");
+        manureManagementToDtoMap.put("Animal Population", "animalPopulation");
+    }
+
+    // This hashmap is responsible for reading data from Liming Emissions Excel files and mapping it to DTOs.
+    private static final Map<String, String> limingToDtoMap = new HashMap<>();
+    static {
+        limingToDtoMap.put("Year", "year");
+        limingToDtoMap.put("Material", "material");
+        limingToDtoMap.put("CaCO3 Quantity", "CaCO3Qty");
+    }
+
+    // This hashmap is responsible for reading data from Urea Emissions Excel files and mapping it to DTOs.
+    private static final Map<String, String> ureaToDtoMap = new HashMap<>();
+    static {
+        ureaToDtoMap.put("Year", "year");
+        ureaToDtoMap.put("Fertilizer Name", "fertilizerName");
+        ureaToDtoMap.put("Quantity", "qty");
+    }
+
+    // This hashmap is responsible for reading data from Aquaculture Emissions Excel files and mapping it to DTOs.
+    private static final Map<String, String> aquacultureToDtoMap = new HashMap<>();
+    static {
+        aquacultureToDtoMap.put("Year", "year");
+        aquacultureToDtoMap.put("Activity Description", "activityDesc");
+        aquacultureToDtoMap.put("Fish Production", "fishProduction");
+    }
+
+    // This hashmap is responsible for reading data from Rice Cultivation Emissions Excel files and mapping it to DTOs.
+    private static final Map<String, String> riceCultivationToDtoMap = new HashMap<>();
+    static {
+        riceCultivationToDtoMap.put("Year", "year");
+        riceCultivationToDtoMap.put("Rice Ecosystem", "riceEcosystem");
+        riceCultivationToDtoMap.put("Water Regime", "waterRegime");
+        riceCultivationToDtoMap.put("Harvested Area", "harvestedArea");
+        riceCultivationToDtoMap.put("Cultivation Period", "cultivationPeriod");
+    }
+
+    // This hashmap is responsible for reading data from Burning Emissions Excel files and mapping it to DTOs.
+    private static final Map<String, String> burningToDtoMap = new HashMap<>();
+    static {
+        burningToDtoMap.put("Year", "year");
+        burningToDtoMap.put("Burning Agent Type", "burningAgentType");
+        burningToDtoMap.put("Burnt Area", "burntArea");
+        burningToDtoMap.put("Fire Type", "fireType");
+        burningToDtoMap.put("Fuel Mass Available", "fuelMassAvailable");
+        burningToDtoMap.put("Fuel Mass Unit", "fuelMassUnit");
+        burningToDtoMap.put("Is Eucalyptus Forest", "isEucalyptusForest");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -506,7 +568,14 @@ public class ExcelReader {
             case COOKSTOVE_MITIGATION:
             case LIGHT_BULB_MITIGATION:
             case BAU:
-                // All waste mitigation templates, IPPU, Cookstove, LightBulb and BAU have: Row 0 = Title, Row 1
+            case ENTERIC_FERMENTATION_EMISSIONS:
+            case MANURE_MANAGEMENT_EMISSIONS:
+            case LIMING_EMISSIONS:
+            case UREA_EMISSIONS:
+            case AQUACULTURE_EMISSIONS:
+            case RICE_CULTIVATION_EMISSIONS:
+            case BURNING_EMISSIONS:
+                // All waste mitigation templates, IPPU, Cookstove, LightBulb, BAU, Enteric Fermentation, Manure Management, Liming, Urea, Aquaculture, Rice Cultivation and Burning have: Row 0 = Title, Row 1
                 // = Blank,
                 // Row 2 = Headers
                 return 2;
@@ -601,6 +670,28 @@ public class ExcelReader {
                     } else {
                         throw new IllegalArgumentException(
                                 "Cell type is not numeric or string for Double field " + field.getName());
+                    }
+                    break;
+                case "Boolean":
+                case "boolean": // Handle both Boolean wrapper and primitive boolean
+                    if (cellType == CellType.BOOLEAN) {
+                        boolean boolValue = cell.getBooleanCellValue();
+                        field.set(dto, boolValue); // Autoboxing handles both Boolean and boolean
+                    } else if (cellType == CellType.BLANK) {
+                        break;
+                    } else if (cellType == CellType.STRING) {
+                        String stringValue = cell.getStringCellValue().trim().toUpperCase();
+                        if ("TRUE".equals(stringValue) || "YES".equals(stringValue) || "1".equals(stringValue)) {
+                            field.set(dto, true);
+                        } else if ("FALSE".equals(stringValue) || "NO".equals(stringValue) || "0".equals(stringValue)) {
+                            field.set(dto, false);
+                        } else {
+                            throw new IllegalArgumentException("Cannot convert '" + cell.getStringCellValue()
+                                    + "' to Boolean for field " + field.getName() + ". Use TRUE/FALSE, YES/NO, or 1/0");
+                        }
+                    } else {
+                        throw new IllegalArgumentException(
+                                "Cell type is not boolean or string for Boolean field " + field.getName());
                     }
                     break;
                 default:
@@ -772,6 +863,20 @@ public class ExcelReader {
                 return "Light Bulb Mitigation";
             case BAU:
                 return "BAU";
+            case ENTERIC_FERMENTATION_EMISSIONS:
+                return "Enteric Fermentation Emissions";
+            case MANURE_MANAGEMENT_EMISSIONS:
+                return "Manure Management Emissions";
+            case LIMING_EMISSIONS:
+                return "Liming Emissions";
+            case UREA_EMISSIONS:
+                return "Urea Emissions";
+            case AQUACULTURE_EMISSIONS:
+                return "Aquaculture Emissions";
+            case RICE_CULTIVATION_EMISSIONS:
+                return "Rice Cultivation Emissions";
+            case BURNING_EMISSIONS:
+                return "Burning Emissions";
             default:
                 return "";
         }
@@ -835,6 +940,20 @@ public class ExcelReader {
                 return lightBulbToDtoMap.get(header);
             case BAU:
                 return bauToDtoMap.get(header);
+            case ENTERIC_FERMENTATION_EMISSIONS:
+                return entericFermentationToDtoMap.get(header);
+            case MANURE_MANAGEMENT_EMISSIONS:
+                return manureManagementToDtoMap.get(header);
+            case LIMING_EMISSIONS:
+                return limingToDtoMap.get(header);
+            case UREA_EMISSIONS:
+                return ureaToDtoMap.get(header);
+            case AQUACULTURE_EMISSIONS:
+                return aquacultureToDtoMap.get(header);
+            case RICE_CULTIVATION_EMISSIONS:
+                return riceCultivationToDtoMap.get(header);
+            case BURNING_EMISSIONS:
+                return burningToDtoMap.get(header);
             default:
                 return "";
         }

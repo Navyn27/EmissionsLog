@@ -52,6 +52,10 @@ public interface AgricultureEmissionsService {
 
     void deleteEntericFermentationEmissions(UUID id);
 
+    byte[] generateEntericFermentationExcelTemplate();
+
+    java.util.Map<String, Object> createEntericFermentationEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
     LimingEmissions createLimingEmissions(LimingEmissionsDto emissions);
 
     LimingEmissions updateLimingEmissions(UUID id, LimingEmissionsDto emissions);
@@ -167,6 +171,30 @@ public interface AgricultureEmissionsService {
     ManureManagementEmissions getManureManagementEmissionsById(UUID id);
 
     List<ManureManagementEmissions> getAllManureManagementEmissions(Integer year, ManureManagementLivestock species);
+
+    byte[] generateManureManagementExcelTemplate();
+
+    java.util.Map<String, Object> createManureManagementEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generateLimingExcelTemplate();
+
+    java.util.Map<String, Object> createLimingEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generateUreaExcelTemplate();
+
+    java.util.Map<String, Object> createUreaEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generateAquacultureExcelTemplate();
+
+    java.util.Map<String, Object> createAquacultureEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generateRiceCultivationExcelTemplate();
+
+    java.util.Map<String, Object> createRiceCultivationEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generateBurningExcelTemplate();
+
+    java.util.Map<String, Object> createBurningEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
 
     // Mini Dashboards
     DashboardData getAgricultureDashboardSummary(Integer startingYear, Integer endingYear);
