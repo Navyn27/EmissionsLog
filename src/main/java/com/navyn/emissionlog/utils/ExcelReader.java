@@ -324,10 +324,10 @@ public class ExcelReader {
     private static final Map<String, String> cookstoveToDtoMap = new HashMap<>();
     static {
         cookstoveToDtoMap.put("Year", "year");
-        cookstoveToDtoMap.put("Stove Type Name", "stoveTypeName");
-        cookstoveToDtoMap.put("Baseline Percentage", "baselinePercentage");
-        cookstoveToDtoMap.put("Units Installed This Year", "unitsInstalledThisYear");
-        cookstoveToDtoMap.put("BAU", "bau");
+        cookstoveToDtoMap.put("Stove Type", "stoveType");
+        cookstoveToDtoMap.put("Units Installed", "unitsInstalled");
+        cookstoveToDtoMap.put("Efficiency (%)", "efficiency");
+        cookstoveToDtoMap.put("Project Intervention Name", "projectInterventionName");
     }
 
     // This hashmap is responsible for reading data from light bulb mitigation
