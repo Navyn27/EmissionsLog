@@ -2,12 +2,12 @@ package com.navyn.emissionlog.modules.mitigationProjects.energy;
 
 import com.navyn.emissionlog.modules.mitigationProjects.energy.dto.EnergyDashboardSummaryDto;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.dto.EnergyDashboardYearDto;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveMitigationYear;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveMitigationYearRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.model.RoofTopMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.repository.IRoofTopMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.model.LightBulb;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.repository.ILightBulbRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models.AvoidedElectricityProduction;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.repository.AvoidedElectricityProductionRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,6 @@ import org.hibernate.Hibernate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.io.ByteArrayOutputStream;
 
@@ -31,9 +30,9 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
 
     private static final double TCO2E_TO_KCO2E = 1000.0; // Conversion factor: tCO2e to ktCO2e
 
-    private final StoveMitigationYearRepository stoveMitigationYearRepository;
     private final IRoofTopMitigationRepository rooftopRepository;
     private final ILightBulbRepository lightbulbRepository;
+    private final StoveMitigationRepository cookstoveRepository;
     private final AvoidedElectricityProductionRepository waterheatRepository;
 
     /**
@@ -44,43 +43,35 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
     }
 
     /**
-     * For cookstove: Get unique totalAvoidedEmissions per year
-     * Since all records for the same year have the same totalAvoidedEmissions
-     * value,
-     * we group by year and take the first record's value
+     * Sum projectEmission for cookstove records in a year
+     * projectEmission is already in ktCO2e, no conversion needed
      */
-    private double getCookstoveTotalForYear(List<StoveMitigationYear> cookstoveData, int year) {
+    private double getCookstoveTotalForYear(List<StoveMitigation> cookstoveData, int year) {
         return cookstoveData.stream()
                 .filter(s -> s.getYear() == year)
-                .findFirst()
-                .map(s -> convertToKtCO2e(s.getTotalAvoidedEmissions()))
-                .orElse(0.0);
+                .mapToDouble(s -> s.getProjectEmission() != null ? s.getProjectEmission() : 0.0)
+                .sum();
     }
 
     @Override
     public EnergyDashboardSummaryDto getEnergyDashboardSummary(Integer startingYear, Integer endingYear) {
-        List<StoveMitigationYear> cookstove = stoveMitigationYearRepository.findAll();
+        List<StoveMitigation> cookstove = cookstoveRepository.findAll();
         List<RoofTopMitigation> rooftop = rooftopRepository.findAll();
         List<LightBulb> lightbulb = lightbulbRepository.findAll();
         List<AvoidedElectricityProduction> waterheat = waterheatRepository.findAll();
 
         // Filter by year range if specified
         if (startingYear != null && endingYear != null) {
-            cookstove = filterByYear(cookstove, StoveMitigationYear::getYear, startingYear, endingYear);
+            cookstove = filterByYear(cookstove, StoveMitigation::getYear, startingYear, endingYear);
             rooftop = filterByYear(rooftop, RoofTopMitigation::getYear, startingYear, endingYear);
             lightbulb = filterByYear(lightbulb, LightBulb::getYear, startingYear, endingYear);
             waterheat = filterByYear(waterheat, AvoidedElectricityProduction::getYear, startingYear, endingYear);
         }
 
-        // Aggregate cookstove: Get unique years and sum their totalAvoidedEmissions
+        // Aggregate cookstove: Sum projectEmission (already in ktCO2e, no conversion
+        // needed)
         double cookstoveTotal = cookstove.stream()
-                .collect(Collectors.toMap(
-                        StoveMitigationYear::getYear,
-                        s -> convertToKtCO2e(s.getTotalAvoidedEmissions()),
-                        (existing, replacement) -> existing)) // Keep first value if duplicate year
-                .values()
-                .stream()
-                .mapToDouble(Double::doubleValue)
+                .mapToDouble(s -> s.getProjectEmission() != null ? s.getProjectEmission() : 0.0)
                 .sum();
 
         // Aggregate rooftop: Sum netGhGMitigationAchieved (convert tCO2e to ktCO2e)
@@ -124,7 +115,7 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
             end = tmp;
         }
 
-        List<StoveMitigationYear> cookstove = stoveMitigationYearRepository.findAll();
+        List<StoveMitigation> cookstove = cookstoveRepository.findAll();
         List<RoofTopMitigation> rooftop = rooftopRepository.findAll();
         List<LightBulb> lightbulb = lightbulbRepository.findAll();
         List<AvoidedElectricityProduction> waterheat = waterheatRepository.findAll();
@@ -132,7 +123,7 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
         List<EnergyDashboardYearDto> response = new ArrayList<>();
         for (int year = start; year <= end; year++) {
             double cookstoveTotal = getCookstoveTotalForYear(
-                    filterByYear(cookstove, StoveMitigationYear::getYear, year, year), year);
+                    filterByYear(cookstove, StoveMitigation::getYear, year, year), year);
             double rooftopTotal = sumDouble(
                     filterByYear(rooftop, RoofTopMitigation::getYear, year, year),
                     r -> convertToKtCO2e(r.getNetGhGMitigationAchieved()));
@@ -178,14 +169,14 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
 
     @Override
     public byte[] exportEnergyDashboard(Integer startingYear, Integer endingYear) {
-        List<StoveMitigationYear> cookstove = stoveMitigationYearRepository.findAll();
+        List<StoveMitigation> cookstove = cookstoveRepository.findAll();
         List<RoofTopMitigation> rooftop = rooftopRepository.findAll();
         List<LightBulb> lightbulb = lightbulbRepository.findAll();
         List<AvoidedElectricityProduction> waterheat = waterheatRepository.findAll();
 
         // Get min and max years from all projects
         int minYear = Stream.of(
-                cookstove.stream().map(StoveMitigationYear::getYear),
+                cookstove.stream().map(StoveMitigation::getYear),
                 rooftop.stream().map(RoofTopMitigation::getYear),
                 lightbulb.stream().map(LightBulb::getYear),
                 waterheat.stream().map(AvoidedElectricityProduction::getYear))
@@ -195,7 +186,7 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
                 .orElse(LocalDateTime.now().getYear());
 
         int maxYear = Stream.of(
-                cookstove.stream().map(StoveMitigationYear::getYear),
+                cookstove.stream().map(StoveMitigation::getYear),
                 rooftop.stream().map(RoofTopMitigation::getYear),
                 lightbulb.stream().map(LightBulb::getYear),
                 waterheat.stream().map(AvoidedElectricityProduction::getYear))
@@ -212,7 +203,7 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
             end = tmp;
         }
 
-        cookstove = filterByYear(cookstove, StoveMitigationYear::getYear, start, end);
+        cookstove = filterByYear(cookstove, StoveMitigation::getYear, start, end);
         rooftop = filterByYear(rooftop, RoofTopMitigation::getYear, start, end);
         lightbulb = filterByYear(lightbulb, LightBulb::getYear, start, end);
         waterheat = filterByYear(waterheat, AvoidedElectricityProduction::getYear, start, end);
@@ -388,7 +379,7 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
             DataFormat dataFormat,
             int startYear,
             int endYear,
-            List<StoveMitigationYear> cookstove,
+            List<StoveMitigation> cookstove,
             List<RoofTopMitigation> rooftop,
             List<LightBulb> lightbulb,
             List<AvoidedElectricityProduction> waterheat,
@@ -433,12 +424,9 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
         rangeEnd.setCellStyle(yearStyle);
 
         // Calculate totals
-        Map<Integer, Double> cookstoveByYear = cookstove.stream()
-                .collect(Collectors.toMap(
-                        StoveMitigationYear::getYear,
-                        s -> convertToKtCO2e(s.getTotalAvoidedEmissions()),
-                        (existing, replacement) -> existing));
-        double cookstoveTotal = cookstoveByYear.values().stream().mapToDouble(Double::doubleValue).sum();
+        double cookstoveTotal = cookstove.stream()
+                .mapToDouble(s -> s.getProjectEmission() != null ? s.getProjectEmission() : 0.0)
+                .sum();
 
         double rooftopTotal = rooftop.stream()
                 .mapToDouble(r -> convertToKtCO2e(r.getNetGhGMitigationAchieved()))
@@ -543,7 +531,7 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
             r.setHeightInPoints(18);
             boolean isAlternate = (year - startYear) % 2 == 1;
 
-            double cs = getCookstoveTotalForYear(filterByYear(cookstove, StoveMitigationYear::getYear, year, year),
+            double cs = getCookstoveTotalForYear(filterByYear(cookstove, StoveMitigation::getYear, year, year),
                     year);
             double rt = sumDouble(filterByYear(rooftop, RoofTopMitigation::getYear, year, year),
                     r2 -> convertToKtCO2e(r2.getNetGhGMitigationAchieved()));
@@ -565,8 +553,9 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
 
             // Number columns
             CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook()) : numberStyle;
-            r.createCell(1).setCellValue(cs);
-            r.getCell(1).setCellStyle(numStyle);
+            Cell csCell = r.createCell(1);
+            csCell.setCellValue(cs);
+            csCell.setCellStyle(numStyle);
             r.createCell(2).setCellValue(rt);
             r.getCell(2).setCellStyle(numStyle);
             r.createCell(3).setCellValue(lb);
@@ -649,29 +638,26 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
     }
 
     private void buildCookstoveSheet(XSSFSheet sheet, CellStyle headerStyle, CellStyle dataStyle,
-            CellStyle alternateDataStyle, CellStyle numberStyle, List<StoveMitigationYear> data) {
-        // Group by year and get unique records
-        Map<Integer, StoveMitigationYear> uniqueByYear = data.stream()
-                .collect(Collectors.toMap(
-                        StoveMitigationYear::getYear,
-                        Function.identity(),
-                        (existing, replacement) -> existing));
-
-        List<StoveMitigationYear> uniqueData = new ArrayList<>(uniqueByYear.values());
-        uniqueData.sort(Comparator.comparing(StoveMitigationYear::getYear));
+            CellStyle alternateDataStyle, CellStyle numberStyle,
+            List<StoveMitigation> data) {
+        // Sort by year
+        List<StoveMitigation> sortedData = new ArrayList<>(data);
+        sortedData.sort(Comparator.comparing(StoveMitigation::getYear));
 
         String[] headers = {
                 "Year",
-                "Total Avoided Emissions (tCO2e)",
-                "Total Avoided Emissions (ktCO2e)",
-                "BAU",
-                "Adjustment"
+                "Stove Type",
+                "Units Installed",
+                "Efficiency (%)",
+                "Project Intervention",
+                "Fuel Consumption",
+                "Project Emission (ktCO2e)"
         };
         createHeader(sheet, headerStyle, headers);
         DataFormat dataFormat = sheet.getWorkbook().createDataFormat();
         int rowIdx = 1;
-        for (int i = 0; i < uniqueData.size(); i++) {
-            StoveMitigationYear item = uniqueData.get(i);
+        for (int i = 0; i < sortedData.size(); i++) {
+            StoveMitigation item = sortedData.get(i);
             Row r = sheet.createRow(rowIdx++);
             r.setHeightInPoints(18);
             boolean isAlternate = i % 2 == 1;
@@ -686,14 +672,38 @@ public class EnergyDashboardServiceImpl implements EnergyDashboardService {
             yearCell.setCellStyle(yearCellStyle);
 
             CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook()) : numberStyle;
-            r.createCell(1).setCellValue(item.getTotalAvoidedEmissions());
-            r.getCell(1).setCellStyle(numStyle);
-            r.createCell(2).setCellValue(convertToKtCO2e(item.getTotalAvoidedEmissions()));
+            CellStyle textStyle = isAlternate ? alternateDataStyle : dataStyle;
+
+            // Stove Type column (text)
+            Cell stoveTypeCell = r.createCell(1);
+            stoveTypeCell.setCellValue(item.getStoveType() != null ? item.getStoveType().name() : "");
+            stoveTypeCell.setCellStyle(textStyle);
+
+            // Units Installed column (number)
+            r.createCell(2).setCellValue(item.getUnitsInstalled());
             r.getCell(2).setCellStyle(numStyle);
-            r.createCell(3).setCellValue(item.getBau());
+
+            // Efficiency column (number)
+            r.createCell(3).setCellValue(item.getEfficiency() != null ? item.getEfficiency() : 0.0);
             r.getCell(3).setCellStyle(numStyle);
-            r.createCell(4).setCellValue(item.getAdjustment());
-            r.getCell(4).setCellStyle(numStyle);
+
+            // Project Intervention column (text)
+            Cell interventionCell = r.createCell(4);
+            String interventionName = "";
+            if (item.getProjectIntervention() != null) {
+                Hibernate.initialize(item.getProjectIntervention());
+                interventionName = item.getProjectIntervention().getName();
+            }
+            interventionCell.setCellValue(interventionName);
+            interventionCell.setCellStyle(textStyle);
+
+            // Fuel Consumption column (number)
+            r.createCell(5).setCellValue(item.getFuelConsumption() != null ? item.getFuelConsumption() : 0.0);
+            r.getCell(5).setCellStyle(numStyle);
+
+            // Project Emission column (number, already in ktCO2e)
+            r.createCell(6).setCellValue(item.getProjectEmission() != null ? item.getProjectEmission() : 0.0);
+            r.getCell(6).setCellStyle(numStyle);
         }
         autoSizeWithLimits(sheet, headers.length);
     }
