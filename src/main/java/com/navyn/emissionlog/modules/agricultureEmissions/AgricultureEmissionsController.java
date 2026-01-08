@@ -614,6 +614,57 @@ public class AgricultureEmissionsController {
         return ResponseEntity.ok(new ApiResponse(true, "Urea emissions deleted successfully", null));
     }
 
+    @GetMapping("/ureaEmissions/template")
+    @Operation(summary = "Download Urea Emissions Excel template", description = "Downloads an Excel template file with the required column headers and data validation for uploading Urea Emissions records")
+    public ResponseEntity<byte[]> downloadUreaExcelTemplate() {
+        byte[] templateBytes = agricultureEmissionsService.generateUreaExcelTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Urea_Emissions_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(templateBytes);
+    }
+
+    @PostMapping("/ureaEmissions/excel")
+    @Operation(summary = "Upload Urea Emissions records from Excel file", description = "Uploads multiple Urea Emissions records from an Excel file. Records with duplicate year+Fertilizer Name combinations will be skipped.")
+    public ResponseEntity<ApiResponse> createUreaEmissionsFromExcel(
+            @RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = agricultureEmissionsService.createUreaEmissionsFromExcel(file);
+
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> skippedRows = (List<Map<String, Object>>) result.get("skippedRows");
+
+        String message = String.format(
+                "Upload completed. %d record(s) saved successfully. %d record(s) skipped.",
+                savedCount,
+                skippedCount);
+
+        // Optionally add skipped details to the message if there are few skipped
+        // records
+        if (skippedCount > 0 && skippedRows != null && skippedRows.size() <= 10) {
+            StringBuilder skippedDetails = new StringBuilder();
+            skippedDetails.append(" Details: ");
+            for (Map<String, Object> row : skippedRows) {
+                skippedDetails.append(String.format("Row %d (Year: %s, Fertilizer Name: %s, Reason: %s); ",
+                        (Integer) row.get("row"),
+                        row.get("year"),
+                        row.get("fertilizerName"),
+                        row.get("reason")));
+            }
+            message += skippedDetails.toString().trim();
+        } else if (skippedCount > 0) {
+            message += " See response data for details on skipped rows.";
+        }
+
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
+    }
+
     @DeleteMapping("/burningEmissions/{id}")
     @Operation(summary = "Delete burning emissions record")
     public ResponseEntity<ApiResponse> deleteBurningEmissions(@PathVariable UUID id) {

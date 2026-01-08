@@ -372,6 +372,14 @@ public class ExcelReader {
         limingToDtoMap.put("CaCO3 Quantity", "CaCO3Qty");
     }
 
+    // This hashmap is responsible for reading data from Urea Emissions Excel files and mapping it to DTOs.
+    private static final Map<String, String> ureaToDtoMap = new HashMap<>();
+    static {
+        ureaToDtoMap.put("Year", "year");
+        ureaToDtoMap.put("Fertilizer Name", "fertilizerName");
+        ureaToDtoMap.put("Quantity", "qty");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -533,7 +541,8 @@ public class ExcelReader {
             case ENTERIC_FERMENTATION_EMISSIONS:
             case MANURE_MANAGEMENT_EMISSIONS:
             case LIMING_EMISSIONS:
-                // All waste mitigation templates, IPPU, Cookstove, LightBulb, BAU, Enteric Fermentation, Manure Management and Liming have: Row 0 = Title, Row 1
+            case UREA_EMISSIONS:
+                // All waste mitigation templates, IPPU, Cookstove, LightBulb, BAU, Enteric Fermentation, Manure Management, Liming and Urea have: Row 0 = Title, Row 1
                 // = Blank,
                 // Row 2 = Headers
                 return 2;
@@ -805,6 +814,8 @@ public class ExcelReader {
                 return "Manure Management Emissions";
             case LIMING_EMISSIONS:
                 return "Liming Emissions";
+            case UREA_EMISSIONS:
+                return "Urea Emissions";
             default:
                 return "";
         }
@@ -874,6 +885,8 @@ public class ExcelReader {
                 return manureManagementToDtoMap.get(header);
             case LIMING_EMISSIONS:
                 return limingToDtoMap.get(header);
+            case UREA_EMISSIONS:
+                return ureaToDtoMap.get(header);
             default:
                 return "";
         }
