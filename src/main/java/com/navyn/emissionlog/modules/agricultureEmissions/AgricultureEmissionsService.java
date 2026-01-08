@@ -176,6 +176,10 @@ public interface AgricultureEmissionsService {
 
     java.util.Map<String, Object> createManureManagementEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
 
+    byte[] generateLimingExcelTemplate();
+
+    java.util.Map<String, Object> createLimingEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
     // Mini Dashboards
     DashboardData getAgricultureDashboardSummary(Integer startingYear, Integer endingYear);
 
