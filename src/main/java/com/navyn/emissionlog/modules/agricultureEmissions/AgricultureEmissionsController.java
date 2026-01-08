@@ -15,11 +15,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -125,6 +129,38 @@ private  final  AgricultureEmissionsService agricultureEmissionsService;
     @Operation(summary = "Create new enteric fermentation emissions record")
     public ResponseEntity<ApiResponse> createEntericFermentationEmissions(@Valid @RequestBody EntericFermentationEmissionsDto entericFermentationEmissionsDto) {
         return ResponseEntity.ok(new ApiResponse(true, "Enteric fermentation emissions created successfully", agricultureEmissionsService.createEntericFermentationEmissions(entericFermentationEmissionsDto)));
+    }
+
+    @GetMapping("/entericFermentationEmissions/template")
+    @Operation(summary = "Download Enteric Fermentation Emissions Excel template", description = "Downloads an Excel template file with the required column headers and data validation for uploading Enteric Fermentation Emissions records")
+    public ResponseEntity<byte[]> downloadEntericFermentationExcelTemplate() {
+        byte[] templateBytes = agricultureEmissionsService.generateEntericFermentationExcelTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Enteric_Fermentation_Emissions_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(templateBytes);
+    }
+
+    @PostMapping("/entericFermentationEmissions/excel")
+    @Operation(summary = "Upload Enteric Fermentation Emissions records from Excel file", description = "Uploads multiple Enteric Fermentation Emissions records from an Excel file. Records with duplicate year+Species combinations will be skipped.")
+    public ResponseEntity<ApiResponse> createEntericFermentationEmissionsFromExcel(
+            @RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = agricultureEmissionsService.createEntericFermentationEmissionsFromExcel(file);
+
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+
+        String message = String.format(
+                "Upload completed. %d record(s) saved successfully. %d record(s) skipped.",
+                savedCount,
+                skippedCount);
+
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
 
     // Create burning emissions log

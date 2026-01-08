@@ -348,6 +348,14 @@ public class ExcelReader {
         bauToDtoMap.put("Value (ktCO₂e)", "value");
     }
 
+    // This hashmap is responsible for reading data from Enteric Fermentation Emissions Excel files and mapping it to DTOs.
+    private static final Map<String, String> entericFermentationToDtoMap = new HashMap<>();
+    static {
+        entericFermentationToDtoMap.put("Year", "year");
+        entericFermentationToDtoMap.put("Species", "species");
+        entericFermentationToDtoMap.put("Animal Population", "animalPopulation");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -506,7 +514,8 @@ public class ExcelReader {
             case COOKSTOVE_MITIGATION:
             case LIGHT_BULB_MITIGATION:
             case BAU:
-                // All waste mitigation templates, IPPU, Cookstove, LightBulb and BAU have: Row 0 = Title, Row 1
+            case ENTERIC_FERMENTATION_EMISSIONS:
+                // All waste mitigation templates, IPPU, Cookstove, LightBulb, BAU and Enteric Fermentation have: Row 0 = Title, Row 1
                 // = Blank,
                 // Row 2 = Headers
                 return 2;
@@ -772,6 +781,8 @@ public class ExcelReader {
                 return "Light Bulb Mitigation";
             case BAU:
                 return "BAU";
+            case ENTERIC_FERMENTATION_EMISSIONS:
+                return "Enteric Fermentation Emissions";
             default:
                 return "";
         }
@@ -835,6 +846,8 @@ public class ExcelReader {
                 return lightBulbToDtoMap.get(header);
             case BAU:
                 return bauToDtoMap.get(header);
+            case ENTERIC_FERMENTATION_EMISSIONS:
+                return entericFermentationToDtoMap.get(header);
             default:
                 return "";
         }

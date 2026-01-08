@@ -52,6 +52,10 @@ public interface AgricultureEmissionsService {
 
     void deleteEntericFermentationEmissions(UUID id);
 
+    byte[] generateEntericFermentationExcelTemplate();
+
+    java.util.Map<String, Object> createEntericFermentationEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
     LimingEmissions createLimingEmissions(LimingEmissionsDto emissions);
 
     LimingEmissions updateLimingEmissions(UUID id, LimingEmissionsDto emissions);
