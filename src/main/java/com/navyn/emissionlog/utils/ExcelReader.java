@@ -356,6 +356,14 @@ public class ExcelReader {
         entericFermentationToDtoMap.put("Animal Population", "animalPopulation");
     }
 
+    // This hashmap is responsible for reading data from Manure Management Emissions Excel files and mapping it to DTOs.
+    private static final Map<String, String> manureManagementToDtoMap = new HashMap<>();
+    static {
+        manureManagementToDtoMap.put("Year", "year");
+        manureManagementToDtoMap.put("Species", "species");
+        manureManagementToDtoMap.put("Animal Population", "animalPopulation");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -515,7 +523,8 @@ public class ExcelReader {
             case LIGHT_BULB_MITIGATION:
             case BAU:
             case ENTERIC_FERMENTATION_EMISSIONS:
-                // All waste mitigation templates, IPPU, Cookstove, LightBulb, BAU and Enteric Fermentation have: Row 0 = Title, Row 1
+            case MANURE_MANAGEMENT_EMISSIONS:
+                // All waste mitigation templates, IPPU, Cookstove, LightBulb, BAU, Enteric Fermentation and Manure Management have: Row 0 = Title, Row 1
                 // = Blank,
                 // Row 2 = Headers
                 return 2;
@@ -783,6 +792,8 @@ public class ExcelReader {
                 return "BAU";
             case ENTERIC_FERMENTATION_EMISSIONS:
                 return "Enteric Fermentation Emissions";
+            case MANURE_MANAGEMENT_EMISSIONS:
+                return "Manure Management Emissions";
             default:
                 return "";
         }
@@ -848,6 +859,8 @@ public class ExcelReader {
                 return bauToDtoMap.get(header);
             case ENTERIC_FERMENTATION_EMISSIONS:
                 return entericFermentationToDtoMap.get(header);
+            case MANURE_MANAGEMENT_EMISSIONS:
+                return manureManagementToDtoMap.get(header);
             default:
                 return "";
         }

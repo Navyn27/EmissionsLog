@@ -172,6 +172,10 @@ public interface AgricultureEmissionsService {
 
     List<ManureManagementEmissions> getAllManureManagementEmissions(Integer year, ManureManagementLivestock species);
 
+    byte[] generateManureManagementExcelTemplate();
+
+    java.util.Map<String, Object> createManureManagementEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
     // Mini Dashboards
     DashboardData getAgricultureDashboardSummary(Integer startingYear, Integer endingYear);
 
