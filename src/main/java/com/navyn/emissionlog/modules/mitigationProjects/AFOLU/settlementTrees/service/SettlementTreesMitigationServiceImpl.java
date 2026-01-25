@@ -39,11 +39,6 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
         private final BAURepository bauRepository;
         private final InterventionRepository interventionRepository;
 
-        private static Double apply(SettlementTreesMitigation settlementTreesMitigation) {
-                return settlementTreesMitigation.getNumberOfTreesPlanted()
-                                + settlementTreesMitigation.getCumulativeNumberOfTrees();
-        }
-
         /**
          * Maps SettlementTreesMitigation entity to Response DTO
          * This method loads intervention data within the transaction to avoid lazy
@@ -100,8 +95,9 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
 
                 Optional<SettlementTreesMitigation> lastYearRecord = repository
                                 .findTopByYearLessThanOrderByYearDesc(dto.getYear());
-                Double cumulativeNumberOfTrees = lastYearRecord.map(SettlementTreesMitigationServiceImpl::apply)
-                                .orElse(0.0);
+                // Calculate cumulative: previous cumulative (which already includes all prior years) + current year's trees
+                Double cumulativeNumberOfTrees = lastYearRecord.map(SettlementTreesMitigation::getCumulativeNumberOfTrees)
+                                .orElse(0.0) + dto.getNumberOfTreesPlanted();
                 Double agbSingleTreePrevYear = lastYearRecord
                                 .map(SettlementTreesMitigation::getAgbSingleTreeCurrentYear)
                                 .orElse(0.0);
@@ -252,8 +248,9 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
                         SettlementTreesParameterResponseDto param) {
                 Optional<SettlementTreesMitigation> lastYearRecord = repository
                                 .findTopByYearLessThanOrderByYearDesc(mitigation.getYear());
-                Double cumulativeNumberOfTrees = lastYearRecord.map(SettlementTreesMitigationServiceImpl::apply)
-                                .orElse(0.0);
+                // Calculate cumulative: previous cumulative (which already includes all prior years) + current year's trees
+                Double cumulativeNumberOfTrees = lastYearRecord.map(SettlementTreesMitigation::getCumulativeNumberOfTrees)
+                                .orElse(0.0) + mitigation.getNumberOfTreesPlanted();
                 Double agbSingleTreePrevYear = lastYearRecord
                                 .map(SettlementTreesMitigation::getAgbSingleTreeCurrentYear)
                                 .orElse(0.0);
@@ -306,8 +303,9 @@ public class SettlementTreesMitigationServiceImpl implements SettlementTreesMiti
                         SettlementTreesMitigationDto dto, SettlementTreesParameterResponseDto param) {
                 Optional<SettlementTreesMitigation> lastYearRecord = repository
                                 .findTopByYearLessThanOrderByYearDesc(dto.getYear());
-                Double cumulativeNumberOfTrees = lastYearRecord.map(SettlementTreesMitigationServiceImpl::apply)
-                                .orElse(0.0);
+                // Calculate cumulative: previous cumulative (which already includes all prior years) + current year's trees
+                Double cumulativeNumberOfTrees = lastYearRecord.map(SettlementTreesMitigation::getCumulativeNumberOfTrees)
+                                .orElse(0.0) + dto.getNumberOfTreesPlanted();
                 Double agbSingleTreePrevYear = lastYearRecord
                                 .map(SettlementTreesMitigation::getAgbSingleTreeCurrentYear)
                                 .orElse(0.0);

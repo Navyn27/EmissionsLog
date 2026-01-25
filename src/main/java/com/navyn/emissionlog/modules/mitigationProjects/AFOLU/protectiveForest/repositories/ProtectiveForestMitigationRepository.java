@@ -31,4 +31,11 @@ public interface ProtectiveForestMitigationRepository
         Integer year,
         ProtectiveForestCategory category
     );
+
+    // Find by year range for dashboard filtering
+    List<ProtectiveForestMitigation> findByYearBetweenOrderByYearDesc(Integer startYear, Integer endYear);
+
+    default List<ProtectiveForestMitigation> findByYearRange(Integer startYear, Integer endYear) {
+        return findByYearBetweenOrderByYearDesc(startYear, endYear);
+    }
 }

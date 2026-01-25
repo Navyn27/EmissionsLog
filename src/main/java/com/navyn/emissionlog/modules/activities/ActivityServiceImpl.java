@@ -659,26 +659,27 @@ public class ActivityServiceImpl implements ActivityService {
             List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions = syntheticFertilizerEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
             List<UreaEmissions> ureaEmissions = ureaEmissionsRepository.findByYearRange(startDate.getYear(), endDate.getYear());
 
-            // Land Use Emissions - TODO: Add findByYearRange methods to repositories for
-            // optimization
-            List<BiomassGain> biomassGains = biomassGainRepository.findAll();
-            List<DisturbanceBiomassLoss> disturbanceLosses = disturbanceBiomassLossRepository.findAll();
-            List<FirewoodRemovalBiomassLoss> firewoodLosses = firewoodRemovalBiomassLossRepository.findAll();
-            List<HarvestedBiomassLoss> harvestedLosses = harvestedBiomassLossRepository.findAll();
-            List<RewettedMineralWetlands> rewettedWetlands = rewettedMineralWetlandsRepository.findAll();
+            // Land Use Emissions - Use year range queries for better performance
+            int startYear = startDate.getYear();
+            int endYear = endDate.getYear();
 
-            // Mitigation Projects - TODO: Add findByYearRange methods to repositories for
-            // optimization
-            List<WetlandParksMitigation> wetlandParks = wetlandParksMitigationRepository.findAll();
-            List<SettlementTreesMitigation> settlementTrees = settlementTreesMitigationRepository.findAll();
-            List<StreetTreesMitigation> streetTrees = streetTreesMitigationRepository.findAll();
-            List<GreenFencesMitigation> greenFences = greenFencesMitigationRepository.findAll();
-            List<CropRotationMitigation> cropRotation = cropRotationMitigationRepository.findAll();
-            List<ZeroTillageMitigation> zeroTillage = zeroTillageMitigationRepository.findAll();
-            List<ProtectiveForestMitigation> protectiveForest = protectiveForestMitigationRepository.findAll();
-            List<ManureCoveringMitigation> manureCovering = manureCoveringMitigationRepository.findAll();
-            List<AddingStrawMitigation> addingStraw = addingStrawMitigationRepository.findAll();
-            List<DailySpreadMitigation> dailySpread = dailySpreadMitigationRepository.findAll();
+            List<BiomassGain> biomassGains = biomassGainRepository.findByYearRange(startYear, endYear);
+            List<DisturbanceBiomassLoss> disturbanceLosses = disturbanceBiomassLossRepository.findByYearRange(startYear, endYear);
+            List<FirewoodRemovalBiomassLoss> firewoodLosses = firewoodRemovalBiomassLossRepository.findByYearRange(startYear, endYear);
+            List<HarvestedBiomassLoss> harvestedLosses = harvestedBiomassLossRepository.findByYearRange(startYear, endYear);
+            List<RewettedMineralWetlands> rewettedWetlands = rewettedMineralWetlandsRepository.findByYearRange(startYear, endYear);
+
+            // Mitigation Projects - Use year range queries for better performance
+            List<WetlandParksMitigation> wetlandParks = wetlandParksMitigationRepository.findByYearRange(startYear, endYear);
+            List<SettlementTreesMitigation> settlementTrees = settlementTreesMitigationRepository.findByYearRange(startYear, endYear);
+            List<StreetTreesMitigation> streetTrees = streetTreesMitigationRepository.findByYearRange(startYear, endYear);
+            List<GreenFencesMitigation> greenFences = greenFencesMitigationRepository.findByYearRange(startYear, endYear);
+            List<CropRotationMitigation> cropRotation = cropRotationMitigationRepository.findByYearRange(startYear, endYear);
+            List<ZeroTillageMitigation> zeroTillage = zeroTillageMitigationRepository.findByYearRange(startYear, endYear);
+            List<ProtectiveForestMitigation> protectiveForest = protectiveForestMitigationRepository.findByYearRange(startYear, endYear);
+            List<ManureCoveringMitigation> manureCovering = manureCoveringMitigationRepository.findByYearRange(startYear, endYear);
+            List<AddingStrawMitigation> addingStraw = addingStrawMitigationRepository.findByYearRange(startYear, endYear);
+            List<DailySpreadMitigation> dailySpread = dailySpreadMitigationRepository.findByYearRange(startYear, endYear);
 
             DashboardData dashboardData = calculateDashboardData(activities, wasteActivities, aquacultureEmissions, entericFermentationEmissions, limingEmissions, animalManureAndCompostEmissions, riceCultivationEmissions, syntheticFertilizerEmissions, ureaEmissions, biomassGains, disturbanceLosses, firewoodLosses, harvestedLosses, rewettedWetlands, wetlandParks, settlementTrees, streetTrees, greenFences, cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread);
             dashboardData.setStartingDate(startDate.toString());
@@ -762,64 +763,65 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public List<DashboardData> getDashboardGraphDataByMonth(Integer year) {
 
-        // Fetch all data sources for the year
-        List<Activity> activities = activityRepository.findAll();
-        List<WasteDataAbstract> wasteData = wasteDataAbstractRepository.findAll();
-        List<AquacultureEmissions> aquacultureEmissions = aquacultureEmissionsRepository.findAll();
-        List<EntericFermentationEmissions> entericFermentationEmissions = entericFermentationEmissionsRepository.findAll();
-        List<LimingEmissions> limingEmissions = limingEmissionsRepository.findAll();
-        List<AnimalManureAndCompostEmissions> animalManureAndCompostEmissions = animalManureAndCompostEmissionsRepository.findAll();
-        List<RiceCultivationEmissions> riceCultivationEmissions = riceCultivationEmissionsRepository.findAll();
-        List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions = syntheticFertilizerEmissionsRepository.findAll();
-        List<UreaEmissions> ureaEmissions = ureaEmissionsRepository.findAll();
-        List<BiomassGain> biomassGains = biomassGainRepository.findAll();
-        List<DisturbanceBiomassLoss> disturbanceLosses = disturbanceBiomassLossRepository.findAll();
-        List<FirewoodRemovalBiomassLoss> firewoodLosses = firewoodRemovalBiomassLossRepository.findAll();
-        List<HarvestedBiomassLoss> harvestedLosses = harvestedBiomassLossRepository.findAll();
-        List<RewettedMineralWetlands> rewettedWetlands = rewettedMineralWetlandsRepository.findAll();
-        List<WetlandParksMitigation> wetlandParks = wetlandParksMitigationRepository.findAll();
-        List<SettlementTreesMitigation> settlementTrees = settlementTreesMitigationRepository.findAll();
-        List<StreetTreesMitigation> streetTrees = streetTreesMitigationRepository.findAll();
-        List<GreenFencesMitigation> greenFences = greenFencesMitigationRepository.findAll();
-        List<CropRotationMitigation> cropRotation = cropRotationMitigationRepository.findAll();
-        List<ZeroTillageMitigation> zeroTillage = zeroTillageMitigationRepository.findAll();
-        List<ProtectiveForestMitigation> protectiveForest = protectiveForestMitigationRepository.findAll();
-        List<ManureCoveringMitigation> manureCovering = manureCoveringMitigationRepository.findAll();
-        List<AddingStrawMitigation> addingStraw = addingStrawMitigationRepository.findAll();
-        List<DailySpreadMitigation> dailySpread = dailySpreadMitigationRepository.findAll();
+        // Fetch all data sources for the year - filter by year
+        List<Activity> activities = activityRepository.findAll().stream()
+                .filter(a -> a.getYear() == year).toList();
+        List<WasteDataAbstract> wasteData = wasteDataAbstractRepository.findAll().stream()
+                .filter(w -> w.getYear() == year).toList();
 
-        // Group all data by year-month
-        Map<YearMonth, List<Activity>> activitiesByMonth = activities.stream().filter(a -> a.getYear() == year).collect(groupingBy(activity -> YearMonth.from(activity.getActivityYear())));
+        // Agriculture data (annual granularity only)
+        List<AquacultureEmissions> aquacultureEmissions = aquacultureEmissionsRepository.findByYearRange(year, year);
+        List<EntericFermentationEmissions> entericFermentationEmissions = entericFermentationEmissionsRepository.findByYearRange(year, year);
+        List<LimingEmissions> limingEmissions = limingEmissionsRepository.findByYearRange(year, year);
+        List<AnimalManureAndCompostEmissions> animalManureAndCompostEmissions = animalManureAndCompostEmissionsRepository.findByYearRange(year, year);
+        List<RiceCultivationEmissions> riceCultivationEmissions = riceCultivationEmissionsRepository.findByYearRange(year, year);
+        List<SyntheticFertilizerEmissions> syntheticFertilizerEmissions = syntheticFertilizerEmissionsRepository.findByYearRange(year, year);
+        List<UreaEmissions> ureaEmissions = ureaEmissionsRepository.findByYearRange(year, year);
 
-        Map<YearMonth, List<WasteDataAbstract>> wasteByMonth = wasteData.stream().filter(w -> w.getYear() == year).collect(groupingBy(waste -> YearMonth.from(waste.getActivityYear())));
+        // Land use data (annual granularity only) - use year range queries
+        List<BiomassGain> biomassGains = biomassGainRepository.findByYearRange(year, year);
+        List<DisturbanceBiomassLoss> disturbanceLosses = disturbanceBiomassLossRepository.findByYearRange(year, year);
+        List<FirewoodRemovalBiomassLoss> firewoodLosses = firewoodRemovalBiomassLossRepository.findByYearRange(year, year);
+        List<HarvestedBiomassLoss> harvestedLosses = harvestedBiomassLossRepository.findByYearRange(year, year);
+        List<RewettedMineralWetlands> rewettedWetlands = rewettedMineralWetlandsRepository.findByYearRange(year, year);
 
-        // Agriculture data grouped by month (use year field)
-        Map<Integer, List<AquacultureEmissions>> aquacultureByMonth = aquacultureEmissions.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1)); // All in first month for
-        // yearly data
-        Map<Integer, List<EntericFermentationEmissions>> entericByMonth = entericFermentationEmissions.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<LimingEmissions>> limingByMonth = limingEmissions.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<AnimalManureAndCompostEmissions>> manureByMonth = animalManureAndCompostEmissions.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<RiceCultivationEmissions>> riceByMonth = riceCultivationEmissions.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<SyntheticFertilizerEmissions>> fertilizerByMonth = syntheticFertilizerEmissions.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<UreaEmissions>> ureaByMonth = ureaEmissions.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
+        // Mitigation data (annual granularity only) - use year range queries
+        List<WetlandParksMitigation> wetlandParks = wetlandParksMitigationRepository.findByYearRange(year, year);
+        List<SettlementTreesMitigation> settlementTrees = settlementTreesMitigationRepository.findByYearRange(year, year);
+        List<StreetTreesMitigation> streetTrees = streetTreesMitigationRepository.findByYearRange(year, year);
+        List<GreenFencesMitigation> greenFences = greenFencesMitigationRepository.findByYearRange(year, year);
+        List<CropRotationMitigation> cropRotation = cropRotationMitigationRepository.findByYearRange(year, year);
+        List<ZeroTillageMitigation> zeroTillage = zeroTillageMitigationRepository.findByYearRange(year, year);
+        List<ProtectiveForestMitigation> protectiveForest = protectiveForestMitigationRepository.findByYearRange(year, year);
+        List<ManureCoveringMitigation> manureCovering = manureCoveringMitigationRepository.findByYearRange(year, year);
+        List<AddingStrawMitigation> addingStraw = addingStrawMitigationRepository.findByYearRange(year, year);
+        List<DailySpreadMitigation> dailySpread = dailySpreadMitigationRepository.findByYearRange(year, year);
 
-        // Land use and mitigation only have year field, so we'll include them in month
-        // 1 of each year
-        Map<Integer, List<BiomassGain>> biomassGainsByMonth = biomassGains.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<DisturbanceBiomassLoss>> disturbanceByMonth = disturbanceLosses.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<FirewoodRemovalBiomassLoss>> firewoodByMonth = firewoodLosses.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<HarvestedBiomassLoss>> harvestedByMonth = harvestedLosses.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<RewettedMineralWetlands>> wetlandsByMonth = rewettedWetlands.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<WetlandParksMitigation>> wetlandParksByMonth = wetlandParks.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<SettlementTreesMitigation>> settlementByMonth = settlementTrees.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<StreetTreesMitigation>> streetByMonth = streetTrees.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<GreenFencesMitigation>> fencesByMonth = greenFences.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<CropRotationMitigation>> cropByMonth = cropRotation.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<ZeroTillageMitigation>> tillageByMonth = zeroTillage.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<ProtectiveForestMitigation>> forestByMonth = protectiveForest.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<ManureCoveringMitigation>> manureCoveringByMonth = manureCovering.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<AddingStrawMitigation>> addingStrawByMonth = addingStraw.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
-        Map<Integer, List<DailySpreadMitigation>> dailySpreadByMonth = dailySpread.stream().filter(a -> a.getYear() == year).collect(groupingBy(a -> 1));
+        // Calculate the FULL YEAR totals for annual data (agriculture, land use, mitigation)
+        // This will be divided by 12 and distributed evenly across months
+        DashboardData annualOnlyData = calculateDashboardData(
+                List.of(), List.of(), // No activities/waste - those have monthly data
+                aquacultureEmissions, entericFermentationEmissions, limingEmissions,
+                animalManureAndCompostEmissions, riceCultivationEmissions,
+                syntheticFertilizerEmissions, ureaEmissions,
+                biomassGains, disturbanceLosses, firewoodLosses, harvestedLosses, rewettedWetlands,
+                wetlandParks, settlementTrees, streetTrees, greenFences,
+                cropRotation, zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread
+        );
+
+        // Calculate monthly portions (1/12 of annual data)
+        double monthlyN2O = annualOnlyData.getTotalN2OEmissions() / 12.0;
+        double monthlyFossilCO2 = annualOnlyData.getTotalFossilCO2Emissions() / 12.0;
+        double monthlyBioCO2 = annualOnlyData.getTotalBioCO2Emissions() / 12.0;
+        double monthlyCH4 = annualOnlyData.getTotalCH4Emissions() / 12.0;
+        double monthlyLandUse = annualOnlyData.getTotalLandUseEmissions() / 12.0;
+        double monthlyMitigation = annualOnlyData.getTotalMitigationKtCO2e() / 12.0;
+
+        // Group monthly data (activities and waste) by year-month
+        Map<YearMonth, List<Activity>> activitiesByMonth = activities.stream()
+                .collect(groupingBy(activity -> YearMonth.from(activity.getActivityYear())));
+        Map<YearMonth, List<WasteDataAbstract>> wasteByMonth = wasteData.stream()
+                .collect(groupingBy(waste -> YearMonth.from(waste.getActivityYear())));
 
         // Create aggregated dashboard data for each month
         List<DashboardData> dashboardDataList = new ArrayList<>();
@@ -827,12 +829,39 @@ public class ActivityServiceImpl implements ActivityService {
         for (int month = 1; month <= 12; month++) {
             YearMonth ym = YearMonth.of(year, month);
 
-            DashboardData data = calculateDashboardData(activitiesByMonth.getOrDefault(ym, List.of()), wasteByMonth.getOrDefault(ym, List.of()), month == 1 ? aquacultureByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? entericByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? limingByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? manureByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? riceByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? fertilizerByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? ureaByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? biomassGainsByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? disturbanceByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? firewoodByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? harvestedByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? wetlandsByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? wetlandParksByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? settlementByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? streetByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? fencesByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? cropByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? tillageByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? forestByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? manureCoveringByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? addingStrawByMonth.getOrDefault(1, List.of()) : List.of(), month == 1 ? dailySpreadByMonth.getOrDefault(1, List.of()) : List.of());
+            // Calculate monthly data from activities and waste only
+            DashboardData monthlyData = calculateDashboardActivityData(activitiesByMonth.getOrDefault(ym, List.of()));
+            DashboardData wasteMonthlyData = calculateWasteDashboardData(wasteByMonth.getOrDefault(ym, List.of()));
 
-            data.setStartingDate(LocalDateTime.of(year, month, 1, 0, 0).toString());
-            data.setEndingDate(LocalDateTime.of(year, month, ym.lengthOfMonth(), 23, 59).toString());
-            data.setMonth(ym.getMonth());
-            dashboardDataList.add(data);
+            // Combine activity and waste data
+            monthlyData.setTotalCH4Emissions(monthlyData.getTotalCH4Emissions() + wasteMonthlyData.getTotalCH4Emissions());
+            monthlyData.setTotalN2OEmissions(monthlyData.getTotalN2OEmissions() + wasteMonthlyData.getTotalN2OEmissions());
+            monthlyData.setTotalFossilCO2Emissions(monthlyData.getTotalFossilCO2Emissions() + wasteMonthlyData.getTotalFossilCO2Emissions());
+            monthlyData.setTotalBioCO2Emissions(monthlyData.getTotalBioCO2Emissions() + wasteMonthlyData.getTotalBioCO2Emissions());
+
+            // Add 1/12 of annual data (agriculture, land use, mitigation) to each month
+            monthlyData.setTotalN2OEmissions(monthlyData.getTotalN2OEmissions() + monthlyN2O);
+            monthlyData.setTotalFossilCO2Emissions(monthlyData.getTotalFossilCO2Emissions() + monthlyFossilCO2);
+            monthlyData.setTotalBioCO2Emissions(monthlyData.getTotalBioCO2Emissions() + monthlyBioCO2);
+            monthlyData.setTotalCH4Emissions(monthlyData.getTotalCH4Emissions() + monthlyCH4);
+            monthlyData.setTotalLandUseEmissions(monthlyLandUse);
+            monthlyData.setTotalMitigationKtCO2e(monthlyMitigation);
+
+            // Recalculate CO2Eq with all emissions
+            double totalCO2Eq = monthlyData.getTotalFossilCO2Emissions()
+                    + monthlyData.getTotalBioCO2Emissions()
+                    + monthlyData.getTotalCH4Emissions() * GWP.CH4.getValue()
+                    + monthlyData.getTotalN2OEmissions() * GWP.N2O.getValue()
+                    + monthlyData.getTotalLandUseEmissions();
+            monthlyData.setTotalCO2EqEmissions(totalCO2Eq);
+
+            // Calculate net emissions
+            monthlyData.setNetEmissionsKtCO2e(totalCO2Eq - monthlyMitigation);
+
+            monthlyData.setStartingDate(LocalDateTime.of(year, month, 1, 0, 0).toString());
+            monthlyData.setEndingDate(LocalDateTime.of(year, month, ym.lengthOfMonth(), 23, 59).toString());
+            monthlyData.setMonth(ym.getMonth());
+            dashboardDataList.add(monthlyData);
         }
 
         return dashboardDataList;
@@ -984,8 +1013,8 @@ public class ActivityServiceImpl implements ActivityService {
         dashboardData.setTotalCO2EqEmissions(dashboardData.getTotalFossilCO2Emissions() + dashboardData.getTotalBioCO2Emissions() + dashboardData.getTotalCH4Emissions() * GWP.CH4.getValue() + dashboardData.getTotalN2OEmissions() * GWP.N2O.getValue() + dashboardData.getTotalLandUseEmissions());
 
         // Calculate Net Emissions (Gross - Mitigation)
-        // Convert totalCO2EqEmissions to Kt first (divide by 1000)
-        Double grossEmissionsKt = dashboardData.getTotalCO2EqEmissions() / 1000.0;
+        // Both totalCO2EqEmissions and totalMitigation are already in Kt
+        Double grossEmissionsKt = dashboardData.getTotalCO2EqEmissions();
         dashboardData.setNetEmissionsKtCO2e(grossEmissionsKt - totalMitigation);
 
         return dashboardData;

@@ -92,7 +92,9 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
         GreenFencesMitigation mitigation = new GreenFencesMitigation();
 
         Optional<GreenFencesMitigation> latestYear = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
-        Double cumulativeHouseholds = latestYear.map(greenFencesMitigation -> greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()).orElse(0.0);
+        // Calculate cumulative: previous cumulative (which already includes all prior years) + current year's households
+        Double cumulativeHouseholds = latestYear.map(GreenFencesMitigation::getCumulativeNumberOfHouseholds).orElse(0.0)
+                + dto.getNumberOfHouseholdsWith10m2Fence();
 
         // Convert AGB to tonnes DM (standard unit)
         double agbInTonnesDM = dto.getAgbUnit().toTonnesDM(dto.getAgbOf10m2LiveFence());
@@ -225,9 +227,9 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
     private void recalculateExistingRecord(GreenFencesMitigation mitigation, GreenFencesParameterResponseDto param) {
         // Fetch previous year's data for cumulative calculation
         Optional<GreenFencesMitigation> latestYear = repository.findTopByYearLessThanOrderByYearDesc(mitigation.getYear());
-        Double cumulativeHouseholds = latestYear.map(greenFencesMitigation ->
-                greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()
-        ).orElse(0.0);
+        // Calculate cumulative: previous cumulative (which already includes all prior years) + current year's households
+        Double cumulativeHouseholds = latestYear.map(GreenFencesMitigation::getCumulativeNumberOfHouseholds).orElse(0.0)
+                + mitigation.getNumberOfHouseholdsWith10m2Fence();
 
         // Update cumulative field
         mitigation.setCumulativeNumberOfHouseholds(cumulativeHouseholds);
@@ -268,9 +270,9 @@ public class GreenFencesMitigationServiceImpl implements GreenFencesMitigationSe
      */
     private void recalculateAndUpdateRecord(GreenFencesMitigation mitigation, GreenFencesMitigationDto dto, GreenFencesParameterResponseDto param) {
         Optional<GreenFencesMitigation> latestYear = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
-        Double cumulativeHouseholds = latestYear.map(greenFencesMitigation ->
-                greenFencesMitigation.getCumulativeNumberOfHouseholds() + greenFencesMitigation.getNumberOfHouseholdsWith10m2Fence()
-        ).orElse(0.0);
+        // Calculate cumulative: previous cumulative (which already includes all prior years) + current year's households
+        Double cumulativeHouseholds = latestYear.map(GreenFencesMitigation::getCumulativeNumberOfHouseholds).orElse(0.0)
+                + dto.getNumberOfHouseholdsWith10m2Fence();
 
         // Convert AGB to tonnes DM (standard unit)
         double agbInTonnesDM = dto.getAgbUnit().toTonnesDM(dto.getAgbOf10m2LiveFence());
