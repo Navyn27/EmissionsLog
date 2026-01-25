@@ -27,4 +27,11 @@ public interface CropRotationMitigationRepository
     @EntityGraph(attributePaths = {"intervention"})
     @Override
     List<CropRotationMitigation> findAll(Specification<CropRotationMitigation> spec, Sort sort);
+
+    // Find by year range for dashboard filtering
+    List<CropRotationMitigation> findByYearBetweenOrderByYearDesc(Integer startYear, Integer endYear);
+
+    default List<CropRotationMitigation> findByYearRange(Integer startYear, Integer endYear) {
+        return findByYearBetweenOrderByYearDesc(startYear, endYear);
+    }
 }

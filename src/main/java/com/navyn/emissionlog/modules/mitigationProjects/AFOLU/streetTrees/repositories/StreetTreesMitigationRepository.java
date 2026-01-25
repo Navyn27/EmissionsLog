@@ -21,4 +21,11 @@ public interface StreetTreesMitigationRepository
     
     // Find by exact year
     Optional<StreetTreesMitigation> findByYear(Integer year);
+
+    // Find by year range for dashboard filtering
+    List<StreetTreesMitigation> findByYearBetweenOrderByYearDesc(Integer startYear, Integer endYear);
+
+    default List<StreetTreesMitigation> findByYearRange(Integer startYear, Integer endYear) {
+        return findByYearBetweenOrderByYearDesc(startYear, endYear);
+    }
 }
