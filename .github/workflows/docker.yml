@@ -72,7 +72,10 @@ jobs:
         run: |
           sshpass -p "${{ secrets.SSH_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd ~/Emissions-log-backend
-            git pull origin main
+            git fetch --all
+            git reset --hard origin/main
+            mkdir -p user-manual
+            chmod 777 user-manual
             docker pull --quiet sugirayvan/emissions-log:sleepysloth
             docker-compose down
             docker-compose up -d
