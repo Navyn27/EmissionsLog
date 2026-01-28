@@ -31,4 +31,4 @@ services:
       - "8088:8088"
     volumes:
       - /root/uploads/logs:/app/logs
-      - /root/uploads/user_manual:/app/user-manual
+      - /root/uploads/user-manual:/app/user-manual

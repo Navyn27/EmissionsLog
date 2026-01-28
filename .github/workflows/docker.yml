@@ -74,8 +74,8 @@ jobs:
             cd ~/Emissions-log-backend
             git fetch --all
             git reset --hard origin/main
-            mkdir -p /root/uploads/user_manual /root/uploads/logs
-            chmod 777 /root/uploads/user_manual /root/uploads/logs
+            mkdir -p /root/uploads/user-manual /root/uploads/logs
+            chmod 777 /root/uploads/user-manual /root/uploads/logs
             docker pull --quiet sugirayvan/emissions-log:sleepysloth
             docker-compose down
             docker-compose up -d
