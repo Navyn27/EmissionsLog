@@ -1,6 +1,8 @@
 volumes:
   postgres_data:
     driver: local
+  user_manual_data:
+    driver: local
 
 services:
   database:
@@ -31,4 +33,4 @@ services:
       - "8088:8088"
     volumes:
       - ./logs:/app/logs
-      - ./user-manual:/app/user-manual
+      - user_manual_data:/app/user-manual
