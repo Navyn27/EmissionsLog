@@ -9,4 +9,3 @@ public interface UserManualService {
     void uploadUserManual(MultipartFile file) throws IOException;
     boolean userManualExists();
 }
-
