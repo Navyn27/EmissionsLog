@@ -16,6 +16,16 @@ IMAGE_NAME="emissions-log:$COMMIT_HASH"
 
 echo "Current commit: $COMMIT_HASH"
 
+# Stop and remove old containers to prevent migration conflicts
+echo "🧹 Stopping old containers..."
+docker-compose down --remove-orphans || true
+
+# Force remove old app container if it exists
+docker rm -f emissions-log 2>/dev/null || true
+
+# Remove old Docker Hub image if it exists
+docker rmi sugirayvan/emissions-log:sleepysloth 2>/dev/null || true
+
 # Check if rebuild is needed
 if docker image inspect $IMAGE_NAME >/dev/null 2>&1; then
   echo "✓ Image $IMAGE_NAME already exists, skipping build"
