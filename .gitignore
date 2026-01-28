@@ -24,3 +24,7 @@ IMPLEMENTATION_GUIDE_AGRICULTURE_UPDATES.md
 src/main/java/com/navyn/emissionlog/modules/transportScenarios/README.md
 src/main/java/com/navyn/emissionlog/modules/transportScenarios/QUICK_REFERENCE.md
 src/main/java/com/navyn/emissionlog/modules/transportScenarios/ARCHITECTURE.md
+
+# User data and logs
+user-manual/
+logs/
