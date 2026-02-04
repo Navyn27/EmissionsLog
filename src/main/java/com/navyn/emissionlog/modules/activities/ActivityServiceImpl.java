@@ -41,6 +41,7 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.adding
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.addingStraw.repository.AddingStrawMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.models.DailySpreadMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.improvedMMS.dailySpread.repository.DailySpreadMitigationRepository;
+import com.navyn.emissionlog.modules.activities.dtos.AppliedEmissionFactorsDto;
 import com.navyn.emissionlog.modules.activities.dtos.*;
 import com.navyn.emissionlog.modules.fuel.Fuel;
 import com.navyn.emissionlog.modules.fuel.FuelData;
@@ -56,7 +57,9 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import com.navyn.emissionlog.modules.activities.repositories.ActivityRepository;
 import com.navyn.emissionlog.modules.activities.repositories.ActivityDataRepository;
 import com.navyn.emissionlog.modules.regions.Region;
@@ -123,6 +126,14 @@ public class ActivityServiceImpl implements ActivityService {
             Fuel fuel = fuelRepository.findById(activity.getFuel()).orElseThrow(() -> new EntityNotFoundException("Fuel with ID " + activity.getFuel() + " not found."));
 
             Region region = regionRepository.findById(activity.getRegion()).orElseThrow(() -> new EntityNotFoundException("Region with ID " + activity.getRegion() + " not found."));
+
+            // Duplicate check: same sector, region, year, fuel (stationary)
+            int year = activity.getActivityYear() != null ? activity.getActivityYear().getYear() : LocalDateTime.now().getYear();
+            if (activityRepository.existsBySectorAndRegionAndYearAndFuelAndActivityType(
+                    activity.getSector(), activity.getRegion(), year, activity.getFuel(), ActivityTypes.STATIONARY)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "A stationary activity already exists for this sector, region, fuel, and year. Please edit the existing record or use a different combination.");
+            }
 
             // Create FuelData
             FuelData fuelData = createFuelData(activity, fuel);
@@ -226,6 +237,55 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
+    public Optional<AppliedEmissionFactorsDto> getEmissionFactorsForActivity(UUID activityId) {
+        Activity activity = activityRepository.findById(activityId).orElse(null);
+        if (activity == null || activity.getActivityData() == null || activity.getActivityData().getActivityType() != ActivityTypes.TRANSPORT) {
+            return Optional.empty();
+        }
+        TransportActivityData transportData = (TransportActivityData) activity.getActivityData();
+        if (transportData.getFuelData() == null || transportData.getFuelData().getFuel() == null) {
+            return Optional.empty();
+        }
+        Fuel fuel = transportData.getFuelData().getFuel();
+        if (transportData.getRegionGroup() == null || transportData.getVehicleEngineType() == null) {
+            return Optional.empty();
+        }
+        Optional<TransportFuelEmissionFactors> factorOpt = transportFuelEmissionFactorsService.findBestMatchWithWildcardSupport(
+                fuel, transportData.getRegionGroup(), transportData.getTransportType(), transportData.getVehicleEngineType());
+        if (factorOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        TransportFuelEmissionFactors f = factorOpt.get();
+        String unitPer = "kg";
+        if (f.getBasis() != null) {
+            switch (f.getBasis()) {
+                case VOLUME:
+                case LIQUID:
+                    unitPer = "L";
+                    break;
+                case ENERGY:
+                    unitPer = "kWh";
+                    break;
+                case GASEOUS:
+                    unitPer = "m³";
+                    break;
+                default:
+                    unitPer = "kg";
+            }
+        }
+        AppliedEmissionFactorsDto dto = AppliedEmissionFactorsDto.builder()
+                .basis(f.getBasis() != null ? f.getBasis().name() : null)
+                .fossilCO2EmissionFactor(f.getFossilCO2EmissionFactor())
+                .biogenicCO2EmissionFactor(f.getBiogenicCO2EmissionFactor())
+                .ch4EmissionFactor(f.getCH4EmissionFactor())
+                .n2OEmissionFactor(f.getN2OEmissionFactor())
+                .unitPer(unitPer)
+                .source("IPCC / National factors")
+                .build();
+        return Optional.of(dto);
+    }
+
+    @Override
     public List<Activity> getAllActivities() {
         return activityRepository.findAll();
     }
@@ -262,6 +322,16 @@ public class ActivityServiceImpl implements ActivityService {
             throw new IllegalArgumentException("Region is not recorded");
         }
 
+        // Duplicate check: same sector, region, year, fuel (transport)
+        int year = activityDto.getActivityYear() != null ? activityDto.getActivityYear().getYear() : LocalDateTime.now().getYear();
+        if (activityRepository.existsBySectorAndRegionAndYearAndFuelAndActivityType(
+                activityDto.getSector(), activityDto.getRegion(), year, activityDto.getFuel(), ActivityTypes.TRANSPORT)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A transport activity already exists for this sector, region, fuel, and year. Please edit the existing record or use a different combination.");
+        }
+
+        validateTransportModeTypeConsistency(activityDto.getTransportMode(), activityDto.getTransportType());
+
         // Create FuelData
         FuelData fuelData = createFuelData(activityDto, fuel.get());
 
@@ -271,6 +341,8 @@ public class ActivityServiceImpl implements ActivityService {
         transportActivityData.setFuelData(fuelData);
         transportActivityData.setModeOfTransport(activityDto.getTransportMode());
         transportActivityData.setTransportType(activityDto.getTransportType());
+        transportActivityData.setRegionGroup(activityDto.getRegionGroup());
+        transportActivityData.setVehicleEngineType(activityDto.getVehicleType());
         transportActivityData = activityDataRepository.save(transportActivityData);
 
         // Create Activity
@@ -333,6 +405,16 @@ public class ActivityServiceImpl implements ActivityService {
             throw new IllegalArgumentException("Region is not recorded");
         }
 
+        // Duplicate check: same sector, region, year, fuel (transport by vehicle)
+        int year = activityDto.getActivityYear() != null ? activityDto.getActivityYear().getYear() : LocalDateTime.now().getYear();
+        if (activityRepository.existsBySectorAndRegionAndYearAndFuelAndActivityType(
+                activityDto.getSector(), activityDto.getRegion(), year, activityDto.getFuel(), ActivityTypes.TRANSPORT)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A transport activity already exists for this sector, region, fuel, and year. Please edit the existing record or use a different combination.");
+        }
+
+        validateTransportModeTypeConsistency(activityDto.getTransportMode(), activityDto.getTransportType());
+
         // Create Vehicle Data with validation
         VehicleData vehicleData = createTransportVehicleData(activityDto, vehicle.get());
 
@@ -345,6 +427,8 @@ public class ActivityServiceImpl implements ActivityService {
         transportActivityData.setFuelData(fuelData);
         transportActivityData.setModeOfTransport(activityDto.getTransportMode());
         transportActivityData.setTransportType(activityDto.getTransportType());
+        transportActivityData.setRegionGroup(activityDto.getRegionGroup());
+        transportActivityData.setVehicleEngineType(activityDto.getVehicleType());
         transportActivityData.setVehicleData(vehicleData);
         transportActivityData = activityDataRepository.save(transportActivityData);
 
@@ -425,6 +509,8 @@ public class ActivityServiceImpl implements ActivityService {
         // Update TransportActivityData
         transportActivityData.setModeOfTransport(activityDto.getTransportMode());
         transportActivityData.setTransportType(activityDto.getTransportType());
+        transportActivityData.setRegionGroup(activityDto.getRegionGroup());
+        transportActivityData.setVehicleEngineType(activityDto.getVehicleType());
         activityDataRepository.save(transportActivityData);
 
         // Update Activity
@@ -514,6 +600,8 @@ public class ActivityServiceImpl implements ActivityService {
         // Update TransportActivityData
         transportActivityData.setModeOfTransport(activityDto.getTransportMode());
         transportActivityData.setTransportType(activityDto.getTransportType());
+        transportActivityData.setRegionGroup(activityDto.getRegionGroup());
+        transportActivityData.setVehicleEngineType(activityDto.getVehicleType());
         activityDataRepository.save(transportActivityData);
 
         // Update Activity
@@ -1052,6 +1140,36 @@ public class ActivityServiceImpl implements ActivityService {
         }
         dashboardData.setTotalCO2EqEmissions(dashboardData.getTotalFossilCO2Emissions() + dashboardData.getTotalBioCO2Emissions() + dashboardData.getTotalCH4Emissions() * GWP.CH4.getValue() + dashboardData.getTotalN2OEmissions() * GWP.N2O.getValue());
         return dashboardData;
+    }
+
+    /**
+     * Validates that transport mode and transport type are logically consistent (e.g. Rail mode with Rail type).
+     * Rejects clearly incompatible combinations (e.g. Rail mode + Aircraft type).
+     */
+    private void validateTransportModeTypeConsistency(TransportModes mode, TransportType type) {
+        if (mode == null || type == null) return;
+        switch (mode) {
+            case RAIL:
+                if (type != TransportType.RAIL && type != TransportType.LOCOMOTIVES && type != TransportType.RAILROAD_EQUIPMENT && type != TransportType.ANY) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Transport type must be Rail, Locomotives, or Railroad Equipment when Transport mode is Rail.");
+                }
+                break;
+            case AIR:
+                if (type != TransportType.AIRCRAFT && type != TransportType.AIRPORT_EQUIPMENT && type != TransportType.ANY) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Transport type must be Aircraft or Airport Equipment when Transport mode is Air.");
+                }
+                break;
+            case SEA:
+                if (type != TransportType.SHIP_AND_BOAT && type != TransportType.MARINE && type != TransportType.ANY) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Transport type must be Ship and Boat or Marine when Transport mode is Sea.");
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     // create FuelData

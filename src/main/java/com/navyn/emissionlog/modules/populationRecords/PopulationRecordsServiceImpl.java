@@ -3,8 +3,10 @@ import com.navyn.emissionlog.Enums.*;
 import com.navyn.emissionlog.modules.populationRecords.dtos.CreatePopulationRecordDto;
 import com.navyn.emissionlog.utils.ExcelReader;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,19 +16,49 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PopulationRecordsServiceImpl implements PopulationRecordService {
 
+    private static final int MIN_YEAR = 1990;
+    private static final int MAX_YEAR = 2030;
+    private static final long MAX_POPULATION_RWANDA = 50_000_000L;
+
     private final PopulationRecordsRepository populationRecordRepository;
 
     @Override
     public PopulationRecords createPopulationRecord(CreatePopulationRecordDto createPopulationRecordDto) {
+        if (createPopulationRecordDto.getYear() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Year is required.");
+        }
+        int year = createPopulationRecordDto.getYear().intValue();
+        if (year < MIN_YEAR || year > MAX_YEAR) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Year must be between " + MIN_YEAR + " and " + MAX_YEAR + ".");
+        }
+        if (createPopulationRecordDto.getPopulation() == null || createPopulationRecordDto.getPopulation() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Population must be a positive number.");
+        }
+        long population = createPopulationRecordDto.getPopulation().longValue();
+        if (population > MAX_POPULATION_RWANDA) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Population exceeds maximum plausible value for Rwanda (" + MAX_POPULATION_RWANDA + ").");
+        }
+        if (populationRecordRepository.existsByYear(year)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A population record already exists for year " + year + ". Please edit the existing record.");
+        }
+        if (createPopulationRecordDto.getNumberOfKigaliHouseholds() != null
+                && createPopulationRecordDto.getNumberOfKigaliHouseholds() < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Number of Kigali households cannot be negative.");
+        }
+
         PopulationRecords populationRecords = new PopulationRecords();
-        populationRecords.setYear(createPopulationRecordDto.getYear().intValue());
-        populationRecords.setPopulation(createPopulationRecordDto.getPopulation().longValue());
+        populationRecords.setYear(year);
+        populationRecords.setPopulation(population);
         populationRecords.setAnnualGrowth(createPopulationRecordDto.getAnnualGrowth());
         populationRecords.setCountry(Countries.RWANDA);
         populationRecords.setGDPMillions(createPopulationRecordDto.getGDPMillions());
         populationRecords.setGDPPerCapita(createPopulationRecordDto.getGDPPerCapita());
         populationRecords.setKigaliGDP(createPopulationRecordDto.getKigaliGDP());
-        populationRecords.setNumberOfKigaliHouseholds(createPopulationRecordDto.getNumberOfKigaliHouseholds().intValue());
+        populationRecords.setNumberOfKigaliHouseholds(createPopulationRecordDto.getNumberOfKigaliHouseholds() != null
+                ? createPopulationRecordDto.getNumberOfKigaliHouseholds().intValue() : 0);
         return populationRecordRepository.save(populationRecords);
     }
 
@@ -75,14 +107,35 @@ public class PopulationRecordsServiceImpl implements PopulationRecordService {
     @Override
     public PopulationRecords updatePopulationRecord(UUID id, CreatePopulationRecordDto createPopulationRecordDto) {
         PopulationRecords populationRecords = populationRecordRepository.findById(id).orElseThrow(() -> new RuntimeException("Population record not found"));
-        populationRecords.setYear(createPopulationRecordDto.getYear().intValue());
-        populationRecords.setPopulation(createPopulationRecordDto.getPopulation().longValue());
+        if (createPopulationRecordDto.getYear() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Year is required.");
+        }
+        int year = createPopulationRecordDto.getYear().intValue();
+        if (year < MIN_YEAR || year > MAX_YEAR) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Year must be between " + MIN_YEAR + " and " + MAX_YEAR + ".");
+        }
+        if (createPopulationRecordDto.getPopulation() == null || createPopulationRecordDto.getPopulation() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Population must be a positive number.");
+        }
+        long population = createPopulationRecordDto.getPopulation().longValue();
+        if (population > MAX_POPULATION_RWANDA) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Population exceeds maximum plausible value for Rwanda (" + MAX_POPULATION_RWANDA + ").");
+        }
+        if (year != populationRecords.getYear() && populationRecordRepository.existsByYear(year)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A population record already exists for year " + year + ". Please use a different year.");
+        }
+        populationRecords.setYear(year);
+        populationRecords.setPopulation(population);
         populationRecords.setAnnualGrowth(createPopulationRecordDto.getAnnualGrowth());
         populationRecords.setCountry(Countries.RWANDA);
         populationRecords.setGDPMillions(createPopulationRecordDto.getGDPMillions());
         populationRecords.setGDPPerCapita(createPopulationRecordDto.getGDPPerCapita());
         populationRecords.setKigaliGDP(createPopulationRecordDto.getKigaliGDP());
-        populationRecords.setNumberOfKigaliHouseholds(createPopulationRecordDto.getNumberOfKigaliHouseholds().intValue());
+        populationRecords.setNumberOfKigaliHouseholds(createPopulationRecordDto.getNumberOfKigaliHouseholds() != null
+                ? createPopulationRecordDto.getNumberOfKigaliHouseholds().intValue() : 0);
         return populationRecordRepository.save(populationRecords);
     }
 
