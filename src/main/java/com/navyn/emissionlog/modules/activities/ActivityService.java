@@ -12,10 +12,12 @@ import com.navyn.emissionlog.modules.activities.dtos.UpdateTransportActivityByFu
 import com.navyn.emissionlog.modules.activities.dtos.UpdateTransportActivityByVehicleDataDto;
 import com.navyn.emissionlog.modules.activities.dtos.UpdateStationaryActivityDto;
 import com.navyn.emissionlog.utils.DashboardData;
+import com.navyn.emissionlog.modules.activities.dtos.AppliedEmissionFactorsDto;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -62,4 +64,10 @@ public interface ActivityService {
     DashboardData getStationaryDashboardSummary(Integer startingYear, Integer endingYear);
     
     List<DashboardData> getStationaryDashboardGraph(Integer startingYear, Integer endingYear);
+
+    /**
+     * Returns the emission factors applied for a transport activity (if resolvable).
+     * Used for transparency and audit. Returns empty for non-transport or when factors cannot be resolved.
+     */
+    Optional<AppliedEmissionFactorsDto> getEmissionFactorsForActivity(UUID activityId);
 }
