@@ -58,14 +58,19 @@ public class TransportEmissionCalculationServiceImpl {
         if (vehicleData.getDistanceTravelled_m() == null || vehicleData.getDistanceTravelled_m() <= 0) {
             throw new IllegalArgumentException("Distance travelled must be greater than zero");
         }
-        
+
+        // For vehicle-distance based activities, always calculate emissions directly from factors.
+        // Do not gate these assignments on existing activity emission values (they start at 0.0).
         activity.setBioCO2Emissions(0.0);
-        if (activity.getCH4Emissions() != 0.0)
-            activity.setCH4Emissions(vehicleData.getDistanceTravelled_m() * factor.getCH4EmissionFactor());
-        if (activity.getFossilCO2Emissions() != 0.0)
-            activity.setFossilCO2Emissions(vehicleData.getDistanceTravelled_m() * factor.getCO2EmissionFactor());
-        if (activity.getN2OEmissions() != 0.0)
-            activity.setN2OEmissions(vehicleData.getDistanceTravelled_m() * factor.getN2OEmissionFactor());
+        activity.setCH4Emissions(
+                vehicleData.getDistanceTravelled_m() * factor.getCH4EmissionFactor()
+        );
+        activity.setFossilCO2Emissions(
+                vehicleData.getDistanceTravelled_m() * factor.getCO2EmissionFactor()
+        );
+        activity.setN2OEmissions(
+                vehicleData.getDistanceTravelled_m() * factor.getN2OEmissionFactor()
+        );
     }
 
     private Double convertToSIUnit(Double amount, Metrics metric, String unit) {
