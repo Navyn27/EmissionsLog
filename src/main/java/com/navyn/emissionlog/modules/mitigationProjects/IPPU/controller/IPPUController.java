@@ -2,14 +2,13 @@ package com.navyn.emissionlog.modules.mitigationProjects.IPPU.controller;
 
 import com.navyn.emissionlog.modules.mitigationProjects.IPPU.dto.IPPUMitigationDTO;
 import com.navyn.emissionlog.modules.mitigationProjects.IPPU.dto.IPPUMitigationResponseDTO;
+import com.navyn.emissionlog.modules.mitigationProjects.IPPU.model.FGas;
 import com.navyn.emissionlog.modules.mitigationProjects.IPPU.model.IPPUMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.IPPU.repository.IFGasRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.IPPU.service.IIPPUService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -32,6 +31,14 @@ import java.util.UUID;
 @Tag(name = "IPPU Mitigation Projects", description = "APIs for managing IPPU (Industrial Processes and Product Use) mitigation projects related to F-gases.")
 public class IPPUController {
     private final IIPPUService iippuService;
+    private final IFGasRepository fGasRepository;
+
+    @GetMapping("/f-gases")
+    @Operation(summary = "Get all F-gases for dropdown",
+            description = "Retrieves the list of F-gases (refrigerants) for use in IPPU mitigation forms.")
+    public ResponseEntity<List<FGas>> getFGases() {
+        return ResponseEntity.ok(fGasRepository.findAllByOrderByNameAsc());
+    }
 
     @Operation(summary = "Create a new IPPU mitigation entry",
             description = "Creates a new IPPU mitigation record, calculating emissions reductions based on the provided data.")

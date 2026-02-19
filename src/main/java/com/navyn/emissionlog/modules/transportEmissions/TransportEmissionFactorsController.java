@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
@@ -41,6 +42,7 @@ import java.util.*;
 @RestController(value = "TransportEmissionFactorsController")
 @RequestMapping("/emissionFactors/transport")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "BearerAuth")
 public class TransportEmissionFactorsController {
 
     private final FuelService fuelService;
@@ -98,7 +100,7 @@ public class TransportEmissionFactorsController {
         }
     }
 
-    @Operation(summary = "Upload transport emission factors by vehicle data", description = "This endpoint uploads transport emission factors in bulk basing on provided vehicle data in an Excel File. The Excel file should contain the following columns: Vehicle, Vehicle Year, Size, Weight Laden, Fuel, Region Group, CO2 Emission Factor, CH4 Emission Factor, N2O Emission Factor.  The uploaded data is processed and saved to the database.")
+    @Operation(summary = "Upload transport emission factors by vehicle data", description = "This endpoint uploads transport emission factors in bulk basing on provided vehicle data in an Excel File. The Excel file should contain the following columns: Vehicle, Vehicle Year, Size, Weight Laden, Fuel, Region Group, CO2 Emission Factor, CH4 Emission Factor, N2O Emission Factor.  The uploaded data is processed and saved to the database." )
     @PostMapping(value = "/uploadByVehicleData", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse> uploadTransportEmissionFactorsByVehicleData(@Parameter(description = "Excel file containing transport emission factors by vehicle data", required = true, content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, schema = @Schema(type = "string", format = "binary"))) @RequestParam("file") MultipartFile file) {
         try {
