@@ -17,10 +17,9 @@ public class IPPUMitigationDTO {
     @Min(value = 1990, message = "Year must be 1990 or later.")
     private int year;
 
-    @Schema(description = "Business-as-usual (BAU) emissions in ktCO2e.", example = "150.5", required = true)
-    @NotNull(message = "BAU value cannot be null.")
+    @Schema(description = "Business-as-usual (BAU) emissions in ktCO2e. Optional; defaults to 0 if not provided.", example = "150.5", required = false)
     @PositiveOrZero(message = "BAU value must be a positive number or zero.")
-    private double bau;
+    private Double bau;
 
     @Schema(description = "Name of the F-gas being mitigated.", example = "Perfluoromethane (PFC-14)", required = true)
     @NotBlank(message = "F-gas name cannot be blank.")
