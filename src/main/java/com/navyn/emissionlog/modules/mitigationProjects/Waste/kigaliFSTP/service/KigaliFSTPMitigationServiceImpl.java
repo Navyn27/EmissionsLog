@@ -55,6 +55,10 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
         dto.setAnnualSludgeTreated(mitigation.getAnnualSludgeTreated());
         dto.setMethanePotential(mitigation.getMethanePotential());
         dto.setCo2ePerM3Sludge(mitigation.getCo2ePerM3Sludge());
+        dto.setCh4ReductionTonnes(mitigation.getCh4ReductionTonnes());
+        dto.setDirectN2oTonnes(mitigation.getDirectN2oTonnes());
+        dto.setIndirectN2oTonnes(mitigation.getIndirectN2oTonnes());
+        dto.setTotalN2oTonnes(mitigation.getTotalN2oTonnes());
         dto.setAnnualEmissionsReductionTonnes(mitigation.getAnnualEmissionsReductionTonnes());
         dto.setAnnualEmissionsReductionKilotonnes(mitigation.getAnnualEmissionsReductionKilotonnes());
         dto.setAdjustedBauEmissionMitigation(mitigation.getAdjustedBauEmissionMitigation());
@@ -113,11 +117,30 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
         Double co2ePerM3Sludge = methanePotential * paramDto.getCh4Gwp100Year();
         mitigation.setCo2ePerM3Sludge(co2ePerM3Sludge);
         
-        // 3. Annual Emissions Reduction (tCO₂e) = annualSludgeTreated (m³) × CO₂e per m³ sludge (kg CO₂e per m³) / 1000
-        Double annualEmissionsReductionTonnes = (dto.getAnnualSludgeTreated() * co2ePerM3Sludge) / 1000;
+        // 3. CH₄ Reduction (tCO₂e) = annualSludgeTreated × CO₂e per m³ sludge / 1000
+        Double ch4ReductionTonnes = (dto.getAnnualSludgeTreated() * co2ePerM3Sludge) / 1000;
+        mitigation.setCh4ReductionTonnes(ch4ReductionTonnes);
+        
+        // 4. N₂O (Revised calculations): Direct (plant) + Indirect (disposal) → Total N2O (tCO₂e)
+        // Factor 44/28 converts kg N2O-N to kg N2O. tCO2e = (volume * TN * EF * 44/28 * GWP) / 1000
+        double n2oFactor = 44.0 / 28.0;
+        Double directN2O = 0.0;
+        Double indirectN2O = 0.0;
+        if (paramDto.getTnKgNPerM3() != null && paramDto.getN2oEfPlant() != null && paramDto.getN2oGwp100Year() != null) {
+            directN2O = (dto.getAnnualSludgeTreated() * paramDto.getTnKgNPerM3() * paramDto.getN2oEfPlant() * n2oFactor * paramDto.getN2oGwp100Year()) / 1000.0;
+        }
+        if (paramDto.getTnKgNPerM3() != null && paramDto.getN2oEfDisposal() != null && paramDto.getN2oGwp100Year() != null) {
+            indirectN2O = (dto.getAnnualSludgeTreated() * paramDto.getTnKgNPerM3() * paramDto.getN2oEfDisposal() * n2oFactor * paramDto.getN2oGwp100Year()) / 1000.0;
+        }
+        mitigation.setDirectN2oTonnes(directN2O);
+        mitigation.setIndirectN2oTonnes(indirectN2O);
+        mitigation.setTotalN2oTonnes(directN2O + indirectN2O);
+        
+        // 5. Total Annual Emissions Reduction (tCO₂e) = CH₄ Reduction + Total N₂O
+        Double annualEmissionsReductionTonnes = ch4ReductionTonnes + directN2O + indirectN2O;
         mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
         
-        // 4. Annual Emissions Reduction (ktCO₂e) = Annual Emissions Reduction (tCO₂e) / 1000
+        // 6. Annual Emissions Reduction (ktCO₂e) = Annual Emissions Reduction (tCO₂e) / 1000
         Double annualEmissionsReductionKilotonnes = annualEmissionsReductionTonnes / 1000;
         mitigation.setAnnualEmissionsReductionKilotonnes(annualEmissionsReductionKilotonnes);
         
@@ -169,15 +192,31 @@ public class KigaliFSTPMitigationServiceImpl implements KigaliFSTPMitigationServ
         Double co2ePerM3Sludge = methanePotential * paramDto.getCh4Gwp100Year();
         mitigation.setCo2ePerM3Sludge(co2ePerM3Sludge);
         
-        // 3. Annual Emissions Reduction (tCO₂e)
-        Double annualEmissionsReductionTonnes = (dto.getAnnualSludgeTreated() * co2ePerM3Sludge) / 1000;
-        mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
+        // 3. CH₄ Reduction (tCO₂e)
+        Double ch4ReductionTonnes = (dto.getAnnualSludgeTreated() * co2ePerM3Sludge) / 1000;
+        mitigation.setCh4ReductionTonnes(ch4ReductionTonnes);
         
-        // 4. Annual Emissions Reduction (ktCO₂e)
+        // 4. N₂O Direct + Indirect
+        double n2oFactor = 44.0 / 28.0;
+        Double directN2O = 0.0;
+        Double indirectN2O = 0.0;
+        if (paramDto.getTnKgNPerM3() != null && paramDto.getN2oEfPlant() != null && paramDto.getN2oGwp100Year() != null) {
+            directN2O = (dto.getAnnualSludgeTreated() * paramDto.getTnKgNPerM3() * paramDto.getN2oEfPlant() * n2oFactor * paramDto.getN2oGwp100Year()) / 1000.0;
+        }
+        if (paramDto.getTnKgNPerM3() != null && paramDto.getN2oEfDisposal() != null && paramDto.getN2oGwp100Year() != null) {
+            indirectN2O = (dto.getAnnualSludgeTreated() * paramDto.getTnKgNPerM3() * paramDto.getN2oEfDisposal() * n2oFactor * paramDto.getN2oGwp100Year()) / 1000.0;
+        }
+        mitigation.setDirectN2oTonnes(directN2O);
+        mitigation.setIndirectN2oTonnes(indirectN2O);
+        mitigation.setTotalN2oTonnes(directN2O + indirectN2O);
+        
+        // 5. Total Annual Emissions Reduction (tCO₂e) and (ktCO₂e)
+        Double annualEmissionsReductionTonnes = ch4ReductionTonnes + directN2O + indirectN2O;
+        mitigation.setAnnualEmissionsReductionTonnes(annualEmissionsReductionTonnes);
         Double annualEmissionsReductionKilotonnes = annualEmissionsReductionTonnes / 1000;
         mitigation.setAnnualEmissionsReductionKilotonnes(annualEmissionsReductionKilotonnes);
         
-        // 5. Adjusted BAU Emission Mitigation
+        // 6. Adjusted BAU Emission Mitigation
         Double adjustedBauEmissionMitigation = bau.getValue() - annualEmissionsReductionKilotonnes;
         mitigation.setAdjustedBauEmissionMitigation(adjustedBauEmissionMitigation);
         

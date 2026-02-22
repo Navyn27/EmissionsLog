@@ -18,5 +18,11 @@ public class KigaliFSTPParameterDto {
     @NotNull(message = "CH₄ GWP (100-year) is required")
     @Positive(message = "CH₄ GWP (100-year) must be positive")
     private Double ch4Gwp100Year; // kg CO2e per kg CH4
+
+    // N2O parameters (optional for backward compatibility; when null, N2O contribution = 0)
+    private Double tnKgNPerM3; // kg N per m³ sludge (Total Nitrogen)
+    private Double n2oEfPlant; // kg N2O-N per kg N (plant)
+    private Double n2oEfDisposal; // kg N2O-N per kg N (disposal)
+    private Double n2oGwp100Year; // kg CO2e per kg N2O
 }
 

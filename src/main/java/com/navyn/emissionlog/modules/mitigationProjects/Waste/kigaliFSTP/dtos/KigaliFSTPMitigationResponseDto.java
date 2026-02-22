@@ -16,7 +16,11 @@ public class KigaliFSTPMitigationResponseDto {
     private Double annualSludgeTreated; // m³/year
     private Double methanePotential; // kg CH4 per m³
     private Double co2ePerM3Sludge; // kg CO2e per m³
-    private Double annualEmissionsReductionTonnes; // tCO2e
+    private Double ch4ReductionTonnes; // tCO2e
+    private Double directN2oTonnes; // tCO2e
+    private Double indirectN2oTonnes; // tCO2e
+    private Double totalN2oTonnes; // tCO2e
+    private Double annualEmissionsReductionTonnes; // tCO2e total = CH4 + N2O
     private Double annualEmissionsReductionKilotonnes; // ktCO2e
     private Double adjustedBauEmissionMitigation; // ktCO2e
     private InterventionInfo projectIntervention;

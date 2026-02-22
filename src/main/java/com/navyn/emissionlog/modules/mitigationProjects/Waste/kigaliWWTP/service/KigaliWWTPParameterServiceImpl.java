@@ -25,6 +25,11 @@ public class KigaliWWTPParameterServiceImpl implements KigaliWWTPParameterServic
         parameter.setMethaneEmissionFactor(dto.getMethaneEmissionFactor());
         parameter.setCodConcentration(dto.getCodConcentration());
         parameter.setCh4Gwp100Year(dto.getCh4Gwp100Year());
+        parameter.setTotalNKgPerM3(dto.getTotalNKgPerM3());
+        parameter.setN2oEfPlant(dto.getN2oEfPlant());
+        parameter.setN2oEfEffluent(dto.getN2oEfEffluent());
+        parameter.setNRemovalEfficiency(dto.getNRemovalEfficiency());
+        parameter.setN2oGwp100Year(dto.getN2oGwp100Year());
         // New parameters are active by default (isActive = true is set in entity)
         parameter.setIsActive(true);
         
@@ -41,6 +46,11 @@ public class KigaliWWTPParameterServiceImpl implements KigaliWWTPParameterServic
         parameter.setMethaneEmissionFactor(dto.getMethaneEmissionFactor());
         parameter.setCodConcentration(dto.getCodConcentration());
         parameter.setCh4Gwp100Year(dto.getCh4Gwp100Year());
+        parameter.setTotalNKgPerM3(dto.getTotalNKgPerM3());
+        parameter.setN2oEfPlant(dto.getN2oEfPlant());
+        parameter.setN2oEfEffluent(dto.getN2oEfEffluent());
+        parameter.setNRemovalEfficiency(dto.getNRemovalEfficiency());
+        parameter.setN2oGwp100Year(dto.getN2oGwp100Year());
         // Preserve isActive status on update
         
         KigaliWWTPParameter updated = repository.save(parameter);
@@ -113,6 +123,11 @@ public class KigaliWWTPParameterServiceImpl implements KigaliWWTPParameterServic
         dto.setMethaneEmissionFactor(entity.getMethaneEmissionFactor());
         dto.setCodConcentration(entity.getCodConcentration());
         dto.setCh4Gwp100Year(entity.getCh4Gwp100Year());
+        dto.setTotalNKgPerM3(entity.getTotalNKgPerM3());
+        dto.setN2oEfPlant(entity.getN2oEfPlant());
+        dto.setN2oEfEffluent(entity.getN2oEfEffluent());
+        dto.setNRemovalEfficiency(entity.getNRemovalEfficiency());
+        dto.setN2oGwp100Year(entity.getN2oGwp100Year());
         // Handle null isActive - default to false for backward compatibility
         dto.setIsActive(entity.getIsActive() != null ? entity.getIsActive() : false);
         dto.setCreatedAt(entity.getCreatedAt());

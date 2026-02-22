@@ -25,6 +25,10 @@ public class KigaliFSTPParameterServiceImpl implements KigaliFSTPParameterServic
         parameter.setMethaneEmissionFactor(dto.getMethaneEmissionFactor());
         parameter.setCodConcentration(dto.getCodConcentration());
         parameter.setCh4Gwp100Year(dto.getCh4Gwp100Year());
+        parameter.setTnKgNPerM3(dto.getTnKgNPerM3());
+        parameter.setN2oEfPlant(dto.getN2oEfPlant());
+        parameter.setN2oEfDisposal(dto.getN2oEfDisposal());
+        parameter.setN2oGwp100Year(dto.getN2oGwp100Year());
         // New parameters are active by default (isActive = true is set in entity)
         parameter.setIsActive(true);
         
@@ -41,6 +45,10 @@ public class KigaliFSTPParameterServiceImpl implements KigaliFSTPParameterServic
         parameter.setMethaneEmissionFactor(dto.getMethaneEmissionFactor());
         parameter.setCodConcentration(dto.getCodConcentration());
         parameter.setCh4Gwp100Year(dto.getCh4Gwp100Year());
+        parameter.setTnKgNPerM3(dto.getTnKgNPerM3());
+        parameter.setN2oEfPlant(dto.getN2oEfPlant());
+        parameter.setN2oEfDisposal(dto.getN2oEfDisposal());
+        parameter.setN2oGwp100Year(dto.getN2oGwp100Year());
         // Preserve isActive status on update
         
         KigaliFSTPParameter updated = repository.save(parameter);
@@ -109,6 +117,10 @@ public class KigaliFSTPParameterServiceImpl implements KigaliFSTPParameterServic
         dto.setMethaneEmissionFactor(entity.getMethaneEmissionFactor());
         dto.setCodConcentration(entity.getCodConcentration());
         dto.setCh4Gwp100Year(entity.getCh4Gwp100Year());
+        dto.setTnKgNPerM3(entity.getTnKgNPerM3());
+        dto.setN2oEfPlant(entity.getN2oEfPlant());
+        dto.setN2oEfDisposal(entity.getN2oEfDisposal());
+        dto.setN2oGwp100Year(entity.getN2oGwp100Year());
         dto.setIsActive(entity.getIsActive());
         dto.setCreatedAt(entity.getCreatedAt());
         dto.setUpdatedAt(entity.getUpdatedAt());

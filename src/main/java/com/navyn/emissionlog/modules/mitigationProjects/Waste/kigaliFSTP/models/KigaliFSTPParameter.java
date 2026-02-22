@@ -26,6 +26,16 @@ public class KigaliFSTPParameter {
     @Column(nullable = false, name = "ch4_gwp_100_year")
     private Double ch4Gwp100Year; // kg CO2e per kg CH4
 
+    // N2O parameters (Revised FSTP/WWTP calculations to include N2O)
+    @Column(name = "tn_kg_n_per_m3")
+    private Double tnKgNPerM3; // kg N per m³ sludge (Total Nitrogen)
+    @Column(name = "n2o_ef_plant")
+    private Double n2oEfPlant; // kg N2O-N per kg N (plant)
+    @Column(name = "n2o_ef_disposal")
+    private Double n2oEfDisposal; // kg N2O-N per kg N (disposal)
+    @Column(name = "n2o_gwp_100_year")
+    private Double n2oGwp100Year; // kg CO2e per kg N2O
+
     @Column(nullable = false)
     private Boolean isActive = true;
 
