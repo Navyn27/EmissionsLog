@@ -12,7 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
 import java.util.List;
 
 @RestController
@@ -54,6 +58,23 @@ public class LandUseEmissionsController {
                 return ResponseEntity.ok(new ApiResponse(true, "Biomass Gain deleted successfully", null));
         }
 
+        @GetMapping("/biomassGain/template")
+        @Operation(summary = "Download Biomass Gain Excel template")
+        public ResponseEntity<byte[]> downloadBiomassGainTemplate() {
+                byte[] bytes = landUseEmissionsService.generateBiomassGainExcelTemplate();
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+                headers.setContentDispositionFormData("attachment", "biomass_gain_template.xlsx");
+                return ResponseEntity.ok().headers(headers).body(bytes);
+        }
+
+        @PostMapping("/biomassGain/excel")
+        @Operation(summary = "Upload Biomass Gain records from Excel")
+        public ResponseEntity<ApiResponse> createBiomassGainFromExcel(@RequestParam("file") MultipartFile file) {
+                Map<String, Object> result = landUseEmissionsService.createBiomassGainFromExcel(file);
+                return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+        }
+
         // DisturbanceBiomassLoss endpoints
         @PostMapping("/disturbanceBiomassLoss")
         public ResponseEntity<DisturbanceBiomassLoss> createDisturbanceBiomassLoss(
@@ -87,6 +108,23 @@ public class LandUseEmissionsController {
         public ResponseEntity<ApiResponse> deleteDisturbanceBiomassLoss(@PathVariable UUID id) {
                 landUseEmissionsService.deleteDisturbanceBiomassLoss(id);
                 return ResponseEntity.ok(new ApiResponse(true, "Disturbance Biomass Loss deleted successfully", null));
+        }
+
+        @GetMapping("/disturbanceBiomassLoss/template")
+        @Operation(summary = "Download Disturbance Biomass Loss Excel template")
+        public ResponseEntity<byte[]> downloadDisturbanceBiomassLossTemplate() {
+                byte[] bytes = landUseEmissionsService.generateDisturbanceBiomassLossExcelTemplate();
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+                headers.setContentDispositionFormData("attachment", "disturbance_biomass_loss_template.xlsx");
+                return ResponseEntity.ok().headers(headers).body(bytes);
+        }
+
+        @PostMapping("/disturbanceBiomassLoss/excel")
+        @Operation(summary = "Upload Disturbance Biomass Loss records from Excel")
+        public ResponseEntity<ApiResponse> createDisturbanceBiomassLossFromExcel(@RequestParam("file") MultipartFile file) {
+                Map<String, Object> result = landUseEmissionsService.createDisturbanceBiomassLossFromExcel(file);
+                return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
         }
 
         // FirewoodRemovalBiomassLoss endpoints
@@ -125,6 +163,23 @@ public class LandUseEmissionsController {
                                 .ok(new ApiResponse(true, "Firewood Removal Biomass Loss deleted successfully", null));
         }
 
+        @GetMapping("/firewoodRemovalBiomassLoss/template")
+        @Operation(summary = "Download Firewood Removal Biomass Loss Excel template")
+        public ResponseEntity<byte[]> downloadFirewoodRemovalBiomassLossTemplate() {
+                byte[] bytes = landUseEmissionsService.generateFirewoodRemovalBiomassLossExcelTemplate();
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+                headers.setContentDispositionFormData("attachment", "firewood_removal_biomass_loss_template.xlsx");
+                return ResponseEntity.ok().headers(headers).body(bytes);
+        }
+
+        @PostMapping("/firewoodRemovalBiomassLoss/excel")
+        @Operation(summary = "Upload Firewood Removal Biomass Loss records from Excel")
+        public ResponseEntity<ApiResponse> createFirewoodRemovalBiomassLossFromExcel(@RequestParam("file") MultipartFile file) {
+                Map<String, Object> result = landUseEmissionsService.createFirewoodRemovalBiomassLossFromExcel(file);
+                return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+        }
+
         // HarvestedBiomassLoss endpoints
         @PostMapping("/harvestedBiomassLoss")
         public ResponseEntity<HarvestedBiomassLoss> createHarvestedBiomassLoss(
@@ -161,6 +216,23 @@ public class LandUseEmissionsController {
                 return ResponseEntity.ok(new ApiResponse(true, "Harvested Biomass Loss deleted successfully", null));
         }
 
+        @GetMapping("/harvestedBiomassLoss/template")
+        @Operation(summary = "Download Harvested Biomass Loss Excel template")
+        public ResponseEntity<byte[]> downloadHarvestedBiomassLossTemplate() {
+                byte[] bytes = landUseEmissionsService.generateHarvestedBiomassLossExcelTemplate();
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+                headers.setContentDispositionFormData("attachment", "harvested_biomass_loss_template.xlsx");
+                return ResponseEntity.ok().headers(headers).body(bytes);
+        }
+
+        @PostMapping("/harvestedBiomassLoss/excel")
+        @Operation(summary = "Upload Harvested Biomass Loss records from Excel")
+        public ResponseEntity<ApiResponse> createHarvestedBiomassLossFromExcel(@RequestParam("file") MultipartFile file) {
+                Map<String, Object> result = landUseEmissionsService.createHarvestedBiomassLossFromExcel(file);
+                return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+        }
+
         // RewettedMineralWetlands endpoints (no LandCategory filter)
         @PostMapping("/rewettedMineralWetlands")
         public ResponseEntity<RewettedMineralWetlands> createRewettedMineralWetlands(
@@ -194,6 +266,29 @@ public class LandUseEmissionsController {
         public ResponseEntity<ApiResponse> deleteRewettedMineralWetlands(@PathVariable UUID id) {
                 landUseEmissionsService.deleteRewettedMineralWetlands(id);
                 return ResponseEntity.ok(new ApiResponse(true, "Rewetted Mineral Wetlands deleted successfully", null));
+        }
+
+        @GetMapping("/rewettedMineralWetlands/template")
+        @Operation(summary = "Download Rewetted Mineral Wetlands Excel template")
+        public ResponseEntity<byte[]> downloadRewettedMineralWetlandsTemplate() {
+                byte[] bytes = landUseEmissionsService.generateRewettedMineralWetlandsExcelTemplate();
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+                headers.setContentDispositionFormData("attachment", "rewetted_mineral_wetlands_template.xlsx");
+                return ResponseEntity.ok().headers(headers).body(bytes);
+        }
+
+        @PostMapping("/rewettedMineralWetlands/excel")
+        @Operation(summary = "Upload Rewetted Mineral Wetlands records from Excel")
+        public ResponseEntity<ApiResponse> createRewettedMineralWetlandsFromExcel(@RequestParam("file") MultipartFile file) {
+                Map<String, Object> result = landUseEmissionsService.createRewettedMineralWetlandsFromExcel(file);
+                return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+        }
+
+        private static String uploadMessage(Map<String, Object> result) {
+                int savedCount = (Integer) result.get("savedCount");
+                int skippedCount = (Integer) result.get("skippedCount");
+                return String.format("Upload completed. %d record(s) saved successfully. %d record(s) skipped.", savedCount, skippedCount);
         }
 
         // ============= MINI DASHBOARDS =============

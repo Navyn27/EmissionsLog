@@ -103,6 +103,7 @@ public class ExcelReader {
         solidWasteDtoMap.put("Sludge Deposited Amount", "sludgeDepositedAmount");
         solidWasteDtoMap.put("MSW Deposited Amount", "mswDepositedAmount");
         solidWasteDtoMap.put("Industry Deposited Amount", "industryDepositedAmount");
+        solidWasteDtoMap.put("Methane Recovery", "methaneRecovery");
     }
 
     private static final Map<String, String> industrialWasteDtoMap = new HashMap<>();
@@ -112,6 +113,19 @@ public class ExcelReader {
         industrialWasteDtoMap.put("Beer Production Amount", "beerProductionAmount");
         industrialWasteDtoMap.put("Dairy Production Amount", "dairyProductionAmount");
         industrialWasteDtoMap.put("Meat And Poultry Production Amount", "meatAndPoultryProductionAmount");
+    }
+
+    private static final Map<String, String> generalWasteDtoMap = new HashMap<>();
+    static {
+        generalWasteDtoMap.put("Year", "year");
+        generalWasteDtoMap.put("Scope", "scope");
+    }
+
+    private static final Map<String, String> wasteWaterExcelDtoMap = new HashMap<>();
+    static {
+        wasteWaterExcelDtoMap.put("Year", "year");
+        wasteWaterExcelDtoMap.put("Scope", "scope");
+        wasteWaterExcelDtoMap.put("EICV Report Year", "eicvReportYear");
     }
 
     // This hashmap is responsible for reading data from zero tillage mitigation
@@ -410,6 +424,135 @@ public class ExcelReader {
         burningToDtoMap.put("Is Eucalyptus Forest", "isEucalyptusForest");
     }
 
+    private static final Map<String, String> syntheticFertilizerToDtoMap = new HashMap<>();
+    static {
+        syntheticFertilizerToDtoMap.put("Year", "year");
+        syntheticFertilizerToDtoMap.put("Crop Type", "cropType");
+        syntheticFertilizerToDtoMap.put("Fertilizer Type", "fertType");
+        syntheticFertilizerToDtoMap.put("Quantity Applied", "qtyApplied");
+    }
+
+    private static final Map<String, String> cropResidueToDtoMap = new HashMap<>();
+    static {
+        cropResidueToDtoMap.put("Year", "year");
+        cropResidueToDtoMap.put("Land Use Category", "landUseCategory");
+        cropResidueToDtoMap.put("Crop Type", "cropType");
+        cropResidueToDtoMap.put("Total Area Harvested", "totalAreaHarvested");
+        cropResidueToDtoMap.put("Harvested Fresh Crop Yield", "harvestedFreshCropYield");
+        cropResidueToDtoMap.put("AG Residues Dry Matter", "AGResiduesDryMatter");
+        cropResidueToDtoMap.put("N In Crop Residues Returned", "NInCropResiduesReturned");
+    }
+
+    private static final Map<String, String> leachingToDtoMap = new HashMap<>();
+    static {
+        leachingToDtoMap.put("Year", "year");
+        leachingToDtoMap.put("MMS", "mms");
+        leachingToDtoMap.put("Livestock Species", "livestockSpecies");
+        leachingToDtoMap.put("Number Of Animals", "numberOfAnimals");
+    }
+
+    private static final Map<String, String> leachingAndRunoffToDtoMap = new HashMap<>();
+    static {
+        leachingAndRunoffToDtoMap.put("Year", "year");
+        leachingAndRunoffToDtoMap.put("Land Use Category", "landUseCategory");
+        leachingAndRunoffToDtoMap.put("Synthetic N Applied", "syntheticNApplied");
+        leachingAndRunoffToDtoMap.put("Organic Soil Additions", "organicSoilAdditions");
+        leachingAndRunoffToDtoMap.put("Excretions Deposited By Grazing Animals", "excretionsDepositedByGrazingAnimals");
+        leachingAndRunoffToDtoMap.put("N In Crop Residues", "nInCropResidues");
+        leachingAndRunoffToDtoMap.put("N Mineralized In Mineral Soils", "nMineralizedInMineralSoils");
+    }
+
+    private static final Map<String, String> mineralSoilToDtoMap = new HashMap<>();
+    static {
+        mineralSoilToDtoMap.put("Year", "year");
+        mineralSoilToDtoMap.put("Initial Land Use", "initialLandUse");
+        mineralSoilToDtoMap.put("Land Use In Reporting Year", "landUseInReportingYear");
+        mineralSoilToDtoMap.put("AV Loss Of Soil C", "avLossOfSoilC");
+    }
+
+    private static final Map<String, String> volatilizationToDtoMap = new HashMap<>();
+    static {
+        volatilizationToDtoMap.put("Year", "year");
+        volatilizationToDtoMap.put("MMS", "mms");
+        volatilizationToDtoMap.put("Livestock Species", "livestockSpecies");
+        volatilizationToDtoMap.put("Animal Population", "animalPopulation");
+    }
+
+    private static final Map<String, String> pastureExcretionToDtoMap = new HashMap<>();
+    static {
+        pastureExcretionToDtoMap.put("Year", "year");
+        pastureExcretionToDtoMap.put("MMS", "mms");
+        pastureExcretionToDtoMap.put("Livestock Species", "livestockSpecies");
+        pastureExcretionToDtoMap.put("Animal Population", "animalPopulation");
+    }
+
+    private static final Map<String, String> atmosphericDepositionToDtoMap = new HashMap<>();
+    static {
+        atmosphericDepositionToDtoMap.put("Year", "year");
+        atmosphericDepositionToDtoMap.put("Land Use Category", "landUseCategory");
+        atmosphericDepositionToDtoMap.put("Synthetic N That Volatilizes", "syntheticNThatVolatilizes");
+        atmosphericDepositionToDtoMap.put("Organic N Soil Additions", "organicNSoilAdditions");
+        atmosphericDepositionToDtoMap.put("Excretions Deposited By Grazing Animals", "excretionsDepositedByGrazingAnimals");
+    }
+
+    private static final Map<String, String> animalManureAndCompostToDtoMap = new HashMap<>();
+    static {
+        animalManureAndCompostToDtoMap.put("Year", "year");
+        animalManureAndCompostToDtoMap.put("Population", "population");
+        animalManureAndCompostToDtoMap.put("Species", "species");
+    }
+
+    private static final Map<String, String> biomassGainToDtoMap = new HashMap<>();
+    static {
+        biomassGainToDtoMap.put("Year", "year");
+        biomassGainToDtoMap.put("Land Category", "landCategory");
+        biomassGainToDtoMap.put("Forest Area", "forestArea");
+    }
+
+    private static final Map<String, String> disturbanceBiomassLossToDtoMap = new HashMap<>();
+    static {
+        disturbanceBiomassLossToDtoMap.put("Year", "year");
+        disturbanceBiomassLossToDtoMap.put("Land Category", "landCategory");
+        disturbanceBiomassLossToDtoMap.put("Affected Forest Area", "affectedForestArea");
+        disturbanceBiomassLossToDtoMap.put("Area Affected By Disturbance", "areaAffectedByDisturbance");
+    }
+
+    private static final Map<String, String> harvestedBiomassLossToDtoMap = new HashMap<>();
+    static {
+        harvestedBiomassLossToDtoMap.put("Year", "year");
+        harvestedBiomassLossToDtoMap.put("Land Category", "landCategory");
+        harvestedBiomassLossToDtoMap.put("Harvested Wood", "harvestedWood");
+    }
+
+    private static final Map<String, String> firewoodRemovalBiomassLossToDtoMap = new HashMap<>();
+    static {
+        firewoodRemovalBiomassLossToDtoMap.put("Year", "year");
+        firewoodRemovalBiomassLossToDtoMap.put("Land Category", "landCategory");
+        firewoodRemovalBiomassLossToDtoMap.put("Removed Firewood Amount", "removedFirewoodAmount");
+    }
+
+    private static final Map<String, String> rewettedMineralWetlandsToDtoMap = new HashMap<>();
+    static {
+        rewettedMineralWetlandsToDtoMap.put("Year", "year");
+        rewettedMineralWetlandsToDtoMap.put("Area Of Rewetted Wetlands", "areaOfRewettedWetlands");
+    }
+
+    private static final Map<String, String> rooftopMitigationToDtoMap = new HashMap<>();
+    static {
+        rooftopMitigationToDtoMap.put("Year", "year");
+        rooftopMitigationToDtoMap.put("Installed Unit Per Year", "installedUnitPerYear");
+        rooftopMitigationToDtoMap.put("Solar PV Capacity", "solarPVCapacity");
+        rooftopMitigationToDtoMap.put("Project Intervention Id", "projectInterventionId");
+    }
+
+    private static final Map<String, String> avoidedElectricityProductionToDtoMap = new HashMap<>();
+    static {
+        avoidedElectricityProductionToDtoMap.put("Year", "year");
+        avoidedElectricityProductionToDtoMap.put("Units Installed This Year", "unitsInstalledThisYear");
+        avoidedElectricityProductionToDtoMap.put("Average Water Heat", "averageWaterHeat");
+        avoidedElectricityProductionToDtoMap.put("Project Intervention Id", "projectInterventionId");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -579,6 +722,35 @@ public class ExcelReader {
                 // = Blank,
                 // Row 2 = Headers
                 return 2;
+            case SYNTHETIC_FERTILIZER_EMISSIONS:
+            case CROP_RESIDUE_EMISSIONS:
+            case LEACHING_EMISSIONS:
+            case LEACHING_AND_RUNOFF_EMISSIONS:
+            case MINERAL_SOIL_EMISSIONS:
+            case VOLATILIZATION_EMISSIONS:
+            case PASTURE_EXCRETION_EMISSIONS:
+            case ATMOSPHERIC_DEPOSITION_EMISSIONS:
+            case ANIMAL_MANURE_AND_COMPOST_EMISSIONS:
+                return 2;
+            case BIOMASS_GAIN:
+            case DISTURBANCE_BIOMASS_LOSS:
+            case HARVESTED_BIOMASS_LOSS:
+            case FIREWOOD_REMOVAL_BIOMASS_LOSS:
+            case REWETTED_MINERAL_WETLANDS:
+                return 2;
+            case ROOFTOP_MITIGATION:
+            case AVOIDED_ELECTRICITY_PRODUCTION:
+                return 2;
+            case SOLID_WASTE_STARTER_DATA:
+                // Solid Waste template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
+            case INDUSTRIAL_WASTE_STARTER_DATA:
+                return 2;
+            case BIO_TREATED_WASTE:
+            case BURNT_WASTE:
+            case INCINERATED_WASTE:
+            case WASTE_WATER_EXCEL:
+                return 2;
             default:
                 // Other templates have headers at row 0
                 return 0;
@@ -692,6 +864,18 @@ public class ExcelReader {
                     } else {
                         throw new IllegalArgumentException(
                                 "Cell type is not boolean or string for Boolean field " + field.getName());
+                    }
+                    break;
+                case "UUID":
+                    if (cellType == CellType.STRING) {
+                        String uuidStr = cell.getStringCellValue().trim();
+                        if (uuidStr.isEmpty()) break;
+                        field.set(dto, java.util.UUID.fromString(uuidStr));
+                    } else if (cellType == CellType.BLANK) {
+                        break;
+                    } else {
+                        throw new IllegalArgumentException(
+                                "Cell type is not string or blank for UUID field " + field.getName());
                     }
                     break;
                 default:
@@ -821,6 +1005,14 @@ public class ExcelReader {
                 return "Solid Waste Starter Data";
             case INDUSTRIAL_WASTE_STARTER_DATA:
                 return "Industrial Waste Starter Data";
+            case BIO_TREATED_WASTE:
+                return "Bio Treated Waste";
+            case BURNT_WASTE:
+                return "Burnt Waste";
+            case INCINERATED_WASTE:
+                return "Incineration Waste";
+            case WASTE_WATER_EXCEL:
+                return "Waste Water";
             case ZERO_TILLAGE_MITIGATION:
                 return "Zero Tillage Mitigation";
             case WETLAND_PARKS_MITIGATION:
@@ -877,6 +1069,38 @@ public class ExcelReader {
                 return "Rice Cultivation Emissions";
             case BURNING_EMISSIONS:
                 return "Burning Emissions";
+            case SYNTHETIC_FERTILIZER_EMISSIONS:
+                return "Synthetic Fertilizer Emissions";
+            case CROP_RESIDUE_EMISSIONS:
+                return "Crop Residue Emissions";
+            case LEACHING_EMISSIONS:
+                return "Leaching Emissions";
+            case LEACHING_AND_RUNOFF_EMISSIONS:
+                return "Leaching And Runoff Emissions";
+            case MINERAL_SOIL_EMISSIONS:
+                return "Mineral Soil Emissions";
+            case VOLATILIZATION_EMISSIONS:
+                return "Volatilization Emissions";
+            case PASTURE_EXCRETION_EMISSIONS:
+                return "Pasture Excretion Emissions";
+            case ATMOSPHERIC_DEPOSITION_EMISSIONS:
+                return "Atmospheric Deposition Emissions";
+            case ANIMAL_MANURE_AND_COMPOST_EMISSIONS:
+                return "Animal Manure And Compost Emissions";
+            case BIOMASS_GAIN:
+                return "Biomass Gain";
+            case DISTURBANCE_BIOMASS_LOSS:
+                return "Disturbance Biomass Loss";
+            case HARVESTED_BIOMASS_LOSS:
+                return "Harvested Biomass Loss";
+            case FIREWOOD_REMOVAL_BIOMASS_LOSS:
+                return "Firewood Removal Biomass Loss";
+            case REWETTED_MINERAL_WETLANDS:
+                return "Rewetted Mineral Wetlands";
+            case ROOFTOP_MITIGATION:
+                return "Rooftop Mitigation";
+            case AVOIDED_ELECTRICITY_PRODUCTION:
+                return "Avoided Electricity Production";
             default:
                 return "";
         }
@@ -898,6 +1122,12 @@ public class ExcelReader {
                 return solidWasteDtoMap.get(header);
             case INDUSTRIAL_WASTE_STARTER_DATA:
                 return industrialWasteDtoMap.get(header);
+            case BIO_TREATED_WASTE:
+            case BURNT_WASTE:
+            case INCINERATED_WASTE:
+                return generalWasteDtoMap.get(header);
+            case WASTE_WATER_EXCEL:
+                return wasteWaterExcelDtoMap.get(header);
             case ZERO_TILLAGE_MITIGATION:
                 return zeroTillageToDtoMap.get(header);
             case WETLAND_PARKS_MITIGATION:
@@ -954,6 +1184,38 @@ public class ExcelReader {
                 return riceCultivationToDtoMap.get(header);
             case BURNING_EMISSIONS:
                 return burningToDtoMap.get(header);
+            case SYNTHETIC_FERTILIZER_EMISSIONS:
+                return syntheticFertilizerToDtoMap.get(header);
+            case CROP_RESIDUE_EMISSIONS:
+                return cropResidueToDtoMap.get(header);
+            case LEACHING_EMISSIONS:
+                return leachingToDtoMap.get(header);
+            case LEACHING_AND_RUNOFF_EMISSIONS:
+                return leachingAndRunoffToDtoMap.get(header);
+            case MINERAL_SOIL_EMISSIONS:
+                return mineralSoilToDtoMap.get(header);
+            case VOLATILIZATION_EMISSIONS:
+                return volatilizationToDtoMap.get(header);
+            case PASTURE_EXCRETION_EMISSIONS:
+                return pastureExcretionToDtoMap.get(header);
+            case ATMOSPHERIC_DEPOSITION_EMISSIONS:
+                return atmosphericDepositionToDtoMap.get(header);
+            case ANIMAL_MANURE_AND_COMPOST_EMISSIONS:
+                return animalManureAndCompostToDtoMap.get(header);
+            case BIOMASS_GAIN:
+                return biomassGainToDtoMap.get(header);
+            case DISTURBANCE_BIOMASS_LOSS:
+                return disturbanceBiomassLossToDtoMap.get(header);
+            case HARVESTED_BIOMASS_LOSS:
+                return harvestedBiomassLossToDtoMap.get(header);
+            case FIREWOOD_REMOVAL_BIOMASS_LOSS:
+                return firewoodRemovalBiomassLossToDtoMap.get(header);
+            case REWETTED_MINERAL_WETLANDS:
+                return rewettedMineralWetlandsToDtoMap.get(header);
+            case ROOFTOP_MITIGATION:
+                return rooftopMitigationToDtoMap.get(header);
+            case AVOIDED_ELECTRICITY_PRODUCTION:
+                return avoidedElectricityProductionToDtoMap.get(header);
             default:
                 return "";
         }

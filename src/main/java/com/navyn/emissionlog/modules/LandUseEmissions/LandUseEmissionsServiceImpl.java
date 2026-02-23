@@ -1,23 +1,29 @@
 package com.navyn.emissionlog.modules.LandUseEmissions;
 
 import com.navyn.emissionlog.Enums.GWP;
+import com.navyn.emissionlog.Enums.ExcelType;
 import com.navyn.emissionlog.Enums.LandUse.LandCategory;
 import com.navyn.emissionlog.Enums.LandUse.LandUseConstants;
 import com.navyn.emissionlog.modules.LandUseEmissions.Dtos.*;
 import com.navyn.emissionlog.modules.LandUseEmissions.Repositories.*;
 import com.navyn.emissionlog.modules.LandUseEmissions.models.*;
 import com.navyn.emissionlog.utils.DashboardData;
+import com.navyn.emissionlog.utils.ExcelReader;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.Year;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import jakarta.persistence.EntityNotFoundException;
 
 import static com.navyn.emissionlog.utils.Specifications.LandUseEmissionsSpecification.*;
@@ -341,6 +347,206 @@ public class LandUseEmissionsServiceImpl implements LandUseEmissionsService {
                         throw new EntityNotFoundException("Rewetted Mineral Wetlands not found with id: " + id);
                 }
                 rewettedMineralWetlandsRepository.deleteById(id);
+        }
+
+        @Override
+        public byte[] generateBiomassGainExcelTemplate() {
+                return createLandUseTemplate("Biomass Gain", "Biomass Gain Template",
+                                new String[] { "Year", "Land Category", "Forest Area" },
+                                new Object[] { 2024, "FOREST_LAND", 100.0 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createBiomassGainFromExcel(MultipartFile file) {
+                return createLandUseFromExcel(file, ExcelType.BIOMASS_GAIN, BiomassGainDto.class,
+                                dto -> createBiomassGain((BiomassGainDto) dto),
+                                dto -> ((BiomassGainDto) dto).getYear() == null || ((BiomassGainDto) dto).getLandCategory() == null || ((BiomassGainDto) dto).getForestArea() <= 0,
+                                dto -> ((BiomassGainDto) dto).getYear() + "_" + ((BiomassGainDto) dto).getLandCategory().name());
+        }
+
+        @Override
+        public byte[] generateDisturbanceBiomassLossExcelTemplate() {
+                return createLandUseTemplate("Disturbance Biomass Loss", "Disturbance Biomass Loss Template",
+                                new String[] { "Year", "Land Category", "Affected Forest Area", "Area Affected By Disturbance" },
+                                new Object[] { 2024, "FOREST_LAND", 50.0, 25.0 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createDisturbanceBiomassLossFromExcel(MultipartFile file) {
+                return createLandUseFromExcel(file, ExcelType.DISTURBANCE_BIOMASS_LOSS, DisturbanceBiomassLossDto.class,
+                                dto -> createDisturbanceBiomassLoss((DisturbanceBiomassLossDto) dto),
+                                dto -> ((DisturbanceBiomassLossDto) dto).getYear() == null || ((DisturbanceBiomassLossDto) dto).getLandCategory() == null || ((DisturbanceBiomassLossDto) dto).getAreaAffectedByDisturbance() <= 0,
+                                dto -> ((DisturbanceBiomassLossDto) dto).getYear() + "_" + ((DisturbanceBiomassLossDto) dto).getLandCategory().name());
+        }
+
+        @Override
+        public byte[] generateHarvestedBiomassLossExcelTemplate() {
+                return createLandUseTemplate("Harvested Biomass Loss", "Harvested Biomass Loss Template",
+                                new String[] { "Year", "Land Category", "Harvested Wood" },
+                                new Object[] { 2024, "FOREST_LAND", 30.0 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createHarvestedBiomassLossFromExcel(MultipartFile file) {
+                return createLandUseFromExcel(file, ExcelType.HARVESTED_BIOMASS_LOSS, HarvestedBiomassLossDto.class,
+                                dto -> createHarvestedBiomassLoss((HarvestedBiomassLossDto) dto),
+                                dto -> ((HarvestedBiomassLossDto) dto).getYear() == null || ((HarvestedBiomassLossDto) dto).getLandCategory() == null,
+                                dto -> ((HarvestedBiomassLossDto) dto).getYear() + "_" + ((HarvestedBiomassLossDto) dto).getLandCategory().name());
+        }
+
+        @Override
+        public byte[] generateFirewoodRemovalBiomassLossExcelTemplate() {
+                return createLandUseTemplate("Firewood Removal Biomass Loss", "Firewood Removal Biomass Loss Template",
+                                new String[] { "Year", "Land Category", "Removed Firewood Amount" },
+                                new Object[] { 2024, "FOREST_LAND", 20.0 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createFirewoodRemovalBiomassLossFromExcel(MultipartFile file) {
+                return createLandUseFromExcel(file, ExcelType.FIREWOOD_REMOVAL_BIOMASS_LOSS, FirewoodRemovalBiomassLossDto.class,
+                                dto -> createFirewoodRemovalBiomassLoss((FirewoodRemovalBiomassLossDto) dto),
+                                dto -> ((FirewoodRemovalBiomassLossDto) dto).getYear() == null || ((FirewoodRemovalBiomassLossDto) dto).getLandCategory() == null,
+                                dto -> ((FirewoodRemovalBiomassLossDto) dto).getYear() + "_" + ((FirewoodRemovalBiomassLossDto) dto).getLandCategory().name());
+        }
+
+        @Override
+        public byte[] generateRewettedMineralWetlandsExcelTemplate() {
+                return createLandUseTemplate("Rewetted Mineral Wetlands", "Rewetted Mineral Wetlands Template",
+                                new String[] { "Year", "Area Of Rewetted Wetlands" },
+                                new Object[] { 2024, 10.0 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createRewettedMineralWetlandsFromExcel(MultipartFile file) {
+                return createLandUseFromExcel(file, ExcelType.REWETTED_MINERAL_WETLANDS, RewettedMineralWetlandsDto.class,
+                                dto -> createRewettedMineralWetlands((RewettedMineralWetlandsDto) dto),
+                                dto -> ((RewettedMineralWetlandsDto) dto).getYear() == null || ((RewettedMineralWetlandsDto) dto).getAreaOfRewettedWetlands() <= 0,
+                                dto -> ((RewettedMineralWetlandsDto) dto).getYear() + "_" + ((RewettedMineralWetlandsDto) dto).getAreaOfRewettedWetlands());
+        }
+
+        private byte[] createLandUseTemplate(String sheetName, String title, String[] headers, Object[] exampleRow) {
+                try (Workbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                        Sheet sheet = workbook.createSheet(sheetName);
+                        CellStyle titleStyle = workbook.createCellStyle();
+                        Font titleFont = workbook.createFont();
+                        titleFont.setBold(true);
+                        titleFont.setFontHeightInPoints((short) 18);
+                        titleStyle.setFont(titleFont);
+                        titleStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+                        titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        titleStyle.setAlignment(HorizontalAlignment.CENTER);
+                        CellStyle headerStyle = workbook.createCellStyle();
+                        Font headerFont = workbook.createFont();
+                        headerFont.setBold(true);
+                        headerFont.setColor(IndexedColors.WHITE.getIndex());
+                        headerStyle.setFont(headerFont);
+                        headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+                        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+                        CellStyle dataStyle = workbook.createCellStyle();
+                        dataStyle.setAlignment(HorizontalAlignment.LEFT);
+                        int rowIdx = 0;
+                        Row titleRow = sheet.createRow(rowIdx++);
+                        titleRow.createCell(0).setCellValue(title);
+                        titleRow.getCell(0).setCellStyle(titleStyle);
+                        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, headers.length - 1));
+                        rowIdx++;
+                        Row headerRow = sheet.createRow(rowIdx++);
+                        for (int i = 0; i < headers.length; i++) {
+                                Cell c = headerRow.createCell(i);
+                                c.setCellValue(headers[i]);
+                                c.setCellStyle(headerStyle);
+                        }
+                        Row dataRow = sheet.createRow(rowIdx++);
+                        for (int i = 0; i < exampleRow.length; i++) {
+                                Cell c = dataRow.createCell(i);
+                                if (exampleRow[i] instanceof Number) {
+                                        c.setCellValue(((Number) exampleRow[i]).doubleValue());
+                                } else {
+                                        c.setCellValue(String.valueOf(exampleRow[i]));
+                                }
+                                c.setCellStyle(dataStyle);
+                        }
+                        for (int i = 0; i < headers.length; i++) {
+                                sheet.autoSizeColumn(i);
+                        }
+                        workbook.write(out);
+                        return out.toByteArray();
+                } catch (IOException e) {
+                        throw new RuntimeException("Error generating Excel template", e);
+                }
+        }
+
+        @SuppressWarnings("unchecked")
+        private <T> Map<String, Object> createLandUseFromExcel(MultipartFile file, ExcelType excelType, Class<T> dtoClass,
+                        java.util.function.Function<T, ?> createFn,
+                        java.util.function.Predicate<T> isInvalid,
+                        java.util.function.Function<T, String> keyFn) {
+                List<Object> savedRecords = new ArrayList<>();
+                List<Map<String, Object>> skippedRows = new ArrayList<>();
+                Set<String> processedKeys = new HashSet<>();
+                int totalProcessed = 0;
+                try {
+                        List<T> dtos = ExcelReader.readExcel(file.getInputStream(), dtoClass, excelType);
+                        for (int i = 0; i < dtos.size(); i++) {
+                                T dto = dtos.get(i);
+                                totalProcessed++;
+                                int excelRowNumber = i + 1 + 2;
+                                int year = getLandUseYear(dto);
+                                if (isInvalid.test(dto)) {
+                                        skippedRows.add(skipRow(excelRowNumber, year, "Missing required fields"));
+                                        continue;
+                                }
+                                if (year != 0 && (year < 1900 || year > 2100)) {
+                                        skippedRows.add(skipRow(excelRowNumber, year, "Year must be between 1900 and 2100"));
+                                        continue;
+                                }
+                                String key = keyFn.apply(dto);
+                                if (processedKeys.contains(key)) {
+                                        skippedRows.add(skipRow(excelRowNumber, year, "Duplicate row in file"));
+                                        continue;
+                                }
+                                processedKeys.add(key);
+                                try {
+                                        savedRecords.add(createFn.apply(dto));
+                                } catch (RuntimeException e) {
+                                        skippedRows.add(skipRow(excelRowNumber, year, e.getMessage()));
+                                }
+                        }
+                        Map<String, Object> result = new HashMap<>();
+                        result.put("saved", savedRecords);
+                        result.put("savedCount", savedRecords.size());
+                        result.put("skippedCount", skippedRows.size());
+                        result.put("skippedRows", skippedRows);
+                        result.put("totalProcessed", totalProcessed);
+                        return result;
+                } catch (IOException e) {
+                        throw new RuntimeException("Incorrect template. Please download the correct template and try again.", e);
+                } catch (Exception e) {
+                        throw new RuntimeException(e.getMessage() != null ? e.getMessage() : "Error processing Excel file.", e);
+                }
+        }
+
+        private int getLandUseYear(Object dto) {
+                if (dto instanceof BiomassGainDto) return ((BiomassGainDto) dto).getYear() != null ? ((BiomassGainDto) dto).getYear() : 0;
+                if (dto instanceof DisturbanceBiomassLossDto) return ((DisturbanceBiomassLossDto) dto).getYear() != null ? ((DisturbanceBiomassLossDto) dto).getYear() : 0;
+                if (dto instanceof HarvestedBiomassLossDto) return ((HarvestedBiomassLossDto) dto).getYear() != null ? ((HarvestedBiomassLossDto) dto).getYear() : 0;
+                if (dto instanceof FirewoodRemovalBiomassLossDto) return ((FirewoodRemovalBiomassLossDto) dto).getYear() != null ? ((FirewoodRemovalBiomassLossDto) dto).getYear() : 0;
+                if (dto instanceof RewettedMineralWetlandsDto) return ((RewettedMineralWetlandsDto) dto).getYear() != null ? ((RewettedMineralWetlandsDto) dto).getYear() : 0;
+                return 0;
+        }
+
+        private static Map<String, Object> skipRow(int row, int year, String reason) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("row", row);
+                m.put("year", year);
+                m.put("reason", reason);
+                return m;
         }
 
         // ============= MINI DASHBOARDS =============

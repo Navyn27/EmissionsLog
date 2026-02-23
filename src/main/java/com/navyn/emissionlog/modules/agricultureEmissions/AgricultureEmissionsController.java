@@ -323,6 +323,165 @@ public class AgricultureEmissionsController {
         return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
 
+    @GetMapping("/syntheticFertilizerEmissions/template")
+    @Operation(summary = "Download Synthetic Fertilizer Emissions Excel template")
+    public ResponseEntity<byte[]> downloadSyntheticFertilizerExcelTemplate() {
+        byte[] templateBytes = agricultureEmissionsService.generateSyntheticFertilizerExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "synthetic_fertilizer_emissions_template.xlsx");
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @PostMapping("/syntheticFertilizerEmissions/excel")
+    @Operation(summary = "Upload Synthetic Fertilizer Emissions records from Excel file")
+    public ResponseEntity<ApiResponse> createSyntheticFertilizerEmissionsFromExcel(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = agricultureEmissionsService.createSyntheticFertilizerEmissionsFromExcel(file);
+        return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+    }
+
+    @GetMapping("/cropResidueEmissions/template")
+    @Operation(summary = "Download Crop Residue Emissions Excel template")
+    public ResponseEntity<byte[]> downloadCropResidueExcelTemplate() {
+        byte[] templateBytes = agricultureEmissionsService.generateCropResidueExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "crop_residue_emissions_template.xlsx");
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @PostMapping("/cropResidueEmissions/excel")
+    @Operation(summary = "Upload Crop Residue Emissions records from Excel file")
+    public ResponseEntity<ApiResponse> createCropResidueEmissionsFromExcel(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = agricultureEmissionsService.createCropResidueEmissionsFromExcel(file);
+        return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+    }
+
+    @GetMapping("/leachingEmissions/template")
+    @Operation(summary = "Download Leaching Emissions Excel template")
+    public ResponseEntity<byte[]> downloadLeachingExcelTemplate() {
+        byte[] templateBytes = agricultureEmissionsService.generateLeachingExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "leaching_emissions_template.xlsx");
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @PostMapping("/leachingEmissions/excel")
+    @Operation(summary = "Upload Leaching Emissions records from Excel file")
+    public ResponseEntity<ApiResponse> createLeachingEmissionsFromExcel(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = agricultureEmissionsService.createLeachingEmissionsFromExcel(file);
+        return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+    }
+
+    @GetMapping("/leachingAndRunoffEmissions/template")
+    @Operation(summary = "Download Leaching And Runoff Emissions Excel template")
+    public ResponseEntity<byte[]> downloadLeachingAndRunoffExcelTemplate() {
+        byte[] templateBytes = agricultureEmissionsService.generateLeachingAndRunoffExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "leaching_and_runoff_emissions_template.xlsx");
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @PostMapping("/leachingAndRunoffEmissions/excel")
+    @Operation(summary = "Upload Leaching And Runoff Emissions records from Excel file")
+    public ResponseEntity<ApiResponse> createLeachingAndRunoffEmissionsFromExcel(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = agricultureEmissionsService.createLeachingAndRunoffEmissionsFromExcel(file);
+        return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+    }
+
+    @GetMapping("/mineralSoilEmissions/template")
+    @Operation(summary = "Download Mineral Soil Emissions Excel template")
+    public ResponseEntity<byte[]> downloadMineralSoilExcelTemplate() {
+        byte[] templateBytes = agricultureEmissionsService.generateMineralSoilExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "mineral_soil_emissions_template.xlsx");
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @PostMapping("/mineralSoilEmissions/excel")
+    @Operation(summary = "Upload Mineral Soil Emissions records from Excel file")
+    public ResponseEntity<ApiResponse> createMineralSoilEmissionsFromExcel(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = agricultureEmissionsService.createMineralSoilEmissionsFromExcel(file);
+        return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+    }
+
+    @GetMapping("/volatilizationEmissions/template")
+    @Operation(summary = "Download Volatilization Emissions Excel template")
+    public ResponseEntity<byte[]> downloadVolatilizationExcelTemplate() {
+        byte[] templateBytes = agricultureEmissionsService.generateVolatilizationExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "volatilization_emissions_template.xlsx");
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @PostMapping("/volatilizationEmissions/excel")
+    @Operation(summary = "Upload Volatilization Emissions records from Excel file")
+    public ResponseEntity<ApiResponse> createVolatilizationEmissionsFromExcel(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = agricultureEmissionsService.createVolatilizationEmissionsFromExcel(file);
+        return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+    }
+
+    @GetMapping("/pastureExcretionEmissions/template")
+    @Operation(summary = "Download Pasture Excretion Emissions Excel template")
+    public ResponseEntity<byte[]> downloadPastureExcretionExcelTemplate() {
+        byte[] templateBytes = agricultureEmissionsService.generatePastureExcretionExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "pasture_excretion_emissions_template.xlsx");
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @PostMapping("/pastureExcretionEmissions/excel")
+    @Operation(summary = "Upload Pasture Excretion Emissions records from Excel file")
+    public ResponseEntity<ApiResponse> createPastureExcretionEmissionsFromExcel(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = agricultureEmissionsService.createPastureExcretionEmissionsFromExcel(file);
+        return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+    }
+
+    @GetMapping("/atmosphericDepositionEmissions/template")
+    @Operation(summary = "Download Atmospheric Deposition Emissions Excel template")
+    public ResponseEntity<byte[]> downloadAtmosphericDepositionExcelTemplate() {
+        byte[] templateBytes = agricultureEmissionsService.generateAtmosphericDepositionExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "atmospheric_deposition_emissions_template.xlsx");
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @PostMapping("/atmosphericDepositionEmissions/excel")
+    @Operation(summary = "Upload Atmospheric Deposition Emissions records from Excel file")
+    public ResponseEntity<ApiResponse> createAtmosphericDepositionEmissionsFromExcel(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = agricultureEmissionsService.createAtmosphericDepositionEmissionsFromExcel(file);
+        return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+    }
+
+    @GetMapping("/animalManureAndCompostEmissions/template")
+    @Operation(summary = "Download Animal Manure And Compost Emissions Excel template")
+    public ResponseEntity<byte[]> downloadAnimalManureAndCompostExcelTemplate() {
+        byte[] templateBytes = agricultureEmissionsService.generateAnimalManureAndCompostExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "animal_manure_and_compost_emissions_template.xlsx");
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @PostMapping("/animalManureAndCompostEmissions/excel")
+    @Operation(summary = "Upload Animal Manure And Compost Emissions records from Excel file")
+    public ResponseEntity<ApiResponse> createAnimalManureAndCompostEmissionsFromExcel(@RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = agricultureEmissionsService.createAnimalManureAndCompostEmissionsFromExcel(file);
+        return ResponseEntity.ok(new ApiResponse(true, uploadMessage(result), result));
+    }
+
+    private static String uploadMessage(Map<String, Object> result) {
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        return String.format("Upload completed. %d record(s) saved successfully. %d record(s) skipped.", savedCount, skippedCount);
+    }
+
     // Create crop residue emissions logs
     @PostMapping("/cropResidueEmissions")
     @Operation(summary = "Create new crop residue emissions record")

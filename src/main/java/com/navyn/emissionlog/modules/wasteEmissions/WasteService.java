@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface WasteService {
@@ -44,6 +45,23 @@ public interface WasteService {
     List<WasteDataAbstract> populateIndustrialWasteData(MultipartFile file) throws IOException;
 
     List<WasteDataAbstract> populateSolidWasteData(MultipartFile file) throws IOException;
+
+    byte[] generateSolidWasteExcelTemplate();
+
+    Map<String, Object> createSolidWasteFromExcel(MultipartFile file) throws IOException;
+
+    byte[] generateIndustrialWasteExcelTemplate();
+
+    Map<String, Object> createIndustrialWasteFromExcel(MultipartFile file) throws IOException;
+
+    byte[] generateBioTreatedWasteExcelTemplate();
+    Map<String, Object> createBioTreatedWasteFromExcel(MultipartFile file) throws IOException;
+    byte[] generateBurntWasteExcelTemplate();
+    Map<String, Object> createBurntWasteFromExcel(MultipartFile file) throws IOException;
+    byte[] generateIncinerationWasteExcelTemplate();
+    Map<String, Object> createIncinerationWasteFromExcel(MultipartFile file) throws IOException;
+    byte[] generateWasteWaterExcelTemplate();
+    Map<String, Object> createWasteWaterFromExcel(MultipartFile file) throws IOException;
 
     List<SolidWasteData> getSolidWasteData(SolidWasteType solidWasteType, Integer year, UUID regionId);
     

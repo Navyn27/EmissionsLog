@@ -3208,6 +3208,368 @@ public class AgricultureEmissionsServiceImpl implements AgricultureEmissionsServ
         }
 
         @Override
+        public byte[] generateSyntheticFertilizerExcelTemplate() {
+                return createAgricultureTemplate("Synthetic Fertilizer Emissions", "Synthetic Fertilizer Emissions Template",
+                                new String[] { "Year", "Crop Type", "Fertilizer Type", "Quantity Applied" },
+                                new Object[] { 2024, "MAIZE", "UREA", 100.0 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createSyntheticFertilizerEmissionsFromExcel(MultipartFile file) {
+                List<SyntheticFertilizerEmissions> savedRecords = new ArrayList<>();
+                List<Map<String, Object>> skippedRows = new ArrayList<>();
+                Set<String> processedKeys = new HashSet<>();
+                int totalProcessed = 0;
+                try {
+                        List<SyntheticFertilizerEmissionsDto> dtos = ExcelReader.readExcel(file.getInputStream(),
+                                        SyntheticFertilizerEmissionsDto.class, ExcelType.SYNTHETIC_FERTILIZER_EMISSIONS);
+                        for (int i = 0; i < dtos.size(); i++) {
+                                SyntheticFertilizerEmissionsDto dto = dtos.get(i);
+                                totalProcessed++;
+                                int excelRowNumber = i + 1 + 2;
+                                if (dto.getYear() == 0 || dto.getCropType() == null || dto.getFertType() == null || dto.getQtyApplied() <= 0) {
+                                        skippedRows.add(skipRow(excelRowNumber, dto.getYear(), "Missing required fields"));
+                                        continue;
+                                }
+                                if (dto.getYear() < 1900 || dto.getYear() > 2100) {
+                                        skippedRows.add(skipRow(excelRowNumber, dto.getYear(), "Year must be between 1900 and 2100"));
+                                        continue;
+                                }
+                                String key = dto.getYear() + "_" + dto.getCropType().name() + "_" + dto.getFertType().name();
+                                if (processedKeys.contains(key)) {
+                                        skippedRows.add(skipRow(excelRowNumber, dto.getYear(), "Duplicate row in file"));
+                                        continue;
+                                }
+                                processedKeys.add(key);
+                                try {
+                                        savedRecords.add(createSyntheticFertilizerEmissions(dto));
+                                } catch (RuntimeException e) {
+                                        skippedRows.add(skipRow(excelRowNumber, dto.getYear(), e.getMessage()));
+                                }
+                        }
+                        return resultMap(savedRecords, skippedRows, totalProcessed);
+                } catch (IOException e) {
+                        throw new RuntimeException("Incorrect template. Please download the correct template and try again.", e);
+                } catch (Exception e) {
+                        throw new RuntimeException(e.getMessage() != null ? e.getMessage() : "Error processing Excel file.", e);
+                }
+        }
+
+        @Override
+        public byte[] generateCropResidueExcelTemplate() {
+                return createAgricultureTemplate("Crop Residue Emissions", "Crop Residue Emissions Template",
+                                new String[] { "Year", "Land Use Category", "Crop Type", "Total Area Harvested",
+                                                "Harvested Fresh Crop Yield", "AG Residues Dry Matter", "N In Crop Residues Returned" },
+                                new Object[] { 2024, "CROPLAND", "MAIZE", 10.0, 5.0, 2.0, 15.0 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createCropResidueEmissionsFromExcel(MultipartFile file) {
+                List<CropResiduesEmissions> savedRecords = new ArrayList<>();
+                List<Map<String, Object>> skippedRows = new ArrayList<>();
+                Set<String> processedKeys = new HashSet<>();
+                int totalProcessed = 0;
+                try {
+                        List<CropResiduesEmissionsDto> dtos = ExcelReader.readExcel(file.getInputStream(),
+                                        CropResiduesEmissionsDto.class, ExcelType.CROP_RESIDUE_EMISSIONS);
+                        for (int i = 0; i < dtos.size(); i++) {
+                                CropResiduesEmissionsDto dto = dtos.get(i);
+                                totalProcessed++;
+                                int excelRowNumber = i + 1 + 2;
+                                if (dto.getYear() == 0 || dto.getLandUseCategory() == null || dto.getCropType() == null) {
+                                        skippedRows.add(skipRow(excelRowNumber, dto.getYear(), "Missing required fields"));
+                                        continue;
+                                }
+                                if (dto.getYear() < 1900 || dto.getYear() > 2100) {
+                                        skippedRows.add(skipRow(excelRowNumber, dto.getYear(), "Year must be between 1900 and 2100"));
+                                        continue;
+                                }
+                                String key = dto.getYear() + "_" + dto.getLandUseCategory().name() + "_" + dto.getCropType().name();
+                                if (processedKeys.contains(key)) {
+                                        skippedRows.add(skipRow(excelRowNumber, dto.getYear(), "Duplicate row in file"));
+                                        continue;
+                                }
+                                processedKeys.add(key);
+                                try {
+                                        savedRecords.add(createCropResidueEmissions(dto));
+                                } catch (RuntimeException e) {
+                                        skippedRows.add(skipRow(excelRowNumber, dto.getYear(), e.getMessage()));
+                                }
+                        }
+                        return resultMap(savedRecords, skippedRows, totalProcessed);
+                } catch (IOException e) {
+                        throw new RuntimeException("Incorrect template. Please download the correct template and try again.", e);
+                } catch (Exception e) {
+                        throw new RuntimeException(e.getMessage() != null ? e.getMessage() : "Error processing Excel file.", e);
+                }
+        }
+
+        private static Map<String, Object> skipRow(int row, int year, String reason) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("row", row);
+                m.put("year", year);
+                m.put("reason", reason);
+                return m;
+        }
+
+        private static Map<String, Object> resultMap(List<?> savedRecords, List<Map<String, Object>> skippedRows, int totalProcessed) {
+                Map<String, Object> result = new HashMap<>();
+                result.put("saved", savedRecords);
+                result.put("savedCount", savedRecords.size());
+                result.put("skippedCount", skippedRows.size());
+                result.put("skippedRows", skippedRows);
+                result.put("totalProcessed", totalProcessed);
+                return result;
+        }
+
+        private byte[] createAgricultureTemplate(String sheetName, String title, String[] headers, Object[] exampleRow) {
+                try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                        Sheet sheet = workbook.createSheet(sheetName);
+                        XSSFCellStyle titleStyle = (XSSFCellStyle) workbook.createCellStyle();
+                        Font titleFont = workbook.createFont();
+                        titleFont.setBold(true);
+                        titleFont.setFontHeightInPoints((short) 18);
+                        titleFont.setColor(IndexedColors.WHITE.getIndex());
+                        titleStyle.setFont(titleFont);
+                        titleStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+                        titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        titleStyle.setAlignment(HorizontalAlignment.CENTER);
+                        XSSFCellStyle headerStyle = (XSSFCellStyle) workbook.createCellStyle();
+                        Font headerFont = workbook.createFont();
+                        headerFont.setBold(true);
+                        headerFont.setColor(IndexedColors.WHITE.getIndex());
+                        headerStyle.setFont(headerFont);
+                        headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+                        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+                        XSSFCellStyle dataStyle = (XSSFCellStyle) workbook.createCellStyle();
+                        dataStyle.setAlignment(HorizontalAlignment.LEFT);
+                        int rowIdx = 0;
+                        Row titleRow = sheet.createRow(rowIdx++);
+                        titleRow.createCell(0).setCellValue(title);
+                        titleRow.getCell(0).setCellStyle(titleStyle);
+                        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, headers.length - 1));
+                        rowIdx++;
+                        Row headerRow = sheet.createRow(rowIdx++);
+                        for (int i = 0; i < headers.length; i++) {
+                                Cell c = headerRow.createCell(i);
+                                c.setCellValue(headers[i]);
+                                c.setCellStyle(headerStyle);
+                        }
+                        Row dataRow = sheet.createRow(rowIdx++);
+                        for (int i = 0; i < exampleRow.length; i++) {
+                                Cell c = dataRow.createCell(i);
+                                if (exampleRow[i] instanceof Number) {
+                                        c.setCellValue(((Number) exampleRow[i]).doubleValue());
+                                } else {
+                                        c.setCellValue(String.valueOf(exampleRow[i]));
+                                }
+                                c.setCellStyle(dataStyle);
+                        }
+                        for (int i = 0; i < headers.length; i++) {
+                                sheet.autoSizeColumn(i);
+                        }
+                        workbook.write(out);
+                        return out.toByteArray();
+                } catch (IOException e) {
+                        throw new RuntimeException("Error generating Excel template", e);
+                }
+        }
+
+        @Override
+        public byte[] generateLeachingExcelTemplate() {
+                return createAgricultureTemplate("Leaching Emissions", "Leaching Emissions Template",
+                                new String[] { "Year", "MMS", "Livestock Species", "Number Of Animals" },
+                                new Object[] { 2024, "LIQUID", "CATTLE", 100 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createLeachingEmissionsFromExcel(MultipartFile file) {
+                return createFromExcelGeneric(file, ExcelType.LEACHING_EMISSIONS, LeachingEmissionsDto.class,
+                                dto -> createLeachingEmissions((LeachingEmissionsDto) dto),
+                                dto -> ((LeachingEmissionsDto) dto).getYear() == null || ((LeachingEmissionsDto) dto).getMms() == null
+                                                || ((LeachingEmissionsDto) dto).getLivestockSpecies() == null
+                                                || ((LeachingEmissionsDto) dto).getNumberOfAnimals() <= 0,
+                                dto -> ((LeachingEmissionsDto) dto).getYear() + "_" + ((LeachingEmissionsDto) dto).getMms().name()
+                                                + "_" + ((LeachingEmissionsDto) dto).getLivestockSpecies().name());
+        }
+
+        @Override
+        public byte[] generateLeachingAndRunoffExcelTemplate() {
+                return createAgricultureTemplate("Leaching And Runoff Emissions", "Leaching And Runoff Emissions Template",
+                                new String[] { "Year", "Land Use Category", "Synthetic N Applied", "Organic Soil Additions",
+                                                "Excretions Deposited By Grazing Animals", "N In Crop Residues", "N Mineralized In Mineral Soils" },
+                                new Object[] { 2024, "CROPLAND", 10.0, 5.0, 2.0, 1.0, 0.5 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createLeachingAndRunoffEmissionsFromExcel(MultipartFile file) {
+                return createFromExcelGeneric(file, ExcelType.LEACHING_AND_RUNOFF_EMISSIONS, LeachingAndRunoffEmissionsDto.class,
+                                dto -> createLeachingAndRunoffEmissions((LeachingAndRunoffEmissionsDto) dto),
+                                dto -> ((LeachingAndRunoffEmissionsDto) dto).getYear() == null
+                                                || ((LeachingAndRunoffEmissionsDto) dto).getLandUseCategory() == null,
+                                dto -> ((LeachingAndRunoffEmissionsDto) dto).getYear() + "_"
+                                                + ((LeachingAndRunoffEmissionsDto) dto).getLandUseCategory().name());
+        }
+
+        @Override
+        public byte[] generateMineralSoilExcelTemplate() {
+                return createAgricultureTemplate("Mineral Soil Emissions", "Mineral Soil Emissions Template",
+                                new String[] { "Year", "Initial Land Use", "Land Use In Reporting Year", "AV Loss Of Soil C" },
+                                new Object[] { 2024, "CROPLAND", "GRASSLAND", 0.5 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createMineralSoilEmissionsFromExcel(MultipartFile file) {
+                return createFromExcelGeneric(file, ExcelType.MINERAL_SOIL_EMISSIONS, MineralSoilEmissionsDto.class,
+                                dto -> createMineralSoilEmissions((MineralSoilEmissionsDto) dto),
+                                dto -> ((MineralSoilEmissionsDto) dto).getYear() == null
+                                                || ((MineralSoilEmissionsDto) dto).getInitialLandUse() == null
+                                                || ((MineralSoilEmissionsDto) dto).getLandUseInReportingYear() == null,
+                                dto -> ((MineralSoilEmissionsDto) dto).getYear() + "_"
+                                                + ((MineralSoilEmissionsDto) dto).getInitialLandUse().name() + "_"
+                                                + ((MineralSoilEmissionsDto) dto).getLandUseInReportingYear().name());
+        }
+
+        @Override
+        public byte[] generateVolatilizationExcelTemplate() {
+                return createAgricultureTemplate("Volatilization Emissions", "Volatilization Emissions Template",
+                                new String[] { "Year", "MMS", "Livestock Species", "Animal Population" },
+                                new Object[] { 2024, "LIQUID", "CATTLE", 50 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createVolatilizationEmissionsFromExcel(MultipartFile file) {
+                return createFromExcelGeneric(file, ExcelType.VOLATILIZATION_EMISSIONS, VolatilizationEmissionsDto.class,
+                                dto -> createVolatilizationEmissions((VolatilizationEmissionsDto) dto),
+                                dto -> ((VolatilizationEmissionsDto) dto).getYear() == null || ((VolatilizationEmissionsDto) dto).getMms() == null
+                                                || ((VolatilizationEmissionsDto) dto).getLivestockSpecies() == null
+                                                || ((VolatilizationEmissionsDto) dto).getAnimalPopulation() <= 0,
+                                dto -> ((VolatilizationEmissionsDto) dto).getYear() + "_" + ((VolatilizationEmissionsDto) dto).getMms().name()
+                                                + "_" + ((VolatilizationEmissionsDto) dto).getLivestockSpecies().name());
+        }
+
+        @Override
+        public byte[] generatePastureExcretionExcelTemplate() {
+                return createAgricultureTemplate("Pasture Excretion Emissions", "Pasture Excretion Emissions Template",
+                                new String[] { "Year", "MMS", "Livestock Species", "Animal Population" },
+                                new Object[] { 2024, "SOLID", "CATTLE", 80 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createPastureExcretionEmissionsFromExcel(MultipartFile file) {
+                return createFromExcelGeneric(file, ExcelType.PASTURE_EXCRETION_EMISSIONS, PastureExcretionsEmissionsDto.class,
+                                dto -> createPastureExcretionEmissions((PastureExcretionsEmissionsDto) dto),
+                                dto -> ((PastureExcretionsEmissionsDto) dto).getYear() == null
+                                                || ((PastureExcretionsEmissionsDto) dto).getMms() == null
+                                                || ((PastureExcretionsEmissionsDto) dto).getLivestockSpecies() == null
+                                                || ((PastureExcretionsEmissionsDto) dto).getAnimalPopulation() <= 0,
+                                dto -> ((PastureExcretionsEmissionsDto) dto).getYear() + "_"
+                                                + ((PastureExcretionsEmissionsDto) dto).getMms().name() + "_"
+                                                + ((PastureExcretionsEmissionsDto) dto).getLivestockSpecies().name());
+        }
+
+        @Override
+        public byte[] generateAtmosphericDepositionExcelTemplate() {
+                return createAgricultureTemplate("Atmospheric Deposition Emissions", "Atmospheric Deposition Emissions Template",
+                                new String[] { "Year", "Land Use Category", "Synthetic N That Volatilizes", "Organic N Soil Additions",
+                                                "Excretions Deposited By Grazing Animals" },
+                                new Object[] { 2024, "CROPLAND", 5.0, 3.0, 2.0 });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createAtmosphericDepositionEmissionsFromExcel(MultipartFile file) {
+                return createFromExcelGeneric(file, ExcelType.ATMOSPHERIC_DEPOSITION_EMISSIONS, AtmosphericDepositionEmissionsDto.class,
+                                dto -> createAtmosphericNDepositionEmissions((AtmosphericDepositionEmissionsDto) dto),
+                                dto -> ((AtmosphericDepositionEmissionsDto) dto).getYear() == null
+                                                || ((AtmosphericDepositionEmissionsDto) dto).getLandUseCategory() == null,
+                                dto -> ((AtmosphericDepositionEmissionsDto) dto).getYear() + "_"
+                                                + ((AtmosphericDepositionEmissionsDto) dto).getLandUseCategory().name());
+        }
+
+        @Override
+        public byte[] generateAnimalManureAndCompostExcelTemplate() {
+                return createAgricultureTemplate("Animal Manure And Compost Emissions", "Animal Manure And Compost Emissions Template",
+                                new String[] { "Year", "Population", "Species" },
+                                new Object[] { 2024, 100.0, "CATTLE" });
+        }
+
+        @Override
+        @Transactional
+        public Map<String, Object> createAnimalManureAndCompostEmissionsFromExcel(MultipartFile file) {
+                return createFromExcelGeneric(file, ExcelType.ANIMAL_MANURE_AND_COMPOST_EMISSIONS, AnimalManureAndCompostEmissionsDto.class,
+                                dto -> createAnimalManureAndCompostEmissions((AnimalManureAndCompostEmissionsDto) dto),
+                                dto -> ((AnimalManureAndCompostEmissionsDto) dto).getYear() == 0
+                                                || ((AnimalManureAndCompostEmissionsDto) dto).getSpecies() == null
+                                                || ((AnimalManureAndCompostEmissionsDto) dto).getPopulation() <= 0,
+                                dto -> ((AnimalManureAndCompostEmissionsDto) dto).getYear() + "_"
+                                                + ((AnimalManureAndCompostEmissionsDto) dto).getSpecies().name());
+        }
+
+        @SuppressWarnings("unchecked")
+        private <T> Map<String, Object> createFromExcelGeneric(MultipartFile file, ExcelType excelType, Class<T> dtoClass,
+                        java.util.function.Function<T, ?> createFn,
+                        java.util.function.Predicate<T> isInvalid,
+                        java.util.function.Function<T, String> keyFn) {
+                List<Object> savedRecords = new ArrayList<>();
+                List<Map<String, Object>> skippedRows = new ArrayList<>();
+                Set<String> processedKeys = new HashSet<>();
+                int totalProcessed = 0;
+                try {
+                        List<T> dtos = ExcelReader.readExcel(file.getInputStream(), dtoClass, excelType);
+                        for (int i = 0; i < dtos.size(); i++) {
+                                T dto = dtos.get(i);
+                                totalProcessed++;
+                                int excelRowNumber = i + 1 + 2;
+                                int year = getYearFromDto(dto);
+                                if (isInvalid.test(dto)) {
+                                        skippedRows.add(skipRow(excelRowNumber, year, "Missing required fields"));
+                                        continue;
+                                }
+                                if (year != 0 && (year < 1900 || year > 2100)) {
+                                        skippedRows.add(skipRow(excelRowNumber, year, "Year must be between 1900 and 2100"));
+                                        continue;
+                                }
+                                String key = keyFn.apply(dto);
+                                if (processedKeys.contains(key)) {
+                                        skippedRows.add(skipRow(excelRowNumber, year, "Duplicate row in file"));
+                                        continue;
+                                }
+                                processedKeys.add(key);
+                                try {
+                                        savedRecords.add(createFn.apply(dto));
+                                } catch (RuntimeException e) {
+                                        skippedRows.add(skipRow(excelRowNumber, year, e.getMessage()));
+                                }
+                        }
+                        return resultMap(savedRecords, skippedRows, totalProcessed);
+                } catch (IOException e) {
+                        throw new RuntimeException("Incorrect template. Please download the correct template and try again.", e);
+                } catch (Exception e) {
+                        throw new RuntimeException(e.getMessage() != null ? e.getMessage() : "Error processing Excel file.", e);
+                }
+        }
+
+        private int getYearFromDto(Object dto) {
+                if (dto instanceof LeachingEmissionsDto) return ((LeachingEmissionsDto) dto).getYear() != null ? ((LeachingEmissionsDto) dto).getYear() : 0;
+                if (dto instanceof LeachingAndRunoffEmissionsDto) return ((LeachingAndRunoffEmissionsDto) dto).getYear() != null ? ((LeachingAndRunoffEmissionsDto) dto).getYear() : 0;
+                if (dto instanceof MineralSoilEmissionsDto) return ((MineralSoilEmissionsDto) dto).getYear() != null ? ((MineralSoilEmissionsDto) dto).getYear() : 0;
+                if (dto instanceof VolatilizationEmissionsDto) return ((VolatilizationEmissionsDto) dto).getYear() != null ? ((VolatilizationEmissionsDto) dto).getYear() : 0;
+                if (dto instanceof PastureExcretionsEmissionsDto) return ((PastureExcretionsEmissionsDto) dto).getYear() != null ? ((PastureExcretionsEmissionsDto) dto).getYear() : 0;
+                if (dto instanceof AtmosphericDepositionEmissionsDto) return ((AtmosphericDepositionEmissionsDto) dto).getYear() != null ? ((AtmosphericDepositionEmissionsDto) dto).getYear() : 0;
+                if (dto instanceof AnimalManureAndCompostEmissionsDto) return ((AnimalManureAndCompostEmissionsDto) dto).getYear();
+                return 0;
+        }
+
+        @Override
         public CropResiduesEmissions updateCropResidueEmissions(UUID id, CropResiduesEmissionsDto dto) {
                 CropResiduesEmissions emissions = cropResiduesEmissionsRepository.findById(id)
                                 .orElseThrow(() -> new EntityNotFoundException(

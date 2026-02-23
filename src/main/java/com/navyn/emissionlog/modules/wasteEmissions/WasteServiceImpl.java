@@ -18,15 +18,21 @@ import com.navyn.emissionlog.modules.wasteEmissions.dtos.*;
 import com.navyn.emissionlog.utils.Specifications.WasteSpecifications;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFCellStyle;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.Year;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -393,6 +399,455 @@ public class WasteServiceImpl implements WasteService {
             handleMultipleSolidWasteTypes(solidWasteExcelDto, savedRecords, solidWasteDto);
         }
         return savedRecords;
+    }
+
+    @Override
+    public byte[] generateSolidWasteExcelTemplate() {
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Solid Waste Starter Data");
+
+            CellStyle titleStyle = workbook.createCellStyle();
+            Font titleFont = workbook.createFont();
+            titleFont.setFontName("Calibri");
+            titleFont.setFontHeightInPoints((short) 16);
+            titleFont.setBold(true);
+            titleStyle.setFont(titleFont);
+            titleStyle.setAlignment(HorizontalAlignment.CENTER);
+            titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            titleStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            int rowIdx = 0;
+            Row titleRow = sheet.createRow(rowIdx++);
+            titleRow.setHeightInPoints(30);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("Solid Waste Template");
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
+
+            rowIdx++;
+
+            String[] headers = {
+                "Year",
+                "Food Deposited Amount",
+                "Garden Deposited Amount",
+                "Paper Deposited Amount",
+                "Wood Deposited Amount",
+                "Textiles Deposited Amount",
+                "Nappies Deposited Amount",
+                "Sludge Deposited Amount",
+                "MSW Deposited Amount",
+                "Industry Deposited Amount",
+                "Methane Recovery"
+            };
+            Row headerRow = sheet.createRow(rowIdx++);
+            headerRow.setHeightInPoints(22);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            Row exampleRow = sheet.createRow(rowIdx++);
+            exampleRow.createCell(0).setCellValue(2024);
+            exampleRow.createCell(1).setCellValue(0);
+            exampleRow.createCell(2).setCellValue(0);
+            exampleRow.createCell(3).setCellValue(0);
+            exampleRow.createCell(4).setCellValue(0);
+            exampleRow.createCell(5).setCellValue(0);
+            exampleRow.createCell(6).setCellValue(0);
+            exampleRow.createCell(7).setCellValue(0);
+            exampleRow.createCell(8).setCellValue(0);
+            exampleRow.createCell(9).setCellValue(0);
+            exampleRow.createCell(10).setCellValue(0);
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Error generating Solid Waste Excel template", e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> createSolidWasteFromExcel(MultipartFile file) throws IOException {
+        List<WasteDataAbstract> savedRecords = populateSolidWasteData(file);
+        Map<String, Object> result = new HashMap<>();
+        result.put("savedCount", savedRecords.size());
+        result.put("skippedCount", 0);
+        result.put("skippedRows", new ArrayList<Map<String, Object>>());
+        return result;
+    }
+
+    @Override
+    public byte[] generateIndustrialWasteExcelTemplate() {
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Industrial Waste Starter Data");
+
+            CellStyle titleStyle = workbook.createCellStyle();
+            Font titleFont = workbook.createFont();
+            titleFont.setFontName("Calibri");
+            titleFont.setFontHeightInPoints((short) 16);
+            titleFont.setBold(true);
+            titleStyle.setFont(titleFont);
+            titleStyle.setAlignment(HorizontalAlignment.CENTER);
+            titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+            titleStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            int rowIdx = 0;
+            Row titleRow = sheet.createRow(rowIdx++);
+            titleRow.setHeightInPoints(30);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("Industrial Waste Water Template");
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4));
+
+            rowIdx++;
+
+            String[] headers = {
+                "Year",
+                "Sugar Production Amount",
+                "Beer Production Amount",
+                "Dairy Production Amount",
+                "Meat And Poultry Production Amount"
+            };
+            Row headerRow = sheet.createRow(rowIdx++);
+            headerRow.setHeightInPoints(22);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            Row exampleRow = sheet.createRow(rowIdx++);
+            exampleRow.createCell(0).setCellValue(2024);
+            exampleRow.createCell(1).setCellValue(0);
+            exampleRow.createCell(2).setCellValue(0);
+            exampleRow.createCell(3).setCellValue(0);
+            exampleRow.createCell(4).setCellValue(0);
+
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Error generating Industrial Waste Excel template", e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> createIndustrialWasteFromExcel(MultipartFile file) throws IOException {
+        List<WasteDataAbstract> savedRecords = populateIndustrialWasteData(file);
+        Map<String, Object> result = new HashMap<>();
+        result.put("savedCount", savedRecords.size());
+        result.put("skippedCount", 0);
+        result.put("skippedRows", new ArrayList<Map<String, Object>>());
+        return result;
+    }
+
+    private byte[] generateGeneralWasteExcelTemplate(String sheetName, String title) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet(sheetName);
+            CellStyle titleStyle = workbook.createCellStyle();
+            Font titleFont = workbook.createFont();
+            titleFont.setFontName("Calibri");
+            titleFont.setFontHeightInPoints((short) 16);
+            titleFont.setBold(true);
+            titleStyle.setFont(titleFont);
+            titleStyle.setAlignment(HorizontalAlignment.CENTER);
+            titleStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            int rowIdx = 0;
+            Row titleRow = sheet.createRow(rowIdx++);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue(title);
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 1));
+            rowIdx++;
+            Row headerRow = sheet.createRow(rowIdx++);
+            headerRow.createCell(0).setCellValue("Year");
+            headerRow.createCell(1).setCellValue("Scope");
+            for (int i = 0; i <= 1; i++) headerRow.getCell(i).setCellStyle(headerStyle);
+            Row exampleRow = sheet.createRow(rowIdx++);
+            exampleRow.createCell(0).setCellValue(2024);
+            exampleRow.createCell(1).setCellValue("SCOPE_1");
+            for (int i = 0; i <= 1; i++) sheet.autoSizeColumn(i);
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Error generating Excel template", e);
+        }
+    }
+
+    @Override
+    public byte[] generateBioTreatedWasteExcelTemplate() {
+        return generateGeneralWasteExcelTemplate("Bio Treated Waste", "Bio Treated Waste Water Template");
+    }
+
+    @Override
+    public byte[] generateBurntWasteExcelTemplate() {
+        return generateGeneralWasteExcelTemplate("Burnt Waste", "Burnt Waste Template");
+    }
+
+    @Override
+    public byte[] generateIncinerationWasteExcelTemplate() {
+        return generateGeneralWasteExcelTemplate("Incineration Waste", "Incineration Waste Template");
+    }
+
+    @Override
+    public byte[] generateWasteWaterExcelTemplate() {
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Waste Water");
+            CellStyle titleStyle = workbook.createCellStyle();
+            Font titleFont = workbook.createFont();
+            titleFont.setFontName("Calibri");
+            titleFont.setFontHeightInPoints((short) 16);
+            titleFont.setBold(true);
+            titleStyle.setFont(titleFont);
+            titleStyle.setAlignment(HorizontalAlignment.CENTER);
+            titleStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            int rowIdx = 0;
+            Row titleRow = sheet.createRow(rowIdx++);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("Waste Water Template");
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+            rowIdx++;
+            Row headerRow = sheet.createRow(rowIdx++);
+            headerRow.createCell(0).setCellValue("Year");
+            headerRow.createCell(1).setCellValue("Scope");
+            headerRow.createCell(2).setCellValue("EICV Report Year");
+            for (int i = 0; i <= 2; i++) headerRow.getCell(i).setCellStyle(headerStyle);
+            Row exampleRow = sheet.createRow(rowIdx++);
+            exampleRow.createCell(0).setCellValue(2024);
+            exampleRow.createCell(1).setCellValue("SCOPE_1");
+            exampleRow.createCell(2).setCellValue(2022);
+            for (int i = 0; i <= 2; i++) sheet.autoSizeColumn(i);
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Error generating Waste Water Excel template", e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> createBioTreatedWasteFromExcel(MultipartFile file) throws IOException {
+        List<GeneralWasteExcelDto> dtos = ExcelReader.readExcel(file.getInputStream(), GeneralWasteExcelDto.class, ExcelType.BIO_TREATED_WASTE);
+        List<WasteDataAbstract> savedRecords = new ArrayList<>();
+        List<Map<String, Object>> skippedRows = new ArrayList<>();
+        Region defaultRegion = regionRepository.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("No regions found"));
+        for (int i = 0; i < dtos.size(); i++) {
+            GeneralWasteExcelDto dto = dtos.get(i);
+            int excelRow = i + 3;
+            if (dto.getYear() == null) {
+                Map<String, Object> skip = new HashMap<>();
+                skip.put("row", excelRow);
+                skip.put("reason", "Missing year");
+                skippedRows.add(skip);
+                continue;
+            }
+            PopulationRecords pop = populationRecordRepository.findByYear(dto.getYear().intValue());
+            if (pop == null) {
+                Map<String, Object> skip = new HashMap<>();
+                skip.put("row", excelRow);
+                skip.put("reason", "No population record for year " + dto.getYear().intValue());
+                skippedRows.add(skip);
+                continue;
+            }
+            GeneralWasteByPopulationDto g = new GeneralWasteByPopulationDto();
+            g.setPopulationRecords(pop.getId());
+            g.setScope(scopeFromString(dto.getScope()));
+            g.setActivityYear(LocalDateTime.of(dto.getYear().intValue(), 12, 31, 23, 59));
+            g.setRegion(defaultRegion.getId());
+            savedRecords.add(createBioTreatedWasteWaterData(g));
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("savedCount", savedRecords.size());
+        result.put("skippedCount", skippedRows.size());
+        result.put("skippedRows", skippedRows);
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> createBurntWasteFromExcel(MultipartFile file) throws IOException {
+        List<GeneralWasteExcelDto> dtos = ExcelReader.readExcel(file.getInputStream(), GeneralWasteExcelDto.class, ExcelType.BURNT_WASTE);
+        List<WasteDataAbstract> savedRecords = new ArrayList<>();
+        List<Map<String, Object>> skippedRows = new ArrayList<>();
+        Region defaultRegion = regionRepository.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("No regions found"));
+        for (int i = 0; i < dtos.size(); i++) {
+            GeneralWasteExcelDto dto = dtos.get(i);
+            int excelRow = i + 3;
+            if (dto.getYear() == null) {
+                Map<String, Object> skip = new HashMap<>();
+                skip.put("row", excelRow);
+                skip.put("reason", "Missing year");
+                skippedRows.add(skip);
+                continue;
+            }
+            PopulationRecords pop = populationRecordRepository.findByYear(dto.getYear().intValue());
+            if (pop == null) {
+                Map<String, Object> skip = new HashMap<>();
+                skip.put("row", excelRow);
+                skip.put("reason", "No population record for year " + dto.getYear().intValue());
+                skippedRows.add(skip);
+                continue;
+            }
+            GeneralWasteByPopulationDto g = new GeneralWasteByPopulationDto();
+            g.setPopulationRecords(pop.getId());
+            g.setScope(scopeFromString(dto.getScope()));
+            g.setActivityYear(LocalDateTime.of(dto.getYear().intValue(), 12, 31, 23, 59));
+            g.setRegion(defaultRegion.getId());
+            savedRecords.add(createBurntWasteData(g));
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("savedCount", savedRecords.size());
+        result.put("skippedCount", skippedRows.size());
+        result.put("skippedRows", skippedRows);
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> createIncinerationWasteFromExcel(MultipartFile file) throws IOException {
+        List<GeneralWasteExcelDto> dtos = ExcelReader.readExcel(file.getInputStream(), GeneralWasteExcelDto.class, ExcelType.INCINERATED_WASTE);
+        List<WasteDataAbstract> savedRecords = new ArrayList<>();
+        List<Map<String, Object>> skippedRows = new ArrayList<>();
+        Region defaultRegion = regionRepository.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("No regions found"));
+        for (int i = 0; i < dtos.size(); i++) {
+            GeneralWasteExcelDto dto = dtos.get(i);
+            int excelRow = i + 3;
+            if (dto.getYear() == null) {
+                Map<String, Object> skip = new HashMap<>();
+                skip.put("row", excelRow);
+                skip.put("reason", "Missing year");
+                skippedRows.add(skip);
+                continue;
+            }
+            PopulationRecords pop = populationRecordRepository.findByYear(dto.getYear().intValue());
+            if (pop == null) {
+                Map<String, Object> skip = new HashMap<>();
+                skip.put("row", excelRow);
+                skip.put("reason", "No population record for year " + dto.getYear().intValue());
+                skippedRows.add(skip);
+                continue;
+            }
+            GeneralWasteByPopulationDto g = new GeneralWasteByPopulationDto();
+            g.setPopulationRecords(pop.getId());
+            g.setScope(scopeFromString(dto.getScope()));
+            g.setActivityYear(LocalDateTime.of(dto.getYear().intValue(), 12, 31, 23, 59));
+            g.setRegion(defaultRegion.getId());
+            savedRecords.add(createIncinerationWasteData(g));
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("savedCount", savedRecords.size());
+        result.put("skippedCount", skippedRows.size());
+        result.put("skippedRows", skippedRows);
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> createWasteWaterFromExcel(MultipartFile file) throws IOException {
+        List<WasteWaterExcelDto> dtos = ExcelReader.readExcel(file.getInputStream(), WasteWaterExcelDto.class, ExcelType.WASTE_WATER_EXCEL);
+        List<WasteDataAbstract> savedRecords = new ArrayList<>();
+        List<Map<String, Object>> skippedRows = new ArrayList<>();
+        Region defaultRegion = regionRepository.findAll().stream().findFirst().orElseThrow(() -> new RuntimeException("No regions found"));
+        for (int i = 0; i < dtos.size(); i++) {
+            WasteWaterExcelDto dto = dtos.get(i);
+            int excelRow = i + 3;
+            if (dto.getYear() == null) {
+                Map<String, Object> skip = new HashMap<>();
+                skip.put("row", excelRow);
+                skip.put("reason", "Missing year");
+                skippedRows.add(skip);
+                continue;
+            }
+            if (dto.getEicvReportYear() == null) {
+                Map<String, Object> skip = new HashMap<>();
+                skip.put("row", excelRow);
+                skip.put("reason", "Missing EICV Report Year");
+                skippedRows.add(skip);
+                continue;
+            }
+            PopulationRecords pop = populationRecordRepository.findByYear(dto.getYear().intValue());
+            if (pop == null) {
+                Map<String, Object> skip = new HashMap<>();
+                skip.put("row", excelRow);
+                skip.put("reason", "No population record for year " + dto.getYear().intValue());
+                skippedRows.add(skip);
+                continue;
+            }
+            Optional<EICVReport> eicvOpt = eicvReportRepository.findByYear(dto.getEicvReportYear());
+            if (eicvOpt.isEmpty()) {
+                Map<String, Object> skip = new HashMap<>();
+                skip.put("row", excelRow);
+                skip.put("reason", "No EICV report for year " + dto.getEicvReportYear());
+                skippedRows.add(skip);
+                continue;
+            }
+            WasteWaterDto g = new WasteWaterDto();
+            g.setPopulationRecords(pop.getId());
+            g.setEicvReport(eicvOpt.get().getId());
+            g.setScope(scopeFromString(dto.getScope()));
+            g.setActivityYear(LocalDateTime.of(dto.getYear().intValue(), 12, 31, 23, 59));
+            g.setRegion(defaultRegion.getId());
+            savedRecords.add(createWasteWaterData(g));
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("savedCount", savedRecords.size());
+        result.put("skippedCount", skippedRows.size());
+        result.put("skippedRows", skippedRows);
+        return result;
+    }
+
+    private static Scopes scopeFromString(String scope) {
+        if (scope == null || scope.isBlank()) return Scopes.SCOPE_1;
+        try {
+            return Scopes.valueOf(scope.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return Scopes.SCOPE_1;
+        }
     }
 
     @Override

@@ -196,6 +196,42 @@ public interface AgricultureEmissionsService {
 
     java.util.Map<String, Object> createBurningEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
 
+    byte[] generateSyntheticFertilizerExcelTemplate();
+
+    java.util.Map<String, Object> createSyntheticFertilizerEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generateCropResidueExcelTemplate();
+
+    java.util.Map<String, Object> createCropResidueEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generateLeachingExcelTemplate();
+
+    java.util.Map<String, Object> createLeachingEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generateLeachingAndRunoffExcelTemplate();
+
+    java.util.Map<String, Object> createLeachingAndRunoffEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generateMineralSoilExcelTemplate();
+
+    java.util.Map<String, Object> createMineralSoilEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generateVolatilizationExcelTemplate();
+
+    java.util.Map<String, Object> createVolatilizationEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generatePastureExcretionExcelTemplate();
+
+    java.util.Map<String, Object> createPastureExcretionEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generateAtmosphericDepositionExcelTemplate();
+
+    java.util.Map<String, Object> createAtmosphericDepositionEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
+    byte[] generateAnimalManureAndCompostExcelTemplate();
+
+    java.util.Map<String, Object> createAnimalManureAndCompostEmissionsFromExcel(org.springframework.web.multipart.MultipartFile file);
+
     // Mini Dashboards
     DashboardData getAgricultureDashboardSummary(Integer startingYear, Integer endingYear);
 

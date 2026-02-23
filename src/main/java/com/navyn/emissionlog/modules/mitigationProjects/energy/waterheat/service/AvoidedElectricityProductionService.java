@@ -10,14 +10,19 @@ import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models.
 import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.repository.AvoidedElectricityProductionRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
+import com.navyn.emissionlog.Enums.ExcelType;
+import com.navyn.emissionlog.utils.ExcelReader;
 import jakarta.validation.Valid;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -250,5 +255,107 @@ public class AvoidedElectricityProductionService {
         return repository.findByYear(year).stream()
                 .map(this::toResponseDto)
                 .collect(Collectors.toList());
+    }
+
+    public byte[] generateExcelTemplate() {
+        String sheetName = "Avoided Electricity Production";
+        String title = "Avoided Electricity Production Template";
+        String[] headers = { "Year", "Units Installed This Year", "Average Water Heat", "Project Intervention Id" };
+        try (Workbook wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+            Sheet sheet = wb.createSheet(sheetName);
+            Row titleRow = sheet.createRow(0);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue(title);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, headers.length - 1));
+            sheet.createRow(1);
+            Row headerRow = sheet.createRow(2);
+            for (int i = 0; i < headers.length; i++) {
+                headerRow.createCell(i).setCellValue(headers[i]);
+            }
+            Row exampleRow = sheet.createRow(3);
+            exampleRow.createCell(0).setCellValue(2024);
+            exampleRow.createCell(1).setCellValue(10);
+            exampleRow.createCell(2).setCellValue(50);
+            exampleRow.createCell(3).setCellValue("");
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            wb.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate template", e);
+        }
+    }
+
+    @Transactional
+    public Map<String, Object> createFromExcel(MultipartFile file) {
+        List<AvoidedElectricityProductionDTO> dtos;
+        try {
+            dtos = ExcelReader.readExcel(file.getInputStream(), AvoidedElectricityProductionDTO.class, ExcelType.AVOIDED_ELECTRICITY_PRODUCTION);
+        } catch (IOException e) {
+            throw new RuntimeException("Incorrect template. Please download the correct template and try again.", e);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage() != null ? e.getMessage() : "Error processing Excel file.", e);
+        }
+        int savedCount = 0;
+        int skippedCount = 0;
+        List<Map<String, Object>> skippedRows = new ArrayList<>();
+        Set<String> seenKeys = new HashSet<>();
+        for (int i = 0; i < dtos.size(); i++) {
+            AvoidedElectricityProductionDTO dto = dtos.get(i);
+            int excelRowNumber = i + 1 + 2; // row number accounting for title & headers
+            if (dto == null) {
+                Map<String, Object> skipRow = new HashMap<>();
+                skipRow.put("rowNumber", excelRowNumber);
+                skipRow.put("reason", "Row is empty or incorrectly formatted");
+                skippedRows.add(skipRow);
+                skippedCount++;
+                continue;
+            }
+            if (dto.getYear() == null || dto.getUnitsInstalledThisYear() == null || dto.getAverageWaterHeat() == null || dto.getProjectInterventionId() == null) {
+                Map<String, Object> skipRow = new HashMap<>();
+                skipRow.put("rowNumber", excelRowNumber);
+                skipRow.put("year", dto.getYear());
+                skipRow.put("reason", "Missing required fields");
+                skippedRows.add(skipRow);
+                skippedCount++;
+                continue;
+            }
+            if (dto.getYear() < 1900 || dto.getYear() > 2100) {
+                Map<String, Object> skipRow = new HashMap<>();
+                skipRow.put("rowNumber", excelRowNumber);
+                skipRow.put("year", dto.getYear());
+                skipRow.put("reason", "Year must be between 1900 and 2100");
+                skippedRows.add(skipRow);
+                skippedCount++;
+                continue;
+            }
+            String key = dto.getYear() + "_" + dto.getProjectInterventionId();
+            if (seenKeys.contains(key)) {
+                Map<String, Object> skipRow = new HashMap<>();
+                skipRow.put("rowNumber", excelRowNumber);
+                skipRow.put("year", dto.getYear());
+                skipRow.put("reason", "Duplicate row in file");
+                skippedRows.add(skipRow);
+                skippedCount++;
+                continue;
+            }
+            seenKeys.add(key);
+            try {
+                create(dto);
+                savedCount++;
+            } catch (RuntimeException e) {
+                Map<String, Object> skipRow = new HashMap<>();
+                skipRow.put("rowNumber", excelRowNumber);
+                skipRow.put("year", dto.getYear());
+                skipRow.put("reason", e.getMessage() != null ? e.getMessage() : "Error saving record.");
+                skippedRows.add(skipRow);
+                skippedCount++;
+            }
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("savedCount", savedCount);
+        result.put("skippedCount", skippedCount);
+        result.put("skippedRows", skippedRows);
+        result.put("totalProcessed", dtos.size());
+        return result;
     }
 }
