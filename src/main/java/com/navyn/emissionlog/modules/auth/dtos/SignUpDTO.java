@@ -48,8 +48,8 @@ public class SignUpDTO {
 
     @jakarta.validation.constraints.NotNull(message = "Value can't be empty; Phone number is mandatory for every user")
     @Pattern(
-            regexp = "^\\+(2507[358]|25072)\\d{7}|\\*25079\\d{7}$\n",
-            message = "A valid Rwandan registered phone number should be like:  +25078******* or +25073******* or *25079******* or +25072******* "
+            regexp = "^\\+(2507[23589]|25072)\\d{7}|\\*25079\\d{7}$",
+            message = "A valid Rwandan registered phone number should be like: +25078******* or +25073******* or *25079******* or +25072*******"
     )
     private String phoneNumber;
     private UUID record;

@@ -41,7 +41,9 @@ public class JwtService {
         claims.put("firstName", user.getFirstname());
         claims.put("lastName", user.getLastname());
         claims.put("role", user.getRole());
-        claims.put("record", user.getRecord().getId());
+        if (user.getRecord() != null) {
+            claims.put("record", user.getRecord().getId());
+        }
 
         return Jwts.builder()
                 .setClaims(claims)

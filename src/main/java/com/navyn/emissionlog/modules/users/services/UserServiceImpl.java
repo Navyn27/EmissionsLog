@@ -2,9 +2,11 @@ package com.navyn.emissionlog.modules.users.services;
 
 import com.navyn.emissionlog.Exceptions.EmailAlreadyExistsException;
 import com.navyn.emissionlog.Exceptions.UnmatchingPasswordsException;
+import com.navyn.emissionlog.Enums.Roles;
 import com.navyn.emissionlog.modules.users.User;
 import com.navyn.emissionlog.modules.auth.dtos.LoginDTO;
 import com.navyn.emissionlog.modules.auth.dtos.SignUpDTO;
+import com.navyn.emissionlog.modules.auth.dtos.UpdateUserDTO;
 import com.navyn.emissionlog.modules.users.UserRepository;
 import com.navyn.emissionlog.modules.workspace.WorkspaceRepository;
 import com.navyn.emissionlog.utils.GenerateOTP;
@@ -69,7 +71,7 @@ public class UserServiceImpl implements UserService {
         user.setLastname(payload.getLastName());
         user.setPhoneNumber(payload.getPhoneNumber());
         user.setPassword(encoder.encode(payload.getPassword()));
-        user.setRole(payload.getRole());
+        user.setRole(payload.getRole() != null ? payload.getRole() : Roles.VIEWER);
         user.setOtp(otp);
         user.setRecord(null);
         User savedUser = userRepository.save(user);
@@ -121,8 +123,40 @@ public class UserServiceImpl implements UserService {
             user.setFirstname(payload.getFirstName());
             user.setLastname(payload.getLastName());
             user.setPhoneNumber(payload.getPhoneNumber());
-            user.setPassword(payload.getPassword());
-            user.setRole(payload.getRole());
+            if (payload.getPassword() != null && !payload.getPassword().isBlank()) {
+                user.setPassword(encoder.encode(payload.getPassword()));
+            }
+            if (payload.getRole() != null) {
+                user.setRole(payload.getRole());
+            }
+            return userRepository.save(user);
+        }
+        throw new UsernameNotFoundException("User not found");
+    }
+
+    @Override
+    public User updateUser(String email, UpdateUserDTO payload) {
+        Optional<User> user1 = userRepository.findByEmail(email);
+        if (user1.isPresent()) {
+            User user = user1.get();
+            if (payload.getFirstName() != null) {
+                user.setFirstname(payload.getFirstName());
+            }
+            if (payload.getLastName() != null) {
+                user.setLastname(payload.getLastName());
+            }
+            if (payload.getEmail() != null) {
+                user.setEmail(payload.getEmail());
+            }
+            if (payload.getPhoneNumber() != null) {
+                user.setPhoneNumber(payload.getPhoneNumber());
+            }
+            if (payload.getPassword() != null && !payload.getPassword().isBlank()) {
+                user.setPassword(encoder.encode(payload.getPassword()));
+            }
+            if (payload.getRole() != null) {
+                user.setRole(payload.getRole());
+            }
             return userRepository.save(user);
         }
         throw new UsernameNotFoundException("User not found");
