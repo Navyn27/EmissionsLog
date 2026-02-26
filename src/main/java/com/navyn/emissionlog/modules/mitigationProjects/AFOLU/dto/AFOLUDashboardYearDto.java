@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 public class AFOLUDashboardYearDto {
     private Integer year;
     private Double wetlandParks;
+    private Double wetlandsRewetting;
     private Double settlementTrees;
     private Double streetTrees;
     private Double greenFences;

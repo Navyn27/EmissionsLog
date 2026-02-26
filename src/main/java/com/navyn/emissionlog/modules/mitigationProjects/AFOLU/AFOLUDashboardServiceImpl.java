@@ -4,6 +4,8 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.dto.AFOLUDashboard
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.dto.AFOLUDashboardYearDto;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandParks.models.WetlandParksMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandParks.repositories.WetlandParksMitigationRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandsRewetting.models.WetlandsRewettingMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandsRewetting.repositories.WetlandsRewettingMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.models.SettlementTreesMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.settlementTrees.repositories.SettlementTreesMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.streetTrees.models.StreetTreesMitigation;
@@ -46,6 +48,7 @@ import java.io.ByteArrayOutputStream;
 public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
 
     private final WetlandParksMitigationRepository wetlandParksRepository;
+    private final WetlandsRewettingMitigationRepository wetlandsRewettingRepository;
     private final SettlementTreesMitigationRepository settlementTreesRepository;
     private final StreetTreesMitigationRepository streetTreesRepository;
     private final GreenFencesMitigationRepository greenFencesRepository;
@@ -61,6 +64,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
     @Transactional(readOnly = true)
     public AFOLUDashboardSummaryDto getAFOLUDashboardSummary(Integer startingYear, Integer endingYear) {
         List<WetlandParksMitigation> wetlandParks = wetlandParksRepository.findAll();
+        List<WetlandsRewettingMitigation> wetlandsRewetting = wetlandsRewettingRepository.findAll();
         List<SettlementTreesMitigation> settlementTrees = settlementTreesRepository.findAll();
         List<StreetTreesMitigation> streetTrees = streetTreesRepository.findAll();
         List<GreenFencesMitigation> greenFences = greenFencesRepository.findAll();
@@ -74,6 +78,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         // Filter by year range if specified
         if (startingYear != null && endingYear != null) {
             wetlandParks = filterByYear(wetlandParks, WetlandParksMitigation::getYear, startingYear, endingYear);
+            wetlandsRewetting = filterByYear(wetlandsRewetting, WetlandsRewettingMitigation::getYear, startingYear, endingYear);
             settlementTrees = filterByYear(settlementTrees, SettlementTreesMitigation::getYear, startingYear, endingYear);
             streetTrees = filterByYear(streetTrees, StreetTreesMitigation::getYear, startingYear, endingYear);
             greenFences = filterByYear(greenFences, GreenFencesMitigation::getYear, startingYear, endingYear);
@@ -89,6 +94,12 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         double wetlandParksTotal = wetlandParks.stream()
                 .filter(w -> w.getMitigatedEmissionsKtCO2e() != null)
                 .mapToDouble(WetlandParksMitigation::getMitigatedEmissionsKtCO2e)
+                .sum();
+
+        // Aggregate: Wetlands Rewetting (totalMitigationTonnesCo2e -> Kt CO2e)
+        double wetlandsRewettingTotal = wetlandsRewetting.stream()
+                .filter(w -> w.getTotalMitigationTonnesCo2e() != null)
+                .mapToDouble(w -> w.getTotalMitigationTonnesCo2e() / 1000.0)
                 .sum();
 
         // Aggregate: Settlement Trees
@@ -121,7 +132,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         // Aggregate: Daily Spread (different field name)
         double dailySpreadTotal = sumDouble(dailySpread, DailySpreadMitigation::getMitigatedCh4EmissionsKilotonnes);
 
-        double totalMitigation = wetlandParksTotal + settlementTreesTotal + streetTreesTotal + greenFencesTotal
+        double totalMitigation = wetlandParksTotal + wetlandsRewettingTotal + settlementTreesTotal + streetTreesTotal + greenFencesTotal
                 + cropRotationTotal + zeroTillageTotal + protectiveForestTotal + manureCoveringTotal
                 + addingStrawTotal + dailySpreadTotal;
 
@@ -150,6 +161,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         // Calculate record counts
         Map<String, Long> recordCounts = new HashMap<>();
         recordCounts.put("wetlandParks", (long) wetlandParks.size());
+        recordCounts.put("wetlandsRewetting", (long) wetlandsRewetting.size());
         recordCounts.put("settlementTrees", (long) settlementTrees.size());
         recordCounts.put("streetTrees", (long) streetTrees.size());
         recordCounts.put("greenFences", (long) greenFences.size());
@@ -163,6 +175,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         // Calculate data coverage (percentage of years with data)
         Map<String, Double> dataCoverage = new HashMap<>();
         Set<Integer> wetlandParksYears = wetlandParks.stream().map(WetlandParksMitigation::getYear).collect(Collectors.toSet());
+        Set<Integer> wetlandsRewettingYears = wetlandsRewetting.stream().map(WetlandsRewettingMitigation::getYear).collect(Collectors.toSet());
         Set<Integer> settlementTreesYears = settlementTrees.stream().map(SettlementTreesMitigation::getYear).collect(Collectors.toSet());
         Set<Integer> streetTreesYears = streetTrees.stream().map(StreetTreesMitigation::getYear).collect(Collectors.toSet());
         Set<Integer> greenFencesYears = greenFences.stream().map(GreenFencesMitigation::getYear).collect(Collectors.toSet());
@@ -175,6 +188,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
 
         if (startingYear != null && endingYear != null) {
             dataCoverage.put("wetlandParks", calculateCoverage(wetlandParksYears, startingYear, endingYear));
+            dataCoverage.put("wetlandsRewetting", calculateCoverage(wetlandsRewettingYears, startingYear, endingYear));
             dataCoverage.put("settlementTrees", calculateCoverage(settlementTreesYears, startingYear, endingYear));
             dataCoverage.put("streetTrees", calculateCoverage(streetTreesYears, startingYear, endingYear));
             dataCoverage.put("greenFences", calculateCoverage(greenFencesYears, startingYear, endingYear));
@@ -304,6 +318,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         dto.setStartingYear(startingYear);
         dto.setEndingYear(endingYear);
         dto.setWetlandParks(wetlandParksTotal);
+        dto.setWetlandsRewetting(wetlandsRewettingTotal);
         dto.setSettlementTrees(settlementTreesTotal);
         dto.setStreetTrees(streetTreesTotal);
         dto.setGreenFences(greenFencesTotal);
@@ -338,6 +353,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         }
 
         List<WetlandParksMitigation> wetlandParks = wetlandParksRepository.findAll();
+        List<WetlandsRewettingMitigation> wetlandsRewetting = wetlandsRewettingRepository.findAll();
         List<SettlementTreesMitigation> settlementTrees = settlementTreesRepository.findAll();
         List<StreetTreesMitigation> streetTrees = streetTreesRepository.findAll();
         List<GreenFencesMitigation> greenFences = greenFencesRepository.findAll();
@@ -363,12 +379,20 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
                         Collectors.summingDouble(ProtectiveForestMitigation::getMitigatedEmissionsKtCO2e)
                 ));
 
+        Map<Integer, Double> wetlandsRewettingByYear = wetlandsRewetting.stream()
+                .filter(w -> w.getTotalMitigationTonnesCo2e() != null)
+                .collect(Collectors.groupingBy(
+                        WetlandsRewettingMitigation::getYear,
+                        Collectors.summingDouble(w -> w.getTotalMitigationTonnesCo2e() / 1000.0)
+                ));
+
         List<AFOLUDashboardYearDto> response = new ArrayList<>();
         for (int year = start; year <= end; year++) {
             // Get values for each project for this year
             // Composite uniqueness projects (already grouped by year)
             double wetlandParksValue = wetlandParksByYear.getOrDefault(year, 0.0);
             double protectiveForestValue = protectiveForestByYear.getOrDefault(year, 0.0);
+            double wetlandsRewettingValue = wetlandsRewettingByYear.getOrDefault(year, 0.0);
             
             // Simple uniqueness projects (use sumDouble with filterByYear)
             double settlementTreesValue = sumDouble(
@@ -396,7 +420,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
                     filterByYear(dailySpread, DailySpreadMitigation::getYear, year, year),
                     DailySpreadMitigation::getMitigatedCh4EmissionsKilotonnes);
 
-            double totalMitigation = wetlandParksValue + settlementTreesValue + streetTreesValue + greenFencesValue
+            double totalMitigation = wetlandParksValue + wetlandsRewettingValue + settlementTreesValue + streetTreesValue + greenFencesValue
                     + cropRotationValue + zeroTillageValue + protectiveForestValue + manureCoveringValue
                     + addingStrawValue + dailySpreadValue;
 
@@ -415,6 +439,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             AFOLUDashboardYearDto dto = new AFOLUDashboardYearDto();
             dto.setYear(year);
             dto.setWetlandParks(wetlandParksValue);
+            dto.setWetlandsRewetting(wetlandsRewettingValue);
             dto.setSettlementTrees(settlementTreesValue);
             dto.setStreetTrees(streetTreesValue);
             dto.setGreenFences(greenFencesValue);
@@ -463,8 +488,10 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
 
 
     @Override
+    @Transactional(readOnly = true)
     public byte[] exportAFOLUDashboard(Integer startingYear, Integer endingYear) {
         List<WetlandParksMitigation> wetlandParks = wetlandParksRepository.findAll();
+        List<WetlandsRewettingMitigation> wetlandsRewetting = wetlandsRewettingRepository.findAll();
         List<SettlementTreesMitigation> settlementTrees = settlementTreesRepository.findAll();
         List<StreetTreesMitigation> streetTrees = streetTreesRepository.findAll();
         List<GreenFencesMitigation> greenFences = greenFencesRepository.findAll();
@@ -478,6 +505,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         // Find min/max year
         int minYear = Stream.of(
                         wetlandParks.stream().map(WetlandParksMitigation::getYear),
+                        wetlandsRewetting.stream().map(WetlandsRewettingMitigation::getYear),
                         settlementTrees.stream().map(SettlementTreesMitigation::getYear),
                         streetTrees.stream().map(StreetTreesMitigation::getYear),
                         greenFences.stream().map(GreenFencesMitigation::getYear),
@@ -494,6 +522,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
 
         int maxYear = Stream.of(
                         wetlandParks.stream().map(WetlandParksMitigation::getYear),
+                        wetlandsRewetting.stream().map(WetlandsRewettingMitigation::getYear),
                         settlementTrees.stream().map(SettlementTreesMitigation::getYear),
                         streetTrees.stream().map(StreetTreesMitigation::getYear),
                         greenFences.stream().map(GreenFencesMitigation::getYear),
@@ -517,6 +546,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         }
 
         wetlandParks = filterByYear(wetlandParks, WetlandParksMitigation::getYear, start, end);
+        wetlandsRewetting = filterByYear(wetlandsRewetting, WetlandsRewettingMitigation::getYear, start, end);
         settlementTrees = filterByYear(settlementTrees, SettlementTreesMitigation::getYear, start, end);
         streetTrees = filterByYear(streetTrees, StreetTreesMitigation::getYear, start, end);
         greenFences = filterByYear(greenFences, GreenFencesMitigation::getYear, start, end);
@@ -544,7 +574,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             XSSFSheet summarySheet = workbook.createSheet("Summary");
             buildSummarySheet(summarySheet, titleStyle, headerStyle, dataStyle, alternateDataStyle,
                     summaryHeaderStyle, summaryDataStyle, numberStyle, dataFormat, start, end,
-                    wetlandParks, settlementTrees, streetTrees, greenFences, cropRotation,
+                    wetlandParks, wetlandsRewetting, settlementTrees, streetTrees, greenFences, cropRotation,
                     zeroTillage, protectiveForest, manureCovering, addingStraw, dailySpread, creationHelper);
 
             // Create individual project sheets
@@ -562,6 +592,8 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
                     alternateDataStyle, numberStyle, zeroTillage);
             buildProtectiveForestSheet(workbook.createSheet("Protective Forest"), headerStyle, dataStyle,
                     alternateDataStyle, numberStyle, protectiveForest);
+            buildWetlandsRewettingSheet(workbook.createSheet("Wetlands Rewetting"), headerStyle, dataStyle,
+                    alternateDataStyle, numberStyle, wetlandsRewetting);
             buildManureCoveringSheet(workbook.createSheet("Manure Covering"), headerStyle, dataStyle,
                     alternateDataStyle, numberStyle, manureCovering);
             buildAddingStrawSheet(workbook.createSheet("Adding Straw"), headerStyle, dataStyle,
@@ -706,6 +738,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
                                    CellStyle numberStyle, DataFormat dataFormat,
                                    int startYear, int endYear,
                                    List<WetlandParksMitigation> wetlandParks,
+                                   List<WetlandsRewettingMitigation> wetlandsRewetting,
                                    List<SettlementTreesMitigation> settlementTrees,
                                    List<StreetTreesMitigation> streetTrees,
                                    List<GreenFencesMitigation> greenFences,
@@ -723,7 +756,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         Cell titleCell = title.createCell(0);
         titleCell.setCellValue("AFOLU Mitigation Dashboard Summary");
         titleCell.setCellStyle(titleStyle);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 14));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 15));
         title.setHeightInPoints(30);
 
         rowIdx++; // Blank row
@@ -768,8 +801,15 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
                         ProtectiveForestMitigation::getYear,
                         Collectors.summingDouble(ProtectiveForestMitigation::getMitigatedEmissionsKtCO2e)
                 ));
+        Map<Integer, Double> wetlandsRewettingByYear = wetlandsRewetting.stream()
+                .filter(w -> w.getTotalMitigationTonnesCo2e() != null)
+                .collect(Collectors.groupingBy(
+                        WetlandsRewettingMitigation::getYear,
+                        Collectors.summingDouble(w -> w.getTotalMitigationTonnesCo2e() / 1000.0)
+                ));
 
         double wetlandParksTotal = wetlandParksByYear.values().stream().mapToDouble(Double::doubleValue).sum();
+        double wetlandsRewettingTotal = wetlandsRewettingByYear.values().stream().mapToDouble(Double::doubleValue).sum();
         double settlementTreesTotal = sumDouble(settlementTrees, SettlementTreesMitigation::getMitigatedEmissionsKtCO2e);
         double streetTreesTotal = sumDouble(streetTrees, StreetTreesMitigation::getMitigatedEmissionsKtCO2e);
         double greenFencesTotal = sumDouble(greenFences, GreenFencesMitigation::getMitigatedEmissionsKtCO2e);
@@ -779,7 +819,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         double manureCoveringTotal = sumDouble(manureCovering, ManureCoveringMitigation::getMitigatedN2oEmissionsKilotonnes);
         double addingStrawTotal = sumDouble(addingStraw, AddingStrawMitigation::getMitigatedCh4EmissionsKilotonnes);
         double dailySpreadTotal = sumDouble(dailySpread, DailySpreadMitigation::getMitigatedCh4EmissionsKilotonnes);
-        double totalMitigation = wetlandParksTotal + settlementTreesTotal + streetTreesTotal + greenFencesTotal
+        double totalMitigation = wetlandParksTotal + wetlandsRewettingTotal + settlementTreesTotal + streetTreesTotal + greenFencesTotal
                 + cropRotationTotal + zeroTillageTotal + protectiveForestTotal + manureCoveringTotal
                 + addingStrawTotal + dailySpreadTotal;
 
@@ -803,13 +843,13 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
 
         String[] totalLabels = new String[]{"Project", "Total Mitigation (ktCO2e)"};
         String[] projectNames = new String[]{
-                "Wetland Parks", "Settlement Trees", "Street Trees", "Green Fences",
+                "Wetland Parks", "Wetland", "Settlement Trees", "Street Trees", "Green Fences",
                 "Crop Rotation", "Zero Tillage", "Protective Forest", 
                 "Improved MMS (Total)", "  - Manure Covering", "  - Adding Straw", "  - Daily Spread",
                 "TOTAL", "Total BAU", "Adjustment Mitigation"
         };
         double[] totalValues = new double[]{
-                wetlandParksTotal, settlementTreesTotal, streetTreesTotal, greenFencesTotal,
+                wetlandParksTotal, wetlandsRewettingTotal, settlementTreesTotal, streetTreesTotal, greenFencesTotal,
                 cropRotationTotal, zeroTillageTotal, protectiveForestTotal, 
                 improvedMMSTotal, manureCoveringTotal, addingStrawTotal, dailySpreadTotal,
                 totalMitigation, bauSum, adjustmentMitigation
@@ -873,7 +913,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
         Row perYearHeader = sheet.createRow(rowIdx++);
         perYearHeader.setHeightInPoints(20);
         String[] header = new String[]{
-                "Year", "Wetland Parks", "Settlement Trees", "Street Trees", "Green Fences",
+                "Year", "Wetland Parks", "Wetland", "Settlement Trees", "Street Trees", "Green Fences",
                 "Crop Rotation", "Zero Tillage", "Protective Forest", "Improved MMS Total",
                 "  - Manure Covering", "  - Adding Straw", "  - Daily Spread", 
                 "Total Mitigation", "BAU", "Adjustment Mitigation"
@@ -891,6 +931,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             boolean isAlternate = (year - startYear) % 2 == 1;
 
             double wp = wetlandParksByYear.getOrDefault(year, 0.0);
+            double wr = wetlandsRewettingByYear.getOrDefault(year, 0.0);
             double st = sumDouble(filterByYear(settlementTrees, SettlementTreesMitigation::getYear, year, year),
                     SettlementTreesMitigation::getMitigatedEmissionsKtCO2e);
             double stt = sumDouble(filterByYear(streetTrees, StreetTreesMitigation::getYear, year, year),
@@ -909,7 +950,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             double ds = sumDouble(filterByYear(dailySpread, DailySpreadMitigation::getYear, year, year),
                     DailySpreadMitigation::getMitigatedCh4EmissionsKilotonnes);
             double improvedMMS = mc + ast + ds;
-            double total = wp + st + stt + gf + cr + zt + pf + mc + ast + ds;
+            double total = wp + wr + st + stt + gf + cr + zt + pf + mc + ast + ds;
             
             // Calculate BAU and Adjustment Mitigation for this year
             double yearBauValue = 0.0;
@@ -932,28 +973,30 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook()) : numberStyle;
             r.createCell(1).setCellValue(wp);
             r.getCell(1).setCellStyle(numStyle);
-            r.createCell(2).setCellValue(st);
+            r.createCell(2).setCellValue(wr);
             r.getCell(2).setCellStyle(numStyle);
-            r.createCell(3).setCellValue(stt);
+            r.createCell(3).setCellValue(st);
             r.getCell(3).setCellStyle(numStyle);
-            r.createCell(4).setCellValue(gf);
+            r.createCell(4).setCellValue(stt);
             r.getCell(4).setCellStyle(numStyle);
-            r.createCell(5).setCellValue(cr);
+            r.createCell(5).setCellValue(gf);
             r.getCell(5).setCellStyle(numStyle);
-            r.createCell(6).setCellValue(zt);
+            r.createCell(6).setCellValue(cr);
             r.getCell(6).setCellStyle(numStyle);
-            r.createCell(7).setCellValue(pf);
+            r.createCell(7).setCellValue(zt);
             r.getCell(7).setCellStyle(numStyle);
-            r.createCell(8).setCellValue(improvedMMS);
+            r.createCell(8).setCellValue(pf);
             r.getCell(8).setCellStyle(numStyle);
-            r.createCell(9).setCellValue(mc);
+            r.createCell(9).setCellValue(improvedMMS);
             r.getCell(9).setCellStyle(numStyle);
-            r.createCell(10).setCellValue(ast);
+            r.createCell(10).setCellValue(mc);
             r.getCell(10).setCellStyle(numStyle);
-            r.createCell(11).setCellValue(ds);
+            r.createCell(11).setCellValue(ast);
             r.getCell(11).setCellStyle(numStyle);
+            r.createCell(12).setCellValue(ds);
+            r.getCell(12).setCellStyle(numStyle);
 
-            Cell totalCell = r.createCell(12);
+            Cell totalCell = r.createCell(13);
             totalCell.setCellValue(total);
             CellStyle totalStyle = sheet.getWorkbook().createCellStyle();
             totalStyle.cloneStyleFrom(numStyle);
@@ -962,11 +1005,11 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             totalStyle.setFont(totalFont);
             totalCell.setCellStyle(totalStyle);
             
-            Cell bauCell = r.createCell(13);
+            Cell bauCell = r.createCell(14);
             bauCell.setCellValue(yearBauValue);
             bauCell.setCellStyle(numStyle);
             
-            Cell adjustmentCell = r.createCell(14);
+            Cell adjustmentCell = r.createCell(15);
             adjustmentCell.setCellValue(yearAdjustmentMitigation);
             adjustmentCell.setCellStyle(numStyle);
         }
@@ -1023,7 +1066,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             bar.setGapWidth(75);
 
             // Add series for each project (excluding Improved MMS sub-items, BAU, and adjustment)
-            int[] seriesColumns = {1, 2, 3, 4, 5, 6, 7, 8, 12, 13}; // Skip 9,10,11 (Improved MMS sub-items) and 14 (adjustment), include 13 (BAU)
+            int[] seriesColumns = {1, 2, 3, 4, 5, 6, 7, 8, 9, 13, 14}; // 1-9 = projects incl. Wetland, 13=Total, 14=BAU; skip 10,11,12 (Improved MMS sub-items), 15 (adjustment)
             for (int c : seriesColumns) {
                 if (c < header.length) {
                     CellRangeAddress valuesRange = new CellRangeAddress(dataStartRow, dataEndRow, c, c);
@@ -1242,6 +1285,45 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             r.getCell(1).setCellStyle(cellStyle);
             r.createCell(2).setCellValue(item.getMitigatedEmissionsKtCO2e() != null ? item.getMitigatedEmissionsKtCO2e() : 0.0);
             r.getCell(2).setCellStyle(numStyle);
+        }
+        autoSizeWithLimits(sheet, headers.length);
+    }
+
+    private void buildWetlandsRewettingSheet(XSSFSheet sheet, CellStyle headerStyle, CellStyle dataStyle,
+                                            CellStyle alternateDataStyle, CellStyle numberStyle,
+                                            List<WetlandsRewettingMitigation> data) {
+        String[] headers = {"Year", "Area (ha)", "Swap", "Total Mitigation (ktCO2e)"};
+        createHeader(sheet, headerStyle, headers);
+        DataFormat dataFormat = sheet.getWorkbook().createDataFormat();
+        int rowIdx = 1;
+        for (int i = 0; i < data.size(); i++) {
+            WetlandsRewettingMitigation item = data.get(i);
+            Row r = sheet.createRow(rowIdx++);
+            r.setHeightInPoints(18);
+            boolean isAlternate = i % 2 == 1;
+            CellStyle cellStyle = isAlternate ? alternateDataStyle : dataStyle;
+            CellStyle numStyle = isAlternate ? createAlternateNumberStyle(sheet.getWorkbook()) : numberStyle;
+
+            Cell yearCell = r.createCell(0);
+            yearCell.setCellValue(item.getYear());
+            CellStyle yearCellStyle = sheet.getWorkbook().createCellStyle();
+            yearCellStyle.cloneStyleFrom(cellStyle);
+            yearCellStyle.setAlignment(HorizontalAlignment.CENTER);
+            yearCellStyle.setDataFormat(dataFormat.getFormat("0"));
+            yearCell.setCellStyle(yearCellStyle);
+
+            r.createCell(1).setCellValue(item.getAreaRewettedMineralWetlandsHa() != null ? item.getAreaRewettedMineralWetlandsHa() : 0.0);
+            r.getCell(1).setCellStyle(numStyle);
+            String swapName = "";
+            if (item.getSwap() != null) {
+                Hibernate.initialize(item.getSwap());
+                swapName = item.getSwap().getName() != null ? item.getSwap().getName() : "";
+            }
+            r.createCell(2).setCellValue(swapName);
+            r.getCell(2).setCellStyle(cellStyle);
+            double totalKt = (item.getTotalMitigationTonnesCo2e() != null ? item.getTotalMitigationTonnesCo2e() : 0.0) / 1000.0;
+            r.createCell(3).setCellValue(totalKt);
+            r.getCell(3).setCellStyle(numStyle);
         }
         autoSizeWithLimits(sheet, headers.length);
     }

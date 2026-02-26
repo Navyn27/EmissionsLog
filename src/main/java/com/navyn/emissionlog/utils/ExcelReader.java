@@ -553,6 +553,13 @@ public class ExcelReader {
         avoidedElectricityProductionToDtoMap.put("Project Intervention Id", "projectInterventionId");
     }
 
+    private static final Map<String, String> wetlandsRewettingToDtoMap = new HashMap<>();
+    static {
+        wetlandsRewettingToDtoMap.put("Year", "year");
+        wetlandsRewettingToDtoMap.put("Area of rewetted mineral wetlands (ha)", "areaRewettedMineralWetlandsHa");
+        wetlandsRewettingToDtoMap.put("Swap Name", "swapName");
+    }
+
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)
             throws IOException {
         List<T> result = new ArrayList<>();
@@ -687,6 +694,8 @@ public class ExcelReader {
                 return 2;
             case WETLAND_PARKS_MITIGATION:
                 // Wetland Parks template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
+                return 2;
+            case WETLANDS_REWETTING_MITIGATION:
                 return 2;
             case STREET_TREES_MITIGATION:
                 // Street Trees template has: Row 0 = Title, Row 1 = Blank, Row 2 = Headers
@@ -1017,6 +1026,8 @@ public class ExcelReader {
                 return "Zero Tillage Mitigation";
             case WETLAND_PARKS_MITIGATION:
                 return "Wetland Parks Mitigation";
+            case WETLANDS_REWETTING_MITIGATION:
+                return "Wetlands Rewetting Mitigation";
             case CROP_ROTATION_MITIGATION:
                 return "Crop Rotation Mitigation";
             case STREET_TREES_MITIGATION:
@@ -1132,6 +1143,8 @@ public class ExcelReader {
                 return zeroTillageToDtoMap.get(header);
             case WETLAND_PARKS_MITIGATION:
                 return wetlandParksToDtoMap.get(header);
+            case WETLANDS_REWETTING_MITIGATION:
+                return wetlandsRewettingToDtoMap.get(header);
             case CROP_ROTATION_MITIGATION:
                 return cropRotationToDtoMap.get(header);
             case STREET_TREES_MITIGATION:

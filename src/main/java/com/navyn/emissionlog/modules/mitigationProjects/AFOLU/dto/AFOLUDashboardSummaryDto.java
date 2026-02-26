@@ -14,6 +14,7 @@ public class AFOLUDashboardSummaryDto {
     private Double totalBAU; // Sum of BAU values in year range
     private Double adjustmentMitigation; // BAU sum - Total Mitigation
     private Double wetlandParks;
+    private Double wetlandsRewetting; // Wetlands Rewetting mitigation (Kt CO2e)
     private Double settlementTrees;
     private Double streetTrees;
     private Double greenFences;
