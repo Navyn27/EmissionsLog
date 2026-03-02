@@ -314,6 +314,17 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
                 );
             });
 
+        wetlandsRewetting.stream()
+            .filter(w -> w.getIntervention() != null && w.getTotalMitigationTonnesCo2e() != null)
+            .forEach(w -> {
+                Hibernate.initialize(w.getIntervention());
+                interventionBreakdown.merge(
+                    w.getIntervention().getName(),
+                    w.getTotalMitigationTonnesCo2e() / 1000.0,
+                    Double::sum
+                );
+            });
+
         AFOLUDashboardSummaryDto dto = new AFOLUDashboardSummaryDto();
         dto.setStartingYear(startingYear);
         dto.setEndingYear(endingYear);
@@ -1292,7 +1303,7 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
     private void buildWetlandsRewettingSheet(XSSFSheet sheet, CellStyle headerStyle, CellStyle dataStyle,
                                             CellStyle alternateDataStyle, CellStyle numberStyle,
                                             List<WetlandsRewettingMitigation> data) {
-        String[] headers = {"Year", "Area (ha)", "Swap", "Total Mitigation (ktCO2e)"};
+        String[] headers = {"Year", "Area (ha)", "Swap", "Intervention", "Total Mitigation (ktCO2e)"};
         createHeader(sheet, headerStyle, headers);
         DataFormat dataFormat = sheet.getWorkbook().createDataFormat();
         int rowIdx = 1;
@@ -1321,9 +1332,16 @@ public class AFOLUDashboardServiceImpl implements AFOLUDashboardService {
             }
             r.createCell(2).setCellValue(swapName);
             r.getCell(2).setCellStyle(cellStyle);
+            String interventionName = "";
+            if (item.getIntervention() != null) {
+                Hibernate.initialize(item.getIntervention());
+                interventionName = item.getIntervention().getName() != null ? item.getIntervention().getName() : "";
+            }
+            r.createCell(3).setCellValue(interventionName);
+            r.getCell(3).setCellStyle(cellStyle);
             double totalKt = (item.getTotalMitigationTonnesCo2e() != null ? item.getTotalMitigationTonnesCo2e() : 0.0) / 1000.0;
-            r.createCell(3).setCellValue(totalKt);
-            r.getCell(3).setCellStyle(numStyle);
+            r.createCell(4).setCellValue(totalKt);
+            r.getCell(4).setCellStyle(numStyle);
         }
         autoSizeWithLimits(sheet, headers.length);
     }

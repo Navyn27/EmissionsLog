@@ -1,6 +1,7 @@
 package com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandsRewetting.models;
 
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandsRewetting.swap.Swap;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -34,6 +35,10 @@ public class WetlandsRewettingMitigation {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "swap_id", nullable = false)
     private Swap swap;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "intervention_id", nullable = true)
+    private Intervention intervention;
 
     // ===== CALCULATED FIELDS =====
     @Column(name = "ch4_emissions_kilotonnes_per_year")

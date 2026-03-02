@@ -8,6 +8,8 @@ import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandsRewetting.
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandsRewetting.repositories.WetlandsRewettingMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandsRewetting.swap.Swap;
 import com.navyn.emissionlog.modules.mitigationProjects.AFOLU.wetlandsRewetting.swap.SwapRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -37,6 +39,7 @@ public class WetlandsRewettingMitigationServiceImpl implements WetlandsRewetting
     private final WetlandsRewettingMitigationRepository repository;
     private final WetlandsRewettingParameterService parameterService;
     private final SwapRepository swapRepository;
+    private final InterventionRepository interventionRepository;
 
     @Override
     @Transactional
@@ -49,6 +52,13 @@ public class WetlandsRewettingMitigationServiceImpl implements WetlandsRewetting
         mitigation.setYear(dto.getYear());
         mitigation.setAreaRewettedMineralWetlandsHa(dto.getAreaRewettedMineralWetlandsHa());
         mitigation.setSwap(swap);
+        if (dto.getInterventionId() != null) {
+            Intervention intervention = interventionRepository.findById(dto.getInterventionId())
+                    .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getInterventionId()));
+            mitigation.setIntervention(intervention);
+        } else {
+            mitigation.setIntervention(null);
+        }
         computeAndSetCalculatedFields(mitigation, param);
         WetlandsRewettingMitigation saved = repository.save(mitigation);
         return toResponseDto(saved);
@@ -66,6 +76,13 @@ public class WetlandsRewettingMitigationServiceImpl implements WetlandsRewetting
         mitigation.setYear(dto.getYear());
         mitigation.setAreaRewettedMineralWetlandsHa(dto.getAreaRewettedMineralWetlandsHa());
         mitigation.setSwap(swap);
+        if (dto.getInterventionId() != null) {
+            Intervention intervention = interventionRepository.findById(dto.getInterventionId())
+                    .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + dto.getInterventionId()));
+            mitigation.setIntervention(intervention);
+        } else {
+            mitigation.setIntervention(null);
+        }
         computeAndSetCalculatedFields(mitigation, param);
         WetlandsRewettingMitigation updated = repository.save(mitigation);
         return toResponseDto(updated);
@@ -144,6 +161,13 @@ public class WetlandsRewettingMitigationServiceImpl implements WetlandsRewetting
         } else {
             dto.setSwap(null);
         }
+        if (mitigation.getIntervention() != null) {
+            Hibernate.initialize(mitigation.getIntervention());
+            Intervention intervention = mitigation.getIntervention();
+            dto.setIntervention(new WetlandsRewettingMitigationResponseDto.InterventionInfo(intervention.getId(), intervention.getName()));
+        } else {
+            dto.setIntervention(null);
+        }
         return dto;
     }
 
@@ -197,16 +221,18 @@ public class WetlandsRewettingMitigationServiceImpl implements WetlandsRewetting
             int rowIdx = 0;
             List<Swap> swaps = swapRepository.findAll();
             String[] swapNames = swaps.stream().map(Swap::getName).sorted().toArray(String[]::new);
+            List<Intervention> interventions = interventionRepository.findAll();
+            String[] interventionNames = interventions.stream().map(Intervention::getName).sorted().toArray(String[]::new);
 
             Row titleRow = sheet.createRow(rowIdx++);
             titleRow.setHeightInPoints(30);
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Wetlands Rewetting Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
             rowIdx++;
 
-            String[] headers = {"Year", "Area of rewetted mineral wetlands (ha)", "Swap Name"};
+            String[] headers = {"Year", "Area of rewetted mineral wetlands (ha)", "Swap Name", "Intervention"};
             Row headerRow = sheet.createRow(rowIdx++);
             headerRow.setHeightInPoints(22);
             for (int i = 0; i < headers.length; i++) {
@@ -227,6 +253,20 @@ public class WetlandsRewettingMitigationServiceImpl implements WetlandsRewetting
                 swapValidation.createPromptBox("Swap Name", "Select a swap from the dropdown.");
                 sheet.addValidationData(swapValidation);
             }
+            if (interventionNames.length > 0) {
+                String[] interventionOptions = new String[interventionNames.length + 1];
+                interventionOptions[0] = "";
+                System.arraycopy(interventionNames, 0, interventionOptions, 1, interventionNames.length);
+                CellRangeAddressList interventionList = new CellRangeAddressList(3, 1000, 3, 3);
+                DataValidationConstraint interventionConstraint = validationHelper.createExplicitListConstraint(interventionOptions);
+                DataValidation interventionValidation = validationHelper.createValidation(interventionConstraint, interventionList);
+                interventionValidation.setShowErrorBox(true);
+                interventionValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionValidation.createErrorBox("Invalid Intervention", "Please select a valid intervention from the dropdown or leave empty.");
+                interventionValidation.setShowPromptBox(true);
+                interventionValidation.createPromptBox("Intervention", "Select an intervention (optional).");
+                sheet.addValidationData(interventionValidation);
+            }
 
             Row exampleRow = sheet.createRow(rowIdx++);
             exampleRow.createCell(0).setCellValue(2025);
@@ -236,6 +276,9 @@ public class WetlandsRewettingMitigationServiceImpl implements WetlandsRewetting
             Cell swapCell = exampleRow.createCell(2);
             swapCell.setCellStyle(dataStyle);
             swapCell.setCellValue(swapNames.length > 0 ? swapNames[0] : "");
+            Cell interventionCell = exampleRow.createCell(3);
+            interventionCell.setCellStyle(dataStyle);
+            interventionCell.setCellValue(interventionNames.length > 0 ? interventionNames[0] : "");
 
             for (int i = 0; i < headers.length; i++) {
                 sheet.autoSizeColumn(i);
@@ -254,6 +297,7 @@ public class WetlandsRewettingMitigationServiceImpl implements WetlandsRewetting
         List<WetlandsRewettingMitigationResponseDto> savedRecords = new ArrayList<>();
         List<Map<String, Object>> skippedMissingFields = new ArrayList<>();
         List<Map<String, Object>> skippedSwapNotFound = new ArrayList<>();
+        List<Map<String, Object>> skippedInterventionNotFound = new ArrayList<>();
         List<Map<String, Object>> skippedParameterNotFound = new ArrayList<>();
         int totalProcessed = 0;
 
@@ -294,6 +338,18 @@ public class WetlandsRewettingMitigationServiceImpl implements WetlandsRewetting
                     continue;
                 }
 
+                if (dto.getInterventionName() != null && !dto.getInterventionName().trim().isEmpty()) {
+                    String name = dto.getInterventionName().trim();
+                    Optional<Intervention> interventionOpt = interventionRepository.findByNameIgnoreCase(name);
+                    if (interventionOpt.isPresent()) {
+                        dto.setInterventionId(interventionOpt.get().getId());
+                    } else {
+                        skippedInterventionNotFound.add(Map.of("row", excelRowNumber, "year", dto.getYear(), "reason", "Intervention '" + name + "' not found"));
+                        continue;
+                    }
+                }
+                dto.setInterventionName(null);
+
                 try {
                     WetlandsRewettingMitigationResponseDto saved = create(dto);
                     savedRecords.add(saved);
@@ -307,13 +363,14 @@ public class WetlandsRewettingMitigationServiceImpl implements WetlandsRewetting
                 }
             }
 
-            int totalSkipped = skippedMissingFields.size() + skippedSwapNotFound.size() + skippedParameterNotFound.size();
+            int totalSkipped = skippedMissingFields.size() + skippedSwapNotFound.size() + skippedInterventionNotFound.size() + skippedParameterNotFound.size();
             Map<String, Object> result = new HashMap<>();
             result.put("saved", savedRecords);
             result.put("savedCount", savedRecords.size());
             result.put("skippedCount", totalSkipped);
             result.put("skippedMissingFields", skippedMissingFields);
             result.put("skippedSwapNotFound", skippedSwapNotFound);
+            result.put("skippedInterventionNotFound", skippedInterventionNotFound);
             result.put("skippedParameterNotFound", skippedParameterNotFound);
             result.put("totalProcessed", totalProcessed);
             return result;

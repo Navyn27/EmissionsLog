@@ -15,6 +15,7 @@ public class WetlandsRewettingMitigationResponseDto {
     private Integer year;
     private Double areaRewettedMineralWetlandsHa;
     private SwapInfo swap;
+    private InterventionInfo intervention;
     private Double ch4EmissionsKilotonnesPerYear;
     private Double emissionsCo2eTonnesPerYear;
     private Double sequestrationTonnesC;
@@ -27,6 +28,14 @@ public class WetlandsRewettingMitigationResponseDto {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SwapInfo {
+        private UUID id;
+        private String name;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InterventionInfo {
         private UUID id;
         private String name;
     }

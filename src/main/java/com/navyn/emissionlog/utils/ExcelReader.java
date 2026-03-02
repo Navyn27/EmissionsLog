@@ -558,6 +558,7 @@ public class ExcelReader {
         wetlandsRewettingToDtoMap.put("Year", "year");
         wetlandsRewettingToDtoMap.put("Area of rewetted mineral wetlands (ha)", "areaRewettedMineralWetlandsHa");
         wetlandsRewettingToDtoMap.put("Swap Name", "swapName");
+        wetlandsRewettingToDtoMap.put("Intervention", "interventionName");
     }
 
     public static <T> List<T> readExcel(InputStream inputStream, Class<T> dtoClass, ExcelType excelType)

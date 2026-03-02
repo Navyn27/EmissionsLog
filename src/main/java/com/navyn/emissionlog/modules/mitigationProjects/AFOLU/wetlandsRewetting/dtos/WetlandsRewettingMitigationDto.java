@@ -23,6 +23,12 @@ public class WetlandsRewettingMitigationDto {
     @NotNull(message = "Swap is required")
     private UUID swapId;
 
+    // Optional – intervention project
+    private UUID interventionId;
+
     // Temporary field for Excel import – swap name (resolved to swapId in service)
     private String swapName;
+
+    // Temporary field for Excel import – intervention name (resolved to interventionId in service)
+    private String interventionName;
 }
