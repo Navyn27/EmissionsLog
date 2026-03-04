@@ -41,7 +41,9 @@ public class JwtService {
         claims.put("firstName", user.getFirstname());
         claims.put("lastName", user.getLastname());
         claims.put("role", user.getRole());
-        claims.put("record", user.getRecord().getId());
+        if (user.getRecord() != null) {
+            claims.put("record", user.getRecord().getId());
+        }
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -67,14 +69,6 @@ public class JwtService {
         return claimResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
-        return Jwts
-                .parser()
-                .setSigningKey(getKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
 
     public boolean validateToken(String token, UserDetails userDetails) {
         final String userName = extractUserName(token);
@@ -87,5 +81,14 @@ public class JwtService {
 
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
+    }
+
+    public Claims extractAllClaims(String token) {
+        return Jwts
+                .parser()
+                .setSigningKey(getKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

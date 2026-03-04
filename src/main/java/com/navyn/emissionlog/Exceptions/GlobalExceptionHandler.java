@@ -271,6 +271,14 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("The requested resource was not found."));
     }
 
+    @ExceptionHandler(com.navyn.emissionlog.modules.userManual.exceptions.UserManualNotFoundException.class)
+    public ResponseEntity<ApiResponse> handleUserManualNotFoundException(com.navyn.emissionlog.modules.userManual.exceptions.UserManualNotFoundException ex) {
+        logger.warn("User manual not found: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("User manual not found."));
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse> handleAccessDeniedException(AccessDeniedException ex) {
         logger.warn("Access denied: {}", ex.getMessage());

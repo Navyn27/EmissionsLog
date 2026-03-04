@@ -29,7 +29,14 @@ public interface WetlandParksMitigationRepository
     
     // Find by exact year and tree category
     Optional<WetlandParksMitigation> findByYearAndTreeCategory(
-        Integer year, 
+        Integer year,
         WetlandTreeCategory treeCategory
     );
+
+    // Find by year range for dashboard filtering
+    List<WetlandParksMitigation> findByYearBetweenOrderByYearDesc(Integer startYear, Integer endYear);
+
+    default List<WetlandParksMitigation> findByYearRange(Integer startYear, Integer endYear) {
+        return findByYearBetweenOrderByYearDesc(startYear, endYear);
+    }
 }

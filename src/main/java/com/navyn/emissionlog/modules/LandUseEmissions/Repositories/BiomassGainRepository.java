@@ -11,4 +11,10 @@ import java.util.UUID;
 @Repository
 public interface BiomassGainRepository extends JpaRepository<BiomassGain, UUID>, JpaSpecificationExecutor<BiomassGain> {
     List<BiomassGain> findAllByOrderByYearDesc();
+
+    List<BiomassGain> findByYearBetweenOrderByYearDesc(Integer startYear, Integer endYear);
+
+    default List<BiomassGain> findByYearRange(Integer startYear, Integer endYear) {
+        return findByYearBetweenOrderByYearDesc(startYear, endYear);
+    }
 }

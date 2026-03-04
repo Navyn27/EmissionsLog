@@ -3,7 +3,6 @@ package com.navyn.emissionlog.utils.Specifications;
 import com.navyn.emissionlog.Enums.Agriculture.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.*;
 import com.navyn.emissionlog.modules.agricultureEmissions.models.AgriculturalLand.DirectLandEmissions.*;
-import jakarta.validation.constraints.Past;
 import org.springframework.data.jpa.domain.Specification;
 
 public class AgricultureSpecifications {

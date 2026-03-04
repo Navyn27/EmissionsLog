@@ -122,7 +122,6 @@ public class RoofTopParameterServiceImpl implements IRoofTopParameterService {
     }
 
     private void mapDtoToEntity(RoofTopParameterDto dto, RoofTopParameter entity) {
-        entity.setSolarPVCapacity(dto.getSolarPVCapacity());
         entity.setEnergyOutPut(dto.getEnergyOutPut());
         entity.setPercentageOutPutDisplacedDiesel(dto.getPercentageOutPutDisplacedDiesel());
         entity.setAvoidedDieselConsumption(dto.getAvoidedDieselConsumption());
@@ -134,7 +133,6 @@ public class RoofTopParameterServiceImpl implements IRoofTopParameterService {
     private RoofTopParameterResponseDto mapEntityToResponseDto(RoofTopParameter entity) {
         RoofTopParameterResponseDto dto = new RoofTopParameterResponseDto();
         dto.setId(entity.getId());
-        dto.setSolarPVCapacity(entity.getSolarPVCapacity());
         dto.setEnergyOutPut(entity.getEnergyOutPut());
         dto.setPercentageOutPutDisplacedDiesel(entity.getPercentageOutPutDisplacedDiesel());
         dto.setAvoidedDieselConsumption(entity.getAvoidedDieselConsumption());

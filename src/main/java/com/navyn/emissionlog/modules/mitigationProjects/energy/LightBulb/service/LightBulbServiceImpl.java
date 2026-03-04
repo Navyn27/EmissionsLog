@@ -1,58 +1,111 @@
 package com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.service;
 
 import com.navyn.emissionlog.Enums.ExcelType;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.enums.ESector;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.models.BAU;
+import com.navyn.emissionlog.modules.mitigationProjects.BAU.services.BAUService;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.CreateLightBulbDTO;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.LightBulbMitigationExcelDto;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.LightBulbMitigationResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.LightBulbParameterResponseDto;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.dto.UpdateLightBulbDTO;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.model.LightBulb;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.repository.ILightBulbRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.Intervention;
+import com.navyn.emissionlog.modules.mitigationProjects.intervention.repositories.InterventionRepository;
 import com.navyn.emissionlog.utils.ExcelReader;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.*;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
 public class LightBulbServiceImpl implements ILightBulbService {
     private final ILightBulbRepository lightBulbRepository;
-
+    private final ILightBulbParameterService parameterService;
+    private  final InterventionRepository interventionRepository;
+    private  final BAUService bauService;
     @Override
-    public LightBulb create(CreateLightBulbDTO lightBulbDTO) {
+    @Transactional
+    public LightBulbMitigationResponseDto create(CreateLightBulbDTO lightBulbDTO) {
+
         LightBulb lightBulb = new LightBulb();
+        // Get LightBulbParameter (the latest active) - throws an exception if none exists
+        LightBulbParameterResponseDto paramDto;
+        try {
+            paramDto = parameterService.getLatestActive();
+        } catch (RuntimeException e) {
+            throw new RuntimeException(
+                    "Cannot create Light Bulb Mitigation: No active Light Bulb Parameter found. " +
+                            "Please create an active parameter first before creating mitigation records.",
+                    e
+            );
+        }
+        // Get Intervention
+        Intervention intervention = interventionRepository.findById(lightBulbDTO.getProjectInterventionId())
+                .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + lightBulbDTO.getProjectInterventionId()));
+
+        // Get BAU for ENERGY sector and same year
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(lightBulbDTO.getYear(), ESector.ENERGY);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + lightBulbDTO.getYear() + " and sector ENERGY. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+        
         lightBulb.setYear(lightBulbDTO.getYear());
         lightBulb.setTotalInstalledBulbsPerYear(lightBulbDTO.getTotalInstalledBulbsPerYear());
         lightBulb.setReductionCapacityPerBulb(lightBulbDTO.getReductionCapacityPerBulb());
-        lightBulb.setEmissionFactor(lightBulbDTO.getEmissionFactor());
-        lightBulb.setBau(lightBulbDTO.getBau());
-        calculateAndSetFields(lightBulb);
-        return lightBulbRepository.save(lightBulb);
+        lightBulb.setProjectIntervention(intervention);
+        
+        calculateAndSetFields(lightBulb, paramDto.getEmissionFactor(), bau.getValue());
+        LightBulb saved = lightBulbRepository.save(lightBulb);
+        return mapEntityToResponseDto(saved);
     }
 
     @Override
-    public List<LightBulb> getAll() {
-        return lightBulbRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<LightBulbMitigationResponseDto> getAll() {
+        return lightBulbRepository.findAll().stream()
+                .map(this::mapEntityToResponseDto)
+                .toList();
     }
 
     @Override
-    public LightBulb getById(UUID id) {
-        return lightBulbRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("LightBulb not found"));
+    @Transactional(readOnly = true)
+    public LightBulbMitigationResponseDto getById(UUID id) {
+        LightBulb lightBulb = lightBulbRepository.findByIdWithIntervention(id)
+                .orElseThrow(() -> new EntityNotFoundException("LightBulb not found"));
+        return mapEntityToResponseDto(lightBulb);
     }
 
     @Override
-    public LightBulb update(UUID id, UpdateLightBulbDTO lightBulbDTO) {
-        LightBulb lightBulb = getById(id);
+    @Transactional
+    public LightBulbMitigationResponseDto update(UUID id, UpdateLightBulbDTO lightBulbDTO) {
+        LightBulb lightBulb = lightBulbRepository.findByIdWithIntervention(id)
+                .orElseThrow(() -> new EntityNotFoundException("LightBulb not found"));
+        
+        // Get latest active parameter for emission factor
+        LightBulbParameterResponseDto paramDto = parameterService.getLatestActive();
+        
+        // Get BAU for the year (use existing year if not updated, otherwise use new year)
+        int yearToUse = lightBulbDTO.getYear() != null ? lightBulbDTO.getYear() : lightBulb.getYear();
+        Optional<BAU> bauOptional = bauService.getBAUByYearAndSector(yearToUse, ESector.ENERGY);
+        if (bauOptional.isEmpty()) {
+            throw new RuntimeException("BAU record not found for year " + yearToUse + " and sector ENERGY. Please create BAU record first.");
+        }
+        BAU bau = bauOptional.get();
+        
         if (lightBulbDTO.getYear() != null) {
             lightBulb.setYear(lightBulbDTO.getYear());
         }
@@ -62,14 +115,15 @@ public class LightBulbServiceImpl implements ILightBulbService {
         if (lightBulbDTO.getReductionCapacityPerBulb() != null) {
             lightBulb.setReductionCapacityPerBulb(lightBulbDTO.getReductionCapacityPerBulb());
         }
-        if (lightBulbDTO.getEmissionFactor() != null) {
-            lightBulb.setEmissionFactor(lightBulbDTO.getEmissionFactor());
+        if (lightBulbDTO.getProjectInterventionId() != null) {
+            Intervention intervention = interventionRepository.findById(lightBulbDTO.getProjectInterventionId())
+                    .orElseThrow(() -> new RuntimeException("Intervention not found with id: " + lightBulbDTO.getProjectInterventionId()));
+            lightBulb.setProjectIntervention(intervention);
         }
-        if (lightBulbDTO.getBau() != null) {
-            lightBulb.setBau(lightBulbDTO.getBau());
-        }
-        calculateAndSetFields(lightBulb);
-        return lightBulbRepository.save(lightBulb);
+        
+        calculateAndSetFields(lightBulb, paramDto.getEmissionFactor(), bau.getValue());
+        LightBulb updated = lightBulbRepository.save(lightBulb);
+        return mapEntityToResponseDto(updated);
     }
 
     @Override
@@ -78,25 +132,70 @@ public class LightBulbServiceImpl implements ILightBulbService {
     }
 
     @Override
-    public List<LightBulb> getByYear(int year) {
-        return lightBulbRepository.findAllByYear(year);
+    @Transactional(readOnly = true)
+    public List<LightBulbMitigationResponseDto> getByYear(int year) {
+        return lightBulbRepository.findAllByYear(year).stream()
+                .map(this::mapEntityToResponseDto)
+                .toList();
     }
 
-    private void calculateAndSetFields(LightBulb lightBulb) {
+    /**
+     * Maps LightBulb entity to Response DTO
+     * This method loads intervention data within the transaction to avoid lazy loading issues
+     */
+    private LightBulbMitigationResponseDto mapEntityToResponseDto(LightBulb lightBulb) {
+        LightBulbMitigationResponseDto dto = new LightBulbMitigationResponseDto();
+        dto.setId(lightBulb.getId());
+        dto.setYear(lightBulb.getYear());
+        dto.setTotalInstalledBulbsPerYear(lightBulb.getTotalInstalledBulbsPerYear());
+        dto.setReductionCapacityPerBulb(lightBulb.getReductionCapacityPerBulb());
+        dto.setTotalReductionPerYear(lightBulb.getTotalReductionPerYear());
+        dto.setNetGhGMitigationAchieved(lightBulb.getNetGhGMitigationAchieved());
+        dto.setScenarioGhGMitigationAchieved(lightBulb.getScenarioGhGMitigationAchieved());
+        dto.setAdjustedBauEmissionMitigation(lightBulb.getAdjustedBauEmissionMitigation());
+        dto.setCreatedAt(lightBulb.getCreatedAt());
+        dto.setUpdatedAt(lightBulb.getUpdatedAt());
+
+        // Map intervention - FORCE initialization within transaction to avoid lazy loading
+        if (lightBulb.getProjectIntervention() != null) {
+            // Force Hibernate to initialize the proxy while session is still open
+            Hibernate.initialize(lightBulb.getProjectIntervention());
+            Intervention intervention = lightBulb.getProjectIntervention();
+            LightBulbMitigationResponseDto.InterventionInfo interventionInfo =
+                    new LightBulbMitigationResponseDto.InterventionInfo(
+                            intervention.getId(),
+                            intervention.getName()
+                    );
+            dto.setProjectIntervention(interventionInfo);
+        } else {
+            dto.setProjectIntervention(null);
+        }
+
+        return dto;
+    }
+
+    private void calculateAndSetFields(LightBulb lightBulb, double emissionFactor, double bauValue) {
         double totalReductionPerYear = lightBulb.getReductionCapacityPerBulb()
                 * lightBulb.getTotalInstalledBulbsPerYear();
-        double netGhGMitigationAchieved = (totalReductionPerYear * lightBulb.getEmissionFactor()) / 1000;
-        double scenarioGhGMitigationAchieved = lightBulb.getBau() - netGhGMitigationAchieved;
+        // Calculate in tCO2e: (kWh * kgCO2e/kWh) / 1000 = tCO2e
+        double netGhGMitigationAchievedTCO2e = (totalReductionPerYear * emissionFactor) / 1000;
+        // Convert to ktCO2e for calculations with BAU (which is in ktCO2e)
+        double netGhGMitigationAchievedKtCO2e = netGhGMitigationAchievedTCO2e / 1000.0;
+        double scenarioGhGMitigationAchieved = bauValue - netGhGMitigationAchievedKtCO2e;
+        double adjustedBauEmissionMitigation = bauValue - netGhGMitigationAchievedKtCO2e;
 
         lightBulb.setTotalReductionPerYear(totalReductionPerYear);
-        lightBulb.setNetGhGMitigationAchieved(netGhGMitigationAchieved);
+        // Store in tCO2e for consistency with other energy projects (Rooftop, Waterheat)
+        lightBulb.setNetGhGMitigationAchieved(netGhGMitigationAchievedTCO2e);
+        // Store scenario and adjusted BAU in ktCO2e to match BAU units
         lightBulb.setScenarioGhGMitigationAchieved(scenarioGhGMitigationAchieved);
+        lightBulb.setAdjustedBauEmissionMitigation(adjustedBauEmissionMitigation);
     }
 
     @Override
     public byte[] generateExcelTemplate() {
         try (Workbook workbook = new XSSFWorkbook();
-                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 
             Sheet sheet = workbook.createSheet("Light Bulb Mitigation");
 
@@ -149,7 +248,7 @@ public class LightBulbServiceImpl implements ILightBulbService {
             dataStyle.setVerticalAlignment(VerticalAlignment.CENTER);
             dataStyle.setWrapText(true);
 
-            // Create alternate data style
+            // Create an alternate data style
             XSSFCellStyle alternateDataStyle = (XSSFCellStyle) workbook.createCellStyle();
             Font altDataFont = workbook.createFont();
             altDataFont.setFontName("Calibri");
@@ -193,7 +292,7 @@ public class LightBulbServiceImpl implements ILightBulbService {
             Cell titleCell = titleRow.createCell(0);
             titleCell.setCellValue("Light Bulb Mitigation Template");
             titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 4));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
 
             rowIdx++; // Blank row
 
@@ -204,8 +303,7 @@ public class LightBulbServiceImpl implements ILightBulbService {
                     "Year",
                     "Total Installed Bulbs Per Year",
                     "Reduction Capacity Per Bulb",
-                    "Emission Factor",
-                    "BAU"
+                    "Project Intervention Name"
             };
 
             for (int i = 0; i < headers.length; i++) {
@@ -214,21 +312,46 @@ public class LightBulbServiceImpl implements ILightBulbService {
                 cell.setCellStyle(headerStyle);
             }
 
+            // Get all interventions for dropdown
+            List<Intervention> interventions = interventionRepository.findAll();
+            String[] interventionNames = interventions.stream()
+                    .map(Intervention::getName)
+                    .toArray(String[]::new);
+
+            // Create data validation helper
+            DataValidationHelper validationHelper = sheet.getDataValidationHelper();
+
+            // Data validation for Project Intervention Name column (Column D, index 3)
+            if (interventionNames.length > 0) {
+                CellRangeAddressList interventionList = new CellRangeAddressList(3, 1000, 3, 3);
+                DataValidationConstraint interventionConstraint = validationHelper
+                        .createExplicitListConstraint(interventionNames);
+                DataValidation interventionValidation = validationHelper.createValidation(interventionConstraint,
+                        interventionList);
+                interventionValidation.setShowErrorBox(true);
+                interventionValidation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+                interventionValidation.createErrorBox("Invalid Intervention",
+                        "Please select a valid intervention from the dropdown list.");
+                interventionValidation.setShowPromptBox(true);
+                interventionValidation.createPromptBox("Project Intervention",
+                        "Select an intervention from the dropdown list.");
+                sheet.addValidationData(interventionValidation);
+            }
+
             // Create example data rows
             Object[] exampleData1 = {
                     2024,
                     1000.0,
                     0.1,
-                    0.5,
-                    500.0
+                    interventions.isEmpty() ? "Example Intervention 1" : interventions.get(0).getName()
             };
 
             Object[] exampleData2 = {
                     2025,
                     1200.0,
                     0.12,
-                    0.55,
-                    600.0
+                    interventions.size() > 1 ? interventions.get(1).getName()
+                            : (interventions.isEmpty() ? "Example Intervention 2" : interventions.get(0).getName())
             };
 
             // First example row
@@ -236,12 +359,15 @@ public class LightBulbServiceImpl implements ILightBulbService {
             exampleRow1.setHeightInPoints(18);
             for (int i = 0; i < exampleData1.length; i++) {
                 Cell cell = exampleRow1.createCell(i);
-                if (i == 0) { // Year
+                if (i == 0) {
                     cell.setCellStyle(yearStyle);
                     cell.setCellValue(((Number) exampleData1[i]).intValue());
-                } else { // All other fields are numbers
+                } else if (i == 1 || i == 2) {
                     cell.setCellStyle(numberStyle);
                     cell.setCellValue(((Number) exampleData1[i]).doubleValue());
+                } else {
+                    cell.setCellStyle(dataStyle);
+                    cell.setCellValue((String) exampleData1[i]);
                 }
             }
 
@@ -250,19 +376,22 @@ public class LightBulbServiceImpl implements ILightBulbService {
             exampleRow2.setHeightInPoints(18);
             for (int i = 0; i < exampleData2.length; i++) {
                 Cell cell = exampleRow2.createCell(i);
-                if (i == 0) { // Year
+                if (i == 0) {
                     CellStyle altYearStyle = workbook.createCellStyle();
                     altYearStyle.cloneStyleFrom(alternateDataStyle);
                     altYearStyle.setAlignment(HorizontalAlignment.CENTER);
                     cell.setCellStyle(altYearStyle);
                     cell.setCellValue(((Number) exampleData2[i]).intValue());
-                } else { // All other fields are numbers
+                } else if (i == 1 || i == 2) {
                     CellStyle altNumStyle = workbook.createCellStyle();
                     altNumStyle.cloneStyleFrom(numberStyle);
                     altNumStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
                     altNumStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                     cell.setCellStyle(altNumStyle);
                     cell.setCellValue(((Number) exampleData2[i]).doubleValue());
+                } else {
+                    cell.setCellStyle(alternateDataStyle);
+                    cell.setCellValue((String) exampleData2[i]);
                 }
             }
 
@@ -288,8 +417,8 @@ public class LightBulbServiceImpl implements ILightBulbService {
 
     @Override
     public Map<String, Object> createLightBulbMitigationFromExcel(MultipartFile file) {
-        List<LightBulb> savedRecords = new ArrayList<>();
-        List<Integer> skippedYears = new ArrayList<>();
+        List<LightBulbMitigationResponseDto> savedRecords = new ArrayList<>();
+        List<Map<String, Object>> skippedRows = new ArrayList<>();
         int totalProcessed = 0;
 
         try {
@@ -300,20 +429,17 @@ public class LightBulbServiceImpl implements ILightBulbService {
 
             for (int i = 0; i < dtos.size(); i++) {
                 LightBulbMitigationExcelDto dto = dtos.get(i);
-                // Calculate actual Excel row number: headerRowIndex(2) + 1 + i + 1 (1-based) =
-                // i + 4
-                int actualRowNumber = i + 4;
+                totalProcessed++;
+                int rowNumber = i + 1; // Excel row number (1-based, accounting for header row)
+                int excelRowNumber = rowNumber + 2; // +2 for title row and blank row
 
-                // Check if row is effectively empty (missing critical fields) - skip it
-                // A row is effectively empty if Year is missing
+                // Check if a row is effectively empty (missing critical fields) - skip it
                 boolean isEffectivelyEmpty = (dto.getYear() == 0);
 
                 if (isEffectivelyEmpty) {
                     // Skip this row - it's effectively empty (likely formatting or blank row)
                     continue;
                 }
-
-                totalProcessed++;
 
                 // Validate required fields
                 List<String> missingFields = new ArrayList<>();
@@ -326,23 +452,28 @@ public class LightBulbServiceImpl implements ILightBulbService {
                 if (dto.getReductionCapacityPerBulb() <= 0) {
                     missingFields.add("Reduction Capacity Per Bulb");
                 }
-                if (dto.getEmissionFactor() <= 0) {
-                    missingFields.add("Emission Factor");
-                }
-                if (dto.getBau() < 0) {
-                    missingFields.add("BAU");
+                if (dto.getProjectInterventionName() == null || dto.getProjectInterventionName().trim().isEmpty()) {
+                    missingFields.add("Project Intervention Name");
                 }
 
                 if (!missingFields.isEmpty()) {
-                    throw new RuntimeException(String.format(
-                            "Missing required fields at row %d: %s. Please fill in all required fields in your Excel file.",
-                            actualRowNumber,
-                            String.join(", ", missingFields)));
+                    Map<String, Object> skipInfo = new HashMap<>();
+                    skipInfo.put("row", excelRowNumber);
+                    skipInfo.put("year", dto.getYear() > 0 ? dto.getYear() : "N/A");
+                    skipInfo.put("reason", "Missing required fields: " + String.join(", ", missingFields));
+                    skippedRows.add(skipInfo);
+                    continue; // Skip this row
                 }
 
-                // Check if year already exists
-                if (lightBulbRepository.findByYear(dto.getYear()).isPresent()) {
-                    skippedYears.add(dto.getYear());
+                // Convert intervention name to UUID
+                Optional<Intervention> interventionOpt = interventionRepository
+                        .findByNameIgnoreCase(dto.getProjectInterventionName().trim());
+                if (interventionOpt.isEmpty()) {
+                    Map<String, Object> skipInfo = new HashMap<>();
+                    skipInfo.put("row", excelRowNumber);
+                    skipInfo.put("year", dto.getYear());
+                    skipInfo.put("reason", String.format("Intervention '%s' not found. Please use a valid intervention name from the dropdown.", dto.getProjectInterventionName()));
+                    skippedRows.add(skipInfo);
                     continue; // Skip this row
                 }
 
@@ -351,19 +482,49 @@ public class LightBulbServiceImpl implements ILightBulbService {
                 createDto.setYear(dto.getYear());
                 createDto.setTotalInstalledBulbsPerYear(dto.getTotalInstalledBulbsPerYear());
                 createDto.setReductionCapacityPerBulb(dto.getReductionCapacityPerBulb());
-                createDto.setEmissionFactor(dto.getEmissionFactor());
-                createDto.setBau(dto.getBau());
+                createDto.setProjectInterventionId(interventionOpt.get().getId());
 
-                // Create the record using existing create method
-                LightBulb saved = create(createDto);
-                savedRecords.add(saved);
+                // Try to create the record - catch specific errors and skip instead of failing
+                try {
+                    LightBulbMitigationResponseDto saved = create(createDto);
+                    savedRecords.add(saved);
+                } catch (RuntimeException e) {
+                    String errorMessage = e.getMessage();
+                    if (errorMessage != null) {
+                        // Check for BAU not found error
+                        if ((errorMessage.contains("BAU record") || errorMessage.contains("BAU")) && errorMessage.contains("not found")) {
+                            Map<String, Object> skipInfo = new HashMap<>();
+                            skipInfo.put("row", excelRowNumber);
+                            skipInfo.put("year", dto.getYear());
+                            skipInfo.put("reason", errorMessage);
+                            skippedRows.add(skipInfo);
+                            continue; // Skip this row
+                        }
+                        // Check for Parameter not found error
+                        if (errorMessage.contains("Light Bulb Parameter") || 
+                            errorMessage.contains("active parameter") || 
+                            errorMessage.contains("No active Light Bulb Parameter")) {
+                            Map<String, Object> skipInfo = new HashMap<>();
+                            skipInfo.put("row", excelRowNumber);
+                            skipInfo.put("year", dto.getYear());
+                            skipInfo.put("reason", errorMessage);
+                            skippedRows.add(skipInfo);
+                            continue; // Skip this row
+                        }
+                    }
+                    // If it's a different error, re-throw it (e.g., file format issues)
+                    throw e;
+                }
             }
+
+            // Calculate total skipped count
+            int totalSkipped = skippedRows.size();
 
             Map<String, Object> result = new HashMap<>();
             result.put("saved", savedRecords);
             result.put("savedCount", savedRecords.size());
-            result.put("skippedCount", skippedYears.size());
-            result.put("skippedYears", skippedYears);
+            result.put("skippedCount", totalSkipped);
+            result.put("skippedRows", skippedRows);
             result.put("totalProcessed", totalProcessed);
 
             return result;
@@ -371,22 +532,9 @@ public class LightBulbServiceImpl implements ILightBulbService {
             // Re-throw IOException with user-friendly message
             String message = e.getMessage();
             if (message != null) {
-                throw new RuntimeException(message, e);
-            } else {
-                throw new RuntimeException(
-                        "Incorrect template. Please download the correct template and try again.",
-                        e);
+                throw new RuntimeException("Error reading Excel file: " + message, e);
             }
-        } catch (NullPointerException e) {
-            // Handle null pointer exceptions with clear message
-            throw new RuntimeException(
-                    "Missing required fields. Please fill in all required fields in your Excel file.", e);
-        } catch (Exception e) {
-            String errorMsg = e.getMessage();
-            if (errorMsg != null) {
-                throw new RuntimeException(errorMsg, e);
-            }
-            throw new RuntimeException("Error processing Excel file. Please check your file and try again.", e);
+            throw new RuntimeException("Error reading Excel file. Please ensure the file is a valid Excel format.", e);
         }
     }
 }

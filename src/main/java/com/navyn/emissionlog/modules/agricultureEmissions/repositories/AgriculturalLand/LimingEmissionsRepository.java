@@ -9,10 +9,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface LimingEmissionsRepository extends JpaRepository<LimingEmissions, UUID>, JpaSpecificationExecutor<LimingEmissions> {
     @Query("SELECT le FROM LimingEmissions le WHERE le.year BETWEEN :startYear AND :endYear ORDER BY le.year DESC")
     List<LimingEmissions> findByYearRange(@Param("startYear") int startYear, @Param("endYear") int endYear);
+    
+    Optional<LimingEmissions> findByYearAndMaterial(int year, com.navyn.emissionlog.Enums.Agriculture.LimingMaterials material);
 }

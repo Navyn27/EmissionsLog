@@ -12,12 +12,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -34,6 +37,27 @@ public class WasteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Industrial waste water created successfully", wasteService.createIndustrialWasteWaterData(wasteData)));
     }
 
+    @Operation(summary = "Download Industrial Waste Water Excel template")
+    @GetMapping("/industrialWasteWater/template")
+    public ResponseEntity<byte[]> downloadIndustrialWasteWaterTemplate() {
+        byte[] templateBytes = wasteService.generateIndustrialWasteExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Industrial_Waste_Water_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @Operation(summary = "Upload Industrial Waste Water records from Excel file")
+    @PostMapping("/industrialWasteWater/excel")
+    public ResponseEntity<ApiResponse> createIndustrialWasteWaterFromExcel(@RequestParam("file") MultipartFile file) throws IOException {
+        Map<String, Object> result = wasteService.createIndustrialWasteFromExcel(file);
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        String message = String.format("Upload completed. %d record(s) saved successfully. %d record(s) skipped.", savedCount, skippedCount);
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
+    }
+
     @Operation(summary = "Create Solid Waste Data and calculate emissions")
     @PostMapping("/solidWaste")
     public ResponseEntity<ApiResponse> createSolidWasteData(@Valid @RequestBody SolidWasteDto wasteData) {
@@ -46,6 +70,27 @@ public class WasteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Waste water created successfully", wasteService.createWasteWaterData(wasteData)));
     }
 
+    @Operation(summary = "Download Waste Water Excel template")
+    @GetMapping("/wasteWater/template")
+    public ResponseEntity<byte[]> downloadWasteWaterTemplate() {
+        byte[] templateBytes = wasteService.generateWasteWaterExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Waste_Water_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @Operation(summary = "Upload Waste Water records from Excel file")
+    @PostMapping("/wasteWater/excel")
+    public ResponseEntity<ApiResponse> createWasteWaterFromExcel(@RequestParam("file") MultipartFile file) throws IOException {
+        Map<String, Object> result = wasteService.createWasteWaterFromExcel(file);
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        String message = String.format("Upload completed. %d record(s) saved successfully. %d record(s) skipped.", savedCount, skippedCount);
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
+    }
+
 
     @Operation(summary = "Create Bio Treated Waste Water Data and calculate emissions")
     @PostMapping("/bioTreatedWasteWater")
@@ -53,16 +98,79 @@ public class WasteController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Bio treated waste water created successfully", wasteService.createBioTreatedWasteWaterData(wasteData)));
     }
 
-    @Operation(summary = "Create Bio Treated Waste Water Data and calculate emissions")
+    @Operation(summary = "Download Bio Treated Waste Excel template")
+    @GetMapping("/bioTreatedWasteWater/template")
+    public ResponseEntity<byte[]> downloadBioTreatedWasteTemplate() {
+        byte[] templateBytes = wasteService.generateBioTreatedWasteExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Bio_Treated_Waste_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @Operation(summary = "Upload Bio Treated Waste records from Excel file")
+    @PostMapping("/bioTreatedWasteWater/excel")
+    public ResponseEntity<ApiResponse> createBioTreatedWasteFromExcel(@RequestParam("file") MultipartFile file) throws IOException {
+        Map<String, Object> result = wasteService.createBioTreatedWasteFromExcel(file);
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        String message = String.format("Upload completed. %d record(s) saved successfully. %d record(s) skipped.", savedCount, skippedCount);
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
+    }
+
+    @Operation(summary = "Create Burnt Waste Data and calculate emissions")
     @PostMapping("/burntWaste")
     public ResponseEntity<ApiResponse> createBurntWasteData(@Valid @RequestBody GeneralWasteByPopulationDto wasteData) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Burnt waste created successfully", wasteService.createBurntWasteData(wasteData)));
+    }
+
+    @Operation(summary = "Download Burnt Waste Excel template")
+    @GetMapping("/burntWaste/template")
+    public ResponseEntity<byte[]> downloadBurntWasteTemplate() {
+        byte[] templateBytes = wasteService.generateBurntWasteExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Burnt_Waste_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @Operation(summary = "Upload Burnt Waste records from Excel file")
+    @PostMapping("/burntWaste/excel")
+    public ResponseEntity<ApiResponse> createBurntWasteFromExcel(@RequestParam("file") MultipartFile file) throws IOException {
+        Map<String, Object> result = wasteService.createBurntWasteFromExcel(file);
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        String message = String.format("Upload completed. %d record(s) saved successfully. %d record(s) skipped.", savedCount, skippedCount);
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
 
     @Operation(summary = "Create Incineration Waste Data and calculate emissions")
     @PostMapping("/incinerationWaste")
     public ResponseEntity<ApiResponse> createWasteData(@Valid @RequestBody GeneralWasteByPopulationDto wasteData) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse(true, "Incineration waste created successfully", wasteService.createIncinerationWasteData(wasteData)));
+    }
+
+    @Operation(summary = "Download Incineration Waste Excel template")
+    @GetMapping("/incinerationWaste/template")
+    public ResponseEntity<byte[]> downloadIncinerationWasteTemplate() {
+        byte[] templateBytes = wasteService.generateIncinerationWasteExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Incineration_Waste_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @Operation(summary = "Upload Incineration Waste records from Excel file")
+    @PostMapping("/incinerationWaste/excel")
+    public ResponseEntity<ApiResponse> createIncinerationWasteFromExcel(@RequestParam("file") MultipartFile file) throws IOException {
+        Map<String, Object> result = wasteService.createIncinerationWasteFromExcel(file);
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        String message = String.format("Upload completed. %d record(s) saved successfully. %d record(s) skipped.", savedCount, skippedCount);
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
 
     @Operation(summary = "Get all recorded Waste Data and their emissions")
@@ -85,6 +193,27 @@ public class WasteController {
                                                                @RequestParam(required = false, value = "year") Integer year,
                                                                @RequestParam(required = false, value = "region") UUID regionId) {
         return ResponseEntity.status(HttpStatus.OK).body(new ApiResponse(true, "Waste data fetched successfully", wasteService.getSolidWasteData(solidWasteType, year, regionId)));
+    }
+
+    @Operation(summary = "Download Solid Waste Excel template", description = "Downloads an Excel template for uploading Solid Waste records")
+    @GetMapping("/solidWaste/template")
+    public ResponseEntity<byte[]> downloadSolidWasteTemplate() {
+        byte[] templateBytes = wasteService.generateSolidWasteExcelTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "Solid_Waste_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+        return ResponseEntity.ok().headers(headers).body(templateBytes);
+    }
+
+    @Operation(summary = "Upload Solid Waste records from Excel file")
+    @PostMapping("/solidWaste/excel")
+    public ResponseEntity<ApiResponse> createSolidWasteFromExcel(@RequestParam("file") MultipartFile file) throws IOException {
+        Map<String, Object> result = wasteService.createSolidWasteFromExcel(file);
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        String message = String.format("Upload completed. %d record(s) saved successfully. %d record(s) skipped.", savedCount, skippedCount);
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
     
     // ============= UPDATE ENDPOINTS =============

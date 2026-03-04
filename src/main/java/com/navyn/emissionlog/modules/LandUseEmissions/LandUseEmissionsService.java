@@ -5,6 +5,8 @@ import com.navyn.emissionlog.modules.LandUseEmissions.Dtos.*;
 import com.navyn.emissionlog.modules.LandUseEmissions.models.*;
 import com.navyn.emissionlog.utils.DashboardData;
 import java.util.List;
+import java.util.Map;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface LandUseEmissionsService {
 
@@ -17,6 +19,9 @@ public interface LandUseEmissionsService {
 
         void deleteBiomassGain(java.util.UUID id);
 
+        byte[] generateBiomassGainExcelTemplate();
+        Map<String, Object> createBiomassGainFromExcel(MultipartFile file);
+
         // DisturbanceBiomassLoss methods
         DisturbanceBiomassLoss createDisturbanceBiomassLoss(DisturbanceBiomassLossDto disturbanceBiomassLossDto);
 
@@ -26,6 +31,9 @@ public interface LandUseEmissionsService {
                         DisturbanceBiomassLossDto disturbanceBiomassLossDto);
 
         void deleteDisturbanceBiomassLoss(java.util.UUID id);
+
+        byte[] generateDisturbanceBiomassLossExcelTemplate();
+        Map<String, Object> createDisturbanceBiomassLossFromExcel(MultipartFile file);
 
         // FirewoodRemovalBiomassLoss methods
         FirewoodRemovalBiomassLoss createFirewoodRemovalBiomassLoss(
@@ -38,6 +46,9 @@ public interface LandUseEmissionsService {
 
         void deleteFirewoodRemovalBiomassLoss(java.util.UUID id);
 
+        byte[] generateFirewoodRemovalBiomassLossExcelTemplate();
+        Map<String, Object> createFirewoodRemovalBiomassLossFromExcel(MultipartFile file);
+
         // HarvestedBiomassLoss methods
         HarvestedBiomassLoss createHarvestedBiomassLoss(HarvestedBiomassLossDto harvestedBiomassLossDto);
 
@@ -48,6 +59,9 @@ public interface LandUseEmissionsService {
 
         void deleteHarvestedBiomassLoss(java.util.UUID id);
 
+        byte[] generateHarvestedBiomassLossExcelTemplate();
+        Map<String, Object> createHarvestedBiomassLossFromExcel(MultipartFile file);
+
         // RewettedMineralWetlands methods (no LandCategory filter)
         RewettedMineralWetlands createRewettedMineralWetlands(RewettedMineralWetlandsDto rewettedMineralWetlandsDto);
 
@@ -57,6 +71,9 @@ public interface LandUseEmissionsService {
                         RewettedMineralWetlandsDto rewettedMineralWetlandsDto);
 
         void deleteRewettedMineralWetlands(java.util.UUID id);
+
+        byte[] generateRewettedMineralWetlandsExcelTemplate();
+        Map<String, Object> createRewettedMineralWetlandsFromExcel(MultipartFile file);
 
         // Mini Dashboards
         DashboardData getLandUseDashboardSummary(Integer startingYear, Integer endingYear);

@@ -11,4 +11,10 @@ import java.util.UUID;
 @Repository
 public interface RewettedMineralWetlandsRepository extends JpaRepository<RewettedMineralWetlands, UUID>, JpaSpecificationExecutor<RewettedMineralWetlands> {
     List<RewettedMineralWetlands> findAllByOrderByYearDesc();
+
+    List<RewettedMineralWetlands> findByYearBetweenOrderByYearDesc(Integer startYear, Integer endYear);
+
+    default List<RewettedMineralWetlands> findByYearRange(Integer startYear, Integer endYear) {
+        return findByYearBetweenOrderByYearDesc(startYear, endYear);
+    }
 }

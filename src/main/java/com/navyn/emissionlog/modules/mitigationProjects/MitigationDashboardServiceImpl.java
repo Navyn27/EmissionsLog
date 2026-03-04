@@ -38,8 +38,8 @@ import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.models.ISWMMi
 import com.navyn.emissionlog.modules.mitigationProjects.Waste.iswm.repository.ISWMMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.model.RoofTopMitigation;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.repository.IRoofTopMitigationRepository;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveMitigationYear;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveMitigationYearRepository;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveMitigation;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.repository.StoveMitigationRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.model.LightBulb;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.LightBulb.repository.ILightBulbRepository;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.waterheat.models.AvoidedElectricityProduction;
@@ -98,7 +98,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
 
     // ENERGY repositories
     private final IRoofTopMitigationRepository rooftopRepository;
-    private final StoveMitigationYearRepository stoveMitigationYearRepository;
+    private final StoveMitigationRepository cookstoveRepository;
     private final ILightBulbRepository lightbulbRepository;
     private final AvoidedElectricityProductionRepository waterheatRepository;
 
@@ -150,15 +150,14 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
     }
 
     /**
-     * Get cookstove total for a specific year (unique per year)
-     * Already in ktCO2e, no conversion needed
+     * Sum projectEmission for cookstove records in a year
+     * projectEmission is already in ktCO2e, no conversion needed
      */
-    private double getCookstoveTotalForYear(List<StoveMitigationYear> cookstoveData, int year) {
+    private double getCookstoveTotalForYear(List<StoveMitigation> cookstoveData, int year) {
         return cookstoveData.stream()
                 .filter(s -> s.getYear() == year)
-                .findFirst()
-                .map(s -> s.getTotalAvoidedEmissions())
-                .orElse(0.0);
+                .mapToDouble(s -> s.getProjectEmission() != null ? s.getProjectEmission() : 0.0)
+                .sum();
     }
 
     /**
@@ -254,13 +253,14 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
      * Calculate ENERGY mitigation for a year
      */
     private double calculateEnergyMitigationForYear(int year,
-                                                    List<StoveMitigationYear> cookstove,
+                                                    Map<Integer, List<StoveMitigation>> cookstoveByYear,
                                                     Map<Integer, List<RoofTopMitigation>> rooftopByYear,
                                                     Map<Integer, List<LightBulb>> lightbulbByYear,
                                                     Map<Integer, List<AvoidedElectricityProduction>> waterheatByYear) {
 
-        double cookstoveTotal = getCookstoveTotalForYear(
-                filterByYear(cookstove, StoveMitigationYear::getYear, year, year), year);
+        double cookstoveTotal = cookstoveByYear.getOrDefault(year, List.of()).stream()
+                .mapToDouble(s -> s.getProjectEmission() != null ? s.getProjectEmission() : 0.0)
+                .sum();
 
         double rooftopTotal = sumDouble(rooftopByYear.getOrDefault(year, List.of()),
                 RoofTopMitigation::getNetGhGMitigationAchieved);
@@ -367,7 +367,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<ISWMMitigation> iswm = iswmRepository.findAll();
 
         List<RoofTopMitigation> rooftop = rooftopRepository.findAll();
-        List<StoveMitigationYear> cookstove = stoveMitigationYearRepository.findAll();
+        List<StoveMitigation> cookstove = cookstoveRepository.findAll();
         List<LightBulb> lightbulb = lightbulbRepository.findAll();
         List<AvoidedElectricityProduction> waterheat = waterheatRepository.findAll();
 
@@ -398,7 +398,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
             iswm = filterByYear(iswm, ISWMMitigation::getYear, startingYear, endingYear);
 
             rooftop = filterByYear(rooftop, RoofTopMitigation::getYear, startingYear, endingYear);
-            cookstove = filterByYear(cookstove, StoveMitigationYear::getYear, startingYear, endingYear);
+            cookstove = filterByYear(cookstove, StoveMitigation::getYear, startingYear, endingYear);
             lightbulb = filterByYear(lightbulb, LightBulb::getYear, startingYear, endingYear);
             waterheat = filterByYear(waterheat, AvoidedElectricityProduction::getYear, startingYear, endingYear);
 
@@ -439,24 +439,18 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         double iswmTotal = sumDouble(iswm, ISWMMitigation::getNetAnnualReduction);
         double wasteTotal = wasteToEnergyTotal + landfillTotal + mbtTotal + eprTotal + fstpTotal + wwtpTotal + iswmTotal;
 
-        // Aggregate ENERGY (already in ktCO2e, no conversion needed)
+        // Aggregate ENERGY (cookstove projectEmission already in ktCO2e, rooftop and lightbulb need conversion)
         double cookstoveTotal = cookstove.stream()
-                .collect(Collectors.toMap(
-                        StoveMitigationYear::getYear,
-                        StoveMitigationYear::getTotalAvoidedEmissions,
-                        (existing, replacement) -> existing))
-                .values()
-                .stream()
-                .mapToDouble(Double::doubleValue)
+                .mapToDouble(s -> s.getProjectEmission() != null ? s.getProjectEmission() : 0.0)
                 .sum();
         double rooftopTotal = rooftop.stream()
-                .mapToDouble(RoofTopMitigation::getNetGhGMitigationAchieved)
+                .mapToDouble(r -> convertTCO2eToKtCO2e(r.getNetGhGMitigationAchieved()))
                 .sum();
         double lightbulbTotal = lightbulb.stream()
-                .mapToDouble(LightBulb::getNetGhGMitigationAchieved)
+                .mapToDouble(l -> convertTCO2eToKtCO2e(l.getNetGhGMitigationAchieved()))
                 .sum();
         double waterheatTotal = waterheat.stream()
-                .mapToDouble(w -> w.getNetGhGMitigation() != null ? w.getNetGhGMitigation() : 0.0)
+                .mapToDouble(w -> w.getNetGhGMitigation() != null ? convertTCO2eToKtCO2e(w.getNetGhGMitigation()) : 0.0)
                 .sum();
         double energyTotal = cookstoveTotal + rooftopTotal + lightbulbTotal + waterheatTotal;
 
@@ -552,7 +546,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         List<ISWMMitigation> iswm = iswmRepository.findAll();
 
         List<RoofTopMitigation> rooftop = rooftopRepository.findAll();
-        List<StoveMitigationYear> cookstove = stoveMitigationYearRepository.findAll();
+        List<StoveMitigation> cookstove = cookstoveRepository.findAll();
         List<LightBulb> lightbulb = lightbulbRepository.findAll();
         List<AvoidedElectricityProduction> waterheat = waterheatRepository.findAll();
 
@@ -598,6 +592,8 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
         Map<Integer, List<ISWMMitigation>> iswmByYear = iswm.stream()
                 .collect(Collectors.groupingBy(ISWMMitigation::getYear));
 
+        Map<Integer, List<StoveMitigation>> cookstoveByYear = cookstove.stream()
+                .collect(Collectors.groupingBy(StoveMitigation::getYear));
         Map<Integer, List<RoofTopMitigation>> rooftopByYear = rooftop.stream()
                 .collect(Collectors.groupingBy(RoofTopMitigation::getYear));
         Map<Integer, List<LightBulb>> lightbulbByYear = lightbulb.stream()
@@ -623,7 +619,7 @@ public class MitigationDashboardServiceImpl implements MitigationDashboardServic
                     protectiveForestByYear, manureCoveringByYear, addingStrawByYear, dailySpreadByYear);
             double wasteForYear = calculateWasteMitigationForYear(year, wasteToEnergyByYear, landfillByYear,
                     mbtByYear, eprByYear, fstpByYear, wwtpByYear, iswmByYear);
-            double energyForYear = calculateEnergyMitigationForYear(year, cookstove, rooftopByYear,
+            double energyForYear = calculateEnergyMitigationForYear(year, cookstoveByYear, rooftopByYear,
                     lightbulbByYear, waterheatByYear);
             double ippuForYear = calculateIPPUMitigationForYear(year, ippuByYear);
             double transportForYear = calculateTransportMitigationForYear(year, modalShiftByYear, electricVehicleByYear);

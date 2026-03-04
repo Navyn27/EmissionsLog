@@ -40,10 +40,6 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
     private final BAURepository bauRepository;
     private final InterventionRepository interventionRepository;
 
-    private static Double apply(StreetTreesMitigation streetTreesMitigation) {
-        return streetTreesMitigation.getNumberOfTreesPlanted() + streetTreesMitigation.getCumulativeNumberOfTrees();
-    }
-
     /**
      * Maps StreetTreesMitigation entity to Response DTO
      * This method loads intervention data within the transaction to avoid lazy loading issues
@@ -99,7 +95,9 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
         StreetTreesMitigation mitigation = new StreetTreesMitigation();
 
         Optional<StreetTreesMitigation> lastYearRecord = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
-        Double cumulativeNumberOfTrees = lastYearRecord.map(StreetTreesMitigationServiceImpl::apply).orElse(0.0);
+        // Calculate cumulative: previous cumulative (which already includes all prior years) + current year's trees
+        Double cumulativeNumberOfTrees = lastYearRecord.map(StreetTreesMitigation::getCumulativeNumberOfTrees).orElse(0.0)
+                + dto.getNumberOfTreesPlanted();
         Double agbSingleTreePrevYear = lastYearRecord.map(StreetTreesMitigation::getAgbSingleTreeCurrentYear)
                 .orElse(0.0);
 
@@ -239,7 +237,9 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
     private void recalculateExistingRecord(StreetTreesMitigation mitigation, StreetTreesParameterResponseDto param) {
         Optional<StreetTreesMitigation> lastYearRecord = repository
                 .findTopByYearLessThanOrderByYearDesc(mitigation.getYear());
-        Double cumulativeNumberOfTrees = lastYearRecord.map(StreetTreesMitigationServiceImpl::apply).orElse(0.0);
+        // Calculate cumulative: previous cumulative (which already includes all prior years) + current year's trees
+        Double cumulativeNumberOfTrees = lastYearRecord.map(StreetTreesMitigation::getCumulativeNumberOfTrees).orElse(0.0)
+                + mitigation.getNumberOfTreesPlanted();
         Double agbSingleTreePrevYear = lastYearRecord.map(StreetTreesMitigation::getAgbSingleTreeCurrentYear)
                 .orElse(0.0);
 
@@ -293,7 +293,9 @@ public class StreetTreesMitigationServiceImpl implements StreetTreesMitigationSe
     private void recalculateAndUpdateRecord(StreetTreesMitigation mitigation, StreetTreesMitigationDto dto,
                                             StreetTreesParameterResponseDto param) {
         Optional<StreetTreesMitigation> lastYearRecord = repository.findTopByYearLessThanOrderByYearDesc(dto.getYear());
-        Double cumulativeNumberOfTrees = lastYearRecord.map(StreetTreesMitigationServiceImpl::apply).orElse(0.0);
+        // Calculate cumulative: previous cumulative (which already includes all prior years) + current year's trees
+        Double cumulativeNumberOfTrees = lastYearRecord.map(StreetTreesMitigation::getCumulativeNumberOfTrees).orElse(0.0)
+                + dto.getNumberOfTreesPlanted();
         Double agbSingleTreePrevYear = lastYearRecord.map(StreetTreesMitigation::getAgbSingleTreeCurrentYear)
                 .orElse(0.0);
 

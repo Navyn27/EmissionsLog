@@ -9,11 +9,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -87,5 +91,39 @@ public class BAUController {
         bauService.deleteBAU(id);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(new ApiResponse(true, "BAU record deleted successfully", null));
+    }
+
+    @GetMapping("/template")
+    @Operation(summary = "Download BAU Excel template", description = "Downloads an Excel template file with the required column headers and data validation for uploading BAU records")
+    public ResponseEntity<byte[]> downloadExcelTemplate() {
+        byte[] templateBytes = bauService.generateExcelTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "BAU_Template.xlsx");
+        headers.setContentLength(templateBytes.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(templateBytes);
+    }
+
+    @PostMapping("/excel")
+    @Operation(summary = "Upload BAU records from Excel file", description = "Uploads multiple BAU records from an Excel file. Rows with missing fields, invalid values, or duplicate year-sector combinations will be skipped.")
+    public ResponseEntity<ApiResponse> createBAUFromExcel(
+            @RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = bauService.createBAUFromExcel(file);
+
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        int totalProcessed = (Integer) result.get("totalProcessed");
+
+        String message = String.format(
+                "Upload completed. %d record(s) saved successfully, %d row(s) skipped out of %d processed.",
+                savedCount,
+                skippedCount,
+                totalProcessed);
+
+        return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
 }

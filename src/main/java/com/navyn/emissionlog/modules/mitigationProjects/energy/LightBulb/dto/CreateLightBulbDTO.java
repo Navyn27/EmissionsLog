@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class CreateLightBulbDTO {
 
@@ -24,13 +26,7 @@ public class CreateLightBulbDTO {
     @Positive(message = "Reduction capacity per bulb must be a positive number")
     private double reductionCapacityPerBulb;
 
-    @Schema(description = "Emission factor.", example = "0.5", required = true)
-    @NotNull(message = "Emission factor cannot be null")
-    @Positive(message = "Emission factor must be a positive number")
-    private double emissionFactor;
-
-    @Schema(description = "Business as usual (BAU) emissions.", example = "500", required = true)
-    @NotNull(message = "BAU cannot be null")
-    @Positive(message = "BAU must be a positive number")
-    private double bau;
+    @Schema(description = "Project Intervention ID", example = "123e4567-e89b-12d3-a456-426614174000", required = true)
+    @NotNull(message = "Project Intervention is required")
+    private UUID projectInterventionId;
 }

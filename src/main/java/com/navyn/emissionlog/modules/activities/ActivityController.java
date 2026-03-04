@@ -27,9 +27,12 @@ import org.springframework.web.server.ResponseStatusException;
 import jakarta.validation.Valid;
 import jakarta.persistence.EntityNotFoundException;
 
+import com.navyn.emissionlog.modules.activities.dtos.AppliedEmissionFactorsDto;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController("ActivityController")
@@ -185,6 +188,16 @@ public class ActivityController {
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
+    }
+
+    @Operation(summary = "Get emission factors applied for an activity", description = "Returns the emission factors used to calculate emissions for a transport activity. Used for transparency and audit.")
+    @GetMapping("/id/{id}/emission-factors")
+    public ResponseEntity<ApiResponse> getEmissionFactorsForActivity(@PathVariable("id") UUID id) {
+        Optional<AppliedEmissionFactorsDto> factors = activityService.getEmissionFactorsForActivity(id);
+        if (factors.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Activity not found or emission factors not available for this activity.");
+        }
+        return ResponseEntity.ok(new ApiResponse(true, "Emission factors retrieved successfully", factors.get()));
     }
 
     @Operation(summary = "Get all activities", description = "Retrieves a list of all activities and their emissions.")

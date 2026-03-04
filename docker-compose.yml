@@ -1,6 +1,8 @@
 volumes:
   postgres_data:
     driver: local
+  user_manual_data:
+    driver: local
 
 services:
   database:
@@ -17,7 +19,8 @@ services:
         - postgres_data:/var/lib/postgresql/data
 
   app:
-    image: sugirayvan/emissions-log:sleepysloth
+    image: emissions-log:${IMAGE_TAG:-latest}
+    build: .
     container_name: emissions-log
     restart: always
     depends_on:
@@ -30,4 +33,5 @@ services:
     ports:
       - "8088:8088"
     volumes:
-        - ./logs:/app/logs
+      - ./logs:/app/logs
+      - user_manual_data:/app/user-manual

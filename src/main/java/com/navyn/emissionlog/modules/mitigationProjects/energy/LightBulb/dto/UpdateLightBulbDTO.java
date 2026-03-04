@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
 public class UpdateLightBulbDTO {
 
@@ -20,11 +22,6 @@ public class UpdateLightBulbDTO {
     @Positive(message = "Reduction capacity per bulb must be a positive number")
     private Double reductionCapacityPerBulb;
 
-    @Schema(description = "Emission factor.", example = "0.5")
-    @Positive(message = "Emission factor must be a positive number")
-    private Double emissionFactor;
-
-    @Schema(description = "Business as usual (BAU) emissions.", example = "500")
-    @Positive(message = "BAU must be a positive number")
-    private Double bau;
+    @Schema(description = "Project Intervention ID", example = "123e4567-e89b-12d3-a456-426614174000")
+    private UUID projectInterventionId;
 }

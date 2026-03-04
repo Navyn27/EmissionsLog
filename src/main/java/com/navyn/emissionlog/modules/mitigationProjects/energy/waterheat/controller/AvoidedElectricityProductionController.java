@@ -8,7 +8,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -54,5 +57,26 @@ public class AvoidedElectricityProductionController {
     public ResponseEntity<String> delete(@PathVariable UUID id) {
         service.delete(id);
         return ResponseEntity.ok("AvoidedElectricityProduction deleted successfully");
+    }
+
+    @GetMapping("/template")
+    @io.swagger.v3.oas.annotations.Operation(summary = "Download Avoided Electricity Production Excel template")
+    public ResponseEntity<byte[]> downloadTemplate() {
+        byte[] bytes = service.generateExcelTemplate();
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "avoided_electricity_production_template.xlsx");
+        return ResponseEntity.ok().headers(headers).body(bytes);
+    }
+
+    @PostMapping("/excel")
+    @io.swagger.v3.oas.annotations.Operation(summary = "Upload Avoided Electricity Production records from Excel")
+    public ResponseEntity<com.navyn.emissionlog.utils.ApiResponse> createFromExcel(
+            @RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = service.createFromExcel(file);
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        String message = String.format("Upload completed. %d record(s) saved successfully. %d record(s) skipped.", savedCount, skippedCount);
+        return ResponseEntity.ok(new com.navyn.emissionlog.utils.ApiResponse(true, message, result));
     }
 }

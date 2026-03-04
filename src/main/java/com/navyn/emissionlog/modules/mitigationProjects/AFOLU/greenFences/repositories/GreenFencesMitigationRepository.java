@@ -17,4 +17,11 @@ public interface GreenFencesMitigationRepository
     Optional<GreenFencesMitigation> findByYear(Integer year);
     Optional<GreenFencesMitigation> findTopByYearLessThanOrderByYearDesc(Integer year);
     List<GreenFencesMitigation> findByYearGreaterThanOrderByYearAsc(Integer year);
+
+    // Find by year range for dashboard filtering
+    List<GreenFencesMitigation> findByYearBetweenOrderByYearDesc(Integer startYear, Integer endYear);
+
+    default List<GreenFencesMitigation> findByYearRange(Integer startYear, Integer endYear) {
+        return findByYearBetweenOrderByYearDesc(startYear, endYear);
+    }
 }

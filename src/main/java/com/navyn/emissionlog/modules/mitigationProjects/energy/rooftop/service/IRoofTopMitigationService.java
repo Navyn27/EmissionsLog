@@ -3,7 +3,10 @@ package com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.service;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.dto.RoofTopMitigationDto;
 import com.navyn.emissionlog.modules.mitigationProjects.energy.rooftop.dto.RoofTopMitigationResponseDto;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface IRoofTopMitigationService {
@@ -13,4 +16,6 @@ public interface IRoofTopMitigationService {
     RoofTopMitigationResponseDto update(UUID id, RoofTopMitigationDto dto);
     void delete(UUID id);
     List<RoofTopMitigationResponseDto> getByYear(int year);
+    byte[] generateExcelTemplate();
+    Map<String, Object> createFromExcel(MultipartFile file);
 }

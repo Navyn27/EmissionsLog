@@ -5,6 +5,7 @@ import com.navyn.emissionlog.Exceptions.UnmatchingPasswordsException;
 import com.navyn.emissionlog.modules.users.User;
 import com.navyn.emissionlog.modules.auth.dtos.LoginDTO;
 import com.navyn.emissionlog.modules.auth.dtos.SignUpDTO;
+import com.navyn.emissionlog.modules.auth.dtos.UpdateUserDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,4 +20,5 @@ public interface UserService {
     public boolean deleteUser(String email);
 
     User updateUser(String email, SignUpDTO payload);
+    User updateUser(String email, UpdateUserDTO payload);
 }

@@ -27,4 +27,11 @@ public interface ZeroTillageMitigationRepository
     @EntityGraph(attributePaths = {"intervention"})
     @Override
     List<ZeroTillageMitigation> findAll(Specification<ZeroTillageMitigation> spec, Sort sort);
+
+    // Find by year range for dashboard filtering
+    List<ZeroTillageMitigation> findByYearBetweenOrderByYearDesc(Integer startYear, Integer endYear);
+
+    default List<ZeroTillageMitigation> findByYearRange(Integer startYear, Integer endYear) {
+        return findByYearBetweenOrderByYearDesc(startYear, endYear);
+    }
 }

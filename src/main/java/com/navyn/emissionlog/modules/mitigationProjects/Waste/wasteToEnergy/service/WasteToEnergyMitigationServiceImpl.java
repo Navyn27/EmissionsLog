@@ -62,7 +62,7 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
 
         // Map intervention - FORCE initialization within transaction to avoid lazy loading
         if (mitigation.getProjectIntervention() != null) {
-            // Force Hibernate to initialize the proxy while session is still open
+            // Force Hibernate to initialize the proxy while the session is still open
             Hibernate.initialize(mitigation.getProjectIntervention());
             Intervention intervention = mitigation.getProjectIntervention();
             WasteToEnergyMitigationResponseDto.InterventionInfo interventionInfo =
@@ -79,12 +79,12 @@ public class WasteToEnergyMitigationServiceImpl implements WasteToEnergyMitigati
     }
 
     /**
-     * Internal method for Excel processing that returns entity
+     * Internal method for Excel processing that returns an entity
      */
     private WasteToEnergyMitigation createWasteToEnergyMitigationInternal(WasteToEnergyMitigationDto dto) {
         WasteToEnergyMitigation mitigation = new WasteToEnergyMitigation();
         
-        // Get WasteToWtEParameter (latest active) - throws exception if none exists
+        // Get WasteToWtEParameter (the latest active) - throws an exception if none exists
         WasteToWtEParameterResponseDto paramDto;
         try {
             paramDto = parameterService.getLatestActive();

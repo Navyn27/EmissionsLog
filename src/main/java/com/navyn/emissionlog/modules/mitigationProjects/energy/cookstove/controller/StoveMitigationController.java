@@ -1,12 +1,17 @@
 package com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.controller;
 
-import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveInstallationDTO;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.models.StoveMitigationYear;
-import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.service.StoveMitigationService;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.dto.CreateStoveMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.dto.StoveMitigationResponseDto;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.dto.UpdateStoveMitigationDto;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.enums.EStoveType;
+import com.navyn.emissionlog.modules.mitigationProjects.energy.cookstove.service.IStoveMitigationService;
 import com.navyn.emissionlog.utils.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,55 +24,56 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/mitigation/cookstoves")
 @SecurityRequirement(name = "BearerAuth")
+@RequiredArgsConstructor
 public class StoveMitigationController {
 
-    private final StoveMitigationService mitigationService;
+    private final IStoveMitigationService service;
 
-    public StoveMitigationController(StoveMitigationService mitigationService) {
-        this.mitigationService = mitigationService;
-    }
-
+    @Operation(summary = "Create Stove Mitigation record")
     @PostMapping
-    public StoveMitigationYear create(@RequestBody StoveInstallationDTO request) {
-        return mitigationService.createMitigation(request);
+    public ResponseEntity<ApiResponse> createStoveMitigation(
+            @Valid @RequestBody CreateStoveMitigationDto dto) {
+        StoveMitigationResponseDto mitigation = service.createStoveMitigation(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                new ApiResponse(true, "Stove Mitigation record created successfully", mitigation));
     }
 
-    @GetMapping
-    public List<StoveMitigationYear> getAll() {
-        return mitigationService.findAll();
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<StoveMitigationYear> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(mitigationService.findById(id));
-    }
-
+    @Operation(summary = "Update Stove Mitigation record")
     @PutMapping("/{id}")
-    public ResponseEntity<StoveMitigationYear> updateById(@PathVariable UUID id,
-            @RequestBody StoveInstallationDTO request) {
-        return ResponseEntity.ok(mitigationService.updateById(id, request));
+    public ResponseEntity<ApiResponse> updateStoveMitigation(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateStoveMitigationDto dto) {
+        StoveMitigationResponseDto mitigation = service.updateStoveMitigation(id, dto);
+        return ResponseEntity.ok(new ApiResponse(true, "Stove Mitigation record updated successfully", mitigation));
     }
 
-    @GetMapping("/stove-type/{stoveTypeId}")
-    public List<StoveMitigationYear> getByStoveType(@PathVariable UUID stoveTypeId) {
-        return mitigationService.findByStoveType(stoveTypeId);
+    @Operation(summary = "Get Stove Mitigation record by ID")
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse> getStoveMitigationById(@PathVariable UUID id) {
+        StoveMitigationResponseDto mitigation = service.getStoveMitigationById(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Stove Mitigation record fetched successfully", mitigation));
     }
 
-    @GetMapping("/year/{year}")
-    public List<StoveMitigationYear> getByYear(@PathVariable int year) {
-        return mitigationService.findByYear(year);
+    @Operation(summary = "Get all Stove Mitigation records")
+    @GetMapping
+    public ResponseEntity<ApiResponse> getAllStoveMitigations(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) EStoveType stoveType) {
+        List<StoveMitigationResponseDto> mitigations = service.getAllStoveMitigations(year, stoveType);
+        return ResponseEntity.ok(new ApiResponse(true, "Stove Mitigation records fetched successfully", mitigations));
     }
 
+    @Operation(summary = "Delete Stove Mitigation record")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        mitigationService.deleteById(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ApiResponse> deleteStoveMitigation(@PathVariable UUID id) {
+        service.deleteStoveMitigation(id);
+        return ResponseEntity.ok(new ApiResponse(true, "Stove Mitigation record deleted successfully", null));
     }
 
+    @Operation(summary = "Download Cookstove Mitigation Excel template", description = "Downloads an Excel template file with the required column headers for uploading Cookstove Mitigation records.")
     @GetMapping("/template")
-    @Operation(summary = "Download Cookstove Mitigation Excel template", description = "Downloads an Excel template file with the required column headers for uploading Cookstove Mitigation records. Users can type stove type names, and new stove types will be created automatically.")
     public ResponseEntity<byte[]> downloadExcelTemplate() {
-        byte[] templateBytes = mitigationService.generateExcelTemplate();
+        byte[] templateBytes = service.generateExcelTemplate();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
@@ -79,23 +85,21 @@ public class StoveMitigationController {
                 .body(templateBytes);
     }
 
+    @Operation(summary = "Upload Cookstove Mitigation records from Excel file", description = "Uploads multiple Cookstove Mitigation records from an Excel file. Records with errors will be skipped.")
     @PostMapping("/excel")
-    @Operation(summary = "Upload Cookstove Mitigation records from Excel file", description = "Uploads multiple Cookstove Mitigation records from an Excel file. Stove types will be found (case-insensitive) or created automatically. Records with duplicate year+stove type combinations will be skipped.")
-    public ResponseEntity<ApiResponse> createCookstoveMitigationFromExcel(
+    public ResponseEntity<ApiResponse> createStoveMitigationFromExcel(
             @RequestParam("file") MultipartFile file) {
-        Map<String, Object> result = mitigationService.createCookstoveMitigationFromExcel(file);
+        Map<String, Object> result = service.createStoveMitigationFromExcel(file);
 
         int savedCount = (Integer) result.get("savedCount");
         int skippedCount = (Integer) result.get("skippedCount");
-        @SuppressWarnings("unchecked")
-        List<String> skippedRecords = (List<String>) result.get("skippedRecords");
 
         String message = String.format(
-                "Upload completed. %d record(s) saved successfully. %d record(s) skipped (year+stove type already exist: %s)",
+                "Upload completed. %d record(s) saved successfully. %d record(s) skipped.",
                 savedCount,
-                skippedCount,
-                skippedRecords.isEmpty() ? "none" : String.join(", ", skippedRecords));
+                skippedCount);
 
         return ResponseEntity.ok(new ApiResponse(true, message, result));
     }
 }
+

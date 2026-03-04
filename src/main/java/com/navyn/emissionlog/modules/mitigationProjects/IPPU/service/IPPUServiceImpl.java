@@ -72,7 +72,8 @@ public class IPPUServiceImpl implements IIPPUService {
 
     private void updateIPPUMitigationFromDTO(IPPUMitigation ippuMitigation, IPPUMitigationDTO ippuMitigationDTO) {
         ippuMitigation.setYear(ippuMitigationDTO.getYear());
-        ippuMitigation.setBau(ippuMitigationDTO.getBau());
+        double bauValue = (ippuMitigationDTO.getBau() != null) ? ippuMitigationDTO.getBau() : 0.0;
+        ippuMitigation.setBau(bauValue);
         ippuMitigation.setFGasName(ippuMitigationDTO.getFGasName());
         ippuMitigation.setAmountOfAvoidedFGas(ippuMitigationDTO.getAmountOfAvoidedFGas());
         ippuMitigation.setGwpFactor(ippuMitigationDTO.getGwpFactor());
@@ -83,7 +84,7 @@ public class IPPUServiceImpl implements IIPPUService {
         double reducedEmissionInKtCO2e = reducedEmissionInKgCO2e / 1000000;
         ippuMitigation.setReducedEmissionInKtCO2e(reducedEmissionInKtCO2e);
 
-        ippuMitigation.setMitigationScenario(ippuMitigationDTO.getBau() - reducedEmissionInKtCO2e);
+        ippuMitigation.setMitigationScenario(bauValue - reducedEmissionInKtCO2e);
     }
 
     private double calculateTotal(List<IPPUMitigation> mitigations, String field) {
@@ -320,7 +321,7 @@ public class IPPUServiceImpl implements IIPPUService {
                 if (dto.getYear() == 0) {
                     missingFields.add("Year");
                 }
-                if (dto.getBau() < 0) {
+                if (dto.getBau() != null && dto.getBau() < 0) {
                     missingFields.add("BAU");
                 }
                 if (dto.getFGasName() == null || dto.getFGasName().trim().isEmpty()) {

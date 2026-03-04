@@ -8,10 +8,13 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface EntericFermentationEmissionsRepository extends JpaRepository<EntericFermentationEmissions, UUID>, JpaSpecificationExecutor<EntericFermentationEmissions> {
     @Query("SELECT efe FROM EntericFermentationEmissions efe WHERE efe.year BETWEEN :startYear AND :endYear ORDER BY efe.year DESC")
     List<EntericFermentationEmissions> findByYearRange(@Param("startYear") int startYear, @Param("endYear") int endYear);
+    
+    Optional<EntericFermentationEmissions> findByYearAndSpecies(int year, com.navyn.emissionlog.Enums.Agriculture.LivestockSpecies species);
 }

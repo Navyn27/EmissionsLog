@@ -37,9 +37,21 @@ public class KigaliWWTPMitigation {
     
     @Column(nullable = false, name = "co2e_per_m3_wastewater")
     private Double co2ePerM3Wastewater; // kg CO2e per m³ (calculated: MethanePotential * CH4GWP(100-yr))
+
+    // CH4 reduction only (tCO2e) - nullable for backward compatibility with existing rows
+    @Column(name = "ch4_reduction_tonnes")
+    private Double ch4ReductionTonnes;
+
+    // N2O components (tCO2e) - Revised calculations to include N2O
+    @Column(name = "direct_n2o_tonnes")
+    private Double directN2oTonnes;
+    @Column(name = "indirect_n2o_tonnes")
+    private Double indirectN2oTonnes;
+    @Column(name = "total_n2o_tonnes")
+    private Double totalN2oTonnes;
     
     @Column(nullable = false, name = "annual_emissions_reduction_tonnes")
-    private Double annualEmissionsReductionTonnes; // tCO2e (calculated: AnnualWastewaterTreated * CO2ePerM3Wastewater)
+    private Double annualEmissionsReductionTonnes; // tCO2e total = CH4 + Total N2O
     
     @Column(nullable = false, name = "annual_emissions_reduction_kilotonnes")
     private Double annualEmissionsReductionKilotonnes; // ktCO2e (calculated: annualEmissionsReductionTonnes / 1000)

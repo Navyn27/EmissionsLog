@@ -58,4 +58,25 @@ public class RoofTopMitigationController {
         roofTopMitigationService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/template")
+    @io.swagger.v3.oas.annotations.Operation(summary = "Download Rooftop Mitigation Excel template")
+    public ResponseEntity<byte[]> downloadTemplate() {
+        byte[] bytes = roofTopMitigationService.generateExcelTemplate();
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "rooftop_mitigation_template.xlsx");
+        return ResponseEntity.ok().headers(headers).body(bytes);
+    }
+
+    @PostMapping("/excel")
+    @io.swagger.v3.oas.annotations.Operation(summary = "Upload Rooftop Mitigation records from Excel")
+    public ResponseEntity<com.navyn.emissionlog.utils.ApiResponse> createFromExcel(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        java.util.Map<String, Object> result = roofTopMitigationService.createFromExcel(file);
+        int savedCount = (Integer) result.get("savedCount");
+        int skippedCount = (Integer) result.get("skippedCount");
+        String message = String.format("Upload completed. %d record(s) saved successfully. %d record(s) skipped.", savedCount, skippedCount);
+        return ResponseEntity.ok(new com.navyn.emissionlog.utils.ApiResponse(true, message, result));
+    }
 }

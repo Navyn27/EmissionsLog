@@ -11,4 +11,10 @@ import java.util.UUID;
 @Repository
 public interface DisturbanceBiomassLossRepository extends JpaRepository<DisturbanceBiomassLoss, UUID>, JpaSpecificationExecutor<DisturbanceBiomassLoss> {
     List<DisturbanceBiomassLoss> findAllByOrderByYearDesc();
+
+    List<DisturbanceBiomassLoss> findByYearBetweenOrderByYearDesc(Integer startYear, Integer endYear);
+
+    default List<DisturbanceBiomassLoss> findByYearRange(Integer startYear, Integer endYear) {
+        return findByYearBetweenOrderByYearDesc(startYear, endYear);
+    }
 }

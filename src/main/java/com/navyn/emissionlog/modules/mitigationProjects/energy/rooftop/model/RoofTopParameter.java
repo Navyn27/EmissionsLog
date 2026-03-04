@@ -18,9 +18,6 @@ public class RoofTopParameter {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(name = "solar_pv_capacity", nullable = false)
-    private double solarPVCapacity;
-
     @Column(name = "energy_output", nullable = false)
     private double energyOutPut;
 

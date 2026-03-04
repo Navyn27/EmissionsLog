@@ -21,4 +21,11 @@ public interface SettlementTreesMitigationRepository
     
     // Find by exact year
     Optional<SettlementTreesMitigation> findByYear(Integer year);
+
+    // Find by year range for dashboard filtering
+    List<SettlementTreesMitigation> findByYearBetweenOrderByYearDesc(Integer startYear, Integer endYear);
+
+    default List<SettlementTreesMitigation> findByYearRange(Integer startYear, Integer endYear) {
+        return findByYearBetweenOrderByYearDesc(startYear, endYear);
+    }
 }
