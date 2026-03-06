@@ -74,6 +74,7 @@ public class UserServiceImpl implements UserService {
         user.setRole(payload.getRole() != null ? payload.getRole() : Roles.VIEWER);
         user.setOtp(otp);
         user.setRecord(null);
+        user.setEnabled(true);
         User savedUser = userRepository.save(user);
 
         if (payload.getRecord() == null) {
@@ -156,6 +157,9 @@ public class UserServiceImpl implements UserService {
             }
             if (payload.getRole() != null) {
                 user.setRole(payload.getRole());
+            }
+            if (payload.getEnabled() != null) {
+                user.setEnabled(payload.getEnabled());
             }
             return userRepository.save(user);
         }
