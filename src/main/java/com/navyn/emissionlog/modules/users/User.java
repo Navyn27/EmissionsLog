@@ -38,7 +38,8 @@ public class User implements UserDetails {
     @NotBlank(message = "Last name is required")
     private String email;
 
-    private boolean isEnabled = false;
+    @Builder.Default
+    private boolean isEnabled = true;
     private double otp;
 
     @OneToOne
@@ -66,7 +67,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return isEnabled;
     }
 
     @Override

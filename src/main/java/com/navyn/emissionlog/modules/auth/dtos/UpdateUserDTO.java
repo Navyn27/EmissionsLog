@@ -27,6 +27,8 @@ public class UpdateUserDTO {
     @Enumerated(EnumType.STRING)
     private Roles role;
 
+    private Boolean enabled;
+
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,20}$",
             message = "A valid password should be of length 8-20 characters with at least one uppercase character, lowercase character, a special symbol and a number"
